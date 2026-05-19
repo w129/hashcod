@@ -752,9 +752,7 @@ kbd {
 .tb-menu { position: relative; height: 100%; display: flex; align-items: stretch; }
 .tb-n.on { color: #fff; background: #1f1f1f; }
 .tb-dd {
-  position: absolute;
-  top: 38px;
-  left: 0;
+  position: fixed;
   z-index: 120;
   min-width: 208px;
   padding: 7px;

@@ -1459,35 +1459,53 @@ const TOP_MENU_ICONS = {
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
   const open = activeMenu === label;
   const hasDropdown = Array.isArray(items) && items.length > 0;
+  const btnRef = useRef(null);
+  const [menuPos, setMenuPos] = useState({ left: 0, top: 38 });
+  const updateMenuPosition = () => {
+    const rect = btnRef.current?.getBoundingClientRect?.();
+    if (!rect) return;
+    setMenuPos({
+      left: Math.max(6, Math.min(rect.left, window.innerWidth - 224)),
+      top: Math.max(38, rect.bottom),
+    });
+  };
   const handleClick = () => {
     if (primaryAction) {
       setActiveMenu(null);
       primaryAction();
       return;
     }
+    updateMenuPosition();
     setActiveMenu(open ? null : label);
   };
   const handleContextMenu = (e) => {
     if (!primaryAction || !hasDropdown) return;
     e.preventDefault();
+    updateMenuPosition();
     setActiveMenu(open ? null : label);
   };
   return (
     <div className="tb-menu">
       <button
+        ref={btnRef}
         className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''} ${iconOnly ? 'tb-n-icon-only' : ''}`}
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        onMouseEnter={() => activeMenu && hasDropdown && setActiveMenu(label)}
+        onMouseEnter={() => {
+          if (activeMenu && hasDropdown) {
+            updateMenuPosition();
+            setActiveMenu(label);
+          }
+        }}
       >
         {icon ? <span className="tb-n-icon" dangerouslySetInnerHTML={{ __html: icon }} /> : null}
         {!iconOnly ? <span>{label}</span> : null}
         {primaryAction && hasDropdown ? <span className="tb-n-caret">▾</span> : null}
       </button>
       {open && hasDropdown && (
-        <div className="tb-dd" onMouseLeave={() => setActiveMenu(null)}>
+        <div className="tb-dd" style={{ left: menuPos.left, top: menuPos.top }} onMouseLeave={() => setActiveMenu(null)}>
           {items.map((item, i) => item.type === 'sep' ? (
             <div key={`sep-${i}`} className="tb-dd-sep" />
           ) : (
