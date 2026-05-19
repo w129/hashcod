@@ -1454,6 +1454,7 @@ const TOP_MENU_ICONS = {
   view: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="4" fill="currentColor"/><path fill="currentColor" d="M30.94 15.66A16.69 16.69 0 0 0 16 5A16.69 16.69 0 0 0 1.06 15.66a1 1 0 0 0 0 .68A16.69 16.69 0 0 0 16 27a16.69 16.69 0 0 0 14.94-10.66a1 1 0 0 0 0-.68ZM16 22.5a6.5 6.5 0 1 1 6.5-6.5a6.51 6.51 0 0 1-6.5 6.5Z"/></svg>`,
   help: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M16 2a14 14 0 1 0 14 14A14.016 14.016 0 0 0 16 2Zm0 26a12 12 0 1 1 12-12a12.014 12.014 0 0 1-12 12Z"/><path fill="currentColor" d="M15 22h2v2h-2zm1-14a5 5 0 0 0-5 5h2a3 3 0 1 1 3 3a1 1 0 0 0-1 1v3h2v-2.1A5.002 5.002 0 0 0 16 8Z"/></svg>`,
   languages: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M16 2a14 14 0 1 0 14 14A14.016 14.016 0 0 0 16 2Zm9.89 8h-4.1a20.62 20.62 0 0 0-2.08-4.36A12.07 12.07 0 0 1 25.89 10ZM16 4.04A18.54 18.54 0 0 1 19.58 10h-7.16A18.54 18.54 0 0 1 16 4.04ZM4.26 18a11.2 11.2 0 0 1 0-4h4.63a18.72 18.72 0 0 0 0 4Zm1.85 4h4.1a20.62 20.62 0 0 0 2.08 4.36A12.07 12.07 0 0 1 6.11 22Zm4.1-12h-4.1a12.07 12.07 0 0 1 6.18-4.36A20.62 20.62 0 0 0 10.21 10ZM16 27.96A18.54 18.54 0 0 1 12.42 22h7.16A18.54 18.54 0 0 1 16 27.96ZM20.22 18h-8.44a16.64 16.64 0 0 1 0-4h8.44a16.64 16.64 0 0 1 0 4Zm-.51 8.36A20.62 20.62 0 0 0 21.79 22h4.1a12.07 12.07 0 0 1-6.18 4.36ZM23.11 18a18.72 18.72 0 0 0 0-4h4.63a11.2 11.2 0 0 1 0 4Z"/></svg>`,
+  plans: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M28 2H4a2 2 0 0 0-2 2v24a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm-5.414 11.414L18 8.828v5.769a5.02 5.02 0 0 1-1.096 3.124l-2.247 2.808A3.01 3.01 0 0 0 14 22.403V27h-2v-4.597a5.02 5.02 0 0 1 1.096-3.124l2.247-2.808A3.01 3.01 0 0 0 16 14.597V8.828l-4.586 4.586L10 12l7-7l7 7Z"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -8113,7 +8114,7 @@ const App = () => {
             <MenuButton label={t('menuView')} icon={TOP_MENU_ICONS.view} iconOnly items={viewItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuHelp')} icon={TOP_MENU_ICONS.help} iconOnly items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuLanguages')} icon={TOP_MENU_ICONS.languages} iconOnly items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-            <MenuButton label="PLANS" items={planItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPlans} />
+            <MenuButton label="PLANS" icon={TOP_MENU_ICONS.plans} iconOnly items={planItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPlans} />
             <MenuButton label={t('menuDatabase')} items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
             <MenuButton label={t('qrMenu')} items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
             <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
