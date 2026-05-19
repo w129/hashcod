@@ -1,0 +1,8269 @@
+/* opencriptG v12 — main React app */
+
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const APP_VERSION = 12;
+window.APP_VERSION = APP_VERSION;
+const MAX_GENERATION_BATCH = 100000;
+const GENERATION_CHUNK_SIZE = 500;
+const MAX_RENDERED_OUTPUT = 1000;
+const PLAN_SIMILARITY_DENSITY = {
+  free: 0.78,
+  starter: 0.42,
+  professional: 0.18,
+  enterprise: 0.05,
+};
+
+
+const LANG_STORAGE_KEY = 'opencriptG_lang_v12';
+const LANGUAGE_OPTIONS = [
+  { code: 'en', native: 'English' },
+  { code: 'es', native: 'Español' },
+  { code: 'ko', native: '한국어' },
+  { code: 'zh', native: '中文' },
+  { code: 'ja', native: '日本語' },
+  { code: 'fr', native: 'Français' },
+  { code: 'pt', native: 'Português' },
+  { code: 'de', native: 'Deutsch' },
+];
+
+const I18N = {
+  en: {
+    searchPrimitives: 'Search {count} primitives…',
+    prefix: 'Prefix', length: 'Length', charset: 'Charset', quantity: 'Quantity', batch: 'Batch',
+    clear: 'Clear', copyAll: 'Copy all', downloadMd: 'Download .md', generate: 'Generate', generating: 'Generating…',
+    storyModeHover: 'story mode · hover insight',
+    menuFile: 'File', menuGenerate: 'Generate', menuExport: 'Export', menuView: 'View', menuHelp: 'Help', menuLanguages: 'Languages', menuDatabase: 'Database',
+    newSession: 'New session', openSession: 'Open session…', saveSession: 'Save session', clearOutput: 'Clear output',
+    generateSelected: 'Generate selected', generate10: 'Generate 10', generate100: 'Generate 100', generate500: 'Generate 500', generate1000: 'Generate 1000',
+    exportMarkdown: 'Export Markdown', exportTxt: 'Export TXT', exportJson: 'Export JSON', exportCsv: 'Export CSV',
+    compactDensity: 'Compact density', comfortableDensity: 'Comfortable density', focusSearch: 'Focus search', newestOutput: 'Newest output', replayTour: 'Replay tour',
+    openHelp: 'Open help', shortcuts: 'Shortcuts', aboutApp: 'About opencriptG',
+    helpTitle: 'opencriptG Help', helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
+    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved opencriptG session.',
+    helpGenerateDesc: 'Generate the selected primitive, change batch size quickly, copy results, or clear the output.',
+    helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
+    helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
+    generated: 'generated', unique: 'unique', session: 'session', output: 'Output', value: 'value', values: 'values',
+    hoverHint: 'hover any value for storytelling · click to copy',
+    nothingGenerated: 'Nothing generated yet',
+    emptyGenerateHint: 'Select a primitive on the left, configure parameters, then press ⌘ ↵ or hit Generate.',
+    webCrypto: 'Web Crypto API', localOffline: 'Local · Offline',
+    csprng: 'CSPRNG · crypto.getRandomValues',
+    techSelectPrimitive: 'Select a primitive', techSelectPrimitiveDesc: 'Pick a cryptographic type from the left rail to see its specification, entropy profile, and recommended use.', techEngine: 'Engine', techEntropy: 'Entropy', techSearchSpace: 'Search space', techStandard: 'Standard', techUseItFor: 'Use it for', techDont: "Don't", techId: 'id', techCategory: 'category',
+    tour: 'tour',
+    languageChanged: 'Language changed to {name}',
+    sessionLoaded: 'Session loaded', invalidSession: 'Invalid session file', sessionSaved: 'Session saved', markdownExported: 'Markdown exported', txtExported: 'TXT exported', jsonExported: 'JSON exported', csvExported: 'CSV exported', outputCleared: 'Output cleared', newSessionReady: 'New session ready', valuesCopied: '{count} values copied', showingNewest: 'Showing newest output',
+    openDatabase: 'Open database', exportDatabase: 'Export database', clearDatabase: 'Clear database', databaseTitle: 'Copied Codes Database', databaseSubtitle: 'Local vault of generated codes copied by the user. Saved in this browser for quick retrieval.', databaseSearch: 'Search copied code, primitive or text…', databaseTotal: '{count} saved', databaseEmpty: 'No copied codes saved yet.', databaseValue: 'Copied value', databasePrimitive: 'Primitive', databaseCategory: 'Category', databaseMode: 'Mode', databaseCopiedAt: 'Copied at', databaseCopyAgain: 'Copy again', databaseDelete: 'Delete', databaseCleared: 'Database cleared', databaseExported: 'Database exported', databaseSaved: '{count} copied code saved to database', databaseSavedPlural: '{count} copied codes saved to database', databaseBatch: 'batch', databaseSingle: 'single', qrMenu: 'QR Vault', openQrVault: 'Open QR Vault', qrTitle: 'Advanced QR Vault', qrSubtitle: 'Generate uncommon, more advanced QR packets using codes selected from the copied-codes database.', qrSearch: 'Search copied codes to encode…', qrSelected: '{count} selected', qrNoneSelected: 'Select at least one copied code from the database list.', qrMode: 'QR mode', qrModeSingle: 'One QR per selected code', qrModeBundle: 'Sealed bundle QR', qrPayload: 'Payload style', qrPayloadRaw: 'Raw copied value', qrPayloadPacket: 'Advanced packet JSON', qrCorrection: 'Error correction', qrSize: 'Size', qrTheme: 'Card style', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: 'Select all', qrClearSelection: 'Clear selection', qrGenerate: 'Generate QR', qrEmpty: 'No QR generated yet.', qrCopiedAt: 'Source copied at', qrDownload: 'Download PNG', qrCopyPayload: 'Copy payload', qrUseSelected: 'Use selected codes', qrBundleName: 'Bundle packet', qrDatabaseEmpty: 'The copied-codes database is empty. Copy some generated codes first.', qrGenerated: 'QR generated', qrGeneratedPlural: 'QR codes generated', qrRawLabel: 'Raw value', qrPacketLabel: 'Advanced packet',
+  },
+  es: {
+    searchPrimitives: 'Buscar entre {count} primitivas…',
+    prefix: 'Prefijo', length: 'Longitud', charset: 'Conjunto', quantity: 'Cantidad', batch: 'Lote',
+    clear: 'Limpiar', copyAll: 'Copiar todo', downloadMd: 'Descargar .md', generate: 'Generar', generating: 'Generando…',
+    storyModeHover: 'modo historia · pasa el cursor',
+    menuFile: 'Archivo', menuGenerate: 'Generar', menuExport: 'Exportar', menuView: 'Ver', menuHelp: 'Ayuda', menuLanguages: 'Idiomas', menuDatabase: 'Base de datos',
+    newSession: 'Nueva sesión', openSession: 'Abrir sesión…', saveSession: 'Guardar sesión', clearOutput: 'Limpiar salida',
+    generateSelected: 'Generar seleccionado', generate10: 'Generar 10', generate100: 'Generar 100', generate500: 'Generar 500', generate1000: 'Generar 1000',
+    exportMarkdown: 'Exportar Markdown', exportTxt: 'Exportar TXT', exportJson: 'Exportar JSON', exportCsv: 'Exportar CSV',
+    compactDensity: 'Densidad compacta', comfortableDensity: 'Densidad cómoda', focusSearch: 'Enfocar búsqueda', newestOutput: 'Salida más reciente', replayTour: 'Repetir tour',
+    openHelp: 'Abrir ayuda', shortcuts: 'Atajos', aboutApp: 'Acerca de opencriptG',
+    helpTitle: 'Ayuda de opencriptG', helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
+    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de opencriptG.',
+    helpGenerateDesc: 'Genera la primitiva seleccionada, cambia el tamaño del lote rápidamente, copia resultados o limpia la salida.',
+    helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
+    helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
+    generated: 'generados', unique: 'únicos', session: 'sesión', output: 'Salida', value: 'valor', values: 'valores',
+    hoverHint: 'pasa el cursor para ver storytelling · clic para copiar',
+    nothingGenerated: 'Aún no se ha generado nada',
+    emptyGenerateHint: 'Selecciona una primitiva a la izquierda, configura los parámetros y luego presiona ⌘ ↵ o Generar.',
+    webCrypto: 'API Web Crypto', localOffline: 'Local · Sin conexión',
+    csprng: 'CSPRNG · crypto.getRandomValues',
+    techSelectPrimitive: 'Selecciona una primitiva', techSelectPrimitiveDesc: 'Elige un tipo criptográfico desde la columna izquierda para ver su especificación, perfil de entropía y uso recomendado.', techEngine: 'Motor', techEntropy: 'Entropía', techSearchSpace: 'Espacio de búsqueda', techStandard: 'Estándar', techUseItFor: 'Úsalo para', techDont: 'No lo uses para', techId: 'id', techCategory: 'categoría',
+    tour: 'tour',
+    languageChanged: 'Idioma cambiado a {name}',
+    sessionLoaded: 'Sesión cargada', invalidSession: 'Archivo de sesión no válido', sessionSaved: 'Sesión guardada', markdownExported: 'Markdown exportado', txtExported: 'TXT exportado', jsonExported: 'JSON exportado', csvExported: 'CSV exportado', outputCleared: 'Salida limpiada', newSessionReady: 'Nueva sesión lista', valuesCopied: '{count} valores copiados', showingNewest: 'Mostrando la salida más reciente',
+    openDatabase: 'Abrir base de datos', exportDatabase: 'Exportar base de datos', clearDatabase: 'Vaciar base de datos', databaseTitle: 'Base de Datos de Codes Copiados', databaseSubtitle: 'Bóveda local con los codes generados que el usuario ha copiado. Guardada en este navegador.', databaseSearch: 'Buscar code copiado, primitiva o texto…', databaseTotal: '{count} guardados', databaseEmpty: 'Todavía no hay codes copiados guardados.', databaseValue: 'Valor copiado', databasePrimitive: 'Primitiva', databaseCategory: 'Categoría', databaseMode: 'Modo', databaseCopiedAt: 'Copiado el', databaseCopyAgain: 'Copiar otra vez', databaseDelete: 'Eliminar', databaseCleared: 'Base de datos vaciada', databaseExported: 'Base de datos exportada', databaseSaved: '{count} code copiado guardado en la base de datos', databaseSavedPlural: '{count} codes copiados guardados en la base de datos', databaseBatch: 'lote', databaseSingle: 'individual', qrMenu: 'QR Vault', openQrVault: 'Abrir QR Vault', qrTitle: 'QR Vault Avanzado', qrSubtitle: 'Genera QR poco comunes y más avanzados usando los codes seleccionados desde la base de datos de copiados.', qrSearch: 'Buscar codes copiados para codificar…', qrSelected: '{count} seleccionados', qrNoneSelected: 'Selecciona al menos un code copiado de la lista.', qrMode: 'Modo QR', qrModeSingle: 'Un QR por cada code seleccionado', qrModeBundle: 'QR de paquete sellado', qrPayload: 'Estilo del payload', qrPayloadRaw: 'Valor copiado en bruto', qrPayloadPacket: 'JSON de paquete avanzado', qrCorrection: 'Corrección de errores', qrSize: 'Tamaño', qrTheme: 'Estilo de tarjeta', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: 'Seleccionar todo', qrClearSelection: 'Limpiar selección', qrGenerate: 'Generar QR', qrEmpty: 'Todavía no se ha generado ningún QR.', qrCopiedAt: 'Copiado originalmente', qrDownload: 'Descargar PNG', qrCopyPayload: 'Copiar payload', qrUseSelected: 'Usar codes seleccionados', qrBundleName: 'Paquete bundle', qrDatabaseEmpty: 'La base de datos de copiados está vacía. Copia primero algunos codes generados.', qrGenerated: 'QR generado', qrGeneratedPlural: 'QR generados', qrRawLabel: 'Valor bruto', qrPacketLabel: 'Paquete avanzado',
+  },
+  ko: {
+    searchPrimitives: '{count}개 프리미티브 검색…',
+    prefix: '접두사', length: '길이', charset: '문자셋', quantity: '수량', batch: '배치',
+    clear: '지우기', copyAll: '모두 복사', downloadMd: '.md 다운로드', generate: '생성', generating: '생성 중…',
+    storyModeHover: '스토리 모드 · 호버 정보',
+    menuFile: '파일', menuGenerate: '생성', menuExport: '내보내기', menuView: '보기', menuHelp: '도움말', menuLanguages: '언어', menuDatabase: '데이터베이스',
+    newSession: '새 세션', openSession: '세션 열기…', saveSession: '세션 저장', clearOutput: '출력 지우기',
+    generateSelected: '선택 항목 생성', generate10: '10개 생성', generate100: '100개 생성', generate500: '500개 생성', generate1000: '1000개 생성',
+    exportMarkdown: 'Markdown 내보내기', exportTxt: 'TXT 내보내기', exportJson: 'JSON 내보내기', exportCsv: 'CSV 내보내기',
+    compactDensity: '좁은 밀도', comfortableDensity: '편안한 밀도', focusSearch: '검색 포커스', newestOutput: '최신 출력', replayTour: '투어 다시 보기',
+    openHelp: '도움말 열기', shortcuts: '단축키', aboutApp: 'opencriptG 정보',
+    helpTitle: 'opencriptG 도움말', helpSubtitle: '개발자와 사이버보안 워크플로를 위한 로컬 암호 값 생성기입니다.',
+    helpFileDesc: '새 세션을 만들고, 현재 세션을 JSON으로 저장하거나 이전에 저장한 opencriptG 세션을 불러옵니다.',
+    helpGenerateDesc: '선택한 프리미티브를 생성하고, 배치 크기를 빠르게 바꾸고, 결과를 복사하거나 출력을 지웁니다.',
+    helpExportDesc: '상황에 따라 생성된 값을 Markdown, TXT, JSON 또는 CSV로 내보냅니다.',
+    helpViewDesc: '밀도를 변경하고, 검색을 집중하고, 최신 결과로 이동하거나 가이드 투어를 다시 재생합니다.',
+    generated: '생성됨', unique: '고유', session: '세션', output: '출력', value: '값', values: '값들',
+    hoverHint: '스토리 보기는 호버 · 클릭하면 복사',
+    nothingGenerated: '아직 생성된 값이 없습니다',
+    emptyGenerateHint: '왼쪽에서 프리미티브를 선택하고 매개변수를 설정한 다음 ⌘ ↵ 또는 생성 버튼을 누르세요.',
+    webCrypto: 'Web Crypto API', localOffline: '로컬 · 오프라인',
+    csprng: 'CSPRNG · crypto.getRandomValues',
+    techSelectPrimitive: '프리미티브를 선택하세요', techSelectPrimitiveDesc: '왼쪽 패널에서 암호화 유형을 선택하면 사양, 엔트로피 프로필, 권장 사용처를 볼 수 있습니다.', techEngine: '엔진', techEntropy: '엔트로피', techSearchSpace: '탐색 공간', techStandard: '표준', techUseItFor: '권장 사용', techDont: '주의', techId: 'id', techCategory: '카테고리',
+    tour: '투어',
+    languageChanged: '언어가 {name}(으)로 변경되었습니다',
+    sessionLoaded: '세션을 불러왔습니다', invalidSession: '잘못된 세션 파일입니다', sessionSaved: '세션이 저장되었습니다', markdownExported: 'Markdown 내보내기 완료', txtExported: 'TXT 내보내기 완료', jsonExported: 'JSON 내보내기 완료', csvExported: 'CSV 내보내기 완료', outputCleared: '출력을 지웠습니다', newSessionReady: '새 세션 준비 완료', valuesCopied: '{count}개 값을 복사했습니다', showingNewest: '최신 출력을 표시합니다',
+    openDatabase: '데이터베이스 열기', exportDatabase: '데이터베이스 내보내기', clearDatabase: '데이터베이스 비우기', databaseTitle: '복사된 코드 데이터베이스', databaseSubtitle: '사용자가 복사한 생성 코드의 로컬 저장소입니다. 이 브라우저에 저장됩니다.', databaseSearch: '복사한 코드, 프리미티브 또는 텍스트 검색…', databaseTotal: '{count}개 저장됨', databaseEmpty: '아직 저장된 복사 코드가 없습니다.', databaseValue: '복사된 값', databasePrimitive: '프리미티브', databaseCategory: '카테고리', databaseMode: '모드', databaseCopiedAt: '복사 시각', databaseCopyAgain: '다시 복사', databaseDelete: '삭제', databaseCleared: '데이터베이스를 비웠습니다', databaseExported: '데이터베이스를 내보냈습니다', databaseSaved: '{count}개 복사 코드가 데이터베이스에 저장되었습니다', databaseSavedPlural: '{count}개 복사 코드가 데이터베이스에 저장되었습니다', databaseBatch: '배치', databaseSingle: '단일', qrMenu: 'QR 볼트', openQrVault: 'QR 볼트 열기', qrTitle: '고급 QR 볼트', qrSubtitle: '복사 코드 데이터베이스에서 선택한 코드로 더 고급스럽고 독특한 QR 패킷을 생성합니다.', qrSearch: '인코딩할 복사 코드 검색…', qrSelected: '{count}개 선택됨', qrNoneSelected: '목록에서 최소 하나의 복사 코드를 선택하세요.', qrMode: 'QR 모드', qrModeSingle: '선택한 코드마다 QR 하나', qrModeBundle: '봉인된 번들 QR', qrPayload: '페이로드 스타일', qrPayloadRaw: '원본 복사 값', qrPayloadPacket: '고급 패킷 JSON', qrCorrection: '오류 정정', qrSize: '크기', qrTheme: '카드 스타일', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: '모두 선택', qrClearSelection: '선택 해제', qrGenerate: 'QR 생성', qrEmpty: '아직 생성된 QR이 없습니다.', qrCopiedAt: '복사된 시각', qrDownload: 'PNG 다운로드', qrCopyPayload: '페이로드 복사', qrUseSelected: '선택한 코드 사용', qrBundleName: '번들 패킷', qrDatabaseEmpty: '복사 코드 데이터베이스가 비어 있습니다. 먼저 생성된 코드를 복사하세요.', qrGenerated: 'QR 생성 완료', qrGeneratedPlural: 'QR 코드 생성 완료', qrRawLabel: '원본 값', qrPacketLabel: '고급 패킷',
+  },
+  zh: {
+    searchPrimitives: '搜索 {count} 个原语…',
+    prefix: '前缀', length: '长度', charset: '字符集', quantity: '数量', batch: '批量',
+    clear: '清空', copyAll: '全部复制', downloadMd: '下载 .md', generate: '生成', generating: '生成中…',
+    storyModeHover: '故事模式 · 悬停提示',
+    menuFile: '文件', menuGenerate: '生成', menuExport: '导出', menuView: '视图', menuHelp: '帮助', menuLanguages: '语言', menuDatabase: '数据库',
+    newSession: '新建会话', openSession: '打开会话…', saveSession: '保存会话', clearOutput: '清空输出',
+    generateSelected: '生成当前项', generate10: '生成 10 个', generate100: '生成 100 个', generate500: '生成 500 个', generate1000: '生成 1000 个',
+    exportMarkdown: '导出 Markdown', exportTxt: '导出 TXT', exportJson: '导出 JSON', exportCsv: '导出 CSV',
+    compactDensity: '紧凑密度', comfortableDensity: '舒适密度', focusSearch: '聚焦搜索', newestOutput: '最新输出', replayTour: '重播导览',
+    openHelp: '打开帮助', shortcuts: '快捷键', aboutApp: '关于 opencriptG',
+    helpTitle: 'opencriptG 帮助', helpSubtitle: '适用于开发者和网络安全流程的本地加密值生成器。',
+    helpFileDesc: '创建新的会话，将当前会话保存为 JSON，或加载之前保存的 opencriptG 会话。',
+    helpGenerateDesc: '生成所选原语，快速更改批量大小，复制结果，或清空输出。',
+    helpExportDesc: '根据你的使用场景，将生成的值导出为 Markdown、TXT、JSON 或 CSV。',
+    helpViewDesc: '切换密度，聚焦搜索，滚动到最新结果，或重新播放引导导览。',
+    generated: '已生成', unique: '唯一', session: '会话', output: '输出', value: '值', values: '值',
+    hoverHint: '悬停查看故事说明 · 点击复制',
+    nothingGenerated: '尚未生成任何内容',
+    emptyGenerateHint: '请先在左侧选择一个原语，配置参数，然后按下 ⌘ ↵ 或点击生成。',
+    webCrypto: 'Web Crypto API', localOffline: '本地 · 离线',
+    csprng: 'CSPRNG · crypto.getRandomValues',
+    techSelectPrimitive: '选择一个原语', techSelectPrimitiveDesc: '从左侧选择一个加密类型，以查看其规范、熵概况和推荐用途。', techEngine: '引擎', techEntropy: '熵', techSearchSpace: '搜索空间', techStandard: '标准', techUseItFor: '适用场景', techDont: '不要这样用', techId: 'id', techCategory: '类别',
+    tour: '导览',
+    languageChanged: '语言已切换为 {name}',
+    sessionLoaded: '会话已加载', invalidSession: '无效的会话文件', sessionSaved: '会话已保存', markdownExported: 'Markdown 已导出', txtExported: 'TXT 已导出', jsonExported: 'JSON 已导出', csvExported: 'CSV 已导出', outputCleared: '输出已清空', newSessionReady: '新会话已就绪', valuesCopied: '已复制 {count} 个值', showingNewest: '正在显示最新输出',
+    openDatabase: '打开数据库', exportDatabase: '导出数据库', clearDatabase: '清空数据库', databaseTitle: '已复制代码数据库', databaseSubtitle: '本地保存用户复制过的生成代码。数据保存在当前浏览器中。', databaseSearch: '搜索已复制代码、原语或文本…', databaseTotal: '已保存 {count} 条', databaseEmpty: '还没有保存任何已复制代码。', databaseValue: '已复制的值', databasePrimitive: '原语', databaseCategory: '类别', databaseMode: '模式', databaseCopiedAt: '复制时间', databaseCopyAgain: '再次复制', databaseDelete: '删除', databaseCleared: '数据库已清空', databaseExported: '数据库已导出', databaseSaved: '已将 {count} 条复制代码保存到数据库', databaseSavedPlural: '已将 {count} 条复制代码保存到数据库', databaseBatch: '批量', databaseSingle: '单个', qrMenu: 'QR 保险库', openQrVault: '打开 QR 保险库', qrTitle: '高级 QR 保险库', qrSubtitle: '使用从已复制代码数据库中选择的代码生成更高级、更少见的 QR 数据包。', qrSearch: '搜索要编码的已复制代码…', qrSelected: '已选择 {count} 条', qrNoneSelected: '请至少从列表中选择一条已复制代码。', qrMode: 'QR 模式', qrModeSingle: '每个已选代码生成一个 QR', qrModeBundle: '封装包 QR', qrPayload: '载荷样式', qrPayloadRaw: '原始复制值', qrPayloadPacket: '高级数据包 JSON', qrCorrection: '纠错级别', qrSize: '尺寸', qrTheme: '卡片风格', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: '全选', qrClearSelection: '清除选择', qrGenerate: '生成 QR', qrEmpty: '尚未生成任何 QR。', qrCopiedAt: '原始复制时间', qrDownload: '下载 PNG', qrCopyPayload: '复制载荷', qrUseSelected: '使用已选代码', qrBundleName: '封装包', qrDatabaseEmpty: '已复制代码数据库为空。请先复制一些生成代码。', qrGenerated: '已生成 QR', qrGeneratedPlural: '已生成 QR 码', qrRawLabel: '原始值', qrPacketLabel: '高级数据包',
+  }
+};
+
+const CATEGORY_I18N = {
+  symmetric: { en:'Symmetric Keys', es:'Claves Simétricas', ko:'대칭 키', zh:'对称密钥' },
+  asymmetric:{ en:'Asymmetric Keys', es:'Claves Asimétricas', ko:'비대칭 키', zh:'非对称密钥' },
+  hashes:    { en:'Hash Digests', es:'Resúmenes Hash', ko:'해시 다이제스트', zh:'哈希摘要' },
+  passwords: { en:'Passwords & Phrases', es:'Contraseñas y Frases', ko:'비밀번호 및 구문', zh:'密码与短语' },
+  kdf:       { en:'KDFs & Password Hashing', es:'KDF y Hash de Contraseña', ko:'KDF 및 비밀번호 해싱', zh:'KDF 与密码哈希' },
+  macs:      { en:'MACs & Authenticators', es:'MAC y Autenticadores', ko:'MAC 및 인증자', zh:'MAC 与认证器' },
+  identifiers:{ en:'Identifiers', es:'Identificadores', ko:'식별자', zh:'标识符' },
+  tokens:    { en:'Tokens & Auth', es:'Tokens y Auth', ko:'토큰 및 인증', zh:'令牌与认证' },
+  pq:        { en:'Post-Quantum', es:'Post-Cuántica', ko:'양자내성', zh:'后量子' },
+};
+
+const uiText = (lang, key, vars = {}) => {
+  const table = I18N[lang] || I18N.en;
+  const fallback = I18N.en[key] || key;
+  let out = table[key] || fallback;
+  Object.keys(vars).forEach(k => { out = out.replaceAll(`{${k}}`, String(vars[k])); });
+  return out;
+};
+
+const getCategoryLabel = (cat, lang) => {
+  if (!cat) return '—';
+  return CATEGORY_I18N[cat.id]?.[lang] || CATEGORY_I18N[cat.id]?.en || cat.label || cat.id;
+};
+window.getCategoryLabel = getCategoryLabel;
+
+const COPY_DB_KEY = 'opencriptG_copy_db_v1';
+const COPY_DB_LIMIT = 5000;
+const PLAN_LICENSE_KEY = 'opencriptG_plan_license_v1';
+const FREE_DAILY_USAGE_KEY = 'opencriptG_free_daily_usage_v1';
+const FREE_DAILY_CODE_LIMIT = 50;
+const FREE_WATERMARK = 'Generated with OCG Free';
+const PLAN_DEFINITIONS = {
+  free: {
+    id: 'free', name: 'Free Demo', key: '',
+    maxBatch: 10, maxVault: 20, maxFormatBatch: 0, maxCatalog: 10,
+    features: { export: false, qr: false, certificates: false, formatForge: false, databaseExport: false, cmdAdvanced: false },
+  },
+  starter: {
+    id: 'starter', name: 'Starter', key: 'GOST-EC-STARTER-OCG-9F2A-2026',
+    maxBatch: 5000, maxVault: 1000, maxFormatBatch: 1000, maxCatalog: 250,
+    features: { export: true, qr: true, certificates: false, formatForge: false, databaseExport: true, cmdAdvanced: false },
+  },
+  professional: {
+    id: 'professional', name: 'Professional', key: 'GOST-EC-PRO-OCG-6C7D-50K-2026',
+    maxBatch: 50000, maxVault: 10000, maxFormatBatch: 10000, maxCatalog: 900,
+    features: { export: true, qr: true, certificates: true, formatForge: true, databaseExport: true, cmdAdvanced: true },
+  },
+  enterprise: {
+    id: 'enterprise', name: 'Enterprise', key: 'GOST-EC-ENTERPRISE-OCG-1A8E-100K-2026',
+    maxBatch: 100000, maxVault: 50000, maxFormatBatch: 50000, maxCatalog: Infinity,
+    features: { export: true, qr: true, certificates: true, formatForge: true, databaseExport: true, cmdAdvanced: true },
+  },
+};
+const PLAN_ORDER = ['free', 'starter', 'professional', 'enterprise'];
+const PLAN_MARKETING = {
+  free: {
+    fit: 'Prueba inicial y demostracion limitada',
+    good: ['10 codes por lote', '50 codes diarios', '10 primitivas visibles', 'Copiado con marca OCG Free'],
+    limits: ['Sin QR ni descargas avanzadas', 'Sin guardar/cargar sesiones', 'Vault reducido', 'Mas señales de similitud y menos catalogo'],
+    story: 'Free sirve para mirar la plataforma, pero trabajar en Free se siente pequeno rapido: corta el volumen, frena exportaciones y deja el flujo sin continuidad.',
+  },
+  starter: {
+    fit: 'Primer plan real para uso continuo',
+    good: ['5,000 codes por lote', '250 primitivas', 'QR funcional', 'Exportaciones y base de datos exportable'],
+    limits: ['Sin certificados avanzados', 'Sin Format Forge', 'CMD avanzado bloqueado'],
+    story: 'Starter quita la friccion basica: ya puedes producir lotes utiles, descargar, mover codes por QR y trabajar sin la marca Free.',
+  },
+  professional: {
+    fit: 'Produccion, tokenizacion y documentacion seria',
+    good: ['50,000 codes por lote', '900 primitivas', 'Certificados', 'Format Forge', 'CMD avanzado'],
+    limits: ['No es el catalogo completo Enterprise', 'Vault menor que Enterprise'],
+    story: 'Professional es el salto fuerte: convierte OCG en una herramienta de trabajo para crear, documentar, certificar y empaquetar codes criptograficos.',
+  },
+  enterprise: {
+    fit: 'Uso de alta escala y plataforma completa',
+    good: ['100,000 codes por lote', 'Catalogo completo', 'Vault 50,000', 'Todas las herramientas', 'Menor ruido de similaridad'],
+    limits: ['Requiere GOST EC Key Enterprise'],
+    story: 'Enterprise deja la plataforma completa: alto volumen, menos limites, mas automatizacion y flujo preparado para operacion seria.',
+  },
+};
+const normalizePlanKey = (value) => String(value || '').replace(/\s+/g, '').toUpperCase();
+const readPlanLicense = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PLAN_LICENSE_KEY) || 'null');
+    return PLAN_DEFINITIONS[raw?.plan] ? raw : { plan: 'free' };
+  } catch {
+    return { plan: 'free' };
+  }
+};
+const activePlanFromLicense = (license) => PLAN_DEFINITIONS[license?.plan] || PLAN_DEFINITIONS.free;
+const writePlanLicense = (license) => localStorage.setItem(PLAN_LICENSE_KEY, JSON.stringify(license));
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const readFreeDailyUsage = () => {
+  try {
+    const usage = JSON.parse(localStorage.getItem(FREE_DAILY_USAGE_KEY) || 'null');
+    return usage?.date === todayKey() ? usage : { date: todayKey(), count: 0 };
+  } catch {
+    return { date: todayKey(), count: 0 };
+  }
+};
+const writeFreeDailyUsage = (usage) => localStorage.setItem(FREE_DAILY_USAGE_KEY, JSON.stringify(usage));
+const withFreeWatermark = (value) => `${String(value || '')}\n\n${FREE_WATERMARK}`;
+const limitCatalogByPlan = (catalog, plan) => {
+  const limit = Number.isFinite(plan?.maxCatalog) ? plan.maxCatalog : Infinity;
+  if (!Number.isFinite(limit)) return catalog;
+  let remaining = Math.max(0, limit);
+  const limited = [];
+  for (const cat of catalog || []) {
+    if (remaining <= 0) break;
+    const types = (cat.types || []).slice(0, remaining);
+    if (types.length) {
+      limited.push({ ...cat, types });
+      remaining -= types.length;
+    }
+  }
+  return limited;
+};
+const safeJsonParse = (raw, fallback = []) => {
+  try { return JSON.parse(raw); } catch { return fallback; }
+};
+const COPY_DB = {
+  list() {
+    const rows = safeJsonParse(localStorage.getItem(COPY_DB_KEY) || '[]', []);
+    return Array.isArray(rows) ? rows.sort((a,b) => (b.copiedAtTs || 0) - (a.copiedAtTs || 0)) : [];
+  },
+  save(rows) {
+    localStorage.setItem(COPY_DB_KEY, JSON.stringify((rows || []).slice(0, COPY_DB_LIMIT)));
+  },
+  addMany(rows, mode = 'single') {
+    const now = Date.now();
+    const current = COPY_DB.list();
+    const prepared = (rows || []).map((row, idx) => {
+      const { cat, type } = findTypeMeta(row.type);
+      return {
+        id: `db_${now}_${idx}_${Math.random().toString(36).slice(2,8)}`,
+        value: row.value,
+        typeId: row.type,
+        primitiveLabel: type?.label || row.type,
+        categoryId: cat?.id || 'unknown',
+        copiedAtTs: now + idx,
+        copiedAt: new Date(now + idx).toLocaleString(),
+        chars: (row.value || '').length,
+        mode,
+      };
+    });
+    COPY_DB.save([...prepared.reverse(), ...current]);
+    return prepared;
+  },
+  remove(id) {
+    COPY_DB.save(COPY_DB.list().filter(row => row.id !== id));
+  },
+  clear() {
+    localStorage.removeItem(COPY_DB_KEY);
+  },
+};
+
+const qrPacketForRow = (row, payloadStyle = 'packet') => {
+  if (payloadStyle === 'raw') return row.value;
+  return JSON.stringify({
+    version: 'opencriptG-qr-v12',
+    kind: 'sealed-code-packet',
+    primitive: row.primitiveLabel,
+    primitiveId: row.typeId,
+    category: row.categoryId,
+    copiedAt: row.copiedAt,
+    chars: row.chars,
+    value: row.value,
+  }, null, 0);
+};
+const qrPacketBundle = (rows) => JSON.stringify({
+  version: 'opencriptG-qr-v12',
+  kind: 'sealed-bundle-packet',
+  createdAt: new Date().toISOString(),
+  count: rows.length,
+  items: rows.map((row, idx) => ({
+    slot: idx + 1,
+    primitive: row.primitiveLabel,
+    primitiveId: row.typeId,
+    category: row.categoryId,
+    copiedAt: row.copiedAt,
+    value: row.value,
+  })),
+}, null, 0);
+const qrThemeClass = (theme) => theme === 'matrix' ? 'qrdlg-card matrix' : theme === 'minimal' ? 'qrdlg-card minimal' : 'qrdlg-card sealed';
+
+
+const EXACT_TRANSLATIONS = {
+  es: {
+    'General-purpose secret material.': 'Material secreto de propósito general.',
+    'Do not commit to source control.': 'No lo subas al control de versiones.',
+    'Do not reuse across services.': 'No lo reutilices entre servicios.',
+    'Symmetric block cipher, 128-bit key. Default for most TLS suites and disk encryption.': 'Cifrador de bloque simétrico con clave de 128 bits. Predeterminado para la mayoría de suites TLS y cifrado de disco.',
+    'AES with a 256-bit key. Recommended for long-term and post-quantum-aware deployments.': 'AES con una clave de 256 bits. Recomendado para despliegues de largo plazo y conscientes del riesgo poscuántico.',
+    'Disk and database encryption at rest.': 'Cifrado de discos y bases de datos en reposo.',
+    'Application-layer field encryption.': 'Cifrado de campos a nivel de aplicación.',
+    'Long-term archival ciphertexts.': 'Cifrados para archivo a largo plazo.'
+  },
+  ko: {
+    'General-purpose secret material.': '범용 비밀 자료입니다.',
+    'Do not commit to source control.': '소스 제어에 커밋하지 마세요.',
+    'Do not reuse across services.': '여러 서비스에서 재사용하지 마세요.',
+    'Symmetric block cipher, 128-bit key. Default for most TLS suites and disk encryption.': '128비트 키를 사용하는 대칭 블록 암호입니다. 대부분의 TLS 스위트와 디스크 암호화의 기본값입니다.',
+    'AES with a 256-bit key. Recommended for long-term and post-quantum-aware deployments.': '256비트 키를 사용하는 AES입니다. 장기적이고 포스트 양자 위험을 고려하는 배포에 권장됩니다.',
+    'Disk and database encryption at rest.': '저장 데이터의 디스크 및 데이터베이스 암호화.',
+    'Application-layer field encryption.': '애플리케이션 계층 필드 암호화.',
+    'Long-term archival ciphertexts.': '장기 보관용 암호문.'
+  },
+  zh: {
+    'General-purpose secret material.': '通用型机密材料。',
+    'Do not commit to source control.': '不要提交到源代码管理中。',
+    'Do not reuse across services.': '不要在多个服务之间重复使用。',
+    'Symmetric block cipher, 128-bit key. Default for most TLS suites and disk encryption.': '128 位密钥的对称分组密码。适用于大多数 TLS 套件和磁盘加密的默认选择。',
+    'AES with a 256-bit key. Recommended for long-term and post-quantum-aware deployments.': '使用 256 位密钥的 AES。推荐用于长期部署以及考虑后量子风险的场景。',
+    'Disk and database encryption at rest.': '静态磁盘和数据库加密。',
+    'Application-layer field encryption.': '应用层字段加密。',
+    'Long-term archival ciphertexts.': '长期归档密文。'
+  }
+};
+
+const PHRASE_TRANSLATIONS = {
+  es: [
+    ['Symmetric block cipher', 'Cifrador de bloque simétrico'],
+    ['Default for most TLS suites and disk encryption.', 'Predeterminado para la mayoría de suites TLS y cifrado de disco.'],
+    ['AES with a 192-bit key.', 'AES con una clave de 192 bits.'],
+    ['AES with a 256-bit key.', 'AES con una clave de 256 bits.'],
+    ['Recommended for long-term and post-quantum-aware deployments.', 'Recomendado para despliegues de largo plazo y conscientes del riesgo poscuántico.'],
+    ['legacy', 'heredado'], ['Legacy', 'Heredado'], ['deprecated', 'obsoleto'], ['Deprecated', 'Obsoleto'],
+    ['private key', 'clave privada'], ['public-key', 'clave pública'], ['key agreement', 'acuerdo de claves'],
+    ['disk encryption', 'cifrado de disco'], ['database encryption', 'cifrado de base de datos'],
+    ['encryption at rest', 'cifrado en reposo'], ['encryption', 'cifrado'], ['signatures', 'firmas'], ['signature', 'firma'],
+    ['password hashing', 'hash de contraseñas'], ['password', 'contraseña'], ['tokens', 'tokens'], ['token', 'token'],
+    ['Do not commit to source control.', 'No lo subas al control de versiones.'], ['Do not reuse across services.', 'No lo reutilices entre servicios.'],
+    ['General-purpose secret material.', 'Material secreto de propósito general.'],
+    ['lock backups and private archives', 'bloquear copias de seguridad y archivos privados'],
+    ['protect payloads before they leave your machine', 'proteger cargas útiles antes de que salgan de tu máquina'],
+    ['encrypt files, folders, and app secrets', 'cifrar archivos, carpetas y secretos de aplicación'],
+    ['vault', 'bóveda'], ['backup bunker', 'búnker de copias'], ['secret briefcase', 'maletín secreto'], ['encrypted locker', 'casillero cifrado'],
+    ['tiny cyber-raccoon', 'pequeño mapache cibernético'], ['dramatic vault wizard', 'dramático mago de bóvedas'], ['overcaffeinated bot', 'bot sobrecafeinado'],
+    ['paranoid pixel knight', 'caballero de píxel paranoico'], ['sleep-deprived SRE gremlin', 'duende SRE sin dormir'], ['hexadecimal bard', 'bardo hexadecimal'],
+    ['with suspicious elegance', 'con una elegancia sospechosa'], ['without breaking a sweat', 'sin despeinarse'], ['like it owns the server room', 'como si fuera dueño del cuarto de servidores'], ['while wearing invisible sunglasses', 'mientras usa gafas invisibles'], ['with enterprise-level swagger', 'con porte de nivel empresarial'], ['as if the logs were cheering', 'como si los logs aplaudieran'],
+    ['your stack looks calmer', 'tu stack se ve más tranquilo'], ['your demo feels expensive', 'tu demo se siente más premium'], ['your backend stops side-eyeing you', 'tu backend deja de mirarte raro'], ['your release pipeline breathes easier', 'tu pipeline de release respira mejor'], ['your ops team gets one less thing to fear', 'tu equipo de operaciones tiene una preocupación menos'], ['your security docs suddenly sound more convincing', 'tus documentos de seguridad suenan más convincentes'],
+    ['Give it a mission and it behaves like a miniature bodyguard.', 'Dale una misión y se comportará como un guardaespaldas en miniatura.'], ['Treat it nicely and it will quietly do the serious work while you take the credit.', 'Trátalo bien y hará el trabajo serio en silencio mientras tú te llevas el crédito.'], ['Drop it into production carefully and it will act like it trained for this moment.', 'Llévalo a producción con cuidado y actuará como si se hubiera preparado para este momento.'], ['Point it at the right workflow and it becomes pure tactical chaos—in a good way.', 'Úsalo en el flujo correcto y se vuelve caos táctico puro, en el buen sentido.']
+  ],
+  ko: [
+    ['lock backups and private archives', '백업과 개인 아카이브를 잠그는'], ['encrypt files, folders, and app secrets', '파일·폴더·앱 비밀을 암호화하는'], ['protect payloads before they leave your machine', '페이로드가 장치를 떠나기 전에 보호하는'], ['vault', '금고'], ['encrypted locker', '암호화 보관함'], ['backup bunker', '백업 벙커'], ['tiny cyber-raccoon', '작은 사이버 너구리'], ['dramatic vault wizard', '극적인 금고 마법사'], ['overcaffeinated bot', '카페인 과다 봇'], ['paranoid pixel knight', '편집증 픽셀 기사'], ['sleep-deprived SRE gremlin', '잠 못 잔 SRE 그렘린'], ['hexadecimal bard', '16진수 바드'], ['with suspicious elegance', '수상할 정도로 우아하게'], ['without breaking a sweat', '아주 여유롭게'], ['like it owns the server room', '서버실의 주인처럼'], ['while wearing invisible sunglasses', '보이지 않는 선글라스를 낀 채'], ['with enterprise-level swagger', '엔터프라이즈급 자신감으로'], ['as if the logs were cheering', '로그가 환호하는 듯'], ['your stack looks calmer', '스택이 더 차분해지고'], ['your release pipeline breathes easier', '릴리스 파이프라인이 한숨 돌리고'], ['Give it a mission and it behaves like a miniature bodyguard.', '임무를 주면 작은 보디가드처럼 행동합니다.'], ['Drop it into production carefully and it will act like it trained for this moment.', '조심스럽게 프로덕션에 넣으면 이 순간을 위해 훈련한 것처럼 움직입니다.']
+  ],
+  zh: [
+    ['lock backups and private archives', '锁定备份和私密归档'], ['encrypt files, folders, and app secrets', '加密文件、文件夹和应用机密'], ['protect payloads before they leave your machine', '在数据离开你的设备之前保护它们'], ['vault', '保险库'], ['encrypted locker', '加密储物柜'], ['backup bunker', '备份堡垒'], ['tiny cyber-raccoon', '小型赛博浣熊'], ['dramatic vault wizard', '戏剧化的保险库法师'], ['overcaffeinated bot', '咖啡因过量机器人'], ['paranoid pixel knight', '偏执像素骑士'], ['sleep-deprived SRE gremlin', '缺觉的 SRE 小精灵'], ['hexadecimal bard', '十六进制吟游诗人'], ['with suspicious elegance', '带着可疑的优雅'], ['without breaking a sweat', '毫不费力'], ['like it owns the server room', '仿佛它拥有整个机房'], ['while wearing invisible sunglasses', '像戴着隐形墨镜一样'], ['with enterprise-level swagger', '带着企业级气场'], ['as if the logs were cheering', '仿佛日志都在欢呼'], ['your stack looks calmer', '你的技术栈会更平静'], ['your release pipeline breathes easier', '你的发布流水线会轻松不少'], ['Give it a mission and it behaves like a miniature bodyguard.', '给它一个任务，它就会像迷你保镖一样行动。'], ['Drop it into production carefully and it will act like it trained for this moment.', '谨慎地把它投入生产，它会像为这一刻训练已久一样表现。']
+  ]
+};
+
+const translateApprox = (lang, text) => {
+  const input = String(text || '');
+  if (!input || lang === 'en') return input;
+  const exact = EXACT_TRANSLATIONS[lang]?.[input];
+  if (exact) return exact;
+  let out = input;
+  const rules = PHRASE_TRANSLATIONS[lang] || [];
+  for (const [from, to] of rules) out = out.split(from).join(to);
+  return out;
+};
+window.translateApprox = translateApprox;
+
+
+// ── Sidebar ──
+const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searchRef, language, t }) => {
+  const [collapsed, setCollapsed] = useState({});
+  const toggle = id => setCollapsed(p => ({ ...p, [id]: !p[id] }));
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return catalog;
+    const q = query.toLowerCase();
+    return catalog.map(c => ({
+      ...c,
+      types: c.types.filter(t =>
+        t.label.toLowerCase().includes(q) ||
+        t.id.toLowerCase().includes(q) ||
+        t.std.toLowerCase().includes(q) ||
+        t.badge.toLowerCase().includes(q)
+      )
+    })).filter(c => c.types.length);
+  }, [catalog, query]);
+
+  const totalTypes = catalog.reduce((s, c) => s + c.types.length, 0);
+
+  return (
+    <aside className={`sb ${density}`}>
+      <div className="sb-search-row">
+        <span className="sb-search-ic" dangerouslySetInnerHTML={{__html: SEARCH_ICON}} />
+        <input
+          ref={searchRef}
+          className="sb-search"
+          placeholder={t('searchPrimitives', { count: totalTypes })}
+          value={query}
+          onChange={e => onQuery(e.target.value)}
+        />
+        {query && <button className="sb-clear" onClick={() => onQuery('')}>×</button>}
+      </div>
+
+      <nav className="sb-nav">
+        {filtered.map(cat => {
+          const open = !collapsed[cat.id];
+          return (
+            <section key={cat.id} className="sb-cat">
+              <button className="sb-cat-h" onClick={() => toggle(cat.id)}>
+                <span className="sb-cat-ic" dangerouslySetInnerHTML={{__html: (window.OCG_ICONS.categoryBadge ? window.OCG_ICONS.categoryBadge(cat, 14) : window.OCG_ICONS[cat.icon](14))}} />
+                <span className="sb-cat-l">{getCategoryLabel(cat, language)}</span>
+                <span className="sb-cat-n">{cat.types.length}</span>
+                <span className={`sb-cat-arrow ${open ? '' : 'closed'}`} dangerouslySetInnerHTML={{__html: CHEV}} />
+              </button>
+              {open && (
+                <ul className="sb-list">
+                  {cat.types.map(t => (
+                    <li
+                      key={t.id}
+                      className={`sb-item ${selectedId === t.id ? 'on' : ''}`}
+                      onClick={() => onSelect(t.id, cat.id)}
+                    >
+                      <span className="sb-item-ic" dangerouslySetInnerHTML={{__html: (window.OCG_ICONS.code ? window.OCG_ICONS.code(t, 16) : window.OCG_ICONS[t.icon](13))}} />
+                      <span className="sb-item-l">{t.label}</span>
+                      <span className="sb-item-b">{t.badge}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+};
+
+// ── Config Bar ──
+const ConfigBar = ({ type, length, setLength, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan }) => {
+  const maxBatch = plan?.maxBatch || MAX_GENERATION_BATCH;
+  const setPlanQty = (value) => setQty(Math.max(1, Math.min(maxBatch, Number(value) || 1)));
+  return (
+    <div className="cfg">
+      {type?.id === 'apikey' && (
+        <div className="cfg-g">
+          <label className="cfg-l">{t('prefix')}</label>
+          <input className="cfg-inp" value={prefix} onChange={e => setPrefix(e.target.value)} placeholder="ocg_" maxLength={16} />
+        </div>
+      )}
+
+      {type?.hasLen && (
+        <div className="cfg-g">
+          <label className="cfg-l">{t('length')}</label>
+          <div className="stp">
+            <button onClick={() => setLength(Math.max(4, length - 4))}>−</button>
+            <input type="number" value={length} min={4} max={1024} onChange={e => setLength(Math.max(4, Math.min(1024, +e.target.value || 4)))} />
+            <button onClick={() => setLength(Math.min(1024, length + 4))}>+</button>
+          </div>
+        </div>
+      )}
+
+      {type?.hasCharset && (
+        <div className="cfg-g">
+          <label className="cfg-l">{t('charset')}</label>
+          <div className="cs">
+            {[
+              { k: 'upper', l: 'ABC' },
+              { k: 'lower', l: 'abc' },
+              { k: 'num',   l: '123' },
+              { k: 'sym',   l: '!@#' },
+            ].map(({k,l}) => (
+              <button
+                key={k}
+                className={`cs-b ${charset[k] ? 'on' : ''}`}
+                onClick={() => setCharset({ ...charset, [k]: !charset[k] })}
+              >{l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="cfg-g">
+        <label className="cfg-l">{t('quantity')}</label>
+        <div className="stp">
+          <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+          <input type="number" value={qty} min={1} max={maxBatch} onChange={e => setPlanQty(e.target.value)} />
+          <button onClick={() => setQty(Math.min(MAX_GENERATION_BATCH, qty + 1))}>+</button>
+        </div>
+        <div className="cfg-plan-limit">{plan?.name || 'Free'} max {maxBatch.toLocaleString()}</div>
+      </div>
+
+      <div className="cfg-g">
+        <label className="cfg-l">{t('batch')}</label>
+        <div className="stp">
+          <button onClick={() => setPlanQty(10)}>10</button>
+          <button onClick={() => setPlanQty(100)}>100</button>
+          <button onClick={() => setPlanQty(1000)} disabled={maxBatch < 1000}>1000</button>
+          <button onClick={() => setPlanQty(10000)} disabled={maxBatch < 10000}>10K</button>
+          <button onClick={() => setPlanQty(50000)} disabled={maxBatch < 50000}>50K</button>
+        </div>
+      </div>
+
+      <div className="cfg-acts">
+        <button className="btn" onClick={onClear} disabled={!hasOut}>
+          <span dangerouslySetInnerHTML={{__html: TRASH_ICON}} />
+          <span>{t('clear')}</span>
+        </button>
+        <button className="btn" onClick={onCopy} disabled={!hasOut}>
+          <span dangerouslySetInnerHTML={{__html: COPY_ICON}} />
+          <span>{t('copyAll')}</span>
+        </button>
+        <button className="btn" onClick={onDownload} disabled={!hasOut} title={t('downloadMd')}>
+          <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
+          <span>{t('downloadMd')}</span>
+        </button>
+        <button className="btn btn-pri" onClick={onGen} disabled={busy || !type}>
+          <span dangerouslySetInnerHTML={{__html: PLAY_ICON}} />
+          <span>{busy ? t('generating') : t('generate')}</span>
+          <kbd>⌘↵</kbd>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── Markdown helpers ──
+const PlanLicenseDialog = ({ open, onClose, license, onActivate, onReset, language, initialPlan = null }) => {
+  const [selected, setSelected] = useState(license?.plan || 'free');
+  const [key, setKey] = useState('');
+  const [status, setStatus] = useState('');
+  useEffect(() => {
+    if (open) {
+      setSelected(initialPlan || license?.plan || 'free');
+      setKey('');
+      setStatus('');
+    }
+  }, [open, license?.plan, initialPlan]);
+  if (!open) return null;
+  const L = (es, en) => language === 'es' ? es : en;
+  const active = activePlanFromLicense(license);
+  const selectedPlan = PLAN_DEFINITIONS[selected] || PLAN_DEFINITIONS.free;
+  const selectedInfo = PLAN_MARKETING[selected] || PLAN_MARKETING.free;
+  const tryActivate = async () => {
+    const plan = PLAN_DEFINITIONS[selected] || PLAN_DEFINITIONS.free;
+    if (plan.id === 'free') {
+      onReset();
+      setStatus(L('Plan Free activado.', 'Free plan activated.'));
+      return;
+    }
+    if (normalizePlanKey(key) !== normalizePlanKey(plan.key)) {
+      setStatus(L('GOST EC Key incorrecto para este plan.', 'Wrong GOST EC Key for this plan.'));
+      return;
+    }
+    const fingerprint = (await digestHex(`${plan.id}|${plan.key}|OCG-GOST-EC-LICENSE`)).slice(0, 24).toUpperCase();
+    onActivate({ plan: plan.id, activatedAt: new Date().toISOString(), fingerprint });
+    setKey('');
+    setStatus(`${plan.name} ${L('activado con GOST EC Key.', 'activated with GOST EC Key.')}`);
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg plandlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Planes y licencias', 'Plans & Licensing')}</h2>
+            <p>{L('Desbloquea funciones con un GOST EC Key por plan. El plan activo aplica limites reales.', 'Unlock features with one GOST EC Key per plan. The active plan applies real limits.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="plandlg-active">
+          <span>{L('Plan activo', 'Active plan')}</span>
+          <b>{active.name}</b>
+          <em>{L('Max lote', 'Max batch')}: {active.maxBatch.toLocaleString()} | Codes: {Number.isFinite(active.maxCatalog) ? active.maxCatalog.toLocaleString() : 'ALL'} | Vault: {active.maxVault.toLocaleString()}</em>
+        </div>
+        <div className="plandlg-hero">
+          <div>
+            <span>{L('Plataforma OCG', 'OCG Platform')}</span>
+            <h3>{L('Tokenizacion local, codes criptograficos, QR, certificados, formatos nuevos y vault operativo.', 'Local tokenization, cryptographic codes, QR, certificates, new formats and an operational vault.')}</h3>
+          </div>
+          <p>{L('Free muestra la idea, pero limita el trabajo real. Los planes pagos eliminan friccion: mas volumen, mas herramientas, mejor salida y menos restricciones visibles.', 'Free shows the idea, but limits real work. Paid plans remove friction: more volume, more tools, better output and fewer visible restrictions.')}</p>
+        </div>
+        <div className="plandlg-grid">
+          {PLAN_ORDER.map(id => {
+            const plan = PLAN_DEFINITIONS[id];
+            const info = PLAN_MARKETING[id] || PLAN_MARKETING.free;
+            return (
+              <button key={id} className={`plandlg-card ${selected === id ? 'on' : ''} ${active.id === id ? 'active' : ''}`} onClick={() => setSelected(id)}>
+                <span>{plan.name}</span>
+                <b>{id === 'free' ? 'No key' : 'GOST EC Key'}</b>
+                <em>Batch {plan.maxBatch.toLocaleString()} | Codes {Number.isFinite(plan.maxCatalog) ? plan.maxCatalog.toLocaleString() : 'ALL'} | Vault {plan.maxVault.toLocaleString()} | {plan.features.qr ? 'QR' : 'QR locked'} | {plan.features.certificates ? 'CERT' : 'CERT locked'} | {plan.features.formatForge ? 'FORGE' : 'FORGE locked'}</em>
+                <small>{info.fit}</small>
+                {id !== 'free' && <strong className="plandlg-contact">{L('Para obtener el code contactar a 829 - 472 - 1257', 'To get the code contact 829 - 472 - 1257')}</strong>}
+              </button>
+            );
+          })}
+        </div>
+        <div className="plandlg-detail">
+          <div className="plandlg-detail-main">
+            <span>{L('Plan seleccionado', 'Selected plan')}</span>
+            <h3>{selectedPlan.name}</h3>
+            <p>{selectedInfo.story}</p>
+          </div>
+          <div className="plandlg-list good">
+            <b>{L('Lo bueno', 'Best parts')}</b>
+            {selectedInfo.good.map(item => <span key={item}>{item}</span>)}
+          </div>
+          <div className={`plandlg-list ${selected === 'free' ? 'bad' : ''}`}>
+            <b>{selected === 'free' ? L('Lo que pierdes en Free', 'What Free costs you') : L('Limites restantes', 'Remaining limits')}</b>
+            {selectedInfo.limits.map(item => <span key={item}>{item}</span>)}
+          </div>
+        </div>
+        <div className="plandlg-unlock">
+          <label><span>{L('GOST EC Key del plan', 'Plan GOST EC Key')}</span><input value={key} onChange={e => setKey(e.target.value)} placeholder={selected === 'free' ? 'Free no requiere key' : 'GOST-EC-...'} disabled={selected === 'free'} /></label>
+          <button className="dbdlg-btn" onClick={tryActivate}>{selected === 'free' ? L('Activar Free', 'Activate Free') : L('Desbloquear plan', 'Unlock plan')}</button>
+        </div>
+        {status && <div className="plandlg-status">{status}</div>}
+        <div className="plandlg-note">{L('Keys demo: Starter GOST-EC-STARTER-OCG-9F2A-2026 | Professional GOST-EC-PRO-OCG-6C7D-50K-2026 | Enterprise GOST-EC-ENTERPRISE-OCG-1A8E-100K-2026', 'Demo keys: Starter GOST-EC-STARTER-OCG-9F2A-2026 | Professional GOST-EC-PRO-OCG-6C7D-50K-2026 | Enterprise GOST-EC-ENTERPRISE-OCG-1A8E-100K-2026')}</div>
+      </section>
+    </div>
+  );
+};
+
+const FREE_UPGRADE_STORIES = [
+  {
+    title: 'Tus primeros 10 codes ya hablan de una idea mas grande',
+    body: 'Free te deja probar el motor, pero el flujo serio empieza cuando no tienes que detenerte justo cuando el lote toma forma. Starter desbloquea mas codes, QR y exportaciones para convertir una prueba en una entrega real.',
+  },
+  {
+    title: 'El laboratorio esta abierto, pero la puerta de produccion sigue cerrada',
+    body: 'Estos codes son la muestra. Si tu proyecto necesita continuidad, menos limites y archivos descargables, un plan superior convierte cada generacion en material listo para operar, revisar y compartir.',
+  },
+  {
+    title: 'Tu siguiente lote no deberia sentirse pequeno',
+    body: 'Cuando una herramienta empieza a encajar en tu trabajo, el limite se nota mas que el precio. Subir de plan reduce friccion, abre QR, exportacion y un catalogo mucho mas amplio.',
+  },
+  {
+    title: 'Free prueba la chispa; los planes pagos sostienen el sistema',
+    body: 'Si estos codes ya te sirven para prototipar, imagina el mismo flujo con mas volumen, menos marcas de similitud y herramientas de salida completas para documentar tu tokenizacion.',
+  },
+  {
+    title: 'Cada generacion te esta mostrando el valor escondido',
+    body: 'El plan Free deja ver el concepto. Starter, Professional y Enterprise estan pensados para cuando el code deja de ser experimento y se vuelve parte de un proceso que quieres repetir con confianza.',
+  },
+];
+
+const FreeUpgradeNudge = ({ open, story, onUpgrade, onSkip, language }) => {
+  if (!open || !story) return null;
+  const L = (es, en) => language === 'es' ? es : en;
+  return (
+    <div className="free-nudge" role="dialog" aria-live="polite">
+      <div className="free-nudge-icon" aria-hidden="true">
+        <span /><span />
+      </div>
+      <div className="free-nudge-copy">
+        <b>{language === 'es' ? story.title : 'Your free batch is showing upgrade potential'}</b>
+        <p>{language === 'es' ? story.body : 'Free is perfect for testing the engine. A paid plan unlocks more volume, exports, QR tools and a cleaner production flow when the codes become part of real work.'}</p>
+      </div>
+      <div className="free-nudge-actions">
+        <button className="free-nudge-primary" onClick={onUpgrade}>{L('Cambiar de plan', 'Change plan')}</button>
+        <button className="free-nudge-skip" onClick={onSkip}>{L('Omitir', 'Skip')}</button>
+      </div>
+    </div>
+  );
+};
+
+const sanitizeFilename = (s) => String(s || 'opencriptG').replace(/[^a-z0-9_\-\.]+/gi, '_').slice(0, 64);
+const MAX_SESSION_IMPORT_ROWS = 5000;
+const MAX_TEXT_IMPORT_BYTES = 1024 * 1024 * 3;
+const escapeHtmlStrict = (value = '') => String(value)
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
+const sanitizeUrl = (value = '', { images = false } = {}) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw, window.location.origin);
+    const protocol = url.protocol.toLowerCase();
+    if (['http:', 'https:', 'mailto:'].includes(protocol)) return url.href;
+    if (images && protocol === 'data:' && /^data:image\/(png|jpeg|jpg|gif|webp);/i.test(raw)) return raw;
+  } catch {}
+  return '';
+};
+const sanitizeRichHtml = (markup = '') => {
+  if (typeof document === 'undefined') return escapeHtmlStrict(markup);
+  const template = document.createElement('template');
+  template.innerHTML = String(markup || '');
+  const allowedTags = new Set(['A','B','BLOCKQUOTE','BR','CODE','DEL','DIV','EM','H1','H2','H3','H4','H5','H6','HR','I','IMG','INPUT','LI','OL','P','PRE','S','SPAN','STRONG','SUB','SUP','TABLE','TBODY','TD','TH','THEAD','TR','U','UL']);
+  const allowedAttrs = new Set(['alt','checked','class','colspan','data-lang','disabled','href','rel','rowspan','src','style','target','title','type']);
+  const cleanStyle = (style = '') => String(style || '').split(';').map(part => part.trim()).filter(part => /^(color|background-color|font-size|font-family|font-weight|font-style|text-decoration|text-align|line-height|margin-left|padding-left)\s*:/i.test(part) && !/url\s*\(|expression\s*\(/i.test(part)).join('; ');
+  const walk = (node) => {
+    [...node.children].forEach((el) => {
+      if (!allowedTags.has(el.tagName)) {
+        el.replaceWith(document.createTextNode(el.textContent || ''));
+        return;
+      }
+      [...el.attributes].forEach((attr) => {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith('on') || !allowedAttrs.has(name)) {
+          el.removeAttribute(attr.name);
+          return;
+        }
+        if (name === 'href') {
+          const safe = sanitizeUrl(attr.value);
+          if (!safe) el.removeAttribute(attr.name);
+          else { el.setAttribute('href', safe); el.setAttribute('rel', 'noreferrer noopener'); el.setAttribute('target', '_blank'); }
+        } else if (name === 'src') {
+          const safe = sanitizeUrl(attr.value, { images: true });
+          if (!safe) el.removeAttribute(attr.name);
+          else el.setAttribute('src', safe);
+        } else if (name === 'style') {
+          const style = cleanStyle(attr.value);
+          if (style) el.setAttribute('style', style);
+          else el.removeAttribute(attr.name);
+        } else if (name === 'type' && el.tagName === 'INPUT' && attr.value !== 'checkbox') {
+          el.removeAttribute(attr.name);
+        }
+      });
+      if (el.tagName === 'INPUT') {
+        el.setAttribute('type', 'checkbox');
+        el.setAttribute('disabled', 'disabled');
+      }
+      walk(el);
+    });
+  };
+  walk(template.content);
+  return template.innerHTML;
+};
+
+const TOOL_FUNCTION_PROFILES = {
+  db: {
+    icon: 'database', es: 'Boveda local de codes copiados', en: 'Local vault for copied codes',
+    inputs: ['codes generados', 'metadatos', 'busqueda'],
+    outputs: ['JSON', 'CSV', 're-copia', 'QR/certificados'],
+    security: 'Retencion local, borrado manual, export controlado',
+    action: 'guardar, buscar, auditar y reutilizar codes',
+  },
+  qr: {
+    icon: 'grid', es: 'Transporte QR y paquetes verificables', en: 'QR transport and verifiable packets',
+    inputs: ['codes seleccionados', 'payload', 'correccion'],
+    outputs: ['PNG', 'payload copiable', 'bundle sellado'],
+    security: 'QR-LITE para payloads largos, checksum y seleccion explicita',
+    action: 'convertir codes en artefactos escaneables',
+  },
+  text: {
+    icon: 'card', es: 'Editor de documentos operativos', en: 'Operational document editor',
+    inputs: ['texto', 'HTML', 'notas'],
+    outputs: ['documento local', 'HTML', 'texto'],
+    security: 'sin red, contenido local, exportacion manual',
+    action: 'redactar documentacion y reportes',
+  },
+  drive: {
+    icon: 'cube', es: 'Laboratorio de unidades virtuales', en: 'Virtual drive laboratory',
+    inputs: ['drives', 'archivos virtuales', 'manifiestos'],
+    outputs: ['manifest', 'backup', 'descargas'],
+    security: 'inventario local, hashes y control de capacidad',
+    action: 'organizar contenedores y paquetes privados',
+  },
+  pandora: {
+    icon: 'database', es: 'Hojas, formulas y analisis', en: 'Sheets, formulas and analysis',
+    inputs: ['celdas', 'formulas', 'codes DB'],
+    outputs: ['CSV', 'impresion', 'graficos'],
+    security: 'calculo local y datos insertados bajo control del usuario',
+    action: 'modelar datos, costos, ROI y tablas',
+  },
+  osdg: {
+    icon: 'lock', es: 'Cifrador/descifrador de archivos', en: 'File encryptor/decryptor',
+    inputs: ['archivo', 'key', 'nonce oculta'],
+    outputs: ['archivo cifrado', 'archivo desbloqueado', 'reporte'],
+    security: 'AES-GCM, nonce controlada y verificacion local',
+    action: 'proteger documentos y paquetes sensibles',
+  },
+  markdown: {
+    icon: 'card', es: 'Mesa Markdown con vista viva', en: 'Markdown desk with live preview',
+    inputs: ['markdown', 'HTML', 'plantillas'],
+    outputs: ['MD', 'HTML', 'preview'],
+    security: 'edicion local, sin telemetria',
+    action: 'crear documentacion tecnica portable',
+  },
+  sequence: {
+    icon: 'hash', es: 'Secuencia de valor y trazabilidad', en: 'Value sequence and traceability',
+    inputs: ['codes DB', 'indices', 'formula'],
+    outputs: ['nota', 'PDF/print', 'valor calculado'],
+    security: 'trazabilidad por code y calculos repetibles',
+    action: 'crear notas encadenadas a codes',
+  },
+  certificates: {
+    icon: 'fingerprint', es: 'Certificados privados de code', en: 'Private code certificates',
+    inputs: ['code', 'propietario', 'licencia'],
+    outputs: ['certificado', 'QR', 'registro'],
+    security: 'identidad, hash, QR y clausulas legales',
+    action: 'certificar propiedad y uso de codes',
+  },
+  ivory: {
+    icon: 'id', es: 'Ideas verificables con DID', en: 'Verifiable ideas with DID',
+    inputs: ['DID', 'idea', 'QR', 'colaborador'],
+    outputs: ['documento verificable', 'registro', 'QR'],
+    security: 'DID, hash y evidencia local',
+    action: 'recibir ideas con autoria verificable',
+  },
+  ocgunits: {
+    icon: 'token', es: 'Unidades internas OCG', en: 'Internal OCG units',
+    inputs: ['valor', 'owner DID', 'payload'],
+    outputs: ['billete PNG', 'QR', 'ledger'],
+    security: 'hash de unidad, chain hash y firma local',
+    action: 'emitir unidades internas verificables',
+  },
+  color: {
+    icon: 'grid', es: 'Color Forge accesible', en: 'Accessible Color Forge',
+    inputs: ['color base', 'modo', 'steps'],
+    outputs: ['paleta', 'CSS', 'contraste'],
+    security: 'sin secretos, validacion visual y WCAG',
+    action: 'crear paletas utiles para la interfaz',
+  },
+  formatforge: {
+    icon: 'hash', es: 'Forjador de formatos matematicos', en: 'Mathematical format forge',
+    inputs: ['proposito', 'bits', 'prefijo', 'semilla'],
+    outputs: ['spec JSON', 'validator JS', 'codes', 'regex'],
+    security: 'CSPRNG, SHA-256, matriz GF(256), checksum y firma local',
+    action: 'inventar formatos propietarios verificables',
+  },
+  cmd: {
+    icon: 'key', es: 'IDE/CMD de automatizacion', en: 'Automation IDE/CMD',
+    inputs: ['comandos', 'tipos', 'flags'],
+    outputs: ['codes', 'exports', 'modulos abiertos'],
+    security: 'acciones locales, registro de comandos y limites de lote',
+    action: 'operar la plataforma rapido por comandos',
+  },
+  enterprise: {
+    icon: 'shield', es: 'Enterprise production gate', en: 'Enterprise production gate',
+    inputs: ['self-tests', 'catalogo', 'manifest'],
+    outputs: ['PASS/FAIL', 'manifest JSON', 'bloqueo de arranque'],
+    security: 'vectores conocidos, headers, no-store y catalog gate',
+    action: 'validar que la base critica este sana',
+  },
+};
+
+const toolProfile = (key) => TOOL_FUNCTION_PROFILES[key] || TOOL_FUNCTION_PROFILES.cmd;
+
+const AdaptiveToolCard = ({ toolKey, title, language, compact = false }) => {
+  const p = toolProfile(toolKey);
+  const L = (es, en) => (language === 'es' ? es : en);
+  return (
+    <div className={`adapt-card ${compact ? 'compact' : ''}`} data-tool={toolKey}>
+      <div className="adapt-head">
+        <span className="adapt-ic" dangerouslySetInnerHTML={{__html: (window.OCG_ICONS[p.icon] || window.OCG_ICONS.shield)(13)}} />
+        <div>
+          <b>{title || (language === 'es' ? p.es : p.en)}</b>
+          <span>{language === 'es' ? p.es : p.en}</span>
+        </div>
+      </div>
+      <div className="adapt-grid">
+        <div><span>{L('Entradas', 'Inputs')}</span><b>{p.inputs.join(' · ')}</b></div>
+        <div><span>{L('Salidas', 'Outputs')}</span><b>{p.outputs.join(' · ')}</b></div>
+        <div><span>{L('Seguridad', 'Security')}</span><b>{p.security}</b></div>
+        <div><span>{L('Funcion ideal', 'Best fit')}</span><b>{p.action}</b></div>
+      </div>
+    </div>
+  );
+};
+
+const triggerDownload = (filename, text, mime = 'text/markdown;charset=utf-8') => {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const digestHex = async (value, algo = 'SHA-256') => {
+  const data = new TextEncoder().encode(String(value || ''));
+  const buf = await crypto.subtle.digest(algo, data);
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+};
+
+const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+const rowsToText = (rows) => rows.map(r => r.value).join('\n');
+
+const rowsToJson = (rows) => JSON.stringify({
+  app: 'opencriptG',
+  version: APP_VERSION,
+  exportedAt: new Date().toISOString(),
+  total: rows.length,
+  rows: rows.map(r => ({
+    index: r.idx,
+    primitive: r.type,
+    value: r.value,
+    length: r.value.length,
+    generatedAt: new Date(r.ts || Date.now()).toISOString(),
+  })),
+}, null, 2);
+
+const rowsToCsv = (rows) => [
+  ['index', 'primitive', 'length', 'generated_at', 'value'].map(csvEscape).join(','),
+  ...rows.map(r => [
+    r.idx,
+    r.type,
+    r.value.length,
+    new Date(r.ts || Date.now()).toISOString(),
+    r.value,
+  ].map(csvEscape).join(',')),
+].join('\n');
+
+const sessionToJson = ({ output, selectedId, selectedCatId, length, qty, prefix, charset, stats }) => JSON.stringify({
+  app: 'opencriptG',
+  kind: 'session',
+  version: APP_VERSION,
+  savedAt: new Date().toISOString(),
+  state: { selectedId, selectedCatId, length, qty, prefix, charset, stats, output },
+}, null, 2);
+
+const tsStamp = () => {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+};
+
+const findTypeMeta = (typeId) => {
+  const cat = (window.OCG_CATALOG || []).find(c => c.types.some(t => t.id === typeId));
+  const type = cat ? cat.types.find(t => t.id === typeId) : null;
+  return { cat, type };
+};
+
+const TICKET_PROFILE = {
+  en: {
+    symmetric: { useFor: 'Shared-secret encryption, storage protection, payload sealing.', avoid: 'Avoid frontend key exposure and nonce reuse.', security: 'Modern symmetric material.' },
+    asymmetric: { useFor: 'Key exchange, signatures, PKI, identity workflows.', avoid: 'Do not expose private keys or keep them unencrypted.', security: 'Public/private key material.' },
+    hashes: { useFor: 'Integrity checks, fingerprints, verification pipelines.', avoid: 'Do not use plain hashes for password storage.', security: 'One-way digest material.' },
+    passwords: { useFor: 'Human-facing access secrets and recovery flows.', avoid: 'Do not store or transmit in plaintext.', security: 'Human-managed secret.' },
+    kdf: { useFor: 'Key derivation, password hardening, secret expansion.', avoid: 'Do not replace with plain hashes when KDF is required.', security: 'Secret derivation material.' },
+    macs: { useFor: 'Message authentication, request signing, webhook protection.', avoid: 'Do not reveal MAC secrets to untrusted clients.', security: 'Authentication secret.' },
+    identifiers: { useFor: 'Opaque IDs, sortable references, tracing and records.', avoid: 'Do not treat IDs as authorization secrets.', security: 'Identifier / reference value.' },
+    tokens: { useFor: 'Sessions, API access, auth flows and delegated access.', avoid: 'Do not log long-lived bearer secrets in plaintext.', security: 'Access token / auth secret.' },
+    pq: { useFor: 'Post-quantum pilots and forward-looking deployments.', avoid: 'Check interoperability before production rollout.', security: 'Forward-looking cryptographic material.' },
+    default: { useFor: 'Secure generation, controlled storage, and protected exchange.', avoid: 'Do not expose sensitive material without policy and audit controls.', security: 'Generated cryptographic material.' }
+  },
+  es: {
+    symmetric: { useFor: 'Cifrado con secreto compartido, protección de almacenamiento y sellado de payloads.', avoid: 'Evita exponer claves en frontend y reutilizar nonces.', security: 'Material simétrico moderno.' },
+    asymmetric: { useFor: 'Intercambio de claves, firmas, PKI y flujos de identidad.', avoid: 'No expongas claves privadas ni las dejes sin cifrar.', security: 'Material de clave pública/privada.' },
+    hashes: { useFor: 'Integridad, huellas y verificación de archivos o pipelines.', avoid: 'No uses hashes planos para almacenar contraseñas.', security: 'Material de resumen de una sola vía.' },
+    passwords: { useFor: 'Secretos de acceso humanos y recuperación.', avoid: 'No almacenes ni transmitas en texto plano.', security: 'Secreto manejado por humanos.' },
+    kdf: { useFor: 'Derivación de claves, endurecimiento y expansión de secretos.', avoid: 'No sustituyas un KDF por hashes simples cuando hace falta derivación.', security: 'Material de derivación de secretos.' },
+    macs: { useFor: 'Autenticación de mensajes, firmado de requests y webhooks.', avoid: 'No reveles secretos MAC a clientes no confiables.', security: 'Secreto de autenticación.' },
+    identifiers: { useFor: 'IDs opacos, referencias ordenables, trazabilidad y registros.', avoid: 'No trates identificadores como secretos de autorización.', security: 'Valor identificador / referencia.' },
+    tokens: { useFor: 'Sesiones, acceso por API y flujos de autenticación.', avoid: 'No registres bearer tokens sensibles en texto plano.', security: 'Token de acceso / secreto de autenticación.' },
+    pq: { useFor: 'Pilotos poscuánticos y despliegues orientados al futuro.', avoid: 'Verifica interoperabilidad antes de producción.', security: 'Material criptográfico orientado al futuro.' },
+    default: { useFor: 'Generación segura, almacenamiento controlado e intercambio protegido.', avoid: 'No expongas material sensible sin política y auditoría.', security: 'Material criptográfico generado.' }
+  }
+};
+
+const ticketProfileForRow = (row, language = 'en') => {
+  const { cat } = findTypeMeta(row.type);
+  const lang = TICKET_PROFILE[language] ? language : 'en';
+  const group = TICKET_PROFILE[lang];
+  return group[(cat && cat.id) || 'default'] || group.default;
+};
+
+const rowToMarkdown = (row) => {
+  const { cat, type } = findTypeMeta(row.type);
+  const date = new Date(row.ts || Date.now()).toISOString();
+  const lines = [
+    `# opencriptG — Generated value · v12`,
+    ``,
+    `- **Index:** ${String(row.idx).padStart(3, '0')}`,
+    `- **Primitive:** ${type ? type.label : row.type}`,
+    `- **Category:** ${cat ? cat.label : '—'}`,
+    `- **Standard:** ${type ? type.std : '—'}`,
+    `- **Length:** ${row.value.length} characters`,
+    `- **Generated:** ${date}`,
+    ``,
+    `## Value`,
+    ``,
+    '```',
+    row.value,
+    '```',
+    ``,
+    `---`,
+    `_opencriptG · Open Cryptographic Generator v12 · diktatcart® 2026_`,
+    ``,
+  ];
+  return lines.join('\n');
+};
+
+const rowToLog = (row, language = 'en') => {
+  const { cat, type } = findTypeMeta(row.type);
+  const profile = ticketProfileForRow(row, language);
+  const story = storyForRow(row, language);
+  const date = new Date(row.ts || Date.now()).toISOString();
+  const logId = `OCG-LOG-${String(row.idx).padStart(6, '0')}-${String(row.type || 'code').toUpperCase()}`;
+  const lines = [
+    'OPENCRIPTG CODE LOG',
+    '====================',
+    `LOG_ID=${logId}`,
+    'PLATFORM=opencriptG',
+    'BRAND=diktatcart',
+    'VERSION=v12',
+    `INDEX=${String(row.idx).padStart(3, '0')}`,
+    `PRIMITIVE=${type ? type.label : row.type}`,
+    `TYPE_ID=${row.type}`,
+    `CATEGORY=${cat ? cat.label : '—'}`,
+    `CATEGORY_ID=${cat ? cat.id : '—'}`,
+    `STANDARD=${type ? (type.std || type.badge || '—') : '—'}`,
+    `LENGTH=${row.value.length} ch`,
+    `GENERATED=${date}`,
+    `SECURITY_POSTURE=${profile.security}`,
+    '',
+    '[VALUE]',
+    row.value,
+    '',
+    '[USE_PROFILE]',
+    `USE_FOR=${profile.useFor}`,
+    `AVOID=${profile.avoid}`,
+    '',
+    '[STORY]',
+    story[0],
+    story[1],
+    '',
+    '[AUDIT]',
+    'SOURCE=Generated output row',
+    'EXPORT_FORMAT=.log',
+    'INTEGRITY_NOTE=This log records the generated value and visible metadata at export time.',
+    '',
+    'END_OPENCRIPTG_CODE_LOG',
+  ];
+  return lines.join('\n');
+};
+
+
+const rowToTxt = (row, language = 'en') => {
+  const { cat, type } = findTypeMeta(row.type);
+  const profile = ticketProfileForRow(row, language);
+  const story = storyForRow(row, language);
+  const date = new Date(row.ts || Date.now()).toISOString();
+  const lines = [
+    'OPENCRIPTG GENERATED CODE TXT',
+    '=============================',
+    `INDEX: ${String(row.idx).padStart(3, '0')}`,
+    `PRIMITIVE: ${type ? type.label : row.type}`,
+    `TYPE_ID: ${row.type}`,
+    `CATEGORY: ${cat ? cat.label : '—'}`,
+    `STANDARD: ${type ? (type.std || type.badge || '—') : '—'}`,
+    `LENGTH: ${String(row.value || '').length} ch`,
+    `GENERATED_AT: ${date}`,
+    `SECURITY_POSTURE: ${profile.security}`,
+    '',
+    'CODE:',
+    String(row.value || ''),
+    '',
+    'USE PROFILE:',
+    `USE_FOR: ${profile.useFor}`,
+    `AVOID: ${profile.avoid}`,
+    '',
+    'STORYTELLING:',
+    story[0] || '',
+    story[1] || '',
+    '',
+    'OPENCRIPTG · DIKTATCART · TXT EXPORT',
+  ];
+  return lines.join('\n');
+};
+
+
+const rowToJsonObject = (row, language = 'en') => {
+  const { cat, type } = findTypeMeta(row.type);
+  const profile = ticketProfileForRow(row, language);
+  const story = storyForRow(row, language);
+  const date = new Date(row.ts || Date.now()).toISOString();
+  return {
+    platform: 'opencriptG',
+    brand: 'diktatcart',
+    version: 'v12',
+    export_format: 'json',
+    exported_at: new Date().toISOString(),
+    code: {
+      index: String(row.idx).padStart(3, '0'),
+      row_id: row.id ?? null,
+      type_id: row.type,
+      primitive: type ? type.label : row.type,
+      category: cat ? cat.label : null,
+      category_id: cat ? cat.id : null,
+      standard: type ? (type.std || type.badge || null) : null,
+      generated_at: date,
+      length: String(row.value || '').length,
+      value: row.value,
+    },
+    security_profile: {
+      posture: profile.security,
+      use_for: profile.useFor,
+      avoid: profile.avoid,
+    },
+    storytelling: {
+      line_1: story[0] || '',
+      line_2: story[1] || '',
+    },
+    audit: {
+      source: 'Generated output row',
+      note: 'JSON export records the generated code and visible metadata at export time.',
+    },
+  };
+};
+
+const allRowsToMarkdown = (rows) => {
+  if (!rows.length) return '';
+  // Group by type for nicer output
+  const groups = {};
+  rows.forEach(r => {
+    if (!groups[r.type]) groups[r.type] = [];
+    groups[r.type].push(r);
+  });
+
+  const now = new Date().toISOString();
+  const out = [
+    `# opencriptG — Generated values export · v12`,
+    ``,
+    `- **Exported:** ${now}`,
+    `- **Total values:** ${rows.length}`,
+    `- **Distinct primitives:** ${Object.keys(groups).length}`,
+    ``,
+    `---`,
+    ``,
+  ];
+
+  Object.keys(groups).forEach(typeId => {
+    const { cat, type } = findTypeMeta(typeId);
+    const list = groups[typeId];
+    out.push(`## ${type ? type.label : typeId}`);
+    out.push(``);
+    out.push(`- **Category:** ${cat ? cat.label : '—'}`);
+    out.push(`- **Standard:** ${type ? type.std : '—'}`);
+    out.push(`- **Count:** ${list.length}`);
+    out.push(``);
+    out.push('```');
+    list.forEach(r => out.push(r.value));
+    out.push('```');
+    out.push(``);
+
+    // Per-value detail table
+    out.push(`| # | Length | Generated (UTC) | Value |`);
+    out.push(`|---|--------|-----------------|-------|`);
+    list.forEach(r => {
+      const safe = String(r.value).replace(/[|]/g, '/').replace(/[`]/g, "'");
+      out.push('| ' + String(r.idx).padStart(3, '0') + ' | ' + r.value.length + ' | ' + new Date(r.ts || Date.now()).toISOString() + ' | ' + safe + ' |');
+    });
+    out.push(``);
+  });
+
+  out.push(`---`);
+  out.push(`_opencriptG · Open Cryptographic Generator v12 · diktatcart® 2026_`);
+  out.push(``);
+  return out.join('\n');
+};
+
+
+const hashStory = (str = '') => {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+};
+
+const pickStory = (list, seed, shift = 0) => list[(Math.abs(seed >>> shift) % list.length)] || list[0];
+
+const storyForRow = (row, language = 'en') => {
+  const { cat, type } = findTypeMeta(row.type);
+  const seed = hashStory(`${row.value}|${row.idx}|${row.type}|${row.ts || 0}`);
+  const codeName = `${String(row.value).slice(0, 4)}…${String(row.value).slice(-4)}`;
+  const primitive = type?.label || row.type;
+  const categoryId = cat?.id || '';
+
+  const missionByCategory = {
+    symmetric: ['encrypt files, folders, and app secrets', 'lock backups and private archives', 'protect payloads before they leave your machine'],
+    asymmetric: ['exchange secrets safely and sign important things', 'power key exchange for secure channels', 'sign releases, tokens, and trusted messages'],
+    hashes: ['fingerprint data and verify integrity', 'spot if a file changed when nobody was supposed to touch it', 'build checksums that expose sneaky edits'],
+    passwords: ['protect accounts, vaults, and admin panels', 'create harder-to-guess credentials', 'feed your password manager with something stronger than “hola123”'],
+    identifiers: ['label records, sessions, and database rows', 'name objects without collisions', 'keep distributed systems from arguing over IDs'],
+    tokens: ['authenticate users, services, and API calls', 'hand out access without revealing master secrets', 'secure sessions, invites, and temporary permissions'],
+    kdf: ['stretch passwords into serious cryptographic material', 'derive safer keys from human input', 'turn passphrases into vault-grade secrets'],
+    macs: ['prove a message was not modified in transit', 'sign payloads so receivers can trust them', 'protect webhooks, packets, and internal traffic'],
+    pq: ['future-proof experiments against post-quantum threats', 'prototype next-gen secure channels', 'test cryptography for a more paranoid tomorrow'],
+  };
+
+  const propsByCategory = {
+    symmetric: ['vault', 'backup bunker', 'secret briefcase', 'encrypted locker'],
+    asymmetric: ['handshake portal', 'trust gateway', 'signature station', 'key exchange dock'],
+    hashes: ['forensic lab', 'checksum radar', 'tamper detector', 'integrity scanner'],
+    passwords: ['login gate', 'admin citadel', 'vault door', 'credential bunker'],
+    identifiers: ['database galaxy', 'event pipeline', 'record registry', 'distributed warehouse'],
+    tokens: ['API checkpoint', 'session gateway', 'auth corridor', 'microservice border'],
+    kdf: ['passphrase refinery', 'key forge', 'entropy workshop', 'secret distillery'],
+    macs: ['message convoy', 'webhook dock', 'packet bridge', 'verification terminal'],
+    pq: ['quantum shelter', 'future firewall', 'next-era tunnel', 'research launchpad'],
+  };
+
+  const mascots = ['tiny cyber-raccoon', 'dramatic vault wizard', 'overcaffeinated bot', 'paranoid pixel knight', 'sleep-deprived SRE gremlin', 'hexadecimal bard'];
+  const tones = ['with suspicious elegance', 'without breaking a sweat', 'like it owns the server room', 'while wearing invisible sunglasses', 'with enterprise-level swagger', 'as if the logs were cheering'];
+  const outcomes = ['your stack looks calmer', 'your demo feels expensive', 'your backend stops side-eyeing you', 'your release pipeline breathes easier', 'your ops team gets one less thing to fear', 'your security docs suddenly sound more convincing'];
+  const closers = ['Give it a mission and it behaves like a miniature bodyguard.', 'Point it at the right workflow and it becomes pure tactical chaos—in a good way.', 'Treat it nicely and it will quietly do the serious work while you take the credit.', 'Drop it into production carefully and it will act like it trained for this moment.'];
+
+  const mission = pickStory(missionByCategory[categoryId] || ['protect something important'], seed, 0);
+  const prop = pickStory(propsByCategory[categoryId] || ['secure machine'], seed, 4);
+  const mascot = pickStory(mascots, seed, 8);
+  const tone = pickStory(tones, seed, 12);
+  const outcome = pickStory(outcomes, seed, 16);
+  const closer = pickStory(closers, seed, 20);
+
+  const localized = {
+    es: [
+      `Nombre clave ${codeName}: este ${primitive} puede ${translateApprox('es', mission)}, convirtiendo tu ${translateApprox('es', prop)} en el patio de juegos de un ${translateApprox('es', mascot)} ${translateApprox('es', tone)}.`,
+      `Si lo usas bien, ${translateApprox('es', outcome)}; ${translateApprox('es', closer)}`,
+    ],
+    ko: [
+      `코드명 ${codeName}: 이 ${primitive}는 ${translateApprox('ko', mission)} 일을 도와주며, 당신의 ${translateApprox('ko', prop)}를 ${translateApprox('ko', mascot)}의 놀이터처럼 바꿔 줍니다 ${translateApprox('ko', tone)}.`,
+      `잘 사용하면 ${translateApprox('ko', outcome)}; ${translateApprox('ko', closer)}`,
+    ],
+    zh: [
+      `代号 ${codeName}：这个 ${primitive} 可以${translateApprox('zh', mission)}，把你的${translateApprox('zh', prop)}变成一个${translateApprox('zh', mascot)}的游乐场，${translateApprox('zh', tone)}。`,
+      `只要用得好，${translateApprox('zh', outcome)}；${translateApprox('zh', closer)}`,
+    ],
+  };
+  if (localized[language]) return localized[language];
+  const line1 = `Codename ${codeName}: this ${primitive} can ${mission}, turning your ${prop} into a playground for a ${mascot} ${tone}.`;
+  const line2 = `Use it well and ${outcome}; ${closer}`;
+  return [line1, line2];
+};
+
+// ── Output card ──
+const charProfile = (value = '') => {
+  const text = String(value || '');
+  return [
+    /[A-Z]/.test(text) ? 'U' : '',
+    /[a-z]/.test(text) ? 'L' : '',
+    /\d/.test(text) ? 'N' : '',
+    /[^A-Za-z0-9\s]/.test(text) ? 'S' : '',
+    /\s/.test(text) ? 'W' : '',
+  ].join('');
+};
+
+const sharedEdgeLength = (a = '', b = '', fromEnd = false, cap = 8) => {
+  const left = String(a || '');
+  const right = String(b || '');
+  const max = Math.min(cap, left.length, right.length);
+  let n = 0;
+  for (; n < max; n++) {
+    const ai = fromEnd ? left.length - 1 - n : n;
+    const bi = fromEnd ? right.length - 1 - n : n;
+    if (left[ai] !== right[bi]) break;
+  }
+  return n;
+};
+
+const codeSimilarityScore = (a, b) => {
+  const av = String(a?.value || '');
+  const bv = String(b?.value || '');
+  if (!av || !bv || a?.id === b?.id) return 0;
+  const sameType = a.type === b.type ? 18 : 0;
+  const sameProfile = charProfile(av) === charProfile(bv) ? 14 : 0;
+  const lenDelta = Math.abs(av.length - bv.length);
+  const lengthScore = Math.max(0, 22 - Math.min(22, lenDelta));
+  const prefixScore = sharedEdgeLength(av, bv, false, 8) * 8;
+  const suffixScore = sharedEdgeLength(av, bv, true, 8) * 6;
+  const seedBlend = hashStory(`${a.id}|${b.id}|${av.length}|${bv.length}`) % 11;
+  return sameType + sameProfile + lengthScore + prefixScore + suffixScore + seedBlend;
+};
+
+const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
+  const density = PLAN_SIMILARITY_DENSITY[plan?.id] ?? PLAN_SIMILARITY_DENSITY.free;
+  const maxLinks = Math.max(0, Math.floor(rows.length * density));
+  if (rows.length < 2 || maxLinks <= 0) return new Map();
+  const candidates = [];
+  rows.forEach((row, index) => {
+    const start = Math.max(0, index - 18);
+    const end = Math.min(rows.length - 1, index + 18);
+    let best = null;
+    for (let i = start; i <= end; i++) {
+      if (i === index) continue;
+      const score = codeSimilarityScore(row, rows[i]);
+      if (!best || score > best.score) {
+        best = { sourceId: row.id, targetId: rows[i].id, targetIdx: rows[i].idx, direction: i < index ? 'up' : 'down', score };
+      }
+    }
+    if (best) candidates.push(best);
+  });
+  candidates.sort((a, b) => b.score - a.score);
+  const selected = new Map();
+  const floor = plan?.id === 'enterprise' ? 50 : plan?.id === 'professional' ? 44 : plan?.id === 'starter' ? 36 : 0;
+  for (const candidate of candidates) {
+    if (selected.size >= maxLinks) break;
+    if (candidate.score < floor) continue;
+    const strength = candidate.score >= 78 ? 'high' : candidate.score >= 54 ? 'mid' : 'low';
+    selected.set(candidate.sourceId, { ...candidate, strength });
+  }
+  return selected;
+};
+
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, density, t, language }) => {
+  const [flash, setFlash] = useState(false);
+  const isMulti = row.value.includes('\n');
+  const story = useMemo(() => storyForRow(row, language), [row, language]);
+  const jumpSimilarity = (e) => {
+    e.stopPropagation();
+    if (!similarity?.targetId) return;
+    const escapedId = window.CSS?.escape ? CSS.escape(String(similarity.targetId)) : String(similarity.targetId).replace(/"/g, '\\"');
+    const target = document.querySelector(`[data-row-id="${escapedId}"]`);
+    if (!target) return;
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target.classList.add('similar-hit');
+    setTimeout(() => target.classList.remove('similar-hit'), 900);
+  };
+  const copy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(freeMode ? withFreeWatermark(row.value) : row.value);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 600);
+    onCopy?.(row);
+  };
+  const dl = (e) => {
+    e.stopPropagation();
+    onDownload?.(row);
+  };
+  const dlQr = (e) => {
+    e.stopPropagation();
+    onQrDownload?.(row);
+  };
+  const capture = (e) => {
+    e.stopPropagation();
+    onCapture?.(row);
+  };
+  const printTicket = (e) => {
+    e.stopPropagation();
+    onPrintTicket?.(row);
+  };
+  const downloadLog = (e) => {
+    e.stopPropagation();
+    onLogDownload?.(row);
+  };
+  const downloadJson = (e) => {
+    e.stopPropagation();
+    onJsonDownload?.(row);
+  };
+  const downloadTxt = (e) => {
+    e.stopPropagation();
+    onTxtDownload?.(row);
+  };
+  return (
+    <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
+      <div className="oc-main">
+        <div className="oc-idx">{String(row.idx).padStart(3, '0')}</div>
+        <div className="oc-val" onClick={copy}>{isMulti ? row.value : window.OCG_GEN.display(row.value, 360)}</div>
+        <div className="oc-meta">
+          <span>{row.value.length} ch</span>
+        </div>
+        {similarity ? (
+          <button
+            className={`oc-sim ${similarity.direction} ${similarity.strength}`}
+            onClick={jumpSimilarity}
+            title={language === 'es' ? `Similar al code #${similarity.targetIdx}` : `Similar to code #${similarity.targetIdx}`}
+          >
+            <span className="oc-sim-icon" aria-hidden="true" />
+            <span className="oc-sim-txt">{similarity.direction === 'up' ? 'UP' : 'DN'} #{similarity.targetIdx}</span>
+          </button>
+        ) : (
+          <span className="oc-sim oc-sim-none" title={language === 'es' ? 'Sin similitud marcada por este plan' : 'No similarity marker for this plan'} />
+        )}
+        <button className="oc-act" onClick={copy} title="Copy">
+          <span dangerouslySetInnerHTML={{__html: flash ? CHECK_ICON : COPY_ICON}} />
+        </button>
+        <button className="oc-act oc-act-qr" onClick={dlQr} title={language === 'es' ? 'Descargar QR PNG' : language === 'ko' ? 'QR PNG 다운로드' : language === 'zh' ? '下载二维码 PNG' : 'Download QR PNG'}>
+          <span dangerouslySetInnerHTML={{__html: QR_ICON}} />
+        </button>
+        <button className="oc-act oc-act-shot" onClick={capture} title={language === 'es' ? 'Capturar code en PNG' : language === 'ko' ? '코드 캡처 PNG' : language === 'zh' ? '捕获代码 PNG' : 'Capture code as PNG'}>
+          <span dangerouslySetInnerHTML={{__html: SHOT_ICON}} />
+        </button>
+        <button className="oc-act oc-act-pelican" onClick={printTicket} title={language === 'es' ? 'Imprimir ticket' : language === 'ko' ? '티켓 인쇄' : language === 'zh' ? '打印票据' : 'Print ticket'}>
+          <span dangerouslySetInnerHTML={{__html: PELICAN_ICON}} />
+        </button>
+        <button className="oc-act oc-act-logbook" onClick={downloadLog} title={language === 'es' ? 'Descargar LOG del code' : language === 'ko' ? '코드 LOG 다운로드' : language === 'zh' ? '下载代码 LOG' : 'Download code LOG'}>
+          <span dangerouslySetInnerHTML={{__html: LOGBOOK_ICON}} />
+        </button>
+        <button className="oc-act oc-act-json" onClick={downloadJson} title={language === 'es' ? 'Descargar JSON del code' : language === 'ko' ? '코드 JSON 다운로드' : language === 'zh' ? '下载代码 JSON' : 'Download code JSON'}>
+          <span dangerouslySetInnerHTML={{__html: JSON_BRACKETS_ICON}} />
+        </button>
+        <button className="oc-act oc-act-txt" onClick={downloadTxt} title={language === 'es' ? 'Descargar TXT del code' : language === 'ko' ? '코드 TXT 다운로드' : language === 'zh' ? '下载代码 TXT' : 'Download code TXT'}>
+          <span dangerouslySetInnerHTML={{__html: TXT_ICON}} />
+        </button>
+        <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
+          <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
+        </button>
+        <button className="oc-act" onClick={() => onDelete(row.id)} title="Delete">
+          <span dangerouslySetInnerHTML={{__html: X_ICON}} />
+        </button>
+      </div>
+      <div className="oc-story" aria-hidden="true">
+        <div className="oc-story-k">{t('storyModeHover')}</div>
+        <p>{story[0]}</p>
+        <p>{story[1]}</p>
+      </div>
+    </div>
+  );
+};
+
+// ── Title-bar menu system ──
+const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null }) => {
+  const open = activeMenu === label;
+  const hasDropdown = Array.isArray(items) && items.length > 0;
+  const handleClick = () => {
+    if (primaryAction) {
+      setActiveMenu(null);
+      primaryAction();
+      return;
+    }
+    setActiveMenu(open ? null : label);
+  };
+  const handleContextMenu = (e) => {
+    if (!primaryAction || !hasDropdown) return;
+    e.preventDefault();
+    setActiveMenu(open ? null : label);
+  };
+  return (
+    <div className="tb-menu">
+      <button
+        className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''}`}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        onMouseEnter={() => activeMenu && hasDropdown && setActiveMenu(label)}
+      >
+        <span>{label}</span>
+        {primaryAction && hasDropdown ? <span className="tb-n-caret">▾</span> : null}
+      </button>
+      {open && hasDropdown && (
+        <div className="tb-dd" onMouseLeave={() => setActiveMenu(null)}>
+          {items.map((item, i) => item.type === 'sep' ? (
+            <div key={`sep-${i}`} className="tb-dd-sep" />
+          ) : (
+            <button
+              key={item.label}
+              className="tb-dd-item"
+              disabled={item.disabled}
+              onClick={() => { setActiveMenu(null); item.onClick && item.onClick(); }}
+            >
+              <span className="tb-dd-label">{item.label}</span>
+              {item.key && <kbd>{item.key}</kbd>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const HelpDialog = ({ open, onClose, t }) => {
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{t('helpTitle')}</h2>
+            <p>{t('helpSubtitle')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="dlg-grid">
+          <div className="dlg-card">
+            <h3>{t('menuFile')}</h3>
+            <p>{t('helpFileDesc')}</p>
+          </div>
+          <div className="dlg-card">
+            <h3>{t('menuGenerate')}</h3>
+            <p>{t('helpGenerateDesc')}</p>
+          </div>
+          <div className="dlg-card">
+            <h3>{t('menuExport')}</h3>
+            <p>{t('helpExportDesc')}</p>
+          </div>
+          <div className="dlg-card">
+            <h3>{t('menuView')}</h3>
+            <p>{t('helpViewDesc')}</p>
+          </div>
+        </div>
+        <div className="dlg-shortcuts">
+          <span><kbd>Ctrl/⌘ ↵</kbd> Generate</span>
+          <span><kbd>Ctrl/⌘ K</kbd> Clear</span>
+          <span><kbd>Ctrl/⌘ B</kbd> Batch 100</span>
+          <span><kbd>Ctrl/⌘ ⇧ S</kbd> Export Markdown</span>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const DatabaseDialog = ({ open, onClose, rows, query, setQuery, onExport, onClear, onDelete, onCopyAgain, t, language }) => {
+  if (!open) return null;
+  const filtered = rows.filter(row => {
+    const hay = `${row.value} ${row.primitiveLabel} ${row.categoryId} ${row.copiedAt}`.toLowerCase();
+    return hay.includes(String(query || '').toLowerCase());
+  });
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg dbdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{t('databaseTitle')}</h2>
+            <p>{t('databaseSubtitle')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="dbdlg-tools">
+          <input
+            className="dbdlg-search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={t('databaseSearch')}
+          />
+          <div className="dbdlg-badges">
+            <span className="dbdlg-badge">{t('databaseTotal', { count: filtered.length })}</span>
+            <button className="dbdlg-btn" onClick={onExport} disabled={!rows.length}>{t('exportDatabase')}</button>
+            <button className="dbdlg-btn danger" onClick={onClear} disabled={!rows.length}>{t('clearDatabase')}</button>
+          </div>
+        </div>
+        <div className="dbdlg-list">
+          {!filtered.length ? (
+            <div className="dbdlg-empty">{t('databaseEmpty')}</div>
+          ) : filtered.map((row) => {
+            const cat = { id: row.categoryId, label: row.categoryId };
+            return (
+              <article key={row.id} className="dbdlg-row">
+                <div className="dbdlg-main">
+                  <div className="dbdlg-value-k">{t('databaseValue')}</div>
+                  <div className="dbdlg-value">{row.value}</div>
+                  <div className="dbdlg-meta">
+                    <span><b>{t('databasePrimitive')}:</b> {row.primitiveLabel}</span>
+                    <span><b>{t('databaseCategory')}:</b> {getCategoryLabel(cat, language)}</span>
+                    <span><b>{t('databaseMode')}:</b> {row.mode === 'batch' ? t('databaseBatch') : t('databaseSingle')}</span>
+                    <span><b>{t('databaseCopiedAt')}:</b> {row.copiedAt}</span>
+                  </div>
+                </div>
+                <div className="dbdlg-actions">
+                  <button className="dbdlg-btn" onClick={() => onCopyAgain(row)}>{t('databaseCopyAgain')}</button>
+                  <button className="dbdlg-btn" onClick={() => onDelete(row.id)}>{t('databaseDelete')}</button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const getAdaptiveQrLevels = (value, preferred = 'Q') => {
+  const len = String(value || '').length;
+  const base = len > 2200 ? ['L', 'M', 'Q', 'H'] : len > 1400 ? ['M', 'L', 'Q', 'H'] : [preferred, 'Q', 'M', 'L', 'H'];
+  return [...new Set(base.filter(Boolean))];
+};
+
+const getAdaptiveQrTypeNumber = (value, level = 'Q') => {
+  const bytes = new Blob([String(value || '')]).size;
+  const scale = { L: 70, M: 54, Q: 38, H: 28 }[level] || 38;
+  return Math.max(4, Math.min(40, Math.ceil(bytes / scale) + 2));
+};
+
+const getAdaptiveQrTypeNumbers = (value, level = 'Q') => {
+  const start = getAdaptiveQrTypeNumber(value, level);
+  return [start, start + 4, start + 8, 30, 35, 40]
+    .filter((n) => n >= 4 && n <= 40)
+    .filter((n, idx, arr) => arr.indexOf(n) === idx);
+};
+
+const tryRenderQr = async (host, payload, size, preferred = 'Q') => {
+  if (!host || !window.QRCode) throw new Error('QRCode unavailable');
+  const levels = getAdaptiveQrLevels(payload, preferred);
+  let lastErr = null;
+  for (const level of levels) {
+    for (const typeNumber of getAdaptiveQrTypeNumbers(payload, level)) {
+      try {
+        host.innerHTML = '';
+        new window.QRCode(host, {
+          text: payload,
+          width: size,
+          height: size,
+          typeNumber,
+          colorDark: '#0a0a0a',
+          colorLight: '#f5f5f5',
+          correctLevel: window.QRCode.CorrectLevel[level] || window.QRCode.CorrectLevel.L,
+        });
+        await new Promise((resolve) => setTimeout(resolve, 70));
+        const node = host.querySelector('canvas, img');
+        if (node) return { node, level, typeNumber };
+        lastErr = new Error(`QR node was not created for level ${level} v${typeNumber}`);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+  }
+  throw lastErr || new Error('QR rendering failed');
+};
+
+const QrCanvas = ({ payload, size, correctLevel = 'Q' }) => {
+  const boxRef = useRef(null);
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+      if (!boxRef.current || !window.QRCode) return;
+      try {
+        await tryRenderQr(boxRef.current, payload, size, correctLevel);
+      } catch (err) {
+        console.error(err);
+        if (alive && boxRef.current) {
+          boxRef.current.innerHTML = '<div class="qrdlg-fallback">QR unavailable</div>';
+        }
+      }
+    };
+    run();
+    return () => {
+      alive = false;
+      if (boxRef.current) boxRef.current.innerHTML = '';
+    };
+  }, [payload, size, correctLevel]);
+  return <div className="qrdlg-qrbox" ref={boxRef} />;
+};
+
+const QrVaultDialog = ({ open, onClose, rows, t, language }) => {
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState({});
+  const [mode, setMode] = useState('single');
+  const [payloadStyle, setPayloadStyle] = useState('packet');
+  const [level, setLevel] = useState('Q');
+  const [size, setSize] = useState(256);
+  const [theme, setTheme] = useState('sealed');
+  const [generated, setGenerated] = useState([]);
+  const [exportBusyId, setExportBusyId] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    const initial = {};
+    rows.slice(0, Math.min(3, rows.length)).forEach(r => { initial[r.id] = true; });
+    setSelected(initial);
+    setGenerated([]);
+    setQuery('');
+  }, [open, rows]);
+
+  if (!open) return null;
+  const filtered = rows.filter(row => (`${row.value} ${row.primitiveLabel} ${row.categoryId} ${row.copiedAt}`).toLowerCase().includes(query.toLowerCase()));
+  const selectedRows = rows.filter(row => selected[row.id]);
+
+  const toggle = (id) => setSelected(prev => ({ ...prev, [id]: !prev[id] }));
+  const selectAll = () => {
+    const next = {};
+    filtered.forEach(r => { next[r.id] = true; });
+    setSelected(prev => ({ ...prev, ...next }));
+  };
+  const clearSel = () => setSelected({});
+
+  const generate = () => {
+    if (!selectedRows.length) return;
+    if (mode === 'bundle') {
+      const payload = qrPacketBundle(selectedRows);
+      setGenerated([{
+        id: `bundle_${Date.now()}`,
+        title: t('qrBundleName'),
+        subtitle: `${selectedRows.length} ${t('databaseValue').toLowerCase()}`,
+        payload,
+        source: selectedRows,
+      }]);
+      return;
+    }
+    setGenerated(selectedRows.map((row, idx) => ({
+      id: `${row.id}_${idx}`,
+      title: row.primitiveLabel,
+      subtitle: row.copiedAt,
+      payload: qrPacketForRow(row, payloadStyle),
+      source: [row],
+      raw: row,
+    })));
+  };
+
+  const copyPayload = async (payload) => {
+    await navigator.clipboard?.writeText(payload);
+  };
+
+  const waitFrame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+  const qrCanvasFromHost = async (host) => {
+    const node = host?.querySelector('canvas, img');
+    if (!node) return null;
+    if (node.tagName.toLowerCase() === 'canvas') return node;
+    return await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width;
+        c.height = img.naturalHeight || img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c);
+      };
+      img.onerror = reject;
+      img.src = node.src;
+    });
+  };
+
+  const drawButton = (ctx, x, y, w, h, label, fill = '#f3f3f3', textFill = '#0c0c0c') => {
+    ctx.fillStyle = fill;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#cfcfcf';
+    ctx.strokeRect(x + .5, y + .5, w - 1, h - 1);
+    ctx.fillStyle = textFill;
+    ctx.font = '600 13px "IBM Plex Mono", "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w / 2, y + h / 2 + 1);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  };
+
+  const drawQrExportCard = async (item, qrCanvas) => {
+    const qrSize = qrCanvas.width || size;
+    const pad = 24;
+    const cardW = Math.max(560, qrSize + 96);
+    const headerH = 116;
+    const qrSlotPad = 18;
+    const qrSlotX = pad + 18;
+    const qrSlotY = pad + headerH + 16;
+    const qrSlotW = cardW - pad * 2 - 36;
+    const qrSlotH = qrSize + qrSlotPad * 2;
+    const metaY = qrSlotY + qrSlotH + 26;
+    const actionsY = metaY + 24;
+    const actionsH = 48;
+    const cardH = actionsY + actionsH + 20;
+    const shadow = theme === 'minimal' ? 0 : 10;
+    const totalW = cardW + 20;
+    const totalH = cardH + 20;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = totalW * 2;
+    canvas.height = totalH * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#ececec';
+    ctx.fillRect(0, 0, totalW, totalH);
+    if (shadow) {
+      ctx.fillStyle = theme === 'matrix' ? '#d8d8d8' : '#111111';
+      ctx.fillRect(10 + shadow, 10 + shadow, cardW, cardH);
+    }
+    ctx.fillStyle = '#f3f3f3';
+    ctx.fillRect(10, 10, cardW, cardH);
+    ctx.strokeStyle = '#cfcfcf';
+    ctx.strokeRect(10.5, 10.5, cardW - 1, cardH - 1);
+    // header
+    ctx.fillStyle = '#6e7280';
+    ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(mode === 'bundle' ? t('qrPacketLabel').toUpperCase() : (payloadStyle === 'raw' ? t('qrRawLabel').toUpperCase() : t('qrPacketLabel').toUpperCase()), 28, 34);
+    ctx.fillStyle = '#090909';
+    ctx.font = '700 30px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(String(item.title || '').toUpperCase(), 28, 72);
+    ctx.fillStyle = '#586273';
+    ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(String(item.subtitle || ''), 28, 102);
+    // level badge
+    ctx.strokeStyle = '#cfcfcf';
+    ctx.strokeRect(cardW - 68.5, 24.5, 40, 48);
+    ctx.fillStyle = '#0d0d0d';
+    ctx.font = '600 18px "IBM Plex Mono", "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(level, cardW - 48, 55);
+    ctx.textAlign = 'left';
+    // divider
+    ctx.strokeStyle = '#d4d4d4';
+    ctx.beginPath();
+    ctx.moveTo(10, pad + 88);
+    ctx.lineTo(cardW + 10, pad + 88);
+    ctx.stroke();
+    // qr slot
+    ctx.fillStyle = '#efefef';
+    ctx.fillRect(qrSlotX, qrSlotY, qrSlotW, qrSlotH);
+    ctx.strokeStyle = '#cfcfcf';
+    ctx.strokeRect(qrSlotX + .5, qrSlotY + .5, qrSlotW - 1, qrSlotH - 1);
+    const drawX = qrSlotX + (qrSlotW - qrSize) / 2;
+    const drawY = qrSlotY + qrSlotPad;
+    ctx.drawImage(qrCanvas, drawX, drawY, qrSize, qrSize);
+    // meta text
+    ctx.fillStyle = '#586273';
+    ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
+    const leftMeta = `${item.payload.length} CH`;
+    const rightMeta = `${mode === 'bundle' ? item.source.length : 1} ${mode === 'bundle' ? 'CODES' : 'CODE'}`;
+    ctx.fillText(leftMeta, 28, metaY);
+    ctx.fillText(rightMeta, 92, metaY);
+    // buttons visual
+    drawButton(ctx, 28, actionsY, (cardW - 72) / 2, 48, t('qrCopyPayload').toUpperCase(), '#f3f3f3', '#0c0c0c');
+    drawButton(ctx, 44 + (cardW - 72) / 2, actionsY, (cardW - 72) / 2, 48, t('qrDownload').toUpperCase(), '#0c0c0c', '#ffffff');
+    return canvas;
+  };
+
+  const downloadPng = async (item) => {
+    if (exportBusyId) return;
+    setExportBusyId(item.id);
+    try {
+      await waitFrame();
+      const host = document.getElementById(`qrbox-${item.id}`);
+      const qrCanvas = await qrCanvasFromHost(host);
+      if (!qrCanvas) return;
+      const exportCanvas = await drawQrExportCard(item, qrCanvas);
+      const a = document.createElement('a');
+      a.href = exportCanvas.toDataURL('image/png');
+      a.download = `${sanitizeFilename(item.title || 'opencriptG-qr-card')}-${tsStamp()}.png`;
+      a.click();
+    } finally {
+      setExportBusyId('');
+    }
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg qrdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{t('qrTitle')}</h2>
+            <p>{t('qrSubtitle')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        {!rows.length ? (
+          <div className="qrdlg-empty">{t('qrDatabaseEmpty')}</div>
+        ) : (
+          <div className="qrdlg-body">
+            <div className="qrdlg-left">
+              <div className="qrdlg-topline">
+                <input className="qrdlg-search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t('qrSearch')} />
+                <span className="qrdlg-badge">{t('qrSelected', { count: selectedRows.length })}</span>
+              </div>
+              <div className="qrdlg-selectbar">
+                <button className="dbdlg-btn" onClick={selectAll}>{t('qrSelectAll')}</button>
+                <button className="dbdlg-btn" onClick={clearSel}>{t('qrClearSelection')}</button>
+              </div>
+              <div className="qrdlg-list">
+                {filtered.map(row => {
+                  const cat = { id: row.categoryId, label: row.categoryId };
+                  return (
+                    <label key={row.id} className={`qrdlg-item ${selected[row.id] ? 'on' : ''}`}>
+                      <input type="checkbox" checked={!!selected[row.id]} onChange={() => toggle(row.id)} />
+                      <div className="qrdlg-item-main">
+                        <div className="qrdlg-item-v">{window.OCG_GEN.display(row.value, 100)}</div>
+                        <div className="qrdlg-item-m">{row.primitiveLabel} · {getCategoryLabel(cat, language)} · {row.copiedAt}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="qrdlg-right">
+              <div className="qrdlg-controls">
+                <div className="qrdlg-field"><span>{t('qrMode')}</span><select value={mode} onChange={e => setMode(e.target.value)}><option value="single">{t('qrModeSingle')}</option><option value="bundle">{t('qrModeBundle')}</option></select></div>
+                <div className="qrdlg-field"><span>{t('qrPayload')}</span><select value={payloadStyle} onChange={e => setPayloadStyle(e.target.value)} disabled={mode === 'bundle'}><option value="raw">{t('qrPayloadRaw')}</option><option value="packet">{t('qrPayloadPacket')}</option></select></div>
+                <div className="qrdlg-field"><span>{t('qrCorrection')}</span><select value={level} onChange={e => setLevel(e.target.value)}><option value="M">M</option><option value="Q">Q</option><option value="H">H</option></select></div>
+                <div className="qrdlg-field"><span>{t('qrSize')}</span><select value={size} onChange={e => setSize(Number(e.target.value))}><option value="192">192 px</option><option value="256">256 px</option><option value="320">320 px</option></select></div>
+                <div className="qrdlg-field"><span>{t('qrTheme')}</span><select value={theme} onChange={e => setTheme(e.target.value)}><option value="sealed">{t('qrThemeSealed')}</option><option value="matrix">{t('qrThemeMatrix')}</option><option value="minimal">{t('qrThemeMinimal')}</option></select></div>
+                <button className="qrdlg-generate" onClick={generate} disabled={!selectedRows.length}>{t('qrGenerate')}</button>
+              </div>
+              <div className="qrdlg-preview">
+                {!generated.length ? (
+                  <div className="qrdlg-preview-empty">{selectedRows.length ? t('qrEmpty') : t('qrNoneSelected')}</div>
+                ) : generated.map(item => (
+                  <article key={item.id} className={qrThemeClass(theme)}>
+                    <div className="qrdlg-card-head">
+                      <div>
+                        <div className="qrdlg-card-k">{mode === 'bundle' ? t('qrPacketLabel') : payloadStyle === 'raw' ? t('qrRawLabel') : t('qrPacketLabel')}</div>
+                        <h3>{item.title}</h3>
+                        <p>{item.subtitle}</p>
+                      </div>
+                      <span className="qrdlg-level">{level}</span>
+                    </div>
+                    <div className="qrdlg-card-core">
+                      <div className="qrdlg-qrslot" id={`qrbox-${item.id}`}><QrCanvas payload={item.payload} size={size} correctLevel={level} /></div>
+                    </div>
+                    <div className="qrdlg-card-meta">
+                      <span>{item.payload.length} ch</span>
+                      <span>{mode === 'bundle' ? `${item.source.length} codes` : item.raw?.primitiveLabel}</span>
+                    </div>
+                    <div className="qrdlg-card-actions">
+                      <button className="dbdlg-btn" onClick={() => copyPayload(item.payload)}>{t('qrCopyPayload')}</button>
+                      <button className="dbdlg-btn" disabled={exportBusyId === item.id} onClick={() => downloadPng(item)}>{exportBusyId === item.id ? 'EXPORTING…' : t('qrDownload')}</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+};
+
+
+const IvoryIdeaVaultDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [selectedId, setSelectedId] = useState('');
+  const [form, setForm] = useState(() => ({
+    collaborator: '',
+    contact: '',
+    ivoryDid: '',
+    ideaTitle: '',
+    problem: '',
+    description: '',
+    operation: '',
+    relatedModule: 'OpencriptG',
+    category: 'Productividad criptográfica',
+    difficulty: 'Media',
+    monetization: '',
+    originality: '',
+    status: 'EN REVISIÓN',
+    signature: '',
+    reviewer: ''
+  }));
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('opencriptg_ivory_idea_vault_v1') || '[]'); } catch { return []; }
+  });
+  const [dbQuery, setDbQuery] = useState('');
+  const selectedRow = rows.find(r => r.id === selectedId) || rows[0] || null;
+  const ideaId = useMemo(() => {
+    const basis = `${form.ivoryDid}|${form.ideaTitle}|${selectedRow?.value || ''}`;
+    let hash = 0;
+    for (let i = 0; i < basis.length; i++) hash = ((hash << 5) - hash + basis.charCodeAt(i)) >>> 0;
+    return `IVORY-IDEA-${String(hash).padStart(10, '0').slice(0, 10)}`;
+  }, [form.ivoryDid, form.ideaTitle, selectedRow?.value]);
+
+  useEffect(() => {
+    if (open && rows.length && !selectedId) setSelectedId(rows[0].id);
+  }, [open, rows, selectedId]);
+
+  const update = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const safe = (v) => String(v ?? '').replace(/[&<>"]/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[s]));
+  const getQrDataUrl = async () => {
+    await new Promise(resolve => setTimeout(resolve, 80));
+    const host = document.getElementById(`ivory-qr-${ideaId}`);
+    const node = host?.querySelector('canvas, img');
+    if (!node) return '';
+    if (node.tagName.toLowerCase() === 'canvas') return node.toDataURL('image/png');
+    return node.src || '';
+  };
+
+  const ideaPayload = () => JSON.stringify({
+    version: 'opencriptG-ivory-idea-v1',
+    ideaId,
+    status: form.status,
+    collaborator: form.collaborator,
+    ivoryDid: form.ivoryDid,
+    ideaTitle: form.ideaTitle,
+    selectedCodeId: selectedRow?.id || null,
+    selectedCodePrimitive: selectedRow?.primitiveLabel || selectedRow?.typeId || null,
+    selectedCodeChars: selectedRow?.chars || selectedRow?.value?.length || 0,
+    createdAt: new Date().toISOString()
+  }, null, 0);
+
+  const buildHtml = async ({ printMode = false } = {}) => {
+    const qrUrl = await getQrDataUrl();
+    const codeValue = selectedRow?.value || '';
+    const codePreview = safe(codeValue).replace(/(.{1,96})/g, '$1<br/>');
+    const clause = L(
+      'Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a OpencriptG/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.',
+      'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate OpencriptG/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.'
+    );
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${safe(ideaId)}</title><style>
+      @page{size:A4;margin:14mm}
+      body{margin:0;background:#f4f4f1;color:#111;font-family:"IBM Plex Mono","Courier New",monospace}
+      .doc{max-width:980px;margin:0 auto;background:#f7f7f4;border:2px solid #111;min-height:1200px}
+      .top{display:grid;grid-template-columns:1fr 300px;border-bottom:2px solid #111}
+      .icons{display:flex;align-items:center;gap:34px;padding:44px 48px}
+      .icons svg{width:58px;height:58px;color:#111}
+      .qrside{border-left:2px solid #111;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+      .qrside img{width:235px;height:235px;image-rendering:pixelated}
+      .qrmeta{font-size:8px;color:#555;width:100%;margin-top:8px;word-break:break-all}
+      .body{padding:32px 46px}
+      .k{font-size:11px;letter-spacing:.38em;color:#7b7b7b;text-transform:uppercase;margin:18px 0 7px}
+      h1{font-size:44px;letter-spacing:.05em;margin:0 0 18px}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+      .box{border:1px solid #d4d4cf;background:#fff;padding:12px;min-height:44px}
+      .box b{display:block;font-size:10px;letter-spacing:.24em;color:#8c8c88;text-transform:uppercase;margin-bottom:7px}
+      .box span,.text{font-size:13px;line-height:1.55;white-space:pre-wrap}
+      .wide{grid-column:1/-1}
+      .code{font-size:10px;line-height:1.45;word-break:break-all;background:#f1f1ee;border:1px solid #d0d0cc;padding:10px}
+      .clause{margin-top:18px;border:2px solid #111;padding:13px;background:#fff;font-size:12px;line-height:1.55}
+      .sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:34px}
+      .line{border-top:1.5px solid #111;padding-top:8px;font-size:11px;color:#333}
+      .footer{border-top:1px solid #d0d0cc;margin-top:24px;padding-top:9px;font-size:10px;color:#666}
+      @media print{body{background:#fff}.doc{border:1.5px solid #111;max-width:none}}
+    </style></head><body><section class="doc">
+      <div class="top"><div class="icons">
+        ${BRAND_MARK_ICON.replace('width="12" height="12"', 'width="58" height="58"')}
+        ${IDEA_SHELL_ICON.replace('width="12" height="12"', 'width="66" height="66"')}
+        ${DID_BALLOON_ICON.replace('width="12" height="12"', 'width="58" height="58"')}
+        ${CUBE_DOC_ICON.replace('width="12" height="12"', 'width="58" height="58"')}
+      </div><div class="qrside">${qrUrl ? `<img src="${qrUrl}" />` : '<div>QR</div>'}<div class="qrmeta">${safe(ideaId)} · ${safe(selectedRow?.primitiveLabel || selectedRow?.typeId || 'NO CODE')}</div></div></div>
+      <div class="body">
+        <div class="k">IVORY DID IDEA VAULT</div><h1>${safe(form.ideaTitle || L('Solicitud de idea','Idea request'))}</h1>
+        <div class="grid">
+          <div class="box"><b>${L('ID de idea','Idea ID')}</b><span>${safe(ideaId)}</span></div>
+          <div class="box"><b>${L('Estado','Status')}</b><span>${safe(form.status)}</span></div>
+          <div class="box"><b>${L('Colaborador','Collaborator')}</b><span>${safe(form.collaborator)}</span></div>
+          <div class="box"><b>Ivory DID</b><span>${safe(form.ivoryDid)}</span></div>
+          <div class="box"><b>${L('Contacto','Contact')}</b><span>${safe(form.contact)}</span></div>
+          <div class="box"><b>${L('Módulo relacionado','Related module')}</b><span>${safe(form.relatedModule)}</span></div>
+          <div class="box"><b>${L('Categoría','Category')}</b><span>${safe(form.category)}</span></div>
+          <div class="box"><b>${L('Dificultad','Difficulty')}</b><span>${safe(form.difficulty)}</span></div>
+          <div class="box wide"><b>${L('Problema que resuelve','Problem solved')}</b><div class="text">${safe(form.problem)}</div></div>
+          <div class="box wide"><b>${L('Descripción completa','Full description')}</b><div class="text">${safe(form.description)}</div></div>
+          <div class="box wide"><b>${L('Funcionamiento propuesto','Proposed operation')}</b><div class="text">${safe(form.operation)}</div></div>
+          <div class="box wide"><b>${L('Monetización posible','Possible monetization')}</b><div class="text">${safe(form.monetization)}</div></div>
+          <div class="box wide"><b>${L('Originalidad / referencias','Originality / references')}</b><div class="text">${safe(form.originality)}</div></div>
+          <div class="box wide"><b>${L('Code de base de datos usado para QR','Database code used for QR')}</b><div class="code">${codePreview || '—'}</div></div>
+        </div>
+        <div class="clause">${safe(clause)}</div>
+        <div class="sign"><div class="line">${L('Firma del colaborador','Collaborator signature')}<br/>${safe(form.signature || '')}</div><div class="line">${L('Revisión OpencriptG','OpencriptG review')}<br/>${safe(form.reviewer || '')}</div></div>
+        <div class="footer">OpencriptG · diktatcart · RNC 402-0936929-3 · ${new Date().toLocaleString()}</div>
+      </div></section>${printMode ? '<script>window.onload=()=>setTimeout(()=>window.print(),250);</script>' : ''}</body></html>`;
+  };
+
+  const persistHistory = (next) => {
+    const clean = (next || []).slice(0, 5000);
+    setHistory(clean);
+    localStorage.setItem('opencriptg_ivory_idea_vault_v1', JSON.stringify(clean));
+  };
+
+  const saveRecord = async () => {
+    const selectedCodeSnapshot = selectedRow ? {
+      id: selectedRow.id,
+      value: selectedRow.value,
+      primitiveLabel: selectedRow.primitiveLabel || selectedRow.typeId || selectedRow.type || 'code',
+      chars: selectedRow.chars || selectedRow.value?.length || 0,
+      copiedAt: selectedRow.copiedAt || ''
+    } : null;
+    const record = {
+      id: ideaId,
+      ts: Date.now(),
+      updatedAt: new Date().toISOString(),
+      form: { ...form },
+      selectedRowId: selectedRow?.id || '',
+      selectedCodeSnapshot,
+      status: form.status,
+      collaborator: form.collaborator,
+      title: form.ideaTitle,
+      ivoryDid: form.ivoryDid,
+      payload: ideaPayload()
+    };
+    const next = [record, ...history.filter(x => x.id !== ideaId)].slice(0, 5000);
+    persistHistory(next);
+    notify && notify(L('Registro guardado en la base de datos de ideas', 'Record saved in the ideas database'));
+    return record;
+  };
+
+  const filteredHistory = useMemo(() => {
+    const q = dbQuery.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter(r => `${r.id} ${r.title || r.form?.ideaTitle || ''} ${r.collaborator || r.form?.collaborator || ''} ${r.ivoryDid || r.form?.ivoryDid || ''} ${r.status || r.form?.status || ''} ${r.selectedCodeSnapshot?.primitiveLabel || ''}`.toLowerCase().includes(q));
+  }, [history, dbQuery]);
+
+  const loadRecord = (record) => {
+    if (!record) return;
+    setForm(prev => ({ ...prev, ...(record.form || {}) }));
+    if (record.selectedRowId) setSelectedId(record.selectedRowId);
+    notify && notify(L('Registro cargado para edición', 'Record loaded for editing'));
+  };
+
+  const deleteRecord = (id) => {
+    const next = history.filter(r => r.id !== id);
+    persistHistory(next);
+    notify && notify(L('Registro eliminado de la base de datos de ideas', 'Record deleted from the ideas database'));
+  };
+
+  const clearIdeaDatabase = () => {
+    if (!confirm(L('¿Borrar todos los registros de ideas guardados?', 'Delete all saved idea records?'))) return;
+    persistHistory([]);
+    notify && notify(L('Base de datos de ideas limpiada', 'Ideas database cleared'));
+  };
+
+  const exportIdeaDatabase = (format = 'json') => {
+    const stamp = tsStamp();
+    if (format === 'csv') {
+      const csvSafe = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
+      const lines = [
+        ['id','fecha','estado','colaborador','ivoryDid','titulo','modulo','categoria','codePrimitive','codeChars'].map(csvSafe).join(','),
+        ...history.map(r => [
+          r.id,
+          new Date(r.ts || Date.now()).toISOString(),
+          r.status || r.form?.status || '',
+          r.collaborator || r.form?.collaborator || '',
+          r.ivoryDid || r.form?.ivoryDid || '',
+          r.title || r.form?.ideaTitle || '',
+          r.form?.relatedModule || '',
+          r.form?.category || '',
+          r.selectedCodeSnapshot?.primitiveLabel || '',
+          r.selectedCodeSnapshot?.chars || ''
+        ].map(csvSafe).join(','))
+      ];
+      triggerDownload(`opencriptg-ivory-ideas-db-${stamp}.csv`, lines.join('\\n'), 'text/csv;charset=utf-8');
+    } else {
+      triggerDownload(`opencriptg-ivory-ideas-db-${stamp}.json`, JSON.stringify(history, null, 2), 'application/json;charset=utf-8');
+    }
+    notify && notify(L('Base de datos de ideas exportada', 'Ideas database exported'));
+  };
+
+  const downloadHtml = async () => {
+    await saveRecord();
+    const html = await buildHtml();
+    triggerDownload(`${ideaId.toLowerCase()}.html`, html, 'text/html;charset=utf-8');
+  };
+
+  const printPdf = async () => {
+    await saveRecord();
+    const html = await buildHtml({ printMode: true });
+    const w = window.open('', '_blank', 'width=1000,height=900');
+    if (!w) return notify && notify(L('Permite ventanas emergentes para imprimir.', 'Allow pop-ups to print.'));
+    w.document.open(); w.document.write(html); w.document.close();
+  };
+
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg ivorydlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>IVORY DID IDEA VAULT</h2>
+            <p>{L('Formulario digital e imprimible para recibir ideas de colaboradores con verificación por code, QR y registro interno.', 'Digital and printable form to receive collaborator ideas with code verification, QR and internal registry.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="ivorydlg-body">
+          <div className="ivorydoc-preview">
+            <div className="ivorydoc-top">
+              <div className="ivorydoc-icons">
+                <span dangerouslySetInnerHTML={{__html: BRAND_MARK_ICON}} />
+                <span dangerouslySetInnerHTML={{__html: IDEA_SHELL_ICON}} />
+                <span dangerouslySetInnerHTML={{__html: DID_BALLOON_ICON}} />
+                <span dangerouslySetInnerHTML={{__html: CUBE_DOC_ICON}} />
+              </div>
+              <div className="ivorydoc-qr">
+                {selectedRow ? <div id={`ivory-qr-${ideaId}`}><QrCanvas payload={selectedRow.value} size={210} correctLevel="L" /></div> : <div className="ivory-emptyqr">QR</div>}
+                <small>{selectedRow ? `${selectedRow.chars || selectedRow.value.length} ch · ${selectedRow.primitiveLabel || selectedRow.typeId}` : L('Selecciona un code','Select a code')}</small>
+              </div>
+            </div>
+            <div className="ivorydoc-formhead">
+              <span>IVORY DID IDEA VAULT</span>
+              <h3>{form.ideaTitle || L('Título de la idea','Idea title')}</h3>
+              <p>{ideaId}</p>
+            </div>
+          </div>
+          <div className="ivoryform">
+            <div className="ivory-row wide"><label>Code QR desde base de datos</label><select value={selectedId} onChange={e => setSelectedId(e.target.value)}>{rows.map(r => <option key={r.id} value={r.id}>{`${(r.primitiveLabel || r.typeId || 'code')} · ${(r.value || '').slice(0, 42)}…`}</option>)}</select></div>
+            {!rows.length && <div className="ivory-warning">{L('La base de datos está vacía. Copia primero un code generado para usarlo como QR de verificación.', 'The database is empty. Copy a generated code first to use it as verification QR.')}</div>}
+            <div className="ivory-grid">
+              <label><span>{L('Nombre del colaborador','Collaborator name')}</span><input value={form.collaborator} onChange={e => update('collaborator', e.target.value)} /></label>
+              <label><span>{L('Contacto','Contact')}</span><input value={form.contact} onChange={e => update('contact', e.target.value)} /></label>
+              <label><span>Ivory DID Verification</span><input value={form.ivoryDid} onChange={e => update('ivoryDid', e.target.value)} placeholder="IVORY-DID-OCG-..." /></label>
+              <label><span>{L('Estado','Status')}</span><select value={form.status} onChange={e => update('status', e.target.value)}><option>BORRADOR</option><option>EN REVISIÓN</option><option>APROBADA</option><option>RECHAZADA</option><option>EN DESARROLLO</option><option>INTEGRADA</option><option>MONETIZADA</option><option>ARCHIVADA</option></select></label>
+              <label className="wide"><span>{L('Título de la idea','Idea title')}</span><input value={form.ideaTitle} onChange={e => update('ideaTitle', e.target.value)} /></label>
+              <label><span>{L('Módulo relacionado','Related module')}</span><input value={form.relatedModule} onChange={e => update('relatedModule', e.target.value)} /></label>
+              <label><span>{L('Categoría','Category')}</span><input value={form.category} onChange={e => update('category', e.target.value)} /></label>
+              <label><span>{L('Dificultad','Difficulty')}</span><select value={form.difficulty} onChange={e => update('difficulty', e.target.value)}><option>Baja</option><option>Media</option><option>Alta</option><option>Crítica</option></select></label>
+              <label className="wide"><span>{L('Problema que resuelve','Problem solved')}</span><textarea value={form.problem} onChange={e => update('problem', e.target.value)} /></label>
+              <label className="wide"><span>{L('Descripción completa de la idea','Full idea description')}</span><textarea value={form.description} onChange={e => update('description', e.target.value)} /></label>
+              <label className="wide"><span>{L('Cómo funcionaría','How it would work')}</span><textarea value={form.operation} onChange={e => update('operation', e.target.value)} /></label>
+              <label className="wide"><span>{L('Posible monetización','Possible monetization')}</span><textarea value={form.monetization} onChange={e => update('monetization', e.target.value)} /></label>
+              <label className="wide"><span>{L('Originalidad o referencias','Originality or references')}</span><textarea value={form.originality} onChange={e => update('originality', e.target.value)} /></label>
+              <label><span>{L('Firma del colaborador','Collaborator signature')}</span><input value={form.signature} onChange={e => update('signature', e.target.value)} /></label>
+              <label><span>{L('Revisión OpencriptG','OpencriptG review')}</span><input value={form.reviewer} onChange={e => update('reviewer', e.target.value)} /></label>
+            </div>
+            <div className="ivory-clause">{L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a OpencriptG/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate OpencriptG/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.')}</div>
+            <div className="ivory-actions">
+              <button className="dbdlg-btn" onClick={saveRecord}>{L('Guardar registro','Save record')}</button>
+              <button className="dbdlg-btn" onClick={downloadHtml}>{L('Descargar documento','Download document')}</button>
+              <button className="dbdlg-btn" onClick={printPdf}>{L('Imprimir / PDF','Print / PDF')}</button>
+            </div>
+
+            <section className="ivory-db-panel">
+              <div className="ivory-db-head">
+                <div>
+                  <b>{L('Base de datos de registros','Records database')}</b>
+                  <span>{history.length} {L('registros guardados','saved records')}</span>
+                </div>
+                <div className="ivory-db-actions">
+                  <button className="dbdlg-btn" onClick={() => exportIdeaDatabase('json')}>JSON</button>
+                  <button className="dbdlg-btn" onClick={() => exportIdeaDatabase('csv')}>CSV</button>
+                  <button className="dbdlg-btn" onClick={clearIdeaDatabase}>{L('Limpiar','Clear')}</button>
+                </div>
+              </div>
+              <input className="ivory-db-search" value={dbQuery} onChange={e => setDbQuery(e.target.value)} placeholder={L('Buscar por ID, colaborador, DID, estado o título…','Search by ID, collaborator, DID, status or title…')} />
+              <div className="ivory-db-list">
+                {!filteredHistory.length ? (
+                  <div className="ivory-db-empty">{L('No hay registros guardados todavía.','No saved records yet.')}</div>
+                ) : filteredHistory.map(record => (
+                  <article key={record.id} className="ivory-db-row">
+                    <div className="ivory-db-main">
+                      <strong>{record.title || record.form?.ideaTitle || L('Sin título','Untitled')}</strong>
+                      <span>{record.id}</span>
+                      <small>{new Date(record.ts || Date.now()).toLocaleString()} · {record.status || record.form?.status || '—'} · {record.collaborator || record.form?.collaborator || L('Sin colaborador','No collaborator')}</small>
+                      <em>{record.ivoryDid || record.form?.ivoryDid || 'NO-IVORY-DID'} · {record.selectedCodeSnapshot?.primitiveLabel || L('Sin code QR','No QR code')}</em>
+                    </div>
+                    <div className="ivory-db-row-actions">
+                      <button className="dbdlg-btn" onClick={() => loadRecord(record)}>{L('Cargar','Load')}</button>
+                      <button className="dbdlg-btn" onClick={() => deleteRecord(record.id)}>{L('Eliminar','Delete')}</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+// ── Main App ──
+
+const TEXTLAB_STORAGE_KEY = 'opencriptG_text_lab_v1';
+
+const textLabStrings = (language) => {
+  const es = {
+    menu: 'TEXT LAB', open: 'Abrir Text Lab', title: 'Text Lab', subtitle: 'Estudio avanzado de escritura y edición integrado en opencriptG.',
+    docTitle: 'Título del documento', untitled: 'Documento sin título', newDoc: 'Nuevo', openDoc: 'Abrir', saveHtml: 'Descargar HTML', saveMd: 'Descargar MD', saveTxt: 'Descargar TXT', print: 'Imprimir',
+    undo: 'Deshacer', redo: 'Rehacer', bold: 'Negrita', italic: 'Cursiva', underline: 'Subrayado', strike: 'Tachado', paragraph: 'Párrafo', quote: 'Cita', code: 'Code',
+    ordered: 'Lista ordenada', unordered: 'Lista', checklist: 'Checklist', indent: 'Sangría +', outdent: 'Sangría -', left: 'Izquierda', center: 'Centro', right: 'Derecha', justify: 'Justificar',
+    link: 'Enlace', image: 'Imagen', table: 'Tabla', clearFmt: 'Limpiar formato', find: 'Buscar', replace: 'Reemplazar', replaceOne: 'Reemplazar 1', replaceAll: 'Reemplazar todo',
+    font: 'Fuente', size: 'Tamaño', line: 'Interlineado', textColor: 'Color', highlight: 'Resaltado',
+    quick: 'Acciones rápidas', focus: 'Modo foco', smart: 'Limpieza inteligente', titleCase: 'Tipo título', upper: 'MAYÚSCULAS', lower: 'minúsculas', stamp: 'Insertar fecha', duplicate: 'Duplicar', selectAll: 'Seleccionar todo',
+    stats: 'Estadísticas', words: 'Palabras', chars: 'Caracteres', paragraphs: 'Párrafos', reading: 'Lectura', autosave: 'Autoguardado local activo', placeholder: 'Empieza a escribir aquí…',
+    imported: 'Documento importado', exported: 'Documento exportado', printed: 'Vista de impresión abierta', saved: 'Text Lab guardó tu documento localmente', notFound: 'No se encontró el texto', replaced: 'Reemplazo aplicado', cleaned: 'Texto limpiado',
+    linkPrompt: 'Pega la URL del enlace', imagePrompt: 'Pega la URL de la imagen', tablePrompt: 'Columnas x filas (ejemplo 3x4)', minutes: 'min'
+  };
+  const en = {
+    menu: 'TEXT LAB', open: 'Open Text Lab', title: 'Text Lab', subtitle: 'Advanced writing and editing studio built into opencriptG.',
+    docTitle: 'Document title', untitled: 'Untitled document', newDoc: 'New', openDoc: 'Open', saveHtml: 'Download HTML', saveMd: 'Download MD', saveTxt: 'Download TXT', print: 'Print',
+    undo: 'Undo', redo: 'Redo', bold: 'Bold', italic: 'Italic', underline: 'Underline', strike: 'Strike', paragraph: 'Paragraph', quote: 'Quote', code: 'Code',
+    ordered: 'Ordered list', unordered: 'Bullet list', checklist: 'Checklist', indent: 'Indent +', outdent: 'Indent -', left: 'Left', center: 'Center', right: 'Right', justify: 'Justify',
+    link: 'Link', image: 'Image', table: 'Table', clearFmt: 'Clear format', find: 'Find', replace: 'Replace', replaceOne: 'Replace 1', replaceAll: 'Replace all',
+    font: 'Font', size: 'Size', line: 'Line height', textColor: 'Text color', highlight: 'Highlight',
+    quick: 'Quick actions', focus: 'Focus mode', smart: 'Smart clean', titleCase: 'Title Case', upper: 'UPPERCASE', lower: 'lowercase', stamp: 'Insert date', duplicate: 'Duplicate', selectAll: 'Select all',
+    stats: 'Statistics', words: 'Words', chars: 'Characters', paragraphs: 'Paragraphs', reading: 'Reading', autosave: 'Local autosave active', placeholder: 'Start writing here…',
+    imported: 'Document imported', exported: 'Document exported', printed: 'Print view opened', saved: 'Text Lab saved your document locally', notFound: 'Text not found', replaced: 'Replacement applied', cleaned: 'Text cleaned',
+    linkPrompt: 'Paste the link URL', imagePrompt: 'Paste the image URL', tablePrompt: 'Columns x rows (example 3x4)', minutes: 'min'
+  };
+  return language === 'es' ? es : en;
+};
+
+const htmlToMarkdownLite = (html) => {
+  const root = document.createElement('div');
+  root.innerHTML = html || '';
+  const walk = (node) => {
+    if (node.nodeType === 3) return node.textContent || '';
+    if (node.nodeType !== 1) return '';
+    const tag = node.tagName.toLowerCase();
+    const inner = Array.from(node.childNodes).map(walk).join('');
+    if (tag === 'h1') return `# ${inner}\n\n`;
+    if (tag === 'h2') return `## ${inner}\n\n`;
+    if (tag === 'h3') return `### ${inner}\n\n`;
+    if (tag === 'strong' || tag === 'b') return `**${inner}**`;
+    if (tag === 'em' || tag === 'i') return `*${inner}*`;
+    if (tag === 'u') return `<u>${inner}</u>`;
+    if (tag === 's' || tag === 'strike') return `~~${inner}~~`;
+    if (tag === 'code') return `\`${inner}\``;
+    if (tag === 'pre') return `\n\`\`\`\n${node.textContent || ''}\n\`\`\`\n\n`;
+    if (tag === 'blockquote') return `${(node.textContent || '').split('\n').map(l => `> ${l}`).join('\n')}\n\n`;
+    if (tag === 'br') return `\n`;
+    if (tag === 'p' || tag === 'div') return `${inner}\n\n`;
+    if (tag === 'li') return `- ${inner}\n`;
+    if (tag === 'ul' || tag === 'ol') return `${inner}\n`;
+    if (tag === 'a') return `[${inner}](${node.getAttribute('href') || '#'})`;
+    if (tag === 'img') return `![image](${node.getAttribute('src') || ''})\n\n`;
+    if (tag === 'table') {
+      const rows = Array.from(node.querySelectorAll('tr')).map(tr => Array.from(tr.children).map(c => (c.textContent || '').trim()));
+      if (!rows.length) return '\n';
+      const header = `| ${rows[0].join(' | ')} |\n`;
+      const divider = `| ${rows[0].map(() => '---').join(' | ')} |\n`;
+      const body = rows.slice(1).map(r => `| ${r.join(' | ')} |`).join('\n');
+      return `\n${header}${divider}${body}\n\n`;
+    }
+    return inner;
+  };
+  return Array.from(root.childNodes).map(walk).join('').replace(/\n{3,}/g, '\n\n').trim();
+};
+
+const duplicateSelectedBlock = () => {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return false;
+  let node = sel.anchorNode;
+  if (!node) return false;
+  node = node.nodeType === 3 ? node.parentNode : node;
+  const block = node.closest('p,div,blockquote,pre,li,h1,h2,h3,h4,h5,h6');
+  if (!block || !block.parentNode) return false;
+  const clone = block.cloneNode(true);
+  block.parentNode.insertBefore(clone, block.nextSibling);
+  return true;
+};
+
+const transformSelectionText = (transformer) => {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || sel.isCollapsed) return false;
+  const text = sel.toString();
+  document.execCommand('insertText', false, transformer(text));
+  return true;
+};
+
+const OCG_UNITS_KEY = 'opencriptg_ocg_code_units_v2';
+const OCG_COIN_VALUES = [5, 10, 25, 50];
+const OCG_COIN_SEAL = 'OPENCRIPTG-DIKTATCART-INTERNAL-UNIT-SEAL-v12';
+
+const OCGUnitsQR = ({ payload, size = 172 }) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    let alive = true;
+    const render = async () => {
+      if (!ref.current || !payload || !window.QRCode) return;
+      try {
+        ref.current.innerHTML = '';
+        await tryRenderQr(ref.current, payload, size, 'L');
+      } catch (err) {
+        console.error(err);
+        if (alive && ref.current) ref.current.innerHTML = '<div class="ocgu-qr-fallback">QR</div>';
+      }
+    };
+    render();
+    return () => { alive = false; if (ref.current) ref.current.innerHTML = ''; };
+  }, [payload, size]);
+  return <div className="ocgu-qr" ref={ref} />;
+};
+
+const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
+  if (!open) return null;
+  const L = (es, en) => language === 'es' ? es : en;
+  const [value, setValue] = useState(5);
+  const [issueQty, setIssueQty] = useState(1);
+  const [ownerDid, setOwnerDid] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [note, setNote] = useState('');
+  const [selectedId, setSelectedId] = useState('');
+  const [query, setQuery] = useState('');
+  const [transferDid, setTransferDid] = useState('');
+  const [verifyText, setVerifyText] = useState('');
+  const [verifyResult, setVerifyResult] = useState(null);
+  const [qrDetailsOpen, setQrDetailsOpen] = useState(false);
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(OCG_UNITS_KEY) || '[]'); } catch { return []; }
+  });
+
+  const selected = history.find(u => u.id === selectedId) || history[0] || null;
+  const activeUnits = history.filter(u => u.status === 'ACTIVE');
+  const activeBalance = activeUnits.reduce((sum, u) => sum + Number(u.value || 0), 0);
+  const issuedTotal = history.reduce((sum, u) => sum + Number(u.value || 0), 0);
+
+  const saveHistory = (next) => {
+    setHistory(next);
+    localStorage.setItem(OCG_UNITS_KEY, JSON.stringify(next));
+  };
+
+  const randHex = (bytes = 16) => {
+    const arr = new Uint8Array(bytes);
+    try { crypto.getRandomValues(arr); } catch { for (let i = 0; i < bytes; i++) arr[i] = Math.floor(Math.random() * 256); }
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  };
+  const randB64 = (bytes = 48) => {
+    const arr = new Uint8Array(bytes);
+    try { crypto.getRandomValues(arr); } catch { for (let i = 0; i < bytes; i++) arr[i] = Math.floor(Math.random() * 256); }
+    return btoa(String.fromCharCode(...arr)).replace(/[+/=]/g, m => ({'+':'-','/':'_','=':''}[m]));
+  };
+  const issueStamp = () => new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14);
+
+  const unitPlain = (u) => [
+    u.header,
+    `TYPE=${u.type}`,
+    `VALUE=${u.value}`,
+    `OWNER_DID=${u.ownerDid || 'UNASSIGNED'}`,
+    `OWNER=${u.ownerName || 'UNREGISTERED'}`,
+    `SERIAL=${u.serial}`,
+    `DENOMINATION=OCG-${u.value}`,
+    `BILL_ID=${u.billId}`,
+    `PAYLOAD=${u.payload}`,
+    `SALT=${u.salt}`,
+    `NONCE=${u.nonce}`,
+    `ROUTE=${u.route}`,
+    `VECTOR=${u.vector}`,
+    `MATRIX=${u.matrix}`,
+    `CHAIN_PREV=${u.chainPrev}`,
+    `CHAIN_HASH=${u.chainHash}`,
+    `UNIT_HASH=${u.unitHash}`,
+    `SIGNATURE=${u.signature}`,
+    `FINGERPRINT=${u.fingerprint}`,
+    `ISSUED=${u.issued}`,
+    `STATUS=${u.status}`,
+    `USE=${u.use}`,
+    `CHECK=${u.check}`,
+  ].join('\n');
+
+  const qrDataRows = (u) => u ? [
+    ['VALUE', u.value], ['BILL_ID', u.billId], ['SERIAL', u.serial], ['OWNER_DID', u.ownerDid || 'UNASSIGNED'], ['OWNER', u.ownerName || 'UNREGISTERED'],
+    ['STATUS', u.status], ['FINGERPRINT', u.fingerprint], ['CHECK', u.check], ['ISSUED', u.issued], ['TYPE', u.type],
+    ['PAYLOAD', u.payload], ['SALT', u.salt], ['NONCE', u.nonce], ['ROUTE', u.route], ['VECTOR', u.vector], ['MATRIX', u.matrix],
+    ['CHAIN_PREV', u.chainPrev], ['CHAIN_HASH', u.chainHash], ['UNIT_HASH', u.unitHash], ['SIGNATURE', u.signature], ['USE', u.use]
+  ] : [];
+
+  const billScanRows = (u) => qrDataRows(u).concat([
+    ['DENOMINATION', `OCG-${u?.value || ''}`],
+    ['NETWORK', 'OPENCRIPTG / DIKTATCART'],
+    ['LEGAL_SCOPE', 'INTERNAL DIGITAL BILL · NOT LEGAL TENDER'],
+  ]);
+
+  const billScanHtml = (u) => {
+    const safe = (v) => String(v ?? '—').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s] || s));
+    const rows = billScanRows(u).map(([k,v]) => `<tr><th>${safe(k)}</th><td>${safe(v)}</td></tr>`).join('');
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(u?.billId || 'OCG')}</title><style>body{margin:0;background:#f3f3f1;color:#111;font-family:ui-monospace,Consolas,monospace}.c{margin:10px;border:2px solid #111;background:#fff}.h{display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #111;padding:12px;gap:12px}.b{letter-spacing:.24em;color:#777;font-size:10px}.v{font:700 52px Georgia}.id{font-weight:900;font-size:17px;word-break:break-all}.t{border:1px solid #111;padding:3px 6px;display:inline-block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-top:1px solid #ddd;padding:7px;text-align:left;vertical-align:top;word-break:break-all}th{width:122px;color:#777;font-size:10px;letter-spacing:.12em;background:#f7f7f4}td{font-size:12px}.f{border-top:1px solid #111;padding:9px;color:#555;font-size:11px}</style></head><body><div class="c"><div class="h"><div><div class="b">OPENCRIPTG</div><div class="v">${safe(u?.value)}</div><div class="t">OCG COIN</div></div><div><div class="id">${safe(u?.billId || u?.serial)}</div><p>Billete digital interno verificable dentro de OpencriptG/diktatcart.</p><div class="t">${safe(u?.status)}</div></div></div><table>${rows}</table><div class="f">Unidad interna privada. No es moneda de curso legal, inversión, depósito ni criptomoneda pública.</div></div></body></html>`;
+  };
+
+  const billScanPayload = (u) => {
+    if (!u) return '';
+    // QR-LITE: payload corto para que lo lean cámaras de teléfono con mayor compatibilidad.
+    // Los datos completos siguen en la plataforma, base local y panel "Ver datos QR".
+    return [
+      'OPENCRIPTG QR-LITE BILL',
+      'ECOSYSTEM=DIKTATCART/OPENCRIPTG',
+      'SCOPE=PRIVATE-INTERNAL-UNIT',
+      'NOT_LEGAL_TENDER=YES',
+      `VALUE=${u.value}`,
+      `BILL_ID=${u.billId}`,
+      `SERIAL=${u.serial}`,
+      `OWNER_DID=${u.ownerDid || 'UNASSIGNED'}`,
+      `STATUS=${u.status}`,
+      `ISSUED=${u.issued}`,
+      `FINGERPRINT=${u.fingerprint}`,
+      `CHECK=${u.check}`,
+      `UNIT_HASH=${String(u.unitHash || '').slice(0, 32)}`,
+      `CHAIN_HASH=${String(u.chainHash || '').slice(0, 32)}`,
+      'ACTION=VERIFY-IN-OPENCRIPTG'
+    ].join('\n');
+  };
+
+  const openBillScanPreview = (u = selected) => {
+    if (!u) return;
+    const w = window.open('', '_blank', 'width=980,height=860');
+    if (!w) return;
+    w.document.open();
+    w.document.write(billScanHtml(u));
+    w.document.close();
+  };
+
+  const makeCheck = async (base) => (await digestHex(base)).slice(0, 12).toUpperCase();
+  const makeLongHash = async (base) => await digestHex(base);
+  const buildMatrix = () => Array.from({ length: 4 }, () => randHex(4).toUpperCase()).join('-');
+  const buildVector = () => Array.from({ length: 5 }, () => randB64(5).slice(0, 7).toUpperCase()).join('.');
+  const getPrevChain = () => history[0]?.chainHash || 'GENESIS-OPENCRIPTG-DIKTATCART';
+
+  const createOneUnit = async (chainPrevOverride = null) => {
+    const issued = issueStamp();
+    const chainPrev = chainPrevOverride || getPrevChain();
+    const serial = `OCG-CN-${String(value).padStart(2,'0')}-${issued}-${randHex(3).toUpperCase()}`;
+    const billId = `BILL-${String(value).padStart(2,'0')}-${randB64(10).slice(0, 14).toUpperCase()}`;
+    const payloadLen = value === 5 ? 96 : value === 10 ? 124 : value === 25 ? 164 : 212;
+    const basePayload = randB64(payloadLen);
+    const salt = randHex(24);
+    const nonce = randHex(18);
+    const route = randB64(16).slice(0, 22).toUpperCase();
+    const vector = buildVector();
+    const matrix = buildMatrix();
+    const header = `OCG-COIN.v12.${value}.${randB64(22).slice(0,34)}`;
+    const type = 'INTERNAL-ECOSYSTEM-CODE-COIN';
+    const use = 'private internal OpencriptG/diktatcart ecosystem unit';
+    const base = [value, ownerDid.trim(), ownerName.trim(), serial, billId, basePayload, salt, nonce, route, vector, matrix, chainPrev, issued, OCG_COIN_SEAL].join('|');
+    const unitHash = (await makeLongHash(base)).toUpperCase();
+    const chainHash = (await makeLongHash([chainPrev, unitHash, serial, issued, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const signature = (await makeLongHash([unitHash, chainHash, ownerDid.trim(), value, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const fingerprint = `${unitHash.slice(0,8)}-${signature.slice(8,16)}-${chainHash.slice(16,24)}-${randHex(4).toUpperCase()}`;
+    const check = await makeCheck([value, ownerDid, serial, billId, basePayload, salt, nonce, route, vector, matrix, chainHash, unitHash, signature, issued].join('|'));
+    return {
+      id: `coin_${Date.now()}_${randHex(3)}`,
+      header, type, value: Number(value), ownerDid: ownerDid.trim(), ownerName: ownerName.trim(), serial,
+      billId, payload: basePayload, salt, nonce, route, vector, matrix, chainPrev, chainHash, unitHash,
+      signature, fingerprint, issued, status: 'ACTIVE', use, check, note: note.trim(),
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), transfers: [],
+    };
+  };
+
+  const createUnit = async () => {
+    const count = Math.max(1, Math.min(1000, Number(issueQty) || 1));
+    const batch = [];
+    let runningPrev = getPrevChain();
+    for (let i = 0; i < count; i++) {
+      const unit = await createOneUnit(runningPrev);
+      batch.push(unit);
+      runningPrev = unit.chainHash;
+    }
+    saveHistory([...batch, ...history]);
+    setSelectedId(batch[0].id);
+    setVerifyText(unitPlain(batch[0]));
+    notify && notify(count === 1 ? L('Moneda OCG creada con billete digital y QR.', 'OCG coin created with digital bill and QR.') : L(`${count} monedas OCG creadas con billete digital y QR.`, `${count} OCG coins created with digital bill and QR.`));
+  };
+
+  const qrNodeToCanvas = async (node) => {
+    if (!node) return null;
+    if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
+    return await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width || 260;
+        c.height = img.naturalHeight || img.height || 260;
+        c.getContext('2d').drawImage(img, 0, 0);
+        resolve(c);
+      };
+      img.onerror = reject;
+      img.src = node.src;
+    });
+  };
+
+  const buildQrCanvasForUnit = async (payload, size = 230) => {
+    const host = document.createElement('div');
+    host.style.position = 'fixed';
+    host.style.left = '-99999px';
+    host.style.top = '0';
+    host.style.width = `${size}px`;
+    host.style.height = `${size}px`;
+    document.body.appendChild(host);
+    try {
+      const { node } = await tryRenderQr(host, payload, size, 'L');
+      return await qrNodeToCanvas(node);
+    } finally {
+      host.remove();
+    }
+  };
+
+  const drawWrappedMono = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
+    const raw = String(text || '');
+    let line = '';
+    let yy = y;
+    let lines = 0;
+    for (const ch of raw) {
+      const test = line + ch;
+      if (line && ctx.measureText(test).width > maxWidth) {
+        ctx.fillText(line, x, yy);
+        yy += lineHeight;
+        lines += 1;
+        line = ch;
+        if (lines >= maxLines - 1) break;
+      } else {
+        line = test;
+      }
+    }
+    if (line && lines < maxLines) ctx.fillText(line, x, yy);
+  };
+
+  const downloadBillPng = async (unit = selected) => {
+    if (!unit) return;
+    try {
+      const payload = unitPlain(unit);
+      let qr = null;
+      try {
+        qr = await buildQrCanvasForUnit(billScanPayload(unit), 360);
+      } catch (qrErr) {
+        console.warn('Primary bill QR failed, falling back to plaintext payload', qrErr);
+        qr = await buildQrCanvasForUnit(unit.billId || payload, 360);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 290;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f7f7f4';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'rgba(0,0,0,.035)';
+      for (let x = -canvas.height; x < canvas.width; x += 12) {
+        ctx.beginPath();
+        ctx.moveTo(x, canvas.height);
+        ctx.lineTo(x + canvas.height, 0);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0,0,0,.035)';
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+      ctx.strokeStyle = 'rgba(0,0,0,.17)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(34, 34, canvas.width - 68, canvas.height - 68);
+      ctx.setLineDash([7, 5]);
+      ctx.strokeRect(54, 54, canvas.width - 108, canvas.height - 108);
+      ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(0,0,0,.15)';
+      ctx.beginPath();
+      ctx.moveTo(350, 4); ctx.lineTo(350, 286);
+      ctx.moveTo(875, 4); ctx.lineTo(875, 286);
+      ctx.stroke();
+
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '600 16px IBM Plex Mono, Courier New, monospace';
+      ctx.letterSpacing = '3px';
+      ctx.fillText('OPENCRIPTG', 92, 86);
+      ctx.fillStyle = '#080808';
+      ctx.font = '700 118px IBM Plex Serif, Georgia, serif';
+      ctx.fillText(String(unit.value), 92, 196);
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '600 17px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText('OCG CODE COIN', 92, 232);
+
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '600 17px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText(unit.billId || unit.serial, 386, 70);
+      ctx.fillStyle = '#080808';
+      ctx.font = '700 34px IBM Plex Mono, Courier New, monospace';
+      drawWrappedMono(ctx, unit.fingerprint || unit.check, 386, 110, 430, 43, 2);
+      ctx.fillStyle = '#4b4b47';
+      ctx.font = '500 20px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText('Billete digital interno ·', 386, 202);
+      ctx.fillText('no moneda de curso legal', 386, 232);
+      ctx.fillStyle = '#777';
+      ctx.font = '500 12px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText(`SERIAL ${unit.serial}`, 386, 260);
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(890, 18, 286, 254);
+      ctx.strokeStyle = 'rgba(0,0,0,.28)';
+      ctx.strokeRect(890, 18, 286, 254);
+      if (qr) ctx.drawImage(qr, 905, 30, 232, 232);
+      ctx.fillStyle = '#111';
+      ctx.font = '700 10px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText('QR-LITE', 1142, 50);
+      ctx.fillStyle = '#777';
+      ctx.font = '500 9px IBM Plex Mono, Courier New, monospace';
+      ctx.fillText('PHONE', 1142, 64);
+      ctx.fillText('SCAN', 1142, 76);
+
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `opencriptg-bill-${unit.billId || unit.serial}-${tsStamp()}.png`;
+      a.click();
+    } catch (err) {
+      console.error(err);
+      notify && notify(L('No se pudo descargar el billete PNG.', 'Could not download the bill PNG.'));
+    }
+  };
+
+  const downloadCoinQrPng = async (unit = selected) => {
+    if (!unit) return;
+    try {
+      const qrPayload = billScanPayload(unit);
+      const qrCanvas = await buildQrCanvasForUnit(qrPayload, 360);
+      if (!qrCanvas) throw new Error('QR canvas was not created');
+      const pad = 26;
+      const labelH = 96;
+      const out = document.createElement('canvas');
+      out.width = qrCanvas.width + pad * 2;
+      out.height = qrCanvas.height + pad * 2 + labelH;
+      const ctx = out.getContext('2d');
+
+      ctx.fillStyle = '#f7f7f4';
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, out.width - 2, out.height - 2);
+      ctx.strokeStyle = 'rgba(0,0,0,.16)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(12.5, 12.5, out.width - 25, out.height - 25);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pad - 8, pad - 8, qrCanvas.width + 16, qrCanvas.height + 16);
+      ctx.strokeStyle = 'rgba(0,0,0,.22)';
+      ctx.strokeRect(pad - 8.5, pad - 8.5, qrCanvas.width + 17, qrCanvas.height + 17);
+      ctx.drawImage(qrCanvas, pad, pad, qrCanvas.width, qrCanvas.height);
+
+      const infoY = qrCanvas.height + pad + 24;
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '600 11px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText('OPENCRIPTG · OCG CODE COIN QR', pad, infoY);
+      ctx.fillStyle = '#111111';
+      ctx.font = '700 16px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(`${unit.billId || unit.serial}`, pad, infoY + 24);
+      ctx.fillStyle = '#111111';
+      ctx.font = '600 12px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(`VALUE=${unit.value}  STATUS=${unit.status}  CHECK=${unit.check}`, pad, infoY + 46);
+      ctx.fillStyle = '#777777';
+      ctx.font = '500 10px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(`SCAN DATA · ${String(unit.fingerprint || '').slice(0, 40)}`, pad, infoY + 64);
+
+      const a = document.createElement('a');
+      a.href = out.toDataURL('image/png');
+      a.download = `opencriptg-coin-qr-${sanitizeFilename(unit.billId || unit.serial)}-${tsStamp()}.png`;
+      a.click();
+    } catch (err) {
+      console.error(err);
+      notify && notify(L('No se pudo descargar el QR de la moneda.', 'Could not download the coin QR.'));
+    }
+  };
+
+
+  const verifyUnit = async () => {
+    const raw = String(verifyText || '').trim();
+    if (!raw) return setVerifyResult({ ok:false, text:L('Pega un code coin para verificar.', 'Paste a code coin to verify.') });
+    const lines = Object.fromEntries(raw.split('\n').map(line => {
+      const i = line.indexOf('=');
+      return i > -1 ? [line.slice(0, i), line.slice(i + 1)] : ['HEADER', line];
+    }));
+    const serial = lines.SERIAL || '';
+    const stored = history.find(u => u.serial === serial || raw.includes(u.serial));
+    if (!stored) return setVerifyResult({ ok:false, text:L('No existe en la base local. Posible copia externa o billete no emitido por esta instalación.', 'Not found in local database. Possible external copy or bill not issued by this installation.') });
+    const expected = unitPlain(stored).trim();
+    const base = [stored.value, stored.ownerDid, stored.ownerName, stored.serial, stored.billId, stored.payload, stored.salt, stored.nonce, stored.route, stored.vector, stored.matrix, stored.chainPrev, stored.issued, OCG_COIN_SEAL].join('|');
+    const recalculatedUnitHash = (await makeLongHash(base)).toUpperCase();
+    const recalculatedChainHash = (await makeLongHash([stored.chainPrev, recalculatedUnitHash, stored.serial, stored.issued, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const recalculatedSignature = (await makeLongHash([recalculatedUnitHash, recalculatedChainHash, stored.ownerDid, stored.value, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const ok = raw === expected &&
+      stored.status === 'ACTIVE' &&
+      secureEqual(stored.unitHash, recalculatedUnitHash) &&
+      secureEqual(stored.chainHash, recalculatedChainHash) &&
+      secureEqual(stored.signature, recalculatedSignature) &&
+      lines.CHECK === stored.check;
+    setVerifyResult({ ok, text: ok ? L('Moneda válida, activa, no alterada y emitida dentro de OpencriptG.', 'Valid active coin, unmodified and issued inside OpencriptG.') : L('Moneda alterada, usada, bloqueada, incompleta o fuera de la cadena interna.', 'Coin altered, used, blocked, incomplete, or outside the internal chain.') });
+  };
+
+  const transferSelected = async () => {
+    if (!selected || !transferDid.trim()) return;
+    const nextDid = transferDid.trim();
+    const at = new Date().toISOString();
+    const base = [selected.value, nextDid, selected.ownerName, selected.serial, selected.billId, selected.payload, selected.salt, selected.nonce, selected.route, selected.vector, selected.matrix, selected.chainPrev, selected.issued, OCG_COIN_SEAL].join('|');
+    const unitHash = (await makeLongHash(base)).toUpperCase();
+    const chainHash = (await makeLongHash([selected.chainPrev, unitHash, selected.serial, selected.issued, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const signature = (await makeLongHash([unitHash, chainHash, nextDid, selected.value, OCG_COIN_SEAL].join('|'))).toUpperCase();
+    const fingerprint = `${unitHash.slice(0,8)}-${signature.slice(8,16)}-${chainHash.slice(16,24)}-${randHex(4).toUpperCase()}`;
+    const check = await makeCheck([selected.value, nextDid, selected.serial, selected.billId, selected.payload, selected.salt, selected.nonce, selected.route, selected.vector, selected.matrix, chainHash, unitHash, signature, selected.issued].join('|'));
+    const updated = history.map(u => u.id === selected.id ? {
+      ...u,
+      ownerDid: nextDid,
+      unitHash, chainHash, signature, fingerprint, check,
+      updatedAt: at,
+      transfers: [...(u.transfers || []), { at, to: nextDid, from: u.ownerDid || 'UNASSIGNED', type: 'TRANSFER' }],
+    } : u);
+    saveHistory(updated);
+    setTransferDid('');
+    notify && notify(L('Transferencia interna registrada y re-firmada.', 'Internal transfer registered and re-signed.'));
+  };
+
+  const blockSelected = () => {
+    if (!selected) return;
+    saveHistory(history.map(u => u.id === selected.id ? { ...u, status: u.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE', updatedAt: new Date().toISOString() } : u));
+  };
+
+  const useSelected = () => {
+    if (!selected || selected.status !== 'ACTIVE') return;
+    const usedFor = note.trim() || 'OpencriptG internal ecosystem operation';
+    saveHistory(history.map(u => u.id === selected.id ? {
+      ...u,
+      status: 'USED',
+      updatedAt: new Date().toISOString(),
+      usedAt: new Date().toISOString(),
+      usedFor,
+      transfers: [...(u.transfers || []), { at: new Date().toISOString(), type: 'USED', for: usedFor }]
+    } : u));
+    notify && notify(L('Moneda usada dentro del ecosistema OpencriptG.', 'Coin used inside the OpencriptG ecosystem.'));
+  };
+
+  const removeSelected = () => {
+    if (!selected) return;
+    const next = history.filter(u => u.id !== selected.id);
+    saveHistory(next);
+    setSelectedId(next[0]?.id || '');
+  };
+
+  const exportJson = () => triggerDownload(`opencriptg-ocg-units-${tsStamp()}.json`, JSON.stringify(history, null, 2), 'application/json;charset=utf-8');
+  const exportCsv = () => {
+    const rows = [
+      ['serial','value','owner_did','owner','status','issued','check'].map(csvEscape).join(','),
+      ...history.map(u => [u.serial,u.value,u.ownerDid,u.ownerName,u.status,u.issued,u.check].map(csvEscape).join(','))
+    ].join('\n');
+    triggerDownload(`opencriptg-ocg-units-${tsStamp()}.csv`, rows, 'text/csv;charset=utf-8');
+  };
+
+  const printCertificate = () => {
+    if (!selected) return;
+    const w = window.open('', '_blank', 'width=920,height=900');
+    if (!w) return;
+    const safe = escapeHtmlStrict;
+    const payload = safe(unitPlain(selected));
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(selected.billId || selected.serial)}</title><style>
+      body{margin:0;background:#efefec;color:#111;font-family:'IBM Plex Mono','Courier New',monospace}.page{width:900px;margin:24px auto;background:#f7f7f4;border:2px solid #111;padding:32px}.brand{letter-spacing:.32em;color:#777;text-transform:uppercase}.title{font-size:42px;letter-spacing:.12em;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 260px;gap:24px}.box{border:1px solid #d4d4d4;padding:16px;background:#fff}.k{color:#777;font-size:11px;letter-spacing:.22em;text-transform:uppercase}.v{font-size:16px;margin:6px 0 14px}.code{white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.45}.foot{margin-top:24px;border-top:1px solid #ccc;padding-top:12px;color:#666;font-size:11px}@media print{body{background:#fff}.page{margin:0;width:auto;border:1px solid #000}}
+    </style></head><body><div class="page"><div class="brand">opencriptG · OCG Code Coin Bill</div><div class="title">OCG ${selected.value}</div><div class="grid"><div class="box"><div class="k">Billete digital</div><div class="v">${selected.billId || selected.serial}</div><div class="k">Serial</div><div class="v">${selected.serial}</div><div class="k">Owner DID</div><div class="v">${selected.ownerDid || 'UNASSIGNED'}</div><div class="k">Status</div><div class="v">${selected.status}</div><div class="k">Fingerprint</div><div class="v">${selected.fingerprint || selected.check}</div><div class="k">Check</div><div class="v">${selected.check}</div></div><div class="box"><div id="qr"></div></div></div><div class="box" style="margin-top:18px"><div class="k">Code Coin</div><div class="code">${payload}</div></div><div class="foot">Moneda digital interna de uso privado dentro de OpencriptG/diktatcart. No es moneda de curso legal, no representa inversión pública, depósito ni promesa financiera.</div></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(unitPlain(selected))},width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setTimeout(()=>print(),500)<\/script></body></html>`);
+    w.document.close();
+  };
+
+  const filtered = history.filter(u => {
+    const q = query.toLowerCase().trim();
+    if (!q) return true;
+    return [u.serial,u.ownerDid,u.ownerName,u.status,u.check,String(u.value)].some(x => String(x||'').toLowerCase().includes(q));
+  });
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg ocgu-dlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>OCG Code Coins</h2>
+            <p>{L('Sistema interno para crear, verificar, transferir, usar y certificar monedas 5 / 10 / 25 / 50 dentro de OpencriptG/diktatcart.', 'Internal system to create, verify, transfer, use, and certify 5 / 10 / 25 / 50 coins inside OpencriptG/diktatcart.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="ocgu-wallet-hero">
+          <div className="ocgu-wallet-title">
+            <span>OCG UNITS WALLET</span>
+            <strong>{activeBalance}</strong>
+            <em>{L('balance interno activo', 'active internal balance')}</em>
+          </div>
+          <div className="ocgu-wallet-cards">
+            {OCG_COIN_VALUES.map(v => (
+              <button key={v} className={`ocgu-wallet-card ${value===v?'on':''}`} onClick={() => setValue(v)}>
+                <b>{v}</b>
+                <span>{v===5 ? L('Micro moneda', 'Micro coin') : v===10 ? L('Moneda base', 'Base coin') : v===25 ? L('Moneda avanzada', 'Advanced coin') : L('Moneda premium', 'Premium coin')}</span>
+                <small>{v===5 ? L('Uso ligero', 'Light use') : v===10 ? L('Acciones internas', 'Internal actions') : v===25 ? L('Herramientas y certificados', 'Tools and certificates') : L('Licencias y módulos especiales', 'Licenses and special modules')}</small>
+              </button>
+            ))}
+          </div>
+          <div className="ocgu-wallet-proof">
+            <span>{L('Solo funciona dentro del ecosistema OpencriptG/diktatcart.', 'Works only inside the OpencriptG/diktatcart ecosystem.')}</span>
+            <span>{L('No es moneda de curso legal, inversión, depósito ni criptomoneda pública.', 'Not legal tender, investment, deposit, or public cryptocurrency.')}</span>
+            <span>{L('Cada unidad se valida por DID, serial, QR, hash, nonce, salt, route, estado e historial.', 'Each unit is validated by DID, serial, QR, hash, nonce, salt, route, status, and history.')}</span>
+          </div>
+        </div>
+        <div className="ocgu-layout">
+          <section className="ocgu-panel">
+            <div className="ocgu-head">{L('Crear unidad', 'Create unit')}</div>
+            <div className="ocgu-values">
+              {OCG_COIN_VALUES.map(v => <button key={v} className={value===v?'on':''} onClick={()=>setValue(v)}>{v}</button>)}
+            </div>
+            <label>{L('Cantidad a crear', 'Quantity to create')}<input type="number" min="1" max="1000" value={issueQty} onChange={e=>setIssueQty(Math.max(1, Math.min(1000, Number(e.target.value)||1)))} /></label>
+            <div className="ocgu-qty-note">{L('Puedes crear hasta 1000 billetes digitales por lote.', 'You can create up to 1000 digital bills per batch.')}</div>
+            <label>Ivory DID<input value={ownerDid} onChange={e=>setOwnerDid(e.target.value)} placeholder="IVORY-DID-..." /></label>
+            <label>{L('Nombre / comprador', 'Name / buyer')}<input value={ownerName} onChange={e=>setOwnerName(e.target.value)} /></label>
+            <label>{L('Nota privada', 'Private note')}<textarea value={note} onChange={e=>setNote(e.target.value)} /></label>
+            <button className="ocgu-primary" onClick={createUnit}>{L('Generar billete(s)', 'Generate bill(s)')}</button>
+          </section>
+
+          <section className="ocgu-panel ocgu-main">
+            <div className="ocgu-head">{L('Billete digital seleccionado', 'Selected digital bill')}</div>
+            {selected ? <>
+              <div className={`ocgu-bill ocgu-bill-${selected.value}`}>
+                <div className="ocgu-bill-side"><span>OPENCRIPTG</span><b>{selected.value}</b><em>OCG CODE COIN</em></div>
+                <div className="ocgu-bill-main">
+                  <span>{selected.billId || selected.serial}</span>
+                  <strong>{selected.fingerprint || selected.check}</strong>
+                  <small>{L('Billete digital interno · no moneda de curso legal', 'Internal digital bill · not legal tender')}</small>
+                </div>
+                <button type="button" className="ocgu-bill-qrbtn" onClick={() => setQrDetailsOpen(true)} title={L('Ver datos del QR', 'View QR data')}>
+                  <OCGUnitsQR payload={billScanPayload(selected)} size={170} />
+                </button>
+              </div>
+              <div className="ocgu-selected">
+                <div><span>VALUE</span><strong>{selected.value}</strong></div>
+                <div><span>SERIAL</span><strong>{selected.serial}</strong></div>
+                <div><span>STATUS</span><strong className={selected.status==='ACTIVE'?'good':'bad'}>{selected.status}</strong></div>
+                <div><span>CHECK</span><strong>{selected.check}</strong></div>
+              </div>
+              <div className="ocgu-unit-card">
+                <div><span>{L('Uso', 'Use')}</span><b>{selected.use}</b></div>
+                <div><span>{L('Propietario', 'Owner')}</span><b>{selected.ownerDid || 'UNASSIGNED'}</b></div>
+                <div><span>{L('Red interna', 'Internal network')}</span><b>OpencriptG / diktatcart</b></div>
+                <div><span>Bill ID</span><b>{selected.billId || '—'}</b></div>
+                <div><span>Unit Hash</span><b>{selected.unitHash ? selected.unitHash.slice(0, 24) + '…' : '—'}</b></div>
+                <div><span>Chain Hash</span><b>{selected.chainHash ? selected.chainHash.slice(0, 24) + '…' : '—'}</b></div>
+                <div><span>{L('Última actualización', 'Last update')}</span><b>{selected.updatedAt ? new Date(selected.updatedAt).toLocaleString() : '—'}</b></div>
+              </div>
+              <div className="ocgu-code"><pre>{unitPlain(selected)}</pre><OCGUnitsQR payload={billScanPayload(selected)} size={240} /></div>
+              <div className="ocgu-actions">
+                <button onClick={()=>navigator.clipboard?.writeText(unitPlain(selected))}>{L('Copiar code', 'Copy code')}</button>
+                <button onClick={printCertificate}>{L('Certificado / PDF', 'Certificate / PDF')}</button>
+                <button onClick={()=>downloadBillPng(selected)}>{L('Descargar billete PNG', 'Download bill PNG')}</button>
+                <button onClick={()=>downloadCoinQrPng(selected)}>{L('Descargar QR PNG', 'Download QR PNG')}</button>
+                <button onClick={()=>setQrDetailsOpen(true)}>{L('Ver datos QR', 'View QR data')}</button>
+                <button onClick={()=>openBillScanPreview(selected)}>{L('Vista escaneo', 'Scan view')}</button>
+                <button onClick={useSelected} disabled={selected.status !== 'ACTIVE'}>{L('Usar en OpencriptG', 'Use in OpencriptG')}</button>
+                <button onClick={blockSelected}>{selected.status==='ACTIVE'?L('Bloquear','Block'):L('Activar','Activate')}</button>
+                <button onClick={removeSelected}>{L('Eliminar', 'Delete')}</button>
+              </div>
+              <div className="ocgu-transfer">
+                <input value={transferDid} onChange={e=>setTransferDid(e.target.value)} placeholder="Nuevo Ivory DID" />
+                <button onClick={transferSelected}>{L('Transferir', 'Transfer')}</button>
+              </div>
+            </> : <div className="ocgu-empty">{L('Todavía no hay unidades.', 'No units yet.')}</div>}
+          </section>
+
+          <section className="ocgu-panel">
+            <div className="ocgu-head">{L('Base de datos', 'Database')}</div>
+            <div className="ocgu-ledger">
+              <div><span>{L('Emitido total', 'Issued total')}</span><b>{issuedTotal}</b></div>
+              <div><span>{L('Activo', 'Active')}</span><b>{activeBalance}</b></div>
+              <div><span>{L('Registros', 'Records')}</span><b>{history.length}</b></div>
+            </div>
+            <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={L('Buscar...', 'Search...')} />
+            <div className="ocgu-list">
+              {filtered.map(u => <button key={u.id} className={selected?.id===u.id?'on':''} onClick={()=>setSelectedId(u.id)}><b>{u.value}</b><span>{u.serial}</span><em>{u.status}</em></button>)}
+            </div>
+            <div className="ocgu-actions two"><button onClick={exportJson} disabled={!history.length}>JSON</button><button onClick={exportCsv} disabled={!history.length}>CSV</button></div>
+            <div className="ocgu-head spaced">{L('Verificar', 'Verify')}</div>
+            <textarea value={verifyText} onChange={e=>setVerifyText(e.target.value)} placeholder={L('Pega aquí un OCG Code Unit...', 'Paste an OCG Code Unit here...')} />
+            <button className="ocgu-primary" onClick={verifyUnit}>{L('Verificar moneda', 'Verify coin')}</button>
+            {verifyResult && <div className={`ocgu-verify ${verifyResult.ok?'ok':'no'}`}>{verifyResult.text}</div>}
+          </section>
+        </div>
+        {selected && qrDetailsOpen && (
+          <div className="ocgu-qrdata-back" onClick={() => setQrDetailsOpen(false)}>
+            <section className="ocgu-qrdata" onClick={e => e.stopPropagation()}>
+              <div className="ocgu-qrdata-head">
+                <div><h3>{L('Datos completos del billete', 'Complete bill data')}</h3><p>{L('Estos son los datos que contiene el QR funcional del billete.', 'These are the data contained in the functional QR of the bill.')}</p></div>
+                <button onClick={() => setQrDetailsOpen(false)}>×</button>
+              </div>
+              <div className="ocgu-qrdata-body">
+                <div className="ocgu-qrdata-code"><OCGUnitsQR payload={billScanPayload(selected)} size={240} /></div>
+                <div className="ocgu-qrdata-table">
+                  {qrDataRows(selected).map(([k,v]) => <div key={k}><span>{k}</span><b>{String(v || '—')}</b></div>)}
+                </div>
+              </div>
+              <textarea className="ocgu-qrdata-plain" readOnly value={unitPlain(selected)} />
+              <div className="ocgu-actions"><button onClick={() => navigator.clipboard?.writeText(billScanPayload(selected))}>{L('Copiar texto QR', 'Copy QR text')}</button><button onClick={() => openBillScanPreview(selected)}>{L('Abrir tabla', 'Open table')}</button><button onClick={() => downloadCoinQrPng(selected)}>{L('Descargar QR PNG', 'Download QR PNG')}</button><button onClick={() => downloadBillPng(selected)}>{L('Descargar billete PNG', 'Download bill PNG')}</button></div>
+            </section>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+};
+
+const TextStudioDialog = ({ open, onClose, notify, language }) => {
+  const S = textLabStrings(language);
+  const L = (es, en) => (language === 'es' ? es : en);
+  const TEXTLAB_PRO_KEY = 'opencriptG_text_lab_pro_v3';
+  const editorRef = useRef(null);
+  const importRef = useRef(null);
+  const [docs, setDocs] = useState([]);
+  const [activeDocId, setActiveDocId] = useState('');
+  const [findValue, setFindValue] = useState('');
+  const [replaceValue, setReplaceValue] = useState('');
+  const [fontName, setFontName] = useState('IBM Plex Serif');
+  const [fontPx, setFontPx] = useState(18);
+  const [lineHeight, setLineHeight] = useState('1.6');
+  const [textColor, setTextColor] = useState('#0a0a0a');
+  const [hiliteColor, setHiliteColor] = useState('#fff39a');
+  const [focusMode, setFocusMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiOutput, setAiOutput] = useState('');
+
+  const makeDoc = (title = S.untitled, html = '<h1>opencriptG Text Lab</h1><p>Write, design, outline, and refine rich text here.</p>') => ({
+    id: `doc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    html,
+    updatedAt: Date.now(),
+  });
+
+  const activeDoc = docs.find((d) => d.id === activeDocId) || docs[0] || null;
+
+  const safeText = (value = '') => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const textToHtml = (plain) => `<p>${safeText(String(plain || '')).replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`;
+
+  const getPlainFromHtml = (markup) => {
+    const div = document.createElement('div');
+    div.innerHTML = markup || '';
+    return (div.innerText || '').trim();
+  };
+
+  const pushNotice = (msg) => notify && msg && notify(msg);
+
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem(TEXTLAB_PRO_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const loadedDocs = Array.isArray(parsed.docs) && parsed.docs.length
+          ? parsed.docs.map(doc => ({ ...doc, title: String(doc.title || S.untitled).slice(0, 120), html: sanitizeRichHtml(doc.html || '<p></p>') }))
+          : [makeDoc()];
+        setDocs(loadedDocs);
+        setActiveDocId(parsed.activeDocId || loadedDocs[0].id);
+        setFontName(parsed.fontName || 'IBM Plex Serif');
+        setFontPx(parsed.fontPx || 18);
+        setLineHeight(parsed.lineHeight || '1.6');
+        setDarkMode(!!parsed.darkMode);
+        setFocusMode(!!parsed.focusMode);
+      } catch {
+        const starter = [makeDoc()];
+        setDocs(starter);
+        setActiveDocId(starter[0].id);
+      }
+    } else {
+      const starter = [makeDoc()];
+      setDocs(starter);
+      setActiveDocId(starter[0].id);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !docs.length) return;
+    localStorage.setItem(TEXTLAB_PRO_KEY, JSON.stringify({ docs, activeDocId, fontName, fontPx, lineHeight, darkMode, focusMode }));
+  }, [open, docs, activeDocId, fontName, fontPx, lineHeight, darkMode, focusMode]);
+
+  useEffect(() => {
+    if (!open || !editorRef.current || !activeDoc) return;
+    editorRef.current.innerHTML = sanitizeRichHtml(activeDoc.html || '<p></p>');
+    editorRef.current.style.lineHeight = lineHeight;
+  }, [open, activeDocId]);
+
+  const focusEditor = () => editorRef.current && editorRef.current.focus();
+
+  const syncEditor = () => {
+    if (!editorRef.current || !activeDoc) return;
+    const next = sanitizeRichHtml(editorRef.current.innerHTML);
+    setDocs((prev) => prev.map((doc) => (doc.id === activeDoc.id ? { ...doc, html: next, updatedAt: Date.now() } : doc)));
+  };
+
+  const setActiveTitle = (value) => {
+    if (!activeDoc) return;
+    setDocs((prev) => prev.map((doc) => (doc.id === activeDoc.id ? { ...doc, title: value, updatedAt: Date.now() } : doc)));
+  };
+
+  const exec = (cmd, value = null) => {
+    focusEditor();
+    try { document.execCommand('styleWithCSS', false, true); } catch {}
+    document.execCommand(cmd, false, value);
+    syncEditor();
+  };
+
+  const setBlock = (tag) => exec('formatBlock', tag);
+  const insertHtmlAtCursor = (markup) => { focusEditor(); document.execCommand('insertHTML', false, sanitizeRichHtml(markup)); syncEditor(); };
+  const insertTextAtCursor = (value) => { focusEditor(); document.execCommand('insertText', false, value); syncEditor(); };
+  const getSelectedText = () => {
+    const sel = window.getSelection();
+    return sel ? String(sel.toString() || '') : '';
+  };
+
+  const applyFontSize = (px) => {
+    focusEditor();
+    document.execCommand('fontSize', false, '7');
+    const fonts = editorRef.current.querySelectorAll('font[size="7"]');
+    fonts.forEach((el) => {
+      el.removeAttribute('size');
+      el.style.fontSize = `${px}px`;
+    });
+    setFontPx(px);
+    syncEditor();
+  };
+
+  const insertChecklist = () => insertHtmlAtCursor('<ul class="textlab-check"><li><input type="checkbox" /> item</li><li><input type="checkbox" /> item</li></ul><p></p>');
+  const insertLink = () => {
+    const url = window.prompt(S.linkPrompt, 'https://');
+    const safe = sanitizeUrl(url);
+    if (safe) exec('createLink', safe);
+    else if (url) pushNotice(L('URL bloqueada por seguridad', 'URL blocked for safety'));
+  };
+  const insertImage = () => {
+    const url = window.prompt(S.imagePrompt, 'https://');
+    const safe = sanitizeUrl(url, { images: true });
+    if (safe) exec('insertImage', safe);
+    else if (url) pushNotice(L('Imagen bloqueada por seguridad', 'Image blocked for safety'));
+  };
+  const insertTable = () => {
+    const raw = window.prompt(S.tablePrompt, '3x3');
+    if (!raw) return;
+    const [cRaw, rRaw] = raw.toLowerCase().split('x');
+    const cols = Math.max(1, Math.min(8, parseInt(cRaw || '3', 10) || 3));
+    const rows = Math.max(1, Math.min(12, parseInt(rRaw || '3', 10) || 3));
+    const table = [`<table class="textlab-table"><tbody>`];
+    for (let r = 0; r < rows; r++) {
+      table.push('<tr>');
+      for (let c = 0; c < cols; c++) table.push(`<td>${r === 0 ? `H${c + 1}` : `R${r}C${c + 1}`}</td>`);
+      table.push('</tr>');
+    }
+    table.push('</tbody></table><p></p>');
+    insertHtmlAtCursor(table.join(''));
+  };
+
+  const addDoc = () => {
+    syncEditor();
+    const next = makeDoc(`${L('Documento', 'Document')} ${docs.length + 1}`, `<h1>${L('Nuevo documento', 'New document')}</h1><p></p>`);
+    setDocs((prev) => [...prev, next]);
+    setActiveDocId(next.id);
+    pushNotice(L('Nueva pestaña creada', 'New tab created'));
+  };
+
+  const switchDoc = (id) => {
+    syncEditor();
+    setActiveDocId(id);
+  };
+
+  const closeDoc = (id) => {
+    let nextDocs = docs.filter((doc) => doc.id !== id);
+    if (!nextDocs.length) nextDocs = [makeDoc()];
+    setDocs(nextDocs);
+    if (activeDocId === id) setActiveDocId(nextDocs[0].id);
+    pushNotice(L('Pestaña cerrada', 'Tab closed'));
+  };
+
+  const duplicateDoc = () => {
+    if (!activeDoc) return;
+    syncEditor();
+    const clone = makeDoc(`${activeDoc.title} copy`, activeDoc.html);
+    setDocs((prev) => [...prev, clone]);
+    setActiveDocId(clone.id);
+    pushNotice(L('Documento duplicado', 'Document duplicated'));
+  };
+
+  const newDoc = () => addDoc();
+
+  const importDoc = (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_TEXT_IMPORT_BYTES) {
+      pushNotice(L('Archivo demasiado grande para importar con seguridad', 'File too large to import safely'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result || '');
+      const nextHtml = /<[^>]+>/.test(raw) ? sanitizeRichHtml(raw) : textToHtml(raw);
+      const next = makeDoc(file.name.replace(/\.[^.]+$/, ''), nextHtml);
+      setDocs((prev) => [...prev, next]);
+      setActiveDocId(next.id);
+      pushNotice(S.imported);
+    };
+    reader.readAsText(file);
+  };
+
+  const exportDoc = (type) => {
+    if (!activeDoc) return;
+    syncEditor();
+    const titleSlug = (activeDoc.title || S.untitled).replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '') || 'textlab-document';
+    const currentHtml = sanitizeRichHtml(editorRef.current ? editorRef.current.innerHTML : activeDoc.html);
+    if (type === 'html') {
+      const payload = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtmlStrict(activeDoc.title)}</title></head><body>${currentHtml}</body></html>`;
+      triggerDownload(`${titleSlug}.html`, payload, 'text/html;charset=utf-8');
+    } else if (type === 'md') {
+      triggerDownload(`${titleSlug}.md`, htmlToMarkdownLite(currentHtml), 'text/markdown;charset=utf-8');
+    } else {
+      triggerDownload(`${titleSlug}.txt`, getPlainFromHtml(currentHtml), 'text/plain;charset=utf-8');
+    }
+    pushNotice(S.exported);
+  };
+
+  const renderPrintWindow = (forPdf = false) => {
+    if (!activeDoc) return null;
+    syncEditor();
+    const currentHtml = sanitizeRichHtml(editorRef.current ? editorRef.current.innerHTML : activeDoc.html);
+    const win = window.open('', '_blank', 'width=1100,height=860');
+    if (!win) return null;
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtmlStrict(activeDoc.title)}</title><style>
+      body{font-family:Georgia,serif;padding:40px;line-height:${lineHeight};color:#111} h1,h2,h3,h4{font-family:Georgia,serif} table{border-collapse:collapse;width:100%;margin:16px 0} td,th{border:1px solid #bbb;padding:8px} blockquote{border-left:3px solid #111;padding-left:14px;color:#444} pre{background:#f4f4f4;padding:14px;white-space:pre-wrap} img{max-width:100%;height:auto}
+    </style></head><body>${currentHtml}</body></html>`);
+    win.document.close();
+    if (forPdf) setTimeout(() => { win.focus(); win.print(); }, 240);
+    return win;
+  };
+
+  const printDoc = () => {
+    const win = renderPrintWindow(false);
+    if (!win) return;
+    setTimeout(() => { win.focus(); win.print(); }, 200);
+    pushNotice(S.printed);
+  };
+
+  const exportPdf = () => {
+    const win = renderPrintWindow(true);
+    if (!win) return;
+    pushNotice(L('Vista PDF abierta. Usa “Guardar como PDF”.', 'PDF view opened. Use “Save as PDF”.'));
+  };
+
+  const replaceOne = () => {
+    if (!findValue || !editorRef.current) return;
+    const current = editorRef.current.innerHTML;
+    if (!current.toLowerCase().includes(findValue.toLowerCase())) return pushNotice(S.notFound);
+    editorRef.current.innerHTML = sanitizeRichHtml(current.replace(new RegExp(findValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), escapeHtmlStrict(replaceValue)));
+    syncEditor();
+    pushNotice(S.replaced);
+  };
+
+  const replaceAll = () => {
+    if (!findValue || !editorRef.current) return;
+    const current = editorRef.current.innerHTML;
+    const regex = new RegExp(findValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    if (!regex.test(current)) return pushNotice(S.notFound);
+    editorRef.current.innerHTML = sanitizeRichHtml(current.replace(regex, escapeHtmlStrict(replaceValue)));
+    syncEditor();
+    pushNotice(S.replaced);
+  };
+
+  const smartClean = () => {
+    if (!editorRef.current) return;
+    editorRef.current.innerHTML = sanitizeRichHtml(editorRef.current.innerHTML
+      .replace(/<p><br><\/p>/g, '<p></p>')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/(<\/p>\s*){3,}/g, '</p><p></p>')
+      .trim());
+    syncEditor();
+    pushNotice(S.cleaned);
+  };
+
+  const autocorrectText = (value) => {
+    let out = String(value || '');
+    const replacements = [
+      [/\bi\b/g, 'I'],
+      [/\bteh\b/gi, 'the'],
+      [/\brecieve\b/gi, 'receive'],
+      [/\bseperate\b/gi, 'separate'],
+      [/\bdont\b/gi, "don't"],
+      [/\bcant\b/gi, "can't"],
+      [/\bqeu\b/gi, 'que'],
+      [/\bestta\b/gi, 'está'],
+      [/\bporqe\b/gi, 'porque'],
+      [/\bmas\b(?=\s)/gi, 'más'],
+      [/\s+,/g, ','],
+      [/\s+\./g, '.'],
+      [/\s+!/g, '!'],
+      [/\s+\?/g, '?'],
+      [/\s{2,}/g, ' '],
+      [/\n{3,}/g, '\n\n']
+    ];
+    replacements.forEach(([rx, rep]) => { out = out.replace(rx, rep); });
+    out = out.replace(/(^\s*[a-záéíóúñ])/gm, (m) => m.toUpperCase());
+    return out.trim();
+  };
+
+  const transformSelectionText = (transformer) => {
+    const txt = getSelectedText();
+    if (!txt) return pushNotice(L('Selecciona un texto primero', 'Select some text first'));
+    insertTextAtCursor(transformer(txt));
+  };
+
+  const rewriteSmart = (source, mode) => {
+    const clean = autocorrectText(source).replace(/\s+/g, ' ').trim();
+    const sentences = clean.split(/(?<=[.!?])\s+/).filter(Boolean);
+    const prompt = aiPrompt.trim();
+    if (mode === 'rewrite') {
+      const lead = prompt ? `${prompt}. ` : '';
+      return `${lead}${sentences.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}`;
+    }
+    if (mode === 'summarize') return sentences.slice(0, Math.min(3, sentences.length)).join(' ') || clean;
+    if (mode === 'expand') return `${clean}\n\n${L('Además, este contenido puede desarrollarse con más contexto, un ejemplo práctico y una conclusión clara para reforzar la idea principal.', 'Additionally, this content can be expanded with more context, a practical example, and a clear concluding insight to reinforce the main idea.')}`;
+    if (mode === 'bullets') return sentences.map((s) => `• ${s.replace(/^•\s*/, '')}`).join('\\n');
+    if (mode === 'professional') return `${L('Versión profesional:', 'Professional version:')} ${sentences.join(' ')}`;
+    if (mode === 'simplify') return sentences.map((s) => s.replace(/, /g, '. ')).join(' ');
+    if (mode === 'headlines') {
+      const base = clean.split(/\s+/).slice(0, 6).join(' ');
+      return [1,2,3,4,5].map((n) => `${n}. ${base} ${L('— versión', '— version')} ${n}`).join('\\n');
+    }
+    return clean;
+  };
+
+  const runAiAction = (mode) => {
+    const source = getSelectedText() || getPlainFromHtml(editorRef.current ? editorRef.current.innerHTML : activeDoc?.html || '');
+    if (!source) return pushNotice(L('No hay contenido para procesar', 'There is no content to process'));
+    const result = rewriteSmart(source, mode);
+    setAiOutput(result);
+    if (mode === 'headlines') insertHtmlAtCursor(`<pre><code>${safeText(result)}</code></pre><p></p>`);
+    else insertHtmlAtCursor(textToHtml(result));
+    pushNotice(L('Asistente de escritura aplicado', 'Writing assistant applied'));
+  };
+
+  const runAutocorrect = () => {
+    const selected = getSelectedText();
+    if (selected) insertTextAtCursor(autocorrectText(selected));
+    else if (editorRef.current) { editorRef.current.innerHTML = textToHtml(autocorrectText(getPlainFromHtml(editorRef.current.innerHTML))); syncEditor(); }
+    pushNotice(L('Autocorrección aplicada', 'Autocorrect applied'));
+  };
+
+  const insertTemplate = (markup) => insertHtmlAtCursor(markup);
+  const quickTools = [
+    { key: 'tpl-email', label: L('Email', 'Email'), run: () => insertTemplate('<p>Subject:</p><p>Hello [Name],</p><p></p><p>Best regards,</p>') },
+    { key: 'tpl-meeting', label: L('Reunión', 'Meeting notes'), run: () => insertTemplate('<h2>Meeting Notes</h2><ul><li>Attendees</li><li>Decisions</li><li>Next steps</li></ul>') },
+    { key: 'tpl-table', label: L('Tabla 3x3', '3x3 table'), run: insertTable },
+    { key: 'tpl-code', label: L('Bloque código', 'Code block'), run: () => insertTemplate('<pre><code>const sample = true;</code></pre><p></p>') },
+    { key: 'tpl-quote', label: L('Cita', 'Quote'), run: () => insertTemplate('<blockquote><p>“Quote here.”</p><p><strong>— Source</strong></p></blockquote>') },
+    { key: 'tpl-check', label: L('Checklist', 'Checklist'), run: insertChecklist },
+    { key: 'tpl-timeline', label: L('Timeline', 'Timeline'), run: () => insertTemplate('<ul><li><strong>Phase 1:</strong> Discovery</li><li><strong>Phase 2:</strong> Build</li><li><strong>Phase 3:</strong> Launch</li></ul>') },
+    { key: 'tpl-swot', label: 'SWOT', run: () => insertTemplate('<table class="textlab-table"><tbody><tr><td>Strengths</td><td>Weaknesses</td></tr><tr><td></td><td></td></tr><tr><td>Opportunities</td><td>Threats</td></tr><tr><td></td><td></td></tr></tbody></table>') },
+  ];
+
+  const statsSource = (() => {
+    const plain = getPlainFromHtml(activeDoc?.html || '');
+    const words = plain ? plain.split(/\s+/).filter(Boolean).length : 0;
+    const chars = plain.length;
+    const paragraphs = Math.max(1, plain ? plain.split(/\n+/).filter(Boolean).length : 1);
+    return { words, chars, paragraphs, reading: Math.max(1, Math.ceil(words / 200)) };
+  })();
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className={`dlg textdlg textdlg-pro ${focusMode ? 'focus' : ''} ${darkMode ? 'dark' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h textdlg-h">
+          <div>
+            <h2>{S.title} · PRO</h2>
+            <p>{L('Editor avanzado con pestañas, biblioteca interna, exportación PDF, tema oscuro y asistente de redacción.', 'Advanced editor with tabs, internal library, PDF export, dark theme, and writing assistant.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="textdlg-topbar">
+          <input className="textdlg-title" value={activeDoc?.title || ''} onChange={(e) => setActiveTitle(e.target.value)} placeholder={S.docTitle} />
+          <div className="textdlg-headactions">
+            <button className="dbdlg-btn" onClick={newDoc}>{S.newDoc}</button>
+            <button className="dbdlg-btn" onClick={duplicateDoc}>{L('Duplicar', 'Duplicate')}</button>
+            <button className="dbdlg-btn" onClick={() => importRef.current && importRef.current.click()}>{S.openDoc}</button>
+            <button className="dbdlg-btn" onClick={() => exportDoc('html')}>{S.saveHtml}</button>
+            <button className="dbdlg-btn" onClick={() => exportDoc('md')}>{S.saveMd}</button>
+            <button className="dbdlg-btn" onClick={() => exportDoc('txt')}>{S.saveTxt}</button>
+            <button className="dbdlg-btn" onClick={exportPdf}>PDF</button>
+            <button className="dbdlg-btn" onClick={printDoc}>{S.print}</button>
+            <button className={`dbdlg-btn ${darkMode ? 'dark' : ''}`} onClick={() => setDarkMode((v) => !v)}>{L('Modo oscuro', 'Dark mode')}</button>
+          </div>
+        </div>
+
+        <div className="textdlg-tabs">
+          <div className="textdlg-tabstrip">
+            {docs.map((doc) => (
+              <button key={doc.id} className={`textdlg-tab ${activeDocId === doc.id ? 'active' : ''}`} onClick={() => switchDoc(doc.id)}>
+                <span>{doc.title || S.untitled}</span>
+                <i onClick={(e) => { e.stopPropagation(); closeDoc(doc.id); }}>×</i>
+              </button>
+            ))}
+            <button className="textdlg-tab add" onClick={addDoc}>+</button>
+          </div>
+          <div className="textdlg-tabmeta">{docs.length} {L('documentos', 'documents')} · {L('guardado local automático', 'local autosave active')}</div>
+        </div>
+
+        <div className="textdlg-toolbar">
+          <div className="textdlg-group">
+            <button className="textdlg-tool" onClick={() => exec('undo')}>{S.undo}</button>
+            <button className="textdlg-tool" onClick={() => exec('redo')}>{S.redo}</button>
+          </div>
+          <div className="textdlg-group">
+            <button className="textdlg-tool" onClick={() => exec('bold')}>B</button>
+            <button className="textdlg-tool" onClick={() => exec('italic')}><i>I</i></button>
+            <button className="textdlg-tool" onClick={() => exec('underline')}><u>U</u></button>
+            <button className="textdlg-tool" onClick={() => exec('strikeThrough')}><s>S</s></button>
+          </div>
+          <div className="textdlg-group">
+            <button className="textdlg-tool" onClick={() => setBlock('H1')}>H1</button>
+            <button className="textdlg-tool" onClick={() => setBlock('H2')}>H2</button>
+            <button className="textdlg-tool" onClick={() => setBlock('H3')}>H3</button>
+            <button className="textdlg-tool" onClick={() => setBlock('P')}>{S.paragraph}</button>
+            <button className="textdlg-tool" onClick={() => setBlock('BLOCKQUOTE')}>{S.quote}</button>
+            <button className="textdlg-tool" onClick={() => setBlock('PRE')}>{S.code}</button>
+          </div>
+          <div className="textdlg-group">
+            <button className="textdlg-tool" onClick={() => exec('insertOrderedList')}>{S.ordered}</button>
+            <button className="textdlg-tool" onClick={() => exec('insertUnorderedList')}>{S.unordered}</button>
+            <button className="textdlg-tool" onClick={insertChecklist}>{S.checklist}</button>
+            <button className="textdlg-tool" onClick={() => exec('justifyLeft')}>{S.left}</button>
+            <button className="textdlg-tool" onClick={() => exec('justifyCenter')}>{S.center}</button>
+            <button className="textdlg-tool" onClick={() => exec('justifyRight')}>{S.right}</button>
+          </div>
+          <div className="textdlg-group textdlg-group-inputs">
+            <label>{S.font}<select value={fontName} onChange={(e) => { setFontName(e.target.value); exec('fontName', e.target.value); }}><option>IBM Plex Serif</option><option>IBM Plex Sans</option><option>JetBrains Mono</option><option>Georgia</option><option>Times New Roman</option><option>Arial</option></select></label>
+            <label>{S.size}<select value={fontPx} onChange={(e) => applyFontSize(Number(e.target.value))}>{[12,14,16,18,20,24,28,32,40].map((n) => <option key={n} value={n}>{n}px</option>)}</select></label>
+            <label>{S.line}<select value={lineHeight} onChange={(e) => { setLineHeight(e.target.value); if (editorRef.current) editorRef.current.style.lineHeight = e.target.value; syncEditor(); }}><option value="1.2">1.2</option><option value="1.4">1.4</option><option value="1.6">1.6</option><option value="1.8">1.8</option><option value="2">2.0</option></select></label>
+            <label>{S.textColor}<input type="color" value={textColor} onChange={(e) => { setTextColor(e.target.value); exec('foreColor', e.target.value); }} /></label>
+            <label>{S.highlight}<input type="color" value={hiliteColor} onChange={(e) => { setHiliteColor(e.target.value); exec('hiliteColor', e.target.value); }} /></label>
+          </div>
+          <div className="textdlg-group">
+            <button className="textdlg-tool" onClick={insertLink}>{S.link}</button>
+            <button className="textdlg-tool" onClick={insertImage}>{S.image}</button>
+            <button className="textdlg-tool" onClick={insertTable}>{S.table}</button>
+            <button className="textdlg-tool" onClick={() => exec('removeFormat')}>{S.clearFmt}</button>
+          </div>
+        </div>
+
+        <div className="textdlg-body textdlg-body-pro">
+          <aside className="textdlg-side textdlg-side-pro">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Biblioteca interna', 'Internal library')}</div>
+              <div className="textdlg-library">
+                {docs.map((doc) => (
+                  <button key={doc.id} className={`textdlg-docrow ${activeDocId === doc.id ? 'active' : ''}`} onClick={() => switchDoc(doc.id)}>
+                    <span>{doc.title || S.untitled}</span>
+                    <small>{new Date(doc.updatedAt).toLocaleString()}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{S.quick}</div>
+              <div className="textdlg-stack">
+                <button className={`dbdlg-btn ${focusMode ? 'danger' : ''}`} onClick={() => setFocusMode((v) => !v)}>{S.focus}</button>
+                <button className="dbdlg-btn" onClick={smartClean}>{S.smart}</button>
+                <button className="dbdlg-btn" onClick={runAutocorrect}>{L('Autocorregir', 'Autocorrect')}</button>
+                <button className="dbdlg-btn" onClick={() => transformSelectionText((s) => s.toUpperCase())}>{S.upper}</button>
+                <button className="dbdlg-btn" onClick={() => transformSelectionText((s) => s.toLowerCase())}>{S.lower}</button>
+                <button className="dbdlg-btn" onClick={() => insertTextAtCursor(new Date().toLocaleString())}>{S.stamp}</button>
+              </div>
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{S.find} / {S.replace}</div>
+              <div className="textdlg-findwrap">
+                <input className="textdlg-mini" value={findValue} onChange={(e) => setFindValue(e.target.value)} placeholder={S.find} />
+                <input className="textdlg-mini" value={replaceValue} onChange={(e) => setReplaceValue(e.target.value)} placeholder={S.replace} />
+                <div className="textdlg-inlinebtns">
+                  <button className="dbdlg-btn" onClick={replaceOne}>{S.replaceOne}</button>
+                  <button className="dbdlg-btn" onClick={replaceAll}>{S.replaceAll}</button>
+                </div>
+              </div>
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">AI WRITING LAB</div>
+              <textarea className="textdlg-prompt" value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder={L('Instrucción opcional para el asistente…', 'Optional instruction for the assistant…')} />
+              <div className="textdlg-ai-grid">
+                <button className="textdlg-chip" onClick={() => runAiAction('rewrite')}>{L('Reescribir', 'Rewrite')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('professional')}>{L('Profesional', 'Professional')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('simplify')}>{L('Simplificar', 'Simplify')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('expand')}>{L('Expandir', 'Expand')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('summarize')}>{L('Resumir', 'Summarize')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('bullets')}>{L('Pasar a viñetas', 'Convert to bullets')}</button>
+                <button className="textdlg-chip" onClick={() => runAiAction('headlines')}>{L('Ideas de títulos', 'Headline ideas')}</button>
+              </div>
+              {!!aiOutput && <pre className="textdlg-aiout">{aiOutput}</pre>}
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Plantillas rápidas', 'Quick templates')}</div>
+              <div className="textdlg-toolgrid solo">
+                {quickTools.map((tool) => <button key={tool.key} className="textdlg-chip" onClick={tool.run}>{tool.label}</button>)}
+              </div>
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{S.stats}</div>
+              <div className="textdlg-stats">
+                <div><span>{S.words}</span><b>{statsSource.words}</b></div>
+                <div><span>{S.chars}</span><b>{statsSource.chars}</b></div>
+                <div><span>{S.paragraphs}</span><b>{statsSource.paragraphs}</b></div>
+                <div><span>{S.reading}</span><b>{statsSource.reading} {S.minutes}</b></div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="textdlg-editorwrap">
+            <div className="textdlg-editorchrome">
+              <span>{S.placeholder}</span>
+              <b>{darkMode ? L('oscuro', 'dark') : L('claro', 'light')}</b>
+            </div>
+            <div
+              ref={editorRef}
+              className="textdlg-editor"
+              contentEditable
+              suppressContentEditableWarning
+              onInput={syncEditor}
+              onBlur={syncEditor}
+              style={{ lineHeight }}
+            />
+          </div>
+        </div>
+        <input ref={importRef} type="file" accept=".txt,.md,.html,.htm,.rtf" className="hidden-file" onChange={importDoc} />
+      </section>
+    </div>
+  );
+};
+
+
+
+const VirtualDriveDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_virtual_drive_lab_v1';
+  const [drives, setDrives] = useState([]);
+  const [activeId, setActiveId] = useState('');
+  const [driveName, setDriveName] = useState('');
+  const [driveKind, setDriveKind] = useState('ssd');
+  const [driveCapacity, setDriveCapacity] = useState(128);
+  const [fileName, setFileName] = useState('');
+  const [fileContent, setFileContent] = useState('');
+  const [fileCategory, setFileCategory] = useState('data');
+
+  const makeDrive = (name, kind, capacity) => ({
+    id: `drv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name: name || 'Vault Disk',
+    kind: kind || 'ssd',
+    capacityGb: Math.max(1, Number(capacity || 128)),
+    createdAt: Date.now(),
+    files: [],
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) {
+          setDrives(parsed);
+          setActiveId(parsed[0].id);
+          return;
+        }
+      }
+    } catch {}
+    const starter = [makeDrive('Core SSD', 'ssd', 256)];
+    setDrives(starter);
+    setActiveId(starter[0].id);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (drives.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(drives));
+  }, [open, drives]);
+
+  const activeDrive = drives.find((d) => d.id === activeId) || drives[0] || null;
+  const calcBytes = (value = '') => new Blob([String(value)]).size;
+  const prettyBytes = (num = 0) => {
+    if (num < 1024) return `${num} B`;
+    if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+    if (num < 1024 * 1024 * 1024) return `${(num / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(num / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  };
+  const usedBytes = activeDrive ? activeDrive.files.reduce((sum, f) => sum + Number(f.bytes || 0), 0) : 0;
+  const capacityBytes = activeDrive ? Number(activeDrive.capacityGb || 0) * 1024 * 1024 * 1024 : 0;
+  const usedPct = capacityBytes ? Math.min(100, Math.round((usedBytes / capacityBytes) * 100)) : 0;
+
+  const createDrive = () => {
+    const next = makeDrive(driveName || `${driveKind.toUpperCase()} ${drives.length + 1}`, driveKind, driveCapacity);
+    setDrives((prev) => [...prev, next]);
+    setActiveId(next.id);
+    setDriveName('');
+    if (notify) notify(L('Unidad virtual creada', 'Virtual drive created'));
+  };
+
+  const deleteDrive = (id) => {
+    let next = drives.filter((d) => d.id !== id);
+    if (!next.length) next = [makeDrive('Core SSD', 'ssd', 256)];
+    setDrives(next);
+    setActiveId(next[0].id);
+    if (notify) notify(L('Unidad eliminada', 'Drive removed'));
+  };
+
+  const addFile = () => {
+    if (!activeDrive || !fileName.trim()) return;
+    const content = String(fileContent || '');
+    const bytes = calcBytes(content);
+    const payload = {
+      id: `file_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      name: fileName.trim(),
+      category: fileCategory,
+      content,
+      bytes,
+      createdAt: Date.now(),
+    };
+    setDrives((prev) => prev.map((d) => d.id === activeDrive.id ? { ...d, files: [payload, ...d.files] } : d));
+    setFileName('');
+    setFileContent('');
+    if (notify) notify(L('Archivo agregado al disco virtual', 'File added to virtual drive'));
+  };
+
+  const removeFile = (fileId) => {
+    if (!activeDrive) return;
+    setDrives((prev) => prev.map((d) => d.id === activeDrive.id ? { ...d, files: d.files.filter((f) => f.id !== fileId) } : d));
+  };
+
+  const importCopiedRows = () => {
+    if (!activeDrive || !rows.length) return;
+    const batch = rows.slice(0, 20).map((row, idx) => {
+      const content = JSON.stringify(row, null, 2);
+      return {
+        id: `db_${Date.now()}_${idx}`,
+        name: `${row.type || 'code'}-${String(row.idx || idx + 1).padStart(3, '0')}.json`,
+        category: 'copied-code',
+        content,
+        bytes: calcBytes(content),
+        createdAt: Date.now(),
+      };
+    });
+    setDrives((prev) => prev.map((d) => d.id === activeDrive.id ? { ...d, files: [...batch, ...d.files] } : d));
+    if (notify) notify(L('Códigos copiados importados al disco', 'Copied codes imported into the drive'));
+  };
+
+  const downloadDrive = (format = 'ocgdrive') => {
+    if (!activeDrive) return;
+    const pack = {
+      schema: 'opencriptG-virtual-drive',
+      exportedAt: new Date().toISOString(),
+      note: L(
+        'Contenedor virtual descargable. Simula almacenamiento interno dentro de opencriptG. Para montarlo como unidad real del sistema operativo se necesita una versión nativa de escritorio.',
+        'Downloadable virtual container. It simulates internal storage inside opencriptG. Mounting it as a real operating-system drive requires a native desktop build.'
+      ),
+      drive: activeDrive,
+    };
+    const payload = JSON.stringify(pack, null, 2);
+    const nameBase = `opencriptG-${(activeDrive.name || 'drive').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}`;
+    if (format === 'json') {
+      triggerDownload(`${nameBase}.json`, payload, 'application/json;charset=utf-8');
+    } else if (format === 'txt') {
+      const manifest = [
+        `OPENCRIPTG VIRTUAL DRIVE`,
+        `Name: ${activeDrive.name}`,
+        `Type: ${activeDrive.kind}`,
+        `Capacity: ${activeDrive.capacityGb} GB`,
+        `Files: ${activeDrive.files.length}`,
+        `Used: ${prettyBytes(usedBytes)}`,
+        '',
+        ...activeDrive.files.map((f, i) => `${i + 1}. ${f.name} · ${f.category} · ${prettyBytes(f.bytes)}`),
+        '',
+        L('Este archivo describe el contenedor descargado.', 'This file describes the downloaded container.'),
+      ].join('\n');
+      triggerDownload(`${nameBase}-manifest.txt`, manifest, 'text/plain;charset=utf-8');
+    } else {
+      triggerDownload(`${nameBase}.ocgdrive`, payload, 'application/octet-stream');
+    }
+    if (notify) notify(L('Unidad descargada', 'Drive downloaded'));
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg dbdlg vddlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Virtual Drive Lab', 'Virtual Drive Lab')}</h2>
+            <p>{L('Crea contenedores de almacenamiento tipo SSD/HDD dentro de opencriptG. Puedes guardar archivos, importar códigos copiados y descargar la unidad virtual como contenedor.', 'Create SSD/HDD-style storage containers inside opencriptG. You can save files, import copied codes, and download the virtual drive as a container.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="vddlg-layout">
+          <aside className="vddlg-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Nueva unidad', 'New drive')}</div>
+              <div className="vddlg-form">
+                <input className="textdlg-mini" value={driveName} onChange={(e) => setDriveName(e.target.value)} placeholder={L('Nombre de la unidad', 'Drive name')} />
+                <div className="vddlg-row2">
+                  <select className="textdlg-mini" value={driveKind} onChange={(e) => setDriveKind(e.target.value)}>
+                    <option value="ssd">SSD</option>
+                    <option value="nvme">NVMe</option>
+                    <option value="hdd">HDD</option>
+                  </select>
+                  <input className="textdlg-mini" type="number" min="1" max="4096" value={driveCapacity} onChange={(e) => setDriveCapacity(e.target.value)} placeholder="GB" />
+                </div>
+                <button className="dbdlg-btn" onClick={createDrive}>{L('Crear unidad', 'Create drive')}</button>
+              </div>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Unidades virtuales', 'Virtual drives')}</div>
+              <div className="vddlg-drive-list">
+                {drives.map((d) => (
+                  <button key={d.id} className={`vddlg-drive ${activeId === d.id ? 'active' : ''}`} onClick={() => setActiveId(d.id)}>
+                    <span>{d.name}</span>
+                    <small>{String(d.kind || 'ssd').toUpperCase()} · {d.capacityGb} GB · {d.files.length} {L('archivos', 'files')}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          <div className="vddlg-main">
+            {!activeDrive ? (
+              <div className="dbdlg-empty">{L('No hay unidad activa.', 'No active drive.')}</div>
+            ) : (
+              <>
+                <div className="vddlg-hero">
+                  <div>
+                    <div className="textdlg-panel-k">{L('Unidad activa', 'Active drive')}</div>
+                    <h3>{activeDrive.name}</h3>
+                    <p>{String(activeDrive.kind).toUpperCase()} · {activeDrive.capacityGb} GB · {activeDrive.files.length} {L('archivos guardados', 'stored files')}</p>
+                  </div>
+                  <div className="vddlg-actions">
+                    <button className="dbdlg-btn" onClick={() => downloadDrive('ocgdrive')}>{L('Descargar contenedor', 'Download container')}</button>
+                    <button className="dbdlg-btn" onClick={() => downloadDrive('json')}>JSON</button>
+                    <button className="dbdlg-btn" onClick={() => downloadDrive('txt')}>{L('Manifiesto', 'Manifest')}</button>
+                    <button className="dbdlg-btn danger" onClick={() => deleteDrive(activeDrive.id)}>{L('Eliminar unidad', 'Delete drive')}</button>
+                  </div>
+                </div>
+
+                <div className="vddlg-meter">
+                  <div className="vddlg-meterbar"><i style={{ width: `${usedPct}%` }} /></div>
+                  <div className="vddlg-metertext">{prettyBytes(usedBytes)} / {activeDrive.capacityGb} GB · {usedPct}%</div>
+                </div>
+
+                <div className="vddlg-split">
+                  <section className="textdlg-panel">
+                    <div className="textdlg-panel-k">{L('Crear archivo interno', 'Create internal file')}</div>
+                    <div className="vddlg-form">
+                      <input className="textdlg-mini" value={fileName} onChange={(e) => setFileName(e.target.value)} placeholder={L('Nombre del archivo', 'File name')} />
+                      <select className="textdlg-mini" value={fileCategory} onChange={(e) => setFileCategory(e.target.value)}>
+                        <option value="data">{L('Datos', 'Data')}</option>
+                        <option value="backup">Backup</option>
+                        <option value="notes">Notes</option>
+                        <option value="codes">Codes</option>
+                        <option value="secret">Secret</option>
+                      </select>
+                      <textarea className="textdlg-mini vddlg-area" value={fileContent} onChange={(e) => setFileContent(e.target.value)} placeholder={L('Contenido del archivo...', 'File content...')} />
+                      <div className="vddlg-row2">
+                        <button className="dbdlg-btn" onClick={addFile}>{L('Guardar en unidad', 'Save into drive')}</button>
+                        <button className="dbdlg-btn" onClick={importCopiedRows} disabled={!rows.length}>{L('Importar base de datos copiada', 'Import copied database')}</button>
+                      </div>
+                    </div>
+                    <p className="textdlg-note">
+                      {L('Nota: esta zona crea contenedores virtuales funcionales dentro de opencriptG. Para que el sistema operativo los monte automáticamente como un nuevo HDD real se necesitaría una app nativa de escritorio con privilegios del sistema.', 'Note: this area creates working virtual containers inside opencriptG. For the operating system to mount them automatically as a real new HDD, a native desktop app with system privileges would be required.')}
+                    </p>
+                  </section>
+
+                  <section className="textdlg-panel">
+                    <div className="textdlg-panel-k">{L('Archivos de la unidad', 'Drive files')}</div>
+                    <div className="vddlg-files">
+                      {!activeDrive.files.length ? (
+                        <div className="dbdlg-empty">{L('Todavía no hay archivos almacenados.', 'There are no stored files yet.')}</div>
+                      ) : activeDrive.files.map((f) => (
+                        <div key={f.id} className="vddlg-file">
+                          <div>
+                            <strong>{f.name}</strong>
+                            <p>{f.category} · {prettyBytes(f.bytes)}</p>
+                          </div>
+                          <div className="vddlg-file-actions">
+                            <button className="dbdlg-btn" onClick={() => triggerDownload(f.name, f.content, 'text/plain;charset=utf-8')}>{L('Descargar', 'Download')}</button>
+                            <button className="dbdlg-btn danger" onClick={() => removeFile(f.id)}>{L('Eliminar', 'Delete')}</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+const PandoraSpreadsheetDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_pandora_book_v3';
+  const COLS = Array.from({ length: 20 }, (_, i) => String.fromCharCode(65 + i));
+  const ROW_COUNT = 50;
+  const [book, setBook] = useState([]);
+  const [activeSheetId, setActiveSheetId] = useState('');
+  const [activeCell, setActiveCell] = useState('A1');
+  const [formulaInput, setFormulaInput] = useState('');
+  const [sheetName, setSheetName] = useState('');
+  const [viewTab, setViewTab] = useState('sheet');
+  const [filterText, setFilterText] = useState('');
+  const [filterCol, setFilterCol] = useState('A');
+  const [sortCol, setSortCol] = useState('A');
+  const [sortDir, setSortDir] = useState('asc');
+  const [mergeWidth, setMergeWidth] = useState(2);
+  const [mergeHeight, setMergeHeight] = useState(1);
+  const [labelCol, setLabelCol] = useState('A');
+  const [valueCol, setValueCol] = useState('B');
+  const [importCount, setImportCount] = useState(20);
+  const [chartType, setChartType] = useState('bar');
+
+  const makeSheet = (name = 'P-andora 01') => ({
+    id: `sheet_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    name,
+    cells: {},
+    merges: [],
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.sheets) && parsed.sheets.length) {
+          const normalized = parsed.sheets.map((sheet) => ({ ...sheet, merges: Array.isArray(sheet.merges) ? sheet.merges : [] }));
+          setBook(normalized);
+          const firstId = parsed.activeSheetId || normalized[0].id;
+          setActiveSheetId(firstId);
+          const current = normalized.find((s) => s.id === firstId) || normalized[0];
+          setSheetName(current?.name || 'P-andora 01');
+          setActiveCell(parsed.activeCell || 'A1');
+          return;
+        }
+      }
+    } catch {}
+    const starter = [makeSheet('P-andora 01')];
+    setBook(starter);
+    setActiveSheetId(starter[0].id);
+    setSheetName(starter[0].name);
+    setActiveCell('A1');
+    setFormulaInput('');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !book.length) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ sheets: book, activeSheetId, activeCell }));
+  }, [open, book, activeSheetId, activeCell]);
+
+  const activeSheet = book.find((s) => s.id === activeSheetId) || book[0] || null;
+
+  useEffect(() => {
+    if (!activeSheet) return;
+    const nextVal = String(activeSheet.cells?.[activeCell] || '');
+    setFormulaInput(nextVal);
+    setSheetName(activeSheet.name || 'P-andora');
+  }, [activeSheetId, activeCell, activeSheet]);
+
+  const cellRefParts = (key) => {
+    const m = /^([A-T])(\d{1,2})$/.exec(String(key || '').toUpperCase());
+    if (!m) return null;
+    return { col: m[1], row: Number(m[2]), colIndex: COLS.indexOf(m[1]) };
+  };
+
+  const financialFns = {
+    PMT: (rate, nper, pv) => {
+      rate = Number(rate || 0); nper = Number(nper || 0); pv = Number(pv || 0);
+      if (!nper) return 0;
+      if (rate === 0) return -(pv / nper);
+      return -(pv * rate) / (1 - Math.pow(1 + rate, -nper));
+    },
+    FV: (rate, nper, pmt, pv = 0) => {
+      rate = Number(rate || 0); nper = Number(nper || 0); pmt = Number(pmt || 0); pv = Number(pv || 0);
+      if (rate === 0) return -(pv + pmt * nper);
+      return -(pv * Math.pow(1 + rate, nper) + pmt * ((Math.pow(1 + rate, nper) - 1) / rate));
+    },
+    ROI: (gain, cost) => {
+      gain = Number(gain || 0); cost = Number(cost || 0);
+      if (!cost) return 0;
+      return ((gain - cost) / cost) * 100;
+    },
+    MARGIN: (revenue, cost) => {
+      revenue = Number(revenue || 0); cost = Number(cost || 0);
+      if (!revenue) return 0;
+      return ((revenue - cost) / revenue) * 100;
+    },
+  };
+
+  const rangeValues = (sheet, startKey, endKey, stack) => {
+    const s = cellRefParts(startKey); const e = cellRefParts(endKey);
+    if (!s || !e) return [];
+    const c1 = Math.min(s.colIndex, e.colIndex), c2 = Math.max(s.colIndex, e.colIndex);
+    const r1 = Math.min(s.row, e.row), r2 = Math.max(s.row, e.row);
+    const values = [];
+    for (let r = r1; r <= r2; r++) {
+      for (let c = c1; c <= c2; c++) {
+        const val = parseCellValue(sheet, `${COLS[c]}${r}`, stack);
+        const num = Number(val);
+        if (Number.isFinite(num)) values.push(num);
+      }
+    }
+    return values;
+  };
+
+  const applyFunctionReplacements = (sheet, expr, stack) => {
+    let next = expr;
+    next = next.replace(/(SUM|AVG|MIN|MAX|COUNT)\(([A-T](?:[1-9]|[1-4]\d|50)):([A-T](?:[1-9]|[1-4]\d|50))\)/g, (_, fn, a, b) => {
+      const vals = rangeValues(sheet, a, b, stack);
+      if (!vals.length) return '0';
+      if (fn === 'SUM') return String(vals.reduce((acc, n) => acc + n, 0));
+      if (fn === 'AVG') return String(vals.reduce((acc, n) => acc + n, 0) / vals.length);
+      if (fn === 'MIN') return String(Math.min(...vals));
+      if (fn === 'MAX') return String(Math.max(...vals));
+      if (fn === 'COUNT') return String(vals.length);
+      return '0';
+    });
+    next = next.replace(/([A-T](?:[1-9]|[1-4]\d|50))/g, (match) => {
+      const refVal = parseCellValue(sheet, match, stack);
+      const num = Number(refVal);
+      return Number.isFinite(num) ? String(num) : '0';
+    });
+    next = next.replace(/(PMT|FV|ROI|MARGIN)\(([^)]*)\)/g, (_, fn, argsRaw) => {
+      const parts = argsRaw.split(',').map((x) => Number(String(x).trim() || 0));
+      const val = financialFns[fn] ? financialFns[fn](...parts) : 0;
+      return String(Number.isFinite(val) ? val : 0);
+    });
+    return next;
+  };
+
+  const parseCellValue = (sheet, key, stack = new Set()) => {
+    const raw = String(sheet?.cells?.[key] ?? '');
+    if (!raw) return '';
+    if (!raw.startsWith('=')) return raw;
+    if (stack.has(key)) return '#LOOP';
+    const nextStack = new Set([...stack, key]);
+    let expr = raw.slice(1).toUpperCase();
+    expr = applyFunctionReplacements(sheet, expr, nextStack);
+    try {
+      if (!/^[0-9+\-*/().,\s]+$/.test(expr)) return '#ERR';
+      const result = Function(`return (${expr})`)();
+      return result ?? '';
+    } catch {
+      return '#ERR';
+    }
+  };
+
+  const displayValue = (sheet, key) => parseCellValue(sheet, key);
+
+  const updateActiveSheet = (updater) => {
+    if (!activeSheet) return;
+    setBook((prev) => prev.map((sheet) => sheet.id === activeSheet.id ? updater(sheet) : sheet));
+  };
+
+  const updateCell = (sheetId, cellKey, value) => {
+    setBook((prev) => prev.map((sheet) => sheet.id === sheetId ? { ...sheet, cells: { ...sheet.cells, [cellKey]: value } } : sheet));
+  };
+
+  const setCurrentCellValue = (value) => {
+    if (!activeSheet) return;
+    updateCell(activeSheet.id, activeCell, value);
+    setFormulaInput(value);
+  };
+
+  const createSheet = () => {
+    const next = makeSheet(`P-andora ${String(book.length + 1).padStart(2, '0')}`);
+    setBook((prev) => [...prev, next]);
+    setActiveSheetId(next.id);
+    setActiveCell('A1');
+    setFormulaInput('');
+    notify && notify(L('Nueva hoja creada', 'New sheet created'));
+  };
+
+  const renameSheet = () => {
+    if (!activeSheet || !sheetName.trim()) return;
+    updateActiveSheet((sheet) => ({ ...sheet, name: sheetName.trim() }));
+    notify && notify(L('Hoja renombrada', 'Sheet renamed'));
+  };
+
+  const deleteSheet = (id) => {
+    let next = book.filter((s) => s.id !== id);
+    if (!next.length) next = [makeSheet('P-andora 01')];
+    setBook(next);
+    setActiveSheetId(next[0].id);
+    setActiveCell('A1');
+  };
+
+  const clearSheet = () => {
+    if (!activeSheet) return;
+    updateActiveSheet((sheet) => ({ ...sheet, cells: {}, merges: [] }));
+    setFormulaInput('');
+    notify && notify(L('Hoja limpiada', 'Sheet cleared'));
+  };
+
+  const exportCsv = () => {
+    if (!activeSheet) return;
+    const lines = [];
+    lines.push(['', ...COLS].join(','));
+    for (let r = 1; r <= ROW_COUNT; r++) {
+      const row = [String(r)];
+      for (let c = 0; c < COLS.length; c++) {
+        const key = `${COLS[c]}${r}`;
+        const cell = String(activeSheet.cells[key] || '').replaceAll('"', '""');
+        row.push(`"${cell}"`);
+      }
+      lines.push(row.join(','));
+    }
+    triggerDownload(`p-andora-${(activeSheet.name || 'sheet').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.csv`, lines.join('\n'), 'text/csv;charset=utf-8');
+    notify && notify(L('CSV descargado', 'CSV downloaded'));
+  };
+
+  const printSheet = () => {
+    if (!activeSheet) return;
+    const w = window.open('', '_blank', 'width=1200,height=900');
+    if (!w) return;
+    const rowsHtml = Array.from({ length: ROW_COUNT }, (_, idx) => idx + 1).map((r) => {
+      const cells = COLS.map((col) => `<td>${String(displayValue(activeSheet, `${col}${r}`) || activeSheet.cells?.[`${col}${r}`] || '').replace(/</g, '&lt;')}</td>`).join('');
+      return `<tr><th>${r}</th>${cells}</tr>`;
+    }).join('');
+    const head = COLS.map((col) => `<th>${col}</th>`).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${activeSheet.name}</title><style>body{font-family:Arial,sans-serif;padding:24px;} h1{font-size:20px;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #333;padding:6px;font-size:12px;} th{background:#f2f2f2;} @media print{button{display:none;}}</style></head><body><button onclick="window.print()">Print</button><h1>${activeSheet.name}</h1><table><thead><tr><th>#</th>${head}</tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    notify && notify(L('Vista de impresión abierta', 'Print view opened'));
+  };
+
+  const insertDatabaseCodes = () => {
+    if (!activeSheet || !rows.length) return;
+    const match = /^([A-T])(\d{1,2})$/.exec(activeCell) || ['A1', 'A', '1'];
+    const startColIndex = COLS.indexOf(match[1]);
+    const startRow = Number(match[2]);
+    const limited = rows.slice(0, Math.max(1, Math.min(importCount, ROW_COUNT - startRow + 1)));
+    const additions = {};
+    limited.forEach((row, idx) => {
+      const r = startRow + idx;
+      if (r <= ROW_COUNT) {
+        additions[`${COLS[startColIndex]}${r}`] = row.value || '';
+        if (startColIndex + 1 < COLS.length) additions[`${COLS[startColIndex + 1]}${r}`] = row.type || '';
+        if (startColIndex + 2 < COLS.length) additions[`${COLS[startColIndex + 2]}${r}`] = row.len ? String(row.len) : '';
+        if (startColIndex + 3 < COLS.length) additions[`${COLS[startColIndex + 3]}${r}`] = row.idx ? String(row.idx) : String(idx + 1);
+      }
+    });
+    updateActiveSheet((sheet) => ({ ...sheet, cells: { ...sheet.cells, ...additions } }));
+    notify && notify(L('Códigos incrustados desde la base de datos', 'Codes embedded from the database'));
+  };
+
+  const applyTemplate = (kind) => {
+    if (!activeSheet) return;
+    const templates = {
+      business: {
+        A1: L('Empresa', 'Company'), B1: 'diktatcart',
+        A2: L('Reporte', 'Report'), B2: 'OpencriptG Suite',
+        A4: L('Producto', 'Product'), B4: L('Ventas', 'Sales'), C4: L('Costo', 'Cost'), D4: L('Margen %', 'Margin %'), E4: L('Ingreso', 'Revenue'),
+        A5: 'Drive Lab', B5: '26', C5: '310', E5: '780', D5: '=MARGIN(E5,C5)',
+        A6: 'QR Vault', B6: '14', C6: '120', E6: '430', D6: '=MARGIN(E6,C6)',
+        A7: 'Text Lab', B7: '11', C7: '150', E7: '390', D7: '=MARGIN(E7,C7)',
+        D10: L('Total revenue', 'Total revenue'), E10: '=SUM(E5:E7)',
+      },
+      budget: {
+        A1: L('Presupuesto', 'Budget'), B1: new Date().toLocaleDateString(),
+        A3: L('Concepto', 'Concept'), B3: L('Plan', 'Plan'), C3: L('Real', 'Actual'), D3: L('Diferencia', 'Difference'),
+        A4: 'Infra', B4: '500', C4: '620', D4: '=C4-B4',
+        A5: 'Marketing', B5: '300', C5: '250', D5: '=C5-B5',
+        A6: 'Diseño', B6: '200', C6: '190', D6: '=C6-B6',
+        B9: L('Plan total', 'Plan total'), C9: L('Real total', 'Actual total'), D9: L('Delta', 'Delta'),
+        B10: '=SUM(B4:B6)', C10: '=SUM(C4:C6)', D10: '=C10-B10',
+      },
+      finance: {
+        A1: L('Finanzas', 'Finance'), B1: 'Loan Analyzer',
+        A3: L('Principal', 'Principal'), B3: '25000',
+        A4: L('Rate monthly', 'Rate monthly'), B4: '0.015',
+        A5: L('Months', 'Months'), B5: '24',
+        A6: L('Payment', 'Payment'), B6: '=PMT(B4,B5,B3)',
+        A8: L('Future value', 'Future value'), B8: '=FV(B4,B5,B6,B3)',
+        A10: L('Gain', 'Gain'), B10: '38000',
+        A11: L('Cost', 'Cost'), B11: '25000',
+        A12: L('ROI %', 'ROI %'), B12: '=ROI(B10,B11)',
+      },
+    };
+    const next = templates[kind] || templates.business;
+    updateActiveSheet((sheet) => ({ ...sheet, cells: { ...sheet.cells, ...next } }));
+    notify && notify(L('Plantilla empresarial insertada', 'Business template inserted'));
+  };
+
+  const mergeInfo = useMemo(() => {
+    const startMap = new Map();
+    const hidden = new Set();
+    const merges = activeSheet?.merges || [];
+    merges.forEach((merge) => {
+      startMap.set(merge.start, merge);
+      const parts = cellRefParts(merge.start);
+      if (!parts) return;
+      for (let r = parts.row; r < parts.row + merge.height; r++) {
+        for (let c = parts.colIndex; c < parts.colIndex + merge.width; c++) {
+          const key = `${COLS[c]}${r}`;
+          if (key !== merge.start) hidden.add(key);
+        }
+      }
+    });
+    return { startMap, hidden };
+  }, [activeSheet]);
+
+  const applyMerge = () => {
+    const parts = cellRefParts(activeCell);
+    if (!parts || !activeSheet) return;
+    const width = Math.max(1, Math.min(6, Number(mergeWidth || 1)));
+    const height = Math.max(1, Math.min(6, Number(mergeHeight || 1)));
+    if (parts.colIndex + width > COLS.length || parts.row + height - 1 > ROW_COUNT) {
+      notify && notify(L('La combinación se sale de la hoja', 'Merge exceeds sheet limits'));
+      return;
+    }
+    updateActiveSheet((sheet) => {
+      const cleaned = (sheet.merges || []).filter((m) => m.start !== activeCell);
+      return { ...sheet, merges: [...cleaned, { start: activeCell, width, height }] };
+    });
+    notify && notify(L('Celdas combinadas', 'Cells merged'));
+  };
+
+  const unmergeActive = () => {
+    if (!activeSheet) return;
+    updateActiveSheet((sheet) => ({ ...sheet, merges: (sheet.merges || []).filter((m) => m.start !== activeCell) }));
+    notify && notify(L('Combinación eliminada', 'Merge removed'));
+  };
+
+  const bookStats = useMemo(() => {
+    const cellCount = activeSheet ? Object.values(activeSheet.cells || {}).filter((v) => String(v || '') !== '').length : 0;
+    const formulaCount = activeSheet ? Object.values(activeSheet.cells || {}).filter((v) => String(v || '').startsWith('=')).length : 0;
+    const merges = activeSheet ? (activeSheet.merges || []).length : 0;
+    return { cellCount, formulaCount, merges };
+  }, [activeSheet]);
+
+  const visibleRows = useMemo(() => {
+    if (!activeSheet) return [];
+    const all = Array.from({ length: ROW_COUNT }, (_, i) => i + 1);
+    const filtered = all.filter((r) => {
+      const rowText = COLS.map((col) => String(displayValue(activeSheet, `${col}${r}`) || activeSheet.cells?.[`${col}${r}`] || '')).join(' ').toLowerCase();
+      const generalOk = !filterText.trim() || rowText.includes(filterText.trim().toLowerCase());
+      const specificVal = String(displayValue(activeSheet, `${filterCol}${r}`) || activeSheet.cells?.[`${filterCol}${r}`] || '').toLowerCase();
+      const specificOk = !filterText.trim() || specificVal.includes(filterText.trim().toLowerCase()) || generalOk;
+      return generalOk || specificOk;
+    });
+    return filtered.sort((a, b) => {
+      const avRaw = String(displayValue(activeSheet, `${sortCol}${a}`) || activeSheet.cells?.[`${sortCol}${a}`] || '');
+      const bvRaw = String(displayValue(activeSheet, `${sortCol}${b}`) || activeSheet.cells?.[`${sortCol}${b}`] || '');
+      const avNum = Number(avRaw); const bvNum = Number(bvRaw);
+      let cmp = 0;
+      if (Number.isFinite(avNum) && Number.isFinite(bvNum)) cmp = avNum - bvNum;
+      else cmp = avRaw.localeCompare(bvRaw, undefined, { numeric: true, sensitivity: 'base' });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [activeSheet, filterText, filterCol, sortCol, sortDir]);
+
+  const chartData = useMemo(() => {
+    if (!activeSheet) return [];
+    return visibleRows.map((r) => ({
+      label: String(displayValue(activeSheet, `${labelCol}${r}`) || activeSheet.cells?.[`${labelCol}${r}`] || `${labelCol}${r}`),
+      value: Number(displayValue(activeSheet, `${valueCol}${r}`) || activeSheet.cells?.[`${valueCol}${r}`] || 0),
+      row: r,
+    })).filter((x) => x.label && Number.isFinite(x.value) && x.value !== 0).slice(0, 12);
+  }, [activeSheet, visibleRows, labelCol, valueCol]);
+
+  const chartMax = Math.max(1, ...chartData.map((d) => d.value));
+  const chartMin = Math.min(0, ...chartData.map((d) => d.value));
+  const totalChartValue = chartData.reduce((acc, item) => acc + item.value, 0);
+  const linePoints = chartData.map((item, idx) => {
+    const x = chartData.length === 1 ? 10 : (idx / (chartData.length - 1)) * 92 + 4;
+    const y = chartMax === chartMin ? 50 : 92 - (((item.value - chartMin) / (chartMax - chartMin)) * 82);
+    return `${x},${y}`;
+  }).join(' ');
+  const formulaSnippets = ['=A1+B1', '=SUM(B5:B10)', '=AVG(C5:C10)', '=MAX(D5:D10)', '=MIN(D5:D10)', '=COUNT(B5:B10)', '=PMT(0.015,24,25000)', '=FV(0.015,24,-1250,25000)', '=ROI(38000,25000)', '=MARGIN(780,310)'];
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg padlg padlg-plus padlg-ultra" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>P - ANDORA</h2>
+            <p>{L('Libro de celdas ultra avanzado para OpencriptG. Incluye hojas visuales, fórmulas financieras, filtros, combinación de celdas, múltiples gráficos, impresión y plantillas empresariales.', 'Ultra-advanced workbook for OpencriptG. Includes visual sheets, financial formulas, filters, cell merging, multiple charts, printing, and business templates.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="padlg-layout">
+          <aside className="padlg-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Libro', 'Workbook')}</div>
+              <div className="padlg-sheetlist visual">
+                {book.map((sheet, idx) => (
+                  <button key={sheet.id} className={`padlg-sheetbtn card ${activeSheetId === sheet.id ? 'active' : ''}`} onClick={() => setActiveSheetId(sheet.id)}>
+                    <span>{sheet.name}</span>
+                    <small>{L('Hoja', 'Sheet')} {idx + 1}</small>
+                    <i onClick={(e) => { e.stopPropagation(); deleteSheet(sheet.id); }}>×</i>
+                  </button>
+                ))}
+              </div>
+              <div className="padlg-side-actions">
+                <button className="dbdlg-btn" onClick={createSheet}>{L('Nueva hoja', 'New sheet')}</button>
+                <input className="textdlg-mini" value={sheetName} onChange={(e) => setSheetName(e.target.value)} placeholder={L('Renombrar hoja', 'Rename sheet')} />
+                <button className="dbdlg-btn" onClick={renameSheet}>{L('Guardar nombre', 'Save name')}</button>
+              </div>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Herramientas pro', 'Pro tools')}</div>
+              <div className="padlg-side-actions">
+                <div className="padlg-inline2">
+                  <input className="textdlg-mini" type="number" min="1" max="100" value={importCount} onChange={(e) => setImportCount(e.target.value)} />
+                  <button className="dbdlg-btn" onClick={insertDatabaseCodes} disabled={!rows.length}>{L('Incrustar DB', 'Embed DB')}</button>
+                </div>
+                <button className="dbdlg-btn" onClick={exportCsv}>{L('Descargar CSV', 'Download CSV')}</button>
+                <button className="dbdlg-btn" onClick={printSheet}>{L('Imprimir hoja', 'Print sheet')}</button>
+                <button className="dbdlg-btn danger" onClick={clearSheet}>{L('Limpiar hoja', 'Clear sheet')}</button>
+              </div>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Control de celdas', 'Cell control')}</div>
+              <div className="padlg-meta">
+                <div><span>{L('Referencia', 'Reference')}</span><b>{activeCell}</b></div>
+                <div><span>{L('Valor crudo', 'Raw value')}</span><b>{String(activeSheet?.cells?.[activeCell] || '—').slice(0, 20)}</b></div>
+                <div><span>{L('Visible', 'Visible')}</span><b>{String(displayValue(activeSheet, activeCell) || '—').slice(0, 20)}</b></div>
+                <div><span>{L('Celdas usadas', 'Used cells')}</span><b>{bookStats.cellCount}</b></div>
+                <div><span>{L('Fórmulas', 'Formulas')}</span><b>{bookStats.formulaCount}</b></div>
+                <div><span>{L('Combinadas', 'Merged')}</span><b>{bookStats.merges}</b></div>
+              </div>
+              <div className="padlg-inline2">
+                <input className="textdlg-mini" type="number" min="1" max="6" value={mergeWidth} onChange={(e) => setMergeWidth(e.target.value)} placeholder={L('Ancho', 'Width')} />
+                <input className="textdlg-mini" type="number" min="1" max="6" value={mergeHeight} onChange={(e) => setMergeHeight(e.target.value)} placeholder={L('Alto', 'Height')} />
+              </div>
+              <div className="padlg-inline2">
+                <button className="dbdlg-btn" onClick={applyMerge}>{L('Combinar', 'Merge')}</button>
+                <button className="dbdlg-btn" onClick={unmergeActive}>{L('Descombinar', 'Unmerge')}</button>
+              </div>
+            </div>
+          </aside>
+
+          <div className="padlg-main">
+            <div className="padlg-tabs2 ultra">
+              <button className={`padlg-tab2 ${viewTab === 'sheet' ? 'active' : ''}`} onClick={() => setViewTab('sheet')}>{L('Hoja', 'Sheet')}</button>
+              <button className={`padlg-tab2 ${viewTab === 'formulas' ? 'active' : ''}`} onClick={() => setViewTab('formulas')}>{L('Fórmulas', 'Formulas')}</button>
+              <button className={`padlg-tab2 ${viewTab === 'charts' ? 'active' : ''}`} onClick={() => setViewTab('charts')}>{L('Gráficos', 'Charts')}</button>
+              <button className={`padlg-tab2 ${viewTab === 'templates' ? 'active' : ''}`} onClick={() => setViewTab('templates')}>{L('Plantillas', 'Templates')}</button>
+            </div>
+
+            <div className="padlg-toolbar plus">
+              <div className="padlg-ref">{activeCell}</div>
+              <input className="padlg-formula" value={formulaInput} onChange={(e) => setFormulaInput(e.target.value)} onBlur={() => setCurrentCellValue(formulaInput)} placeholder={L('Escribe texto o fórmula. Ej: =PMT(0.015,24,25000)', 'Type text or a formula. Ex: =PMT(0.015,24,25000)')} />
+              <button className="dbdlg-btn" onClick={() => setCurrentCellValue(formulaInput)}>{L('Aplicar', 'Apply')}</button>
+            </div>
+
+            {viewTab === 'sheet' && (
+              <>
+                <div className="padlg-filters">
+                  <input className="textdlg-mini" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder={L('Filtrar por texto o columna...', 'Filter by text or column...')} />
+                  <select className="textdlg-mini" value={filterCol} onChange={(e) => setFilterCol(e.target.value)}>{COLS.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+                  <select className="textdlg-mini" value={sortCol} onChange={(e) => setSortCol(e.target.value)}>{COLS.map((c) => <option key={c} value={c}>{L('Orden', 'Sort')} {c}</option>)}</select>
+                  <button className="dbdlg-btn" onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}>{sortDir === 'asc' ? '↑ ASC' : '↓ DESC'}</button>
+                </div>
+
+                <div className="padlg-gridwrap plus">
+                  <table className="padlg-grid">
+                    <thead>
+                      <tr>
+                        <th className="corner">#</th>
+                        {COLS.map((col) => <th key={col}>{col}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleRows.map((r) => (
+                        <tr key={r}>
+                          <th>{r}</th>
+                          {COLS.map((col) => {
+                            const key = `${col}${r}`;
+                            if (mergeInfo.hidden.has(key)) return null;
+                            const raw = String(activeSheet?.cells?.[key] || '');
+                            const shown = displayValue(activeSheet, key);
+                            const merge = mergeInfo.startMap.get(key);
+                            return (
+                              <td key={key} className={activeCell === key ? 'active' : ''} colSpan={merge?.width || 1} rowSpan={merge?.height || 1} onClick={() => { setActiveCell(key); setFormulaInput(raw); }}>
+                                <input
+                                  value={activeCell === key ? formulaInput : shown}
+                                  onChange={(e) => {
+                                    if (activeCell !== key) setActiveCell(key);
+                                    setFormulaInput(e.target.value);
+                                  }}
+                                  onFocus={() => { setActiveCell(key); setFormulaInput(raw); }}
+                                  onBlur={(e) => updateCell(activeSheet.id, key, e.target.value)}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="padlg-sheettabs-visual">
+                  {book.map((sheet) => (
+                    <button key={sheet.id} className={`padlg-bottomtab ${activeSheetId === sheet.id ? 'active' : ''}`} onClick={() => setActiveSheetId(sheet.id)}>{sheet.name}</button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {viewTab === 'formulas' && (
+              <div className="padlg-panelview">
+                <div className="padlg-formula-grid">
+                  <section className="textdlg-panel">
+                    <div className="textdlg-panel-k">{L('Biblioteca de fórmulas', 'Formula library')}</div>
+                    <div className="padlg-chipgrid">
+                      {formulaSnippets.map((item) => (
+                        <button key={item} className="textdlg-chip" onClick={() => { setFormulaInput(item); setCurrentCellValue(item); }}>{item}</button>
+                      ))}
+                    </div>
+                  </section>
+                  <section className="textdlg-panel">
+                    <div className="textdlg-panel-k">{L('Referencia rápida', 'Quick reference')}</div>
+                    <div className="padlg-note-list">
+                      <p><b>SUM(A1:A10)</b> · {L('Suma un rango', 'Adds a range')}</p>
+                      <p><b>AVG(B1:B10)</b> · {L('Promedia un rango', 'Averages a range')}</p>
+                      <p><b>PMT(rate,nper,pv)</b> · {L('Pago periódico de un préstamo', 'Periodic payment of a loan')}</p>
+                      <p><b>FV(rate,nper,pmt,pv)</b> · {L('Valor futuro', 'Future value')}</p>
+                      <p><b>ROI(gain,cost)</b> · {L('Retorno sobre inversión en %', 'Return on investment in %')}</p>
+                      <p><b>MARGIN(revenue,cost)</b> · {L('Margen porcentual', 'Percentage margin')}</p>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            )}
+
+            {viewTab === 'charts' && (
+              <div className="padlg-panelview">
+                <div className="padlg-chart-controls">
+                  <select className="textdlg-mini" value={labelCol} onChange={(e) => setLabelCol(e.target.value)}>{COLS.map((c) => <option key={c} value={c}>{L('Etiqueta', 'Label')} {c}</option>)}</select>
+                  <select className="textdlg-mini" value={valueCol} onChange={(e) => setValueCol(e.target.value)}>{COLS.map((c) => <option key={c} value={c}>{L('Valor', 'Value')} {c}</option>)}</select>
+                  <select className="textdlg-mini" value={chartType} onChange={(e) => setChartType(e.target.value)}>
+                    <option value="bar">Bar</option>
+                    <option value="line">Line</option>
+                    <option value="combo">Combo</option>
+                  </select>
+                </div>
+                <div className="padlg-chart-grid">
+                  <div className="padlg-chartbox">
+                    {!chartData.length ? (
+                      <div className="dbdlg-empty">{L('No hay datos numéricos suficientes para el gráfico.', 'There is not enough numeric data for the chart.')}</div>
+                    ) : (
+                      <div className="padlg-bars">
+                        {chartData.map((item) => (
+                          <div key={`${item.label}-${item.row}`} className="padlg-barrow">
+                            <span className="padlg-barlabel">{item.label}</span>
+                            <div className="padlg-bartrack"><i style={{ width: `${(Math.abs(item.value) / chartMax) * 100}%` }} /></div>
+                            <b>{item.value}</b>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="padlg-chartbox">
+                    {!chartData.length ? (
+                      <div className="dbdlg-empty">{L('Sin datos para línea', 'No line data')}</div>
+                    ) : (
+                      <svg viewBox="0 0 100 100" className="padlg-linesvg" aria-label="line chart">
+                        <polyline points={linePoints} fill="none" stroke="black" strokeWidth="2" />
+                        {chartData.map((item, idx) => {
+                          const x = chartData.length === 1 ? 10 : (idx / (chartData.length - 1)) * 92 + 4;
+                          const y = chartMax === chartMin ? 50 : 92 - (((item.value - chartMin) / (chartMax - chartMin)) * 82);
+                          return <circle key={`${item.label}-dot`} cx={x} cy={y} r="1.8" fill="black" />;
+                        })}
+                      </svg>
+                    )}
+                  </div>
+                  <div className="padlg-chartbox summary">
+                    <div className="padlg-summarygrid">
+                      <div><span>{L('Items', 'Items')}</span><b>{chartData.length}</b></div>
+                      <div><span>{L('Total', 'Total')}</span><b>{totalChartValue}</b></div>
+                      <div><span>{L('Máximo', 'Maximum')}</span><b>{chartData.length ? chartMax : 0}</b></div>
+                      <div><span>{L('Promedio', 'Average')}</span><b>{chartData.length ? (totalChartValue / chartData.length).toFixed(2) : 0}</b></div>
+                    </div>
+                    <div className="padlg-donutlist">
+                      {chartData.slice(0, 6).map((item) => (
+                        <div key={`${item.label}-share`} className="padlg-donutrow"><span>{item.label}</span><b>{totalChartValue ? ((item.value / totalChartValue) * 100).toFixed(1) : '0'}%</b></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {viewTab === 'templates' && (
+              <div className="padlg-panelview">
+                <div className="padlg-template-grid">
+                  <button className="padlg-templatecard" onClick={() => applyTemplate('business')}>
+                    <strong>{L('Dashboard de negocio', 'Business dashboard')}</strong>
+                    <p>{L('Ventas, costos, ingresos y margen.', 'Sales, cost, revenue, and margin.')}</p>
+                  </button>
+                  <button className="padlg-templatecard" onClick={() => applyTemplate('budget')}>
+                    <strong>{L('Presupuesto', 'Budget planner')}</strong>
+                    <p>{L('Plan vs real con diferencias.', 'Plan vs actual with differences.')}</p>
+                  </button>
+                  <button className="padlg-templatecard" onClick={() => applyTemplate('finance')}>
+                    <strong>{L('Finanzas / préstamos', 'Finance / loans')}</strong>
+                    <p>{L('PMT, FV y ROI listos para usar.', 'PMT, FV, and ROI ready to use.')}</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="padlg-footnote plus">
+              <span>{L('Versión ultra: hojas visuales, fórmulas financieras, plantillas empresariales, impresión y múltiples gráficos.', 'Ultra version: visual sheets, financial formulas, business templates, printing, and multiple charts.')}</span>
+              <b>{L('Integrado con la base de datos de OpencriptG', 'Integrated with the OpencriptG database')}</b>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+
+
+const DEFAULT_OSDG_CARGO = `[workspace]
+resolver = "2"
+members = [
+    "src/rust/",
+    "src/rust/osdg-cffi",
+    "src/rust/osdg-core",
+    "src/rust/osdg-keepalive",
+    "src/rust/osdg-key-parsing",
+    "src/rust/osdg-tls",
+    "src/rust/osdg-x509",
+    "src/rust/osdg-x509-verification",
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["OpencriptG integration team"]
+edition = "2021"
+publish = false
+rust-version = "1.83.0"
+license = "Apache-2.0 OR BSD-3-Clause"
+
+[workspace.dependencies]
+asn1 = { version = "0.24.1", default-features = false }
+base64 = "0.22"
+cc = "1.2.61"
+cfg-if = "1"
+foreign-types = "0.3"
+foreign-types-shared = "0.1"
+openssl = "0.10.79"
+openssl-sys = "0.9.115"
+pem = { version = "3", default-features = false }
+pyo3 = { version = "0.28", features = ["abi3"] }
+pyo3-build-config = { version = "0.28" }
+self_cell = "1"
+
+[profile.release]
+overflow-checks = true`;
+
+const DEFAULT_OSDG_MAKEFILE = "# Makefile for OSDG -rest documentation\n\nSPHINXOPTS    =\nSPHINXBUILD   = sphinx-build\nPAPER         =\nBUILDDIR      = _build\n\nPAPEROPT_a4     = -D latex_paper_size=a4\nPAPEROPT_letter = -D latex_paper_size=letter\nALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .\nI18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .\n\n.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext texinfo info\n\nhelp:\n\t@echo \"Please use make <target> where <target> is one of\"\n\t@echo \"  html       to make standalone HTML files\"\n\t@echo \"  dirhtml    to make HTML files named index.html in directories\"\n\t@echo \"  singlehtml to make a single large HTML file\"\n\t@echo \"  json       to make JSON files\"\n\t@echo \"  htmlhelp   to make HTML files and a HTML help project\"\n\t@echo \"  qthelp     to make HTML files and a qthelp project\"\n\t@echo \"  devhelp    to make HTML files and a Devhelp project\"\n\t@echo \"  epub       to make an epub\"\n\t@echo \"  latex      to make LaTeX files\"\n\t@echo \"  latexpdf   to make LaTeX files and run them through pdflatex\"\n\t@echo \"  text       to make text files\"\n\t@echo \"  man        to make manual pages\"\n\t@echo \"  texinfo    to make Texinfo files\"\n\t@echo \"  info       to make Texinfo files and run them through makeinfo\"\n\t@echo \"  gettext    to make PO message catalogs\"\n\t@echo \"  changes    to make an overview of all changed items\"\n\t@echo \"  linkcheck  to check all external links\"\n\t@echo \"  doctest    to run doctests\"\n\nclean:\n\t-rm -rf $(BUILDDIR)/*\n\nhtml:\n\t$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html\n\t@echo \"Build finished. The HTML pages are in $(BUILDDIR)/html.\"\n\ndirhtml:\n\t$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml\n\t@echo \"Build finished. The HTML pages are in $(BUILDDIR)/dirhtml.\"\n\nsinglehtml:\n\t$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml\n\t@echo \"Build finished. The HTML page is in $(BUILDDIR)/singlehtml.\"\n\njson:\n\t$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json\n\t@echo \"Build finished. JSON files are in $(BUILDDIR)/json.\"\n\nlatexpdf:\n\t$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex\n\t$(MAKE) -C $(BUILDDIR)/latex all-pdf\n\t@echo \"PDF files are in $(BUILDDIR)/latex.\"\n\ntext:\n\t$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text\n\nlinkcheck:\n\t$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck\n\ndoctest:\n\t$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest\n";
+
+const OSDGRestDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const ACCEPT_KEY = 'opencriptG_osdg_rest_encrypt_license_accept_v1';
+  const [accepted, setAccepted] = useState(() => localStorage.getItem(ACCEPT_KEY) === 'yes');
+  const [acceptApache, setAcceptApache] = useState(false);
+  const [acceptBsd, setAcceptBsd] = useState(false);
+  const [acceptNoName, setAcceptNoName] = useState(false);
+  const [visibleKey, setVisibleKey] = useState('');
+  const [hiddenNonce, setHiddenNonce] = useState('');
+  const [receiverNonce, setReceiverNonce] = useState('');
+  const [fileInfo, setFileInfo] = useState(null);
+  const [encryptedText, setEncryptedText] = useState('');
+  const [encryptedName, setEncryptedName] = useState('');
+  const [lockedFile, setLockedFile] = useState(null);
+  const [unlockFile, setUnlockFile] = useState(null);
+  const [unlockKey, setUnlockKey] = useState('');
+  const [decryptNonce, setDecryptNonce] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadName, setDownloadName] = useState('');
+  const [status, setStatus] = useState('');
+  const encryptInputRef = useRef(null);
+  const decryptInputRef = useRef(null);
+
+  const latestAscon = useMemo(() => {
+    const list = Array.isArray(rows) ? rows : [];
+    return list.find((r) => String(r.primitiveLabel || r.typeId || '').toLowerCase().includes('ascon')) || list[0] || null;
+  }, [rows]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (latestAscon?.value && !visibleKey) {
+      setVisibleKey(String(latestAscon.value));
+      setUnlockKey(String(latestAscon.value));
+    }
+  }, [open, latestAscon]);
+
+  useEffect(() => () => { if (downloadUrl) URL.revokeObjectURL(downloadUrl); }, [downloadUrl]);
+
+  const canAccept = acceptApache && acceptBsd && acceptNoName;
+  const acceptLicenses = () => {
+    if (!canAccept) return;
+    localStorage.setItem(ACCEPT_KEY, 'yes');
+    setAccepted(true);
+    notify && notify(L('Licencias aceptadas. OSDG -rest habilitado.', 'Licenses accepted. OSDG -rest enabled.'));
+  };
+
+  const forgetAcceptance = () => {
+    localStorage.removeItem(ACCEPT_KEY);
+    setAccepted(false);
+    setAcceptApache(false);
+    setAcceptBsd(false);
+    setAcceptNoName(false);
+  };
+
+  const b64url = (buffer) => {
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    let out = '';
+    bytes.forEach((b) => { out += String.fromCharCode(b); });
+    return btoa(out).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+  };
+
+  const fromB64url = (text) => {
+    const normalized = String(text || '').replaceAll('-', '+').replaceAll('_', '/');
+    const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+    const raw = atob(padded);
+    const arr = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  };
+
+  const randomToken = (bytes = 16) => {
+    const arr = new Uint8Array(bytes);
+    crypto.getRandomValues(arr);
+    return b64url(arr);
+  };
+
+  const deriveAesKey = async (keyText, nonceText, saltBytes) => {
+    const enc = new TextEncoder();
+    const material = await crypto.subtle.importKey('raw', enc.encode(String(keyText) + '::' + String(nonceText)), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: saltBytes, iterations: 250000, hash: 'SHA-256' },
+      material,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  };
+
+  const buildNonce = () => {
+    const nonce = 'osdg_' + randomToken(18);
+    setHiddenNonce(nonce);
+    notify && notify(L('Nonce oculto generado. Cópialo para el usuario final cuando sea necesario.', 'Hidden nonce generated. Copy it for the receiver when needed.'));
+    return nonce;
+  };
+
+  const useLatestKey = () => {
+    if (!latestAscon?.value) {
+      notify && notify(L('No hay Ascon Key copiada en la base de datos.', 'There is no copied Ascon Key in the database.'));
+      return;
+    }
+    setVisibleKey(String(latestAscon.value));
+    setUnlockKey(String(latestAscon.value));
+    notify && notify(L('Key visible tomada de la base de datos.', 'Visible key loaded from database.'));
+  };
+
+  const copyNonce = async () => {
+    if (!hiddenNonce) return;
+    await navigator.clipboard?.writeText(hiddenNonce);
+    notify && notify(L('Nonce copiada sin mostrarla.', 'Nonce copied without displaying it.'));
+  };
+
+  const encryptFile = async () => {
+    try {
+      if (!lockedFile) return setStatus(L('Selecciona un archivo primero.', 'Select a file first.'));
+      if (!visibleKey.trim()) return setStatus(L('Falta la key visible.', 'Visible key is missing.'));
+      const nonce = hiddenNonce || buildNonce();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveAesKey(visibleKey.trim(), nonce, salt);
+      const input = await lockedFile.arrayBuffer();
+      const aad = new TextEncoder().encode('OSDG-rest-file-v1');
+      const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, input);
+      const pack = {
+        magic: 'OSDG-rest.locked',
+        version: 1,
+        algorithm: 'ASCON-KEY-COMPAT/AES-256-GCM',
+        kdf: 'PBKDF2-SHA256-250000',
+        note: L('La nonce no está dentro del archivo. El receptor necesita la key visible y la nonce correcta para desbloquear.', 'The nonce is not inside the file. The receiver needs the visible key and the correct nonce to unlock.'),
+        originalName: lockedFile.name,
+        originalType: lockedFile.type || 'application/octet-stream',
+        originalSize: lockedFile.size,
+        createdAt: new Date().toISOString(),
+        salt: b64url(salt),
+        iv: b64url(iv),
+        data: b64url(cipher),
+      };
+      const payload = JSON.stringify(pack, null, 2);
+      setEncryptedText(payload);
+      setEncryptedName((lockedFile.name || 'file') + '.osdglock');
+      triggerDownload((lockedFile.name || 'file') + '.osdglock', payload, 'application/octet-stream');
+      setStatus(L('Archivo cifrado y descargado. Entrega la nonce al usuario final por un canal seguro.', 'File encrypted and downloaded. Send the nonce to the receiver through a secure channel.'));
+    } catch (err) {
+      setStatus(L('Error cifrando el archivo: ', 'Encryption error: ') + (err?.message || err));
+    }
+  };
+
+  const decryptFile = async () => {
+    try {
+      if (!unlockFile) return setStatus(L('Selecciona un archivo bloqueado.', 'Select a locked file.'));
+      if (!unlockKey.trim()) return setStatus(L('Falta la key visible.', 'Visible key is missing.'));
+      if (!decryptNonce.trim()) return setStatus(L('Falta la nonce.', 'Nonce is missing.'));
+      const raw = await unlockFile.text();
+      const pack = JSON.parse(raw);
+      if (pack.magic !== 'OSDG-rest.locked') throw new Error('Invalid OSDG-rest container');
+      const salt = fromB64url(pack.salt);
+      const iv = fromB64url(pack.iv);
+      const data = fromB64url(pack.data);
+      const key = await deriveAesKey(unlockKey.trim(), decryptNonce.trim(), salt);
+      const aad = new TextEncoder().encode('OSDG-rest-file-v1');
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, data);
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      const blob = new Blob([plain], { type: pack.originalType || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
+      setDownloadName(pack.originalName || 'unlocked-file');
+      setStatus(L('Nonce correcta. Archivo desbloqueado y listo para descargar.', 'Correct nonce. File unlocked and ready to download.'));
+    } catch (err) {
+      setDownloadUrl('');
+      setDownloadName('');
+      setStatus(L('No se pudo desbloquear. Revisa key visible, nonce o archivo.', 'Could not unlock. Check visible key, nonce, or file.'));
+    }
+  };
+
+  const exportStatus = () => {
+    const report = [
+      'OPENCRIPTG · OSDG -rest',
+      'Mode: file encryptor / unlocker',
+      'Visible key source: ' + (latestAscon ? (latestAscon.primitiveLabel || latestAscon.typeId || 'database') : 'manual'),
+      'Nonce stored in file: NO',
+      'Container: .osdglock',
+      'Algorithm layer: ASCON-KEY-COMPAT/AES-256-GCM',
+      'KDF: PBKDF2-SHA256-250000',
+      'License gate: Apache-2.0 + BSD-3-Clause accepted',
+      'Original repository/project names: not used in interface',
+    ].join('\n');
+    triggerDownload('OSDG-rest-encryptor-report.txt', report, 'text/plain;charset=utf-8');
+  };
+
+  const resetTool = () => {
+    setLockedFile(null); setUnlockFile(null); setEncryptedText(''); setEncryptedName(''); setHiddenNonce(''); setReceiverNonce(''); setDecryptNonce(''); setDownloadUrl(''); setDownloadName(''); setStatus('');
+    if (encryptInputRef.current) encryptInputRef.current.value = '';
+    if (decryptInputRef.current) decryptInputRef.current.value = '';
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg osdgdlg osdgenc" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>OSDG -rest</h2>
+            <p>{L('Cifrador y desbloqueador de archivos para OpencriptG. Usa una key visible tomada de la base de datos y una nonce oculta que el usuario final necesita para acceder al archivo.', 'File encryptor and unlocker for OpencriptG. It uses a visible key from the database and a hidden nonce required by the receiver to access the file.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        {!accepted && <div className="osdg-licensegate">
+          <section className="textdlg-panel osdg-licensebox"><div className="textdlg-panel-k">Apache-2.0</div><p>{L('Permite uso comercial, modificación y distribución. Debes conservar la licencia, avisos de copyright y marcar archivos modificados cuando distribuyas cambios.', 'Allows commercial use, modification, and distribution. You must keep the license, copyright notices, and mark modified files when distributing changes.')}</p></section>
+          <section className="textdlg-panel osdg-licensebox"><div className="textdlg-panel-k">BSD-3-Clause</div><p>{L('Permite uso comercial y modificación. Debes conservar copyright, condiciones y disclaimer. No puedes usar nombres de autores, contribuidores o proyectos originales para promocionar OSDG -rest sin permiso.', 'Allows commercial use and modification. You must keep copyright, conditions, and disclaimer. You cannot use original author, contributor, or project names to promote OSDG -rest without permission.')}</p></section>
+          <section className="textdlg-panel osdg-acceptbox">
+            <label><input type="checkbox" checked={acceptApache} onChange={(e)=>setAcceptApache(e.target.checked)} /> {L('Acepto conservar la licencia Apache-2.0 y sus avisos.', 'I agree to preserve the Apache-2.0 license and notices.')}</label>
+            <label><input type="checkbox" checked={acceptBsd} onChange={(e)=>setAcceptBsd(e.target.checked)} /> {L('Acepto conservar la licencia BSD-3-Clause y sus avisos.', 'I agree to preserve the BSD-3-Clause license and notices.')}</label>
+            <label><input type="checkbox" checked={acceptNoName} onChange={(e)=>setAcceptNoName(e.target.checked)} /> {L('Acepto no usar nombres de autores, contribuidores ni proyectos externos para promocionar esta herramienta.', 'I agree not to use external author, contributor, or project names to promote this tool.')}</label>
+            <button className="dbdlg-btn" disabled={!canAccept} onClick={acceptLicenses}>{L('Aceptar y abrir OSDG -rest', 'Accept and open OSDG -rest')}</button>
+          </section>
+        </div>}
+
+        {accepted && <div className="osdgenc-layout">
+          <aside className="osdgenc-side">
+            <section className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Key visible · Ascon Key', 'Visible key · Ascon Key')}</div>
+              <textarea className="textdlg-mini osdgenc-key" value={visibleKey} onChange={(e)=>{setVisibleKey(e.target.value); setUnlockKey(e.target.value);}} placeholder={L('Pega o importa una Ascon Key...', 'Paste or import an Ascon Key...')} />
+              <div className="osdgenc-actions">
+                <button className="dbdlg-btn" onClick={useLatestKey}>{L('Usar último code copiado', 'Use latest copied code')}</button>
+                <button className="dbdlg-btn" onClick={buildNonce}>{L('Generar nonce oculta', 'Generate hidden nonce')}</button>
+                <button className="dbdlg-btn" disabled={!hiddenNonce} onClick={copyNonce}>{L('Copiar nonce para receptor', 'Copy nonce for receiver')}</button>
+              </div>
+              <div className="osdgenc-secret"><span>{L('Nonce', 'Nonce')}</span><b>{hiddenNonce ? L('OCULTA · lista para copiar', 'HIDDEN · ready to copy') : L('No generada', 'Not generated')}</b></div>
+              {latestAscon && <p className="textdlg-note">{L('Auto-key detectada desde base de datos:', 'Auto-key detected from database:')} {latestAscon.primitiveLabel || latestAscon.typeId}</p>}
+            </section>
+
+            <section className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Control', 'Control')}</div>
+              <div className="osdgenc-actions">
+                <button className="dbdlg-btn" onClick={exportStatus}>{L('Exportar reporte', 'Export report')}</button>
+                <button className="dbdlg-btn danger" onClick={resetTool}>{L('Limpiar sesión', 'Clear session')}</button>
+                <button className="dbdlg-btn danger" onClick={forgetAcceptance}>{L('Revisar licencias', 'Review licenses')}</button>
+              </div>
+            </section>
+          </aside>
+
+          <main className="osdgenc-main">
+            <section className="textdlg-panel osdgenc-card">
+              <div className="textdlg-panel-k">1 · {L('Cifrar archivo', 'Encrypt file')}</div>
+              <input ref={encryptInputRef} type="file" onChange={(e)=>{ const f=e.target.files?.[0]; setLockedFile(f || null); setFileInfo(f ? { name:f.name, size:f.size, type:f.type } : null); }} />
+              {fileInfo && <div className="osdgenc-file"><strong>{fileInfo.name}</strong><span>{fileInfo.size} bytes · {fileInfo.type || 'file'}</span></div>}
+              <button className="dbdlg-btn osdgenc-primary" onClick={encryptFile}>{L('Cifrar y descargar .osdglock', 'Encrypt and download .osdglock')}</button>
+              <p>{L('El archivo cifrado no contiene la nonce. El receptor necesita la key visible y la nonce correcta.', 'The encrypted file does not contain the nonce. The receiver needs the visible key and the correct nonce.')}</p>
+            </section>
+
+            <section className="textdlg-panel osdgenc-card">
+              <div className="textdlg-panel-k">2 · {L('Desbloquear archivo', 'Unlock file')}</div>
+              <input ref={decryptInputRef} type="file" accept=".osdglock,application/json,application/octet-stream" onChange={(e)=>setUnlockFile(e.target.files?.[0] || null)} />
+              <textarea className="textdlg-mini osdgenc-key" value={unlockKey} onChange={(e)=>setUnlockKey(e.target.value)} placeholder={L('Key visible...', 'Visible key...')} />
+              <input className="textdlg-mini" value={decryptNonce} onChange={(e)=>setDecryptNonce(e.target.value)} placeholder={L('Nonce recibida por el usuario final...', 'Nonce received by the final user...')} />
+              <button className="dbdlg-btn osdgenc-primary" onClick={decryptFile}>{L('Verificar nonce y desbloquear', 'Verify nonce and unlock')}</button>
+              {downloadUrl && <a className="dbdlg-btn osdgenc-download" href={downloadUrl} download={downloadName}>{L('Descargar archivo desbloqueado', 'Download unlocked file')}</a>}
+            </section>
+
+            <section className="textdlg-panel osdgenc-status">
+              <div className="textdlg-panel-k">{L('Estado', 'Status')}</div>
+              <p>{status || L('Listo. Selecciona un archivo para cifrar o desbloquear.', 'Ready. Select a file to encrypt or unlock.')}</p>
+              {encryptedText && <details><summary>{L('Vista técnica del contenedor', 'Technical container preview')}</summary><pre>{encryptedText.slice(0, 1800)}</pre></details>}
+            </section>
+          </main>
+        </div>}
+      </section>
+    </div>
+  );
+};
+
+
+const DEFAULT_MARKDOWN_DOC = [
+  '# OpencriptG Markdown Desk',
+  '',
+  'Markdown editor with live preview.',
+  '',
+  '## Features',
+  '',
+  '- Live split view',
+  '- Code blocks',
+  '- Tables',
+  '- Quotes',
+  '- Checklists',
+  '- Export to Markdown or HTML',
+  '',
+  '```js',
+  'const platform = "OpencriptG";',
+  'console.log(platform);',
+  '```',
+  '',
+  '> Structured for reading instead of scrolling.',
+  '',
+  '| Module | Status |',
+  '|---|---|',
+  '| QR Vault | ready |',
+  '| Text Lab | ready |',
+  '| OSDG -rest | ready |',
+].join('\n');
+
+const MarkdownDeskDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_markdown_desk_v1';
+  const [title, setTitle] = useState('payments-spec.md');
+  const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN_DOC);
+  const [theme, setTheme] = useState('paper');
+  const [wrap, setWrap] = useState(true);
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setTitle(parsed.title || 'payments-spec.md');
+        setMarkdown(parsed.markdown || DEFAULT_MARKDOWN_DOC);
+        setTheme(parsed.theme || 'paper');
+        setWrap(parsed.wrap !== false);
+      }
+    } catch {}
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ title, markdown, theme, wrap }));
+  }, [open, title, markdown, theme, wrap]);
+
+  const escapeHtml = (value = '') => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const parseInline = (value = '') => {
+    let s = escapeHtml(value);
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
+    s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, href) => {
+      const safe = sanitizeUrl(href);
+      return safe ? `<a href="${escapeHtml(safe)}" target="_blank" rel="noreferrer noopener">${label}</a>` : label;
+    });
+    return s;
+  };
+
+  const renderMarkdown = (src = '') => {
+    const lines = String(src || '').replace(/\r\n/g, '\n').split('\n');
+    const out = [];
+    let i = 0;
+    let inCode = false;
+    let codeLang = '';
+    let codeLines = [];
+    const flushCode = () => {
+      out.push('<pre><code data-lang="' + escapeHtml(codeLang || 'text') + '">' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+      codeLines = [];
+      codeLang = '';
+    };
+    const isTable = (idx) => idx + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[idx]) && /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[idx + 1]);
+    while (i < lines.length) {
+      const raw = lines[i];
+      const line = raw.trimEnd();
+      if (line.trim().startsWith('```')) {
+        if (!inCode) { inCode = true; codeLang = line.trim().slice(3).trim(); codeLines = []; }
+        else { inCode = false; flushCode(); }
+        i++; continue;
+      }
+      if (inCode) { codeLines.push(raw); i++; continue; }
+      if (!line.trim()) { i++; continue; }
+      if (isTable(i)) {
+        const headers = lines[i].trim().replace(/^\||\|$/g, '').split('|').map(x => x.trim());
+        i += 2;
+        const rows = [];
+        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
+          rows.push(lines[i].trim().replace(/^\||\|$/g, '').split('|').map(x => x.trim()));
+          i++;
+        }
+        out.push('<table><thead><tr>' + headers.map(h => '<th>' + parseInline(h) + '</th>').join('') + '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(c => '<td>' + parseInline(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table>');
+        continue;
+      }
+      const h = /^(#{1,6})\s+(.+)$/.exec(line);
+      if (h) { const level = h[1].length; out.push('<h' + level + '>' + parseInline(h[2]) + '</h' + level + '>'); i++; continue; }
+      if (/^>\s?/.test(line)) {
+        const block = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { block.push(lines[i].replace(/^>\s?/, '')); i++; }
+        out.push('<blockquote>' + block.map(x => '<p>' + parseInline(x) + '</p>').join('') + '</blockquote>');
+        continue;
+      }
+      if (/^[-*]\s+\[[ xX]\]\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length && /^[-*]\s+\[[ xX]\]\s+/.test(lines[i].trim())) {
+          const checked = /^[-*]\s+\[[xX]\]/.test(lines[i].trim());
+          const txt = lines[i].trim().replace(/^[-*]\s+\[[ xX]\]\s+/, '');
+          items.push('<li><input type="checkbox" disabled ' + (checked ? 'checked' : '') + ' /> ' + parseInline(txt) + '</li>');
+          i++;
+        }
+        out.push('<ul class="md-checklist">' + items.join('') + '</ul>');
+        continue;
+      }
+      if (/^[-*]\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) { items.push('<li>' + parseInline(lines[i].trim().replace(/^[-*]\s+/, '')) + '</li>'); i++; }
+        out.push('<ul>' + items.join('') + '</ul>');
+        continue;
+      }
+      if (/^\d+\.\s+/.test(line)) {
+        const items = [];
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) { items.push('<li>' + parseInline(lines[i].trim().replace(/^\d+\.\s+/, '')) + '</li>'); i++; }
+        out.push('<ol>' + items.join('') + '</ol>');
+        continue;
+      }
+      if (/^---+$/.test(line.trim())) { out.push('<hr />'); i++; continue; }
+      const para = [line];
+      i++;
+      while (i < lines.length && lines[i].trim() && !/^(#{1,6})\s+/.test(lines[i]) && !/^[-*]\s+/.test(lines[i].trim()) && !/^\d+\.\s+/.test(lines[i].trim()) && !/^>\s?/.test(lines[i]) && !lines[i].trim().startsWith('```') && !isTable(i)) {
+        para.push(lines[i].trimEnd()); i++;
+      }
+      out.push('<p>' + parseInline(para.join(' ')) + '</p>');
+    }
+    if (inCode) flushCode();
+    return out.join('\n');
+  };
+
+  const html = useMemo(() => renderMarkdown(markdown), [markdown]);
+  const stats = useMemo(() => {
+    const words = markdown.trim() ? markdown.trim().split(/\s+/).filter(Boolean).length : 0;
+    const lines = markdown.split('\n').length;
+    const chars = markdown.length;
+    return { words, lines, chars };
+  }, [markdown]);
+
+  const insertSnippet = (snippet) => setMarkdown(prev => (prev ? prev + '\n\n' : '') + snippet);
+  const exportMarkdown = () => {
+    triggerDownload(title || 'opencriptg-doc.md', markdown, 'text/markdown;charset=utf-8');
+    notify && notify(L('Markdown descargado', 'Markdown downloaded'));
+  };
+  const exportHtml = () => {
+    const doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title || 'OpencriptG document') + '</title><style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.6;color:#111}pre{background:#f3f3f3;padding:14px;overflow:auto}code{background:#eee;padding:2px 5px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px}blockquote{border-left:3px solid #111;padding-left:14px;color:#555}</style></head><body>' + html + '</body></html>';
+    triggerDownload((title || 'opencriptg-doc').replace(/\.md$/i, '') + '.html', doc, 'text/html;charset=utf-8');
+    notify && notify(L('HTML descargado', 'HTML downloaded'));
+  };
+  const copyHtml = () => {
+    navigator.clipboard && navigator.clipboard.writeText(html);
+    notify && notify(L('HTML copiado', 'HTML copied'));
+  };
+  const clearDoc = () => setMarkdown('');
+
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg mddlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>MARKDOWN DESK</h2>
+            <p>{L('Editor Markdown dividido: escribe a la izquierda y visualiza a la derecha con estilo OpencriptG.', 'Split Markdown editor: write on the left and preview on the right with OpencriptG styling.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="mddlg-toolbar">
+          <input className="textdlg-mini mddlg-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="document.md" />
+          <button className="dbdlg-btn" onClick={() => insertSnippet('# Heading\n\nWrite here...')}>H1</button>
+          <button className="dbdlg-btn" onClick={() => insertSnippet('```js\nconst value = 1;\n```')}>{L('Code', 'Code')}</button>
+          <button className="dbdlg-btn" onClick={() => insertSnippet('| Column A | Column B |\n|---|---|\n| value | value |')}>{L('Tabla', 'Table')}</button>
+          <button className="dbdlg-btn" onClick={() => insertSnippet('- [ ] Task one\n- [x] Task done')}>Checklist</button>
+          <button className="dbdlg-btn" onClick={() => insertSnippet('> Important quote or note.')}>{L('Cita', 'Quote')}</button>
+          <select className="textdlg-mini" value={theme} onChange={(e) => setTheme(e.target.value)}><option value="paper">Paper</option><option value="terminal">Terminal</option><option value="compact">Compact</option></select>
+          <button className="dbdlg-btn" onClick={() => setWrap(v => !v)}>{wrap ? 'Wrap ON' : 'Wrap OFF'}</button>
+          <button className="dbdlg-btn" onClick={exportMarkdown}>MD</button>
+          <button className="dbdlg-btn" onClick={exportHtml}>HTML</button>
+          <button className="dbdlg-btn" onClick={copyHtml}>{L('Copiar HTML', 'Copy HTML')}</button>
+          <button className="dbdlg-btn danger" onClick={clearDoc}>{L('Limpiar', 'Clear')}</button>
+        </div>
+        <div className={'mddlg-split ' + theme}>
+          <section className="mddlg-pane mddlg-editorpane">
+            <div className="mddlg-pane-head"><span>MARKDOWN</span><b>{stats.lines} lines</b></div>
+            <textarea className={wrap ? 'mddlg-editor wrap' : 'mddlg-editor'} value={markdown} onChange={(e) => setMarkdown(e.target.value)} spellCheck="false" />
+          </section>
+          <section className="mddlg-pane mddlg-previewpane">
+            <div className="mddlg-pane-head"><span>HTML PREVIEW</span><b>{stats.words} words · {stats.chars} ch</b></div>
+            <div className="mddlg-preview" dangerouslySetInnerHTML={{ __html: html }} />
+          </section>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_market_notes_v2_indexed';
+  const DEFAULT_BASE = 0.28;
+  const INDEX_CONSTANT = 0.428;
+
+  const generateKuznyechikKey = () => {
+    const bytes = new Uint8Array(32);
+    try {
+      crypto.getRandomValues(bytes);
+    } catch {
+      for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  };
+
+  const makeNote = () => ({
+    id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    title: `sequence - A ${String(Date.now()).slice(-4)}`,
+    kuzKey: generateKuznyechikKey(),
+    text: '',
+    code: '',
+    codes: [],
+    value: 'PENDING',
+    baseValue: DEFAULT_BASE,
+    similarityCount: 2,
+    processEnd: 'A',
+    indexValue: null,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  const [notes, setNotes] = useState([]);
+  const [activeId, setActiveId] = useState('');
+  const [selectedCode, setSelectedCode] = useState('');
+
+  const normalizeNote = (note) => ({
+    ...makeNote(),
+    ...note,
+    kuzKey: note.kuzKey || generateKuznyechikKey(),
+    codes: Array.isArray(note.codes) ? note.codes : (note.code ? [note.code] : []),
+    baseValue: Number.isFinite(Number(note.baseValue)) ? Number(note.baseValue) : DEFAULT_BASE,
+    similarityCount: Number.isFinite(Number(note.similarityCount)) ? Number(note.similarityCount) : 2,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('opencriptG_market_notes_v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.notes)) {
+          const normalized = parsed.notes.map(normalizeNote);
+          setNotes(normalized);
+          setActiveId(parsed.activeId || normalized[0]?.id || '');
+          return;
+        }
+      }
+    } catch {}
+    setNotes([]);
+    setActiveId('');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes, activeId }));
+  }, [open, notes, activeId]);
+
+  useEffect(() => {
+    if (rows.length && !selectedCode) setSelectedCode(rows[0].value || '');
+  }, [rows, selectedCode]);
+
+  const activeNote = notes.find((n) => n.id === activeId) || notes[0] || null;
+
+  const getCodeList = (note) => {
+    const list = Array.isArray(note?.codes) ? note.codes.filter(Boolean) : [];
+    if (!list.length && note?.code) return [note.code];
+    return list;
+  };
+
+  const calculateMarketIndex = (note) => {
+    const codeCount = getCodeList(note).length;
+    const similarity = Math.max(1, Number(note?.similarityCount || 1));
+    const base = Number(note?.baseValue || 0);
+    const rawIndex = (codeCount / similarity) * (base - INDEX_CONSTANT);
+    if (!Number.isFinite(rawIndex)) return -0.0001;
+    const negativeIndex = -Math.abs(rawIndex);
+    return Number(negativeIndex.toFixed(4)) || -0.0001;
+  };
+
+  const formulaParts = (note) => {
+    const codeCount = getCodeList(note).length;
+    const similarity = Math.max(1, Number(note?.similarityCount || 1));
+    const base = Number(note?.baseValue || 0);
+    const index = calculateMarketIndex(note);
+    return { codeCount, similarity, base, index };
+  };
+
+  const addNote = () => {
+    const note = makeNote();
+    setNotes((prev) => [note, ...prev]);
+    setActiveId(note.id);
+    notify && notify(L('Nota creada en sequence - A', 'Note created in sequence - A'));
+  };
+
+  const updateNote = (id, patch) => {
+    setNotes((prev) => prev.map((n) => {
+      if (n.id !== id) return n;
+      const next = { ...n, ...patch, updatedAt: Date.now() };
+      return { ...next, indexValue: calculateMarketIndex(next), value: String(calculateMarketIndex(next)) };
+    }));
+  };
+
+  const removeNote = (id) => {
+    const next = notes.filter((n) => n.id !== id);
+    setNotes(next);
+    setActiveId(next[0]?.id || '');
+    notify && notify(L('Nota eliminada', 'Note deleted'));
+  };
+
+  const attachCode = (code) => {
+    if (!activeNote) return;
+    if (!code) {
+      notify && notify(L('No hay codes disponibles en la base de datos', 'No codes available in the database'));
+      return;
+    }
+    const current = getCodeList(activeNote);
+    const nextCodes = current.includes(code) ? current : [...current, code];
+    updateNote(activeNote.id, { code: nextCodes[0] || '', codes: nextCodes });
+    notify && notify(L('Code agregado como moneda de la nota', 'Code added as note currency'));
+  };
+
+  const attachSelectedCode = () => attachCode(selectedCode || rows[0]?.value || '');
+
+  const attachLatestCode = () => {
+    const code = rows[0]?.value || '';
+    if (code) setSelectedCode(code);
+    attachCode(code);
+  };
+
+  const clearCodes = () => {
+    if (!activeNote) return;
+    updateNote(activeNote.id, { code: '', codes: [] });
+  };
+
+  const escapeHtml = (value = '') => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const printableHtml = (note) => {
+    const parts = formulaParts(note);
+    const indexClass = parts.index < 0 ? 'neg' : parts.index > 0 ? 'pos' : 'neu';
+    const codesHtml = getCodeList(note).map((code, idx) => `<div class="code-line"><b>${String(idx + 1).padStart(2, '0')}</b>${escapeHtml(code)}</div>`).join('') || escapeHtml(L('Sin code agregado', 'No code attached'));
+    return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(note.title)}</title><style>
+    *{box-sizing:border-box} body{margin:0;background:#ece8df;font-family:Arial,Helvetica,sans-serif;color:#0b0b0b;padding:38px} .card{max-width:860px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:12px 12px 0 #111;padding:34px} .k{font:12px monospace;letter-spacing:4px;color:#777;text-transform:uppercase}.kuz{border:1px solid #111;background:#f7f7f7;padding:14px;margin:14px 0 16px}.kuz span{display:block;font:11px monospace;letter-spacing:3px;color:#777;text-transform:uppercase;margin-bottom:8px}.kuz b{display:block;font:13px monospace;word-break:break-all;letter-spacing:1px}.title{font-size:42px;line-height:1;margin:10px 0 18px;font-weight:800}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.box{border:1px solid #111;padding:14px;background:#fafafa}.box span{display:block;font:11px monospace;letter-spacing:2px;color:#777;text-transform:uppercase;margin-bottom:8px}.idx{font-size:36px;font-weight:900;font-family:monospace}.idx.neg{color:#b00020}.idx.pos{color:#008a3d}.idx.neu{color:#111}.formula{border:1px solid #111;background:#f7f7f7;padding:14px;margin:16px 0;font-family:monospace;line-height:1.55}.code{font-family:monospace;word-break:break-all;font-size:12px}.code-line{border-bottom:1px solid #ddd;padding:8px 0;display:grid;grid-template-columns:38px 1fr;gap:10px}.text{border-top:1px solid #ccc;margin-top:20px;padding-top:20px;white-space:pre-wrap;line-height:1.6}.foot{margin-top:30px;font:11px monospace;color:#777;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #111;margin:0;max-width:none}.printbtn{display:none}}</style></head><body><button class="printbtn" onclick="window.print()" style="margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase">${L('Guardar como PDF', 'Save as PDF')}</button><section class="card"><div class="k">sequence - A · OpencriptG</div><div class="kuz"><span>Kuznyechik Key · 256-bit</span><b>${escapeHtml(note.kuzKey || generateKuznyechikKey())}</b></div><h1 class="title">${escapeHtml(note.title)}</h1><div class="meta"><div class="box"><span>${L('Índice', 'Index')}</span><b class="idx ${indexClass}">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes', 'Codes')}</span><b>${parts.codeCount}</b></div><div class="box"><span>${L('Similitudes', 'Similarities')}</span><b>${parts.similarity}</b></div><div class="box"><span>${L('Base', 'Base')}</span><b>${parts.base}</b></div></div><div class="formula">I = -ABS((codes / similitudes) × (base - 0.428))<br/>I = -ABS((${parts.codeCount} / ${parts.similarity}) × (${parts.base} - 0.428)) = <b class="idx ${indexClass}" style="font-size:22px">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes moneda', 'Currency codes')}</span><div class="code">${codesHtml}</div></div><div class="text">${escapeHtml(note.text || L('Nota vacía', 'Empty note'))}</div><div class="foot">Built by diktatcart · sequence - A</div></section></body></html>`;
+  };
+
+  const downloadPdf = (note) => {
+    if (!note) return;
+    const win = window.open('', '_blank', 'width=980,height=880');
+    if (!win) return;
+    win.document.open();
+    win.document.write(printableHtml(note));
+    win.document.close();
+    setTimeout(() => { try { win.focus(); win.print(); } catch {} }, 250);
+    notify && notify(L('Vista PDF abierta. Usa Guardar como PDF.', 'PDF view opened. Use Save as PDF.'));
+  };
+
+  const downloadHtml = (note) => {
+    if (!note) return;
+    const name = `sequence-a-${(note.title || 'note').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.html`;
+    triggerDownload(name, printableHtml(note), 'text/html;charset=utf-8');
+  };
+
+  if (!open) return null;
+
+  const activeParts = activeNote ? formulaParts(activeNote) : { codeCount: 0, similarity: 1, base: DEFAULT_BASE, index: 0 };
+  const indexSignClass = activeParts.index < 0 ? 'negative' : activeParts.index > 0 ? 'positive' : 'neutral';
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg mnotesdlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>sequence - A</h2>
+            <p>{L('Notas con índice interno calculado por codes, similitudes y valor base.', 'Notes with an internal index calculated by codes, similarities, and base value.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="mnotes-layout">
+          <aside className="mnotes-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Mercado', 'Market')}</div>
+              <button className="mnotes-plus" onClick={addNote}>+</button>
+              <p className="textdlg-note">{L('Fórmula activa: índice = -ABS((cantidad de codes / similitudes) × (base - 0.428)).', 'Active formula: index = -ABS((code count / similarities) × (base - 0.428)).')}</p>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Moneda disponible', 'Available currency')}</div>
+              <div className="mnotes-balance">
+                <strong>{rows.length}</strong>
+                <span>{L('codes en base de datos', 'codes in database')}</span>
+              </div>
+              <select className="textdlg-mini" value={selectedCode} onChange={(e) => setSelectedCode(e.target.value)}>
+                <option value="">{L('Seleccionar code', 'Select code')}</option>
+                {rows.slice(0, 200).map((row, idx) => (
+                  <option key={`${row.value || 'code'}-${idx}`} value={row.value || ''}>{String(row.value || '').slice(0, 42)} · {row.type || 'code'}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Notas creadas', 'Created notes')}</div>
+              <div className="mnotes-list">
+                {!notes.length ? <div className="dbdlg-empty">{L('Pulsa + para crear tu primera nota.', 'Press + to create your first note.')}</div> : notes.map((note) => {
+                  const idx = calculateMarketIndex(note);
+                  return (
+                    <button key={note.id} className={`mnotes-item ${activeNote?.id === note.id ? 'active' : ''}`} onClick={() => setActiveId(note.id)}>
+                      <strong>{note.title}</strong>
+                      <span>{getCodeList(note).length} codes · {idx >= 0 ? '+' : ''}{idx}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+
+          <main className="mnotes-main">
+            {!activeNote ? (
+              <div className="dbdlg-empty">{L('No hay nota activa.', 'No active note.')}</div>
+            ) : (
+              <>
+                <div className="mnotes-editor-head">
+                  <input className="mnotes-title" value={activeNote.title} onChange={(e) => updateNote(activeNote.id, { title: e.target.value })} />
+                  <div className="mnotes-actions">
+                    <button className="dbdlg-btn" onClick={attachLatestCode}>{L('Agregar último code', 'Add latest code')}</button>
+                    <button className="dbdlg-btn" onClick={attachSelectedCode}>{L('Agregar code seleccionado', 'Add selected code')}</button>
+                    <button className="dbdlg-btn" onClick={clearCodes}>{L('Limpiar codes', 'Clear codes')}</button>
+                    <button className="dbdlg-btn" onClick={() => downloadPdf(activeNote)}>PDF</button>
+                    <button className="dbdlg-btn" onClick={() => downloadHtml(activeNote)}>HTML</button>
+                    <button className="dbdlg-btn danger" onClick={() => removeNote(activeNote.id)}>{L('Eliminar', 'Delete')}</button>
+                  </div>
+                </div>
+
+                <div className="mnotes-card-preview">
+                  <div className="mnotes-k">sequence - A</div>
+                  <div className="mnotes-kuz-key">
+                    <span>Kuznyechik Key · 256-bit</span>
+                    <b>{activeNote.kuzKey}</b>
+                    <button className="dbdlg-btn" onClick={() => { navigator.clipboard?.writeText(activeNote.kuzKey || ''); notify && notify(L('Kuznyechik Key copiada', 'Kuznyechik Key copied')); }}>{L('Copiar key', 'Copy key')}</button>
+                  </div>
+                  <h3>{activeNote.title}</h3>
+                  <div className="mnotes-index-panel">
+                    <div className="mnotes-index-left">
+                      <span>{L('Índice de sequence - A', 'sequence - A Index')}</span>
+                      <b className={`mnotes-index-value ${indexSignClass}`}>{activeParts.index >= 0 ? '+' : ''}{activeParts.index}</b>
+                    </div>
+                    <div className="mnotes-formula-line">
+                      I = -ABS(({activeParts.codeCount} / {activeParts.similarity}) × ({activeParts.base} - 0.428))
+                    </div>
+                  </div>
+
+                  <div className="mnotes-metrics mnotes-metrics4">
+                    <div><span>{L('Codes', 'Codes')}</span><b>{activeParts.codeCount}</b></div>
+                    <div><span>{L('Similitudes', 'Similarities')}</span><input type="number" min="1" step="1" value={activeNote.similarityCount} onChange={(e) => updateNote(activeNote.id, { similarityCount: Number(e.target.value || 1) })} /></div>
+                    <div><span>{L('Base b(x)', 'Base b(x)')}</span><input type="number" step="0.001" value={activeNote.baseValue} onChange={(e) => updateNote(activeNote.id, { baseValue: Number(e.target.value || 0) })} /></div>
+                    <div><span>{L('Constante', 'Constant')}</span><b>0.428</b></div>
+                  </div>
+
+                  <div className="mnotes-codebox">
+                    <span>{L('Codes de la base de datos', 'Database codes')}</span>
+                    {getCodeList(activeNote).length ? getCodeList(activeNote).map((code, idx) => (
+                      <p key={`${code}-${idx}`}><b>{String(idx + 1).padStart(2, '0')}</b> · {code}</p>
+                    )) : <p>{L('Todavía no se ha agregado un code a esta nota.', 'No code has been added to this note yet.')}</p>}
+                  </div>
+                  <textarea className="mnotes-textarea" value={activeNote.text} onChange={(e) => updateNote(activeNote.id, { text: e.target.value })} placeholder={L('Escribe el contenido de la nota...', 'Write the note content...')} />
+                </div>
+              </>
+            )}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_code_certificates_v1';
+  const [certs, setCerts] = useState([]);
+  const [selectedRowId, setSelectedRowId] = useState('');
+  const [buyerName, setBuyerName] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [licenseType, setLicenseType] = useState('Uso personal no exclusivo');
+  const [scope, setScope] = useState('Uso privado dentro del ecosistema OpencriptG');
+  const [price, setPrice] = useState('');
+  const [notes, setNotes] = useState('');
+  const [includeFullCode, setIncludeFullCode] = useState(false);
+  const [activeCertId, setActiveCertId] = useState('');
+
+  const selectedRow = rows.find((r) => String(r.id) === String(selectedRowId)) || rows[0] || null;
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setCerts(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setCerts([]);
+    }
+    if (rows[0] && !selectedRowId) setSelectedRowId(String(rows[0].id));
+  }, [open, rows.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(certs));
+  }, [open, certs]);
+
+  const escapeHtmlLocal = (value = '') => String(value).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  const maskCode = (value = '') => {
+    const s = String(value || '');
+    if (s.length <= 14) return s;
+    return s.slice(0, 8) + '••••' + s.slice(-6);
+  };
+  const sha256 = async (value) => {
+    const data = new TextEncoder().encode(String(value || ''));
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  };
+  const certId = () => 'OCG-CERT-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+
+  const buildCertPayload = async () => {
+    if (!selectedRow) return null;
+    const issuedAt = new Date().toISOString();
+    const codeValue = String(selectedRow.value || '');
+    const codeHash = await sha256(codeValue);
+    const id = certId();
+    const serialSeed = [id, codeHash, buyerName, buyerEmail, licenseType, scope, issuedAt, price].join('|');
+    const certificateHash = await sha256(serialSeed);
+    return {
+      id,
+      codeId: selectedRow.id || selectedRow.idx || 'N/A',
+      codeType: selectedRow.type || selectedRow.primitive || 'OpencriptG Code',
+      codeValue: includeFullCode ? codeValue : maskCode(codeValue),
+      fullCodeStored: includeFullCode,
+      codeHash,
+      buyerName: buyerName.trim() || L('Titular no especificado', 'Unspecified holder'),
+      buyerEmail: buyerEmail.trim(),
+      licenseType,
+      scope,
+      price: price.trim(),
+      notes: notes.trim(),
+      issuer: 'diktatcart / OpencriptG',
+      issuerRnc: '402-0936929-3',
+      status: 'Activo',
+      issuedAt,
+      certificateHash,
+    };
+  };
+
+  const createCertificate = async () => {
+    if (!selectedRow) {
+      notify && notify(L('Primero copia o guarda codes en la base de datos.', 'Copy or save codes in the database first.'));
+      return;
+    }
+    const payload = await buildCertPayload();
+    if (!payload) return;
+    setCerts((prev) => [payload, ...prev]);
+    setActiveCertId(payload.id);
+    notify && notify(L('Certificado privado creado', 'Private certificate created'));
+  };
+
+  const removeCert = (id) => {
+    setCerts((prev) => prev.filter((c) => c.id !== id));
+    if (activeCertId === id) setActiveCertId('');
+  };
+
+  const certificateHtml = (cert) => {
+    const logoUrl = window.location.origin + '/app/ocg-platform-icon.png?v=platform-icon-3';
+    const legal = L(
+      'Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema OpencriptG operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de OpencriptG.',
+      'This private certificate states that the identified code was generated or registered inside the OpencriptG ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private OpencriptG verification.'
+    );
+    const rowsHtml = [
+      ['ID', cert.id],
+      [L('Titular', 'Holder'), cert.buyerName],
+      ['Email', cert.buyerEmail || '—'],
+      [L('Tipo de licencia', 'License type'), cert.licenseType],
+      [L('Alcance', 'Scope'), cert.scope],
+      [L('Code ID', 'Code ID'), cert.codeId],
+      [L('Tipo de code', 'Code type'), cert.codeType],
+      [L('Code visible', 'Visible code'), cert.codeValue],
+      ['SHA-256 CODE', cert.codeHash],
+      ['SHA-256 CERT', cert.certificateHash],
+      [L('Emitido total', 'Issued total'), new Date(cert.issuedAt).toLocaleString()],
+      ['RNC diktatcart', cert.issuerRnc],
+      [L('Estado', 'Status'), cert.status],
+      [L('Precio / referencia', 'Price / reference'), cert.price || '—'],
+    ].map(([a,b]) => '<div class="row"><span>' + escapeHtmlLocal(a) + '</span><b>' + escapeHtmlLocal(b) + '</b></div>').join('');
+    const notesHtml = cert.notes ? '<div class="notes"><span>NOTAS</span><p>' + escapeHtmlLocal(cert.notes) + '</p></div>' : '';
+    return '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtmlLocal(cert.id) + '</title><style>' +
+      '*{box-sizing:border-box}body{margin:0;background:#ece8df;color:#0a0a0a;font-family:Arial,Helvetica,sans-serif;padding:30px}.printbtn{margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase}.cert{max-width:980px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:14px 14px 0 #111;padding:34px}.top{display:grid;grid-template-columns:100px 1fr;gap:22px;align-items:center;border-bottom:2px solid #111;padding-bottom:22px}.logo{width:92px;height:92px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}.k{font:12px monospace;letter-spacing:4px;text-transform:uppercase;color:#666}.title{font-size:48px;line-height:1;margin:8px 0 0;font-weight:900;letter-spacing:1px}.serial{border:1px solid #111;padding:12px 14px;margin:22px 0;background:#f7f7f7;font-family:monospace;word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{border:1px solid #d7d7d7;padding:12px;min-height:70px}.row span,.notes span,.legal span{display:block;font:10px monospace;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:8px}.row b{font:12px monospace;word-break:break-all}.notes,.legal{border:1px solid #111;padding:16px;margin-top:16px}.notes p,.legal p{margin:0;line-height:1.55}.seal{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:26px;border-top:1px solid #111;padding-top:18px}.sig{font:12px monospace;letter-spacing:2px;text-transform:uppercase}.rnc{font:14px monospace;font-weight:800}.stamp{border:2px solid #111;padding:14px 22px;font:12px monospace;letter-spacing:3px;text-transform:uppercase;transform:rotate(-2deg)}@media print{body{background:#fff;padding:0}.printbtn{display:none}.cert{box-shadow:none;margin:0;max-width:none;border:1px solid #111}}' +
+      '</style></head><body><button class="printbtn" onclick="window.print()">' + escapeHtmlLocal(L('Guardar como PDF', 'Save as PDF')) + '</button><section class="cert"><div class="top"><img class="logo" src="' + logoUrl + '"/><div><div class="k">OpencriptG · diktatcart · RNC 402-0936929-3</div><h1 class="title">' + escapeHtmlLocal(L('Certificado Privado de Code', 'Private Code Certificate')) + '</h1></div></div><div class="serial">' + escapeHtmlLocal(cert.id) + '</div><div class="grid">' + rowsHtml + '</div>' + notesHtml + '<div class="legal"><span>' + escapeHtmlLocal(L('Aviso legal', 'Legal notice')) + '</span><p>' + escapeHtmlLocal(legal) + '</p></div><div class="seal"><div><div class="sig">Emitido total por diktatcart / OpencriptG</div><div class="rnc">RNC: 402-0936929-3</div></div><div class="stamp">CERTIFICADO PRIVADO</div></div></section></body></html>';
+  };
+
+  const printCertificate = (cert) => {
+    const win = window.open('', '_blank', 'width=1100,height=900');
+    if (!win) return;
+    win.document.open();
+    win.document.write(certificateHtml(cert));
+    win.document.close();
+    notify && notify(L('Vista PDF abierta', 'PDF view opened'));
+  };
+
+  const downloadHtml = (cert) => {
+    triggerDownload(cert.id.toLowerCase() + '.html', certificateHtml(cert), 'text/html;charset=utf-8');
+  };
+
+  const activeCert = certs.find((c) => c.id === activeCertId) || certs[0] || null;
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg certdlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Certificados de Code', 'Code Certificates')}</h2>
+            <p>{L('Crea certificados privados de autenticidad y licencia para codes generados y guardados en la base de datos.', 'Create private authenticity and license certificates for codes generated and saved in the database.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="certdlg-layout">
+          <aside className="certdlg-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Datos del certificado', 'Certificate data')}</div>
+              <div className="certdlg-form">
+                <label>{L('Code de la base de datos', 'Database code')}
+                  <select className="textdlg-mini" value={selectedRowId} onChange={(e) => setSelectedRowId(e.target.value)}>
+                    {rows.length ? rows.map((r) => <option key={r.id} value={r.id}>{maskCode(r.value)} · {r.type || 'code'}</option>) : <option>{L('Sin codes guardados', 'No stored codes')}</option>}
+                  </select>
+                </label>
+                <label>{L('Titular / comprador', 'Holder / buyer')}<input className="textdlg-mini" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Nombre o alias" /></label>
+                <label>Email<input className="textdlg-mini" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="cliente@email.com" /></label>
+                <label>{L('Tipo de licencia', 'License type')}
+                  <select className="textdlg-mini" value={licenseType} onChange={(e) => setLicenseType(e.target.value)}>
+                    <option>Uso personal no exclusivo</option>
+                    <option>Uso comercial no exclusivo</option>
+                    <option>Uso comercial exclusivo</option>
+                    <option>Licencia interna de empresa</option>
+                    <option>Licencia transferible</option>
+                  </select>
+                </label>
+                <label>{L('Alcance', 'Scope')}<input className="textdlg-mini" value={scope} onChange={(e) => setScope(e.target.value)} /></label>
+                <label>{L('Precio / referencia', 'Price / reference')}<input className="textdlg-mini" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="RD$ / USD / referencia" /></label>
+                <label>{L('Notas legales o comerciales', 'Legal or commercial notes')}<textarea className="textdlg-mini certdlg-area" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
+                <label className="certdlg-check"><input type="checkbox" checked={includeFullCode} onChange={(e) => setIncludeFullCode(e.target.checked)} /> {L('Incluir code completo en el certificado', 'Include full code in certificate')}</label>
+                <button className="dbdlg-btn" onClick={createCertificate} disabled={!rows.length}>{L('Crear certificado', 'Create certificate')}</button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="certdlg-main">
+            <section className="certdlg-preview">
+              <div className="certdlg-logo-wrap"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="OpencriptG" /></div>
+              <div className="certdlg-k">OPENCRIPTG · DIKTATCART · RNC 402-0936929-3</div>
+              <h3>{L('Certificado Privado de Code', 'Private Code Certificate')}</h3>
+              <p>{L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema OpencriptG.', 'Private document for authenticity, issuance, and use license inside the OpencriptG ecosystem.')}</p>
+              {activeCert ? (
+                <div className="certdlg-certbox">
+                  <div><span>ID</span><b>{activeCert.id}</b></div>
+                  <div><span>{L('Titular', 'Holder')}</span><b>{activeCert.buyerName}</b></div>
+                  <div><span>CODE HASH</span><b>{activeCert.codeHash.slice(0, 28)}...</b></div>
+                  <div><span>{L('Estado', 'Status')}</span><b>{activeCert.status}</b></div>
+                </div>
+              ) : <div className="dbdlg-empty">{L('Crea un certificado para ver la vista previa.', 'Create a certificate to see the preview.')}</div>}
+              <div className="certdlg-legal-mini">
+                {L('Este certificado no es gubernamental, bancario ni notarial. Es una emisión privada de diktatcart/OpencriptG basada en sus registros internos.', 'This certificate is not governmental, banking, or notarial. It is a private issuance by diktatcart/OpencriptG based on internal records.')}
+              </div>
+            </section>
+
+            <section className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Certificados emitidos', 'Issued total certificates')}</div>
+              <div className="certdlg-list">
+                {!certs.length ? <div className="dbdlg-empty">{L('Todavía no hay certificados.', 'No certificates yet.')}</div> : certs.map((cert) => (
+                  <div className={`certdlg-row ${activeCertId === cert.id ? 'active' : ''}`} key={cert.id} onClick={() => setActiveCertId(cert.id)}>
+                    <div><strong>{cert.id}</strong><small>{cert.buyerName} · {new Date(cert.issuedAt).toLocaleDateString()}</small></div>
+                    <div className="certdlg-actions">
+                      <button className="dbdlg-btn" onClick={(e) => { e.stopPropagation(); printCertificate(cert); }}>PDF</button>
+                      <button className="dbdlg-btn" onClick={(e) => { e.stopPropagation(); downloadHtml(cert); }}>HTML</button>
+                      <button className="dbdlg-btn danger" onClick={(e) => { e.stopPropagation(); removeCert(cert.id); }}>×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+const ColorForgeDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [cmd, setCmd] = useState('palette analogous #2F6BFF 8');
+  const [base, setBase] = useState('#2F6BFF');
+  const [mode, setMode] = useState('analogous');
+  const [steps, setSteps] = useState(8);
+  const [colors, setColors] = useState([]);
+  const [log, setLog] = useState([{ kind: 'sys', text: 'Color Forge listo. Usa: color help' }]);
+  const [cssOutput, setCssOutput] = useState('');
+
+  const clamp = (n, a = 0, b = 255) => Math.max(a, Math.min(b, n));
+  const cleanHex = (value) => {
+    const v = String(value || '').trim().replace(/^#/, '');
+    if (/^[0-9a-f]{3}$/i.test(v)) return '#' + v.split('').map(ch => ch + ch).join('').toUpperCase();
+    if (/^[0-9a-f]{6}$/i.test(v)) return '#' + v.toUpperCase();
+    return '#2F6BFF';
+  };
+  const hexToRgb = (hex) => {
+    const h = cleanHex(hex).slice(1);
+    return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+  };
+  const rgbToHex = ({ r, g, b }) => '#' + [r, g, b].map(x => clamp(Math.round(x)).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const rgbToHsl = ({ r, g, b }) => {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h *= 60;
+    }
+    return { h, s: s * 100, l: l * 100 };
+  };
+  const hslToRgb = ({ h, s, l }) => {
+    h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
+  };
+  const luminance = (hex) => {
+    const { r, g, b } = hexToRgb(hex);
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const contrastRatio = (a, b) => {
+    const l1 = luminance(a), l2 = luminance(b);
+    const hi = Math.max(l1, l2), lo = Math.min(l1, l2);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const mixHex = (a, b, t) => {
+    const A = hexToRgb(a), B = hexToRgb(b);
+    return rgbToHex({ r: A.r + (B.r - A.r) * t, g: A.g + (B.g - A.g) * t, b: A.b + (B.b - A.b) * t });
+  };
+  const makePalette = (hex = base, paletteMode = mode, count = steps) => {
+    const hsl = rgbToHsl(hexToRgb(hex));
+    const n = Math.max(2, Math.min(24, Number(count || 8)));
+    let arr = [];
+    if (paletteMode === 'mono') {
+      arr = Array.from({ length: n }, (_, i) => rgbToHex(hslToRgb({ ...hsl, l: 12 + (i * 76) / Math.max(1, n - 1) })));
+    } else if (paletteMode === 'complement') {
+      arr = Array.from({ length: n }, (_, i) => rgbToHex(hslToRgb({ h: hsl.h + (i % 2 ? 180 : 0), s: Math.max(28, hsl.s - Math.floor(i / 2) * 6), l: clamp(46 + ((i % 3) - 1) * 12, 12, 88) })));
+    } else if (paletteMode === 'triadic') {
+      arr = Array.from({ length: n }, (_, i) => rgbToHex(hslToRgb({ h: hsl.h + [0, 120, 240][i % 3], s: clamp(hsl.s - Math.floor(i / 3) * 7, 24, 96), l: clamp(hsl.l + ((i % 2) ? 10 : -4), 18, 86) })));
+    } else if (paletteMode === 'tetradic') {
+      arr = Array.from({ length: n }, (_, i) => rgbToHex(hslToRgb({ h: hsl.h + [0, 90, 180, 270][i % 4], s: clamp(hsl.s - Math.floor(i / 4) * 5, 24, 96), l: clamp(hsl.l + ((i % 2) ? 8 : -8), 18, 86) })));
+    } else if (paletteMode === 'gradient') {
+      arr = Array.from({ length: n }, (_, i) => mixHex(hex, '#0C0C0C', i / Math.max(1, n - 1)));
+    } else {
+      arr = Array.from({ length: n }, (_, i) => rgbToHex(hslToRgb({ h: hsl.h - 35 + (70 * i) / Math.max(1, n - 1), s: clamp(hsl.s, 28, 96), l: clamp(hsl.l + ((i % 2) ? 9 : -5), 16, 88) })));
+    }
+    return [...new Set(arr)].slice(0, n);
+  };
+  const paletteMeta = (hex) => {
+    const rgb = hexToRgb(hex); const hsl = rgbToHsl(rgb); const crWhite = contrastRatio(hex, '#FFFFFF'); const crBlack = contrastRatio(hex, '#000000');
+    return { hex, rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`, hsl: `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`, text: crWhite >= crBlack ? '#FFFFFF' : '#000000', contrast: Math.max(crWhite, crBlack).toFixed(2) };
+  };
+  const rebuildCss = (palette) => {
+    const css = `:root {\n${palette.map((c, i) => `  --ocg-color-${String(i + 1).padStart(2, '0')}: ${c};`).join('\n')}\n}\n\n.ocg-gradient {\n  background: linear-gradient(135deg, ${palette.slice(0, 5).join(', ')});\n}`;
+    setCssOutput(css);
+    return css;
+  };
+  const applyPalette = (hex, nextMode, count) => {
+    const clean = cleanHex(hex); const palette = makePalette(clean, nextMode, count);
+    setBase(clean); setMode(nextMode); setSteps(Math.max(2, Math.min(24, Number(count || steps)))); setColors(palette); rebuildCss(palette);
+    return palette;
+  };
+  useEffect(() => { if (open && !colors.length) applyPalette(base, mode, steps); }, [open]);
+  const push = (text, kind = 'sys') => setLog(prev => [...prev.slice(-40), { kind, text }]);
+  const runColorCommand = (raw) => {
+    const parts = String(raw || '').trim().split(/\s+/).filter(Boolean);
+    const head = String(parts[0] || '').toLowerCase();
+    if (!head) return;
+    if (head === 'help' || (head === 'color' && parts[1] === 'help')) {
+      push('Comandos: palette <analogous|mono|complement|triadic|tetradic|gradient> <hex> <cantidad> · contrast <fg> <bg> · gradient <hex1> <hex2> <pasos> · export css|json', 'sys'); return;
+    }
+    if (head === 'palette' || head === 'pal') {
+      const nextMode = parts[1] || 'analogous'; const hex = cleanHex(parts[2] || base); const count = Number(parts[3] || steps);
+      const palette = applyPalette(hex, nextMode, count); push(`Palette ${nextMode} creada con ${palette.length} colores desde ${hex}.`, 'ok'); return;
+    }
+    if (head === 'color') {
+      const hex = cleanHex(parts[1] || base); const palette = applyPalette(hex, mode, steps); push(`Color base actualizado: ${hex}. ${palette.length} colores recalculados.`, 'ok'); return;
+    }
+    if (head === 'gradient') {
+      const a = cleanHex(parts[1] || base); const b = cleanHex(parts[2] || '#0C0C0C'); const count = Math.max(2, Math.min(24, Number(parts[3] || steps)));
+      const palette = Array.from({ length: count }, (_, i) => mixHex(a, b, i / Math.max(1, count - 1)));
+      setBase(a); setMode('gradient'); setSteps(count); setColors(palette); rebuildCss(palette); push(`Gradient creado ${a} → ${b} con ${count} pasos.`, 'ok'); return;
+    }
+    if (head === 'contrast') {
+      const a = cleanHex(parts[1] || '#111111'); const b = cleanHex(parts[2] || '#FFFFFF'); const ratio = contrastRatio(a, b).toFixed(2);
+      push(`Contraste ${a} / ${b}: ${ratio}:1 · ${Number(ratio) >= 7 ? 'AAA' : Number(ratio) >= 4.5 ? 'AA' : 'bajo'}`, Number(ratio) >= 4.5 ? 'ok' : 'err'); return;
+    }
+    if (head === 'export') {
+      const type = String(parts[1] || 'css').toLowerCase();
+      if (type === 'json') triggerDownload(`opencriptG-color-forge-${tsStamp()}.json`, JSON.stringify(colors.map(paletteMeta), null, 2), 'application/json;charset=utf-8');
+      else triggerDownload(`opencriptG-color-forge-${tsStamp()}.css`, cssOutput || rebuildCss(colors), 'text/css;charset=utf-8');
+      push(`Exportado ${type}.`, 'ok'); return;
+    }
+    if (head === 'copy') { navigator.clipboard?.writeText(cssOutput || rebuildCss(colors)); push('CSS copiado al portapapeles.', 'ok'); return; }
+    push(`Comando de color no reconocido: ${head}. Usa color help.`, 'err');
+  };
+  const submit = (e) => { e.preventDefault(); const raw = cmd; push(`> ${raw}`, 'cmd'); runColorCommand(raw); };
+  const meta = colors.map(paletteMeta);
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg colordlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>COLOR FORGE</h2>
+            <p>{L('Herramienta CMD avanzada para crear paletas, gradientes, variables CSS y comprobar contraste para diseñadores y desarrolladores.', 'Advanced CMD tool for palettes, gradients, CSS variables, and contrast checks for designers and developers.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="colordlg-layout">
+          <aside className="colordlg-side">
+            <div className="cmd-panel">
+              <div className="cmd-panel-k">COMMAND</div>
+              <form className="cmd-inputbar colorcmd-input" onSubmit={submit}>
+                <span>&gt;</span><input value={cmd} onChange={e => setCmd(e.target.value)} placeholder="palette analogous #2F6BFF 8" /><button>RUN</button>
+              </form>
+              <div className="cmdchips colorchips">
+                {['color help','palette analogous #2F6BFF 8','palette triadic #7D3CFF 9','palette complement #00A676 8','gradient #111111 #F2F2F2 10','contrast #111111 #FFFFFF','export css','export json'].map(x => <button key={x} onClick={() => { setCmd(x); push(`> ${x}`, 'cmd'); runColorCommand(x); }}>{x}</button>)}
+              </div>
+            </div>
+            <div className="cmd-panel">
+              <div className="cmd-panel-k">LOG</div>
+              <div className="colorlog">{log.map((x, i) => <div key={i} className={`cmd-line ${x.kind}`}><span className="cmd-prompt">{x.kind}</span><span>{x.text}</span></div>)}</div>
+            </div>
+            <div className="cmd-panel">
+              <div className="cmd-panel-k">EXPORT</div>
+              <pre className="colorcss">{cssOutput}</pre>
+            </div>
+          </aside>
+          <main className="colordlg-main">
+            <div className="colorhero" style={{ background: `linear-gradient(135deg, ${colors.slice(0, 6).join(', ')})` }}>
+              <div><span>BASE</span><b>{base}</b></div><div><span>MODE</span><b>{mode}</b></div><div><span>STEPS</span><b>{colors.length}</b></div>
+            </div>
+            <div className="colorswatch-grid">
+              {meta.map((m, i) => (
+                <article className="colorswatch" key={`${m.hex}-${i}`} style={{ '--sw': m.hex, color: m.text }}>
+                  <div className="colorswatch-chip" style={{ background: m.hex }} />
+                  <div className="colorswatch-info">
+                    <strong>{m.hex}</strong><span>{m.rgb}</span><span>{m.hsl}</span><em>contrast {m.contrast}:1 · text {m.text}</em>
+                  </div>
+                  <button onClick={() => { navigator.clipboard?.writeText(m.hex); notify && notify(`Copiado ${m.hex}`); }}>COPY</button>
+                </article>
+              ))}
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const FF_ALPHABETS = {
+  base32: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+  base36: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  base58: '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
+  hex: '0123456789ABCDEF',
+};
+
+const ffBytes = (n) => crypto.getRandomValues(new Uint8Array(n));
+const ffHex = (bytes) => Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+const ffMod = (n, m) => ((n % m) + m) % m;
+const ffGfMul = (a, b, poly = 0x11b) => {
+  let p = 0;
+  for (let i = 0; i < 8; i++) {
+    if (b & 1) p ^= a;
+    const hi = a & 0x80;
+    a = (a << 1) & 0xff;
+    if (hi) a ^= (poly & 0xff);
+    b >>= 1;
+  }
+  return p & 0xff;
+};
+const ffEncode = (bytes, alphabetName = 'base32') => {
+  const alphabet = FF_ALPHABETS[alphabetName] || FF_ALPHABETS.base32;
+  if (alphabetName === 'hex') return ffHex(bytes);
+  let value = 0, bits = 0, out = '';
+  for (const byte of bytes) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 6) {
+      bits -= 6;
+      out += alphabet[(value >> bits) & 63] || alphabet[(value >> bits) % alphabet.length];
+    }
+  }
+  if (bits > 0) out += alphabet[(value << (6 - bits)) & 63] || alphabet[(value << (6 - bits)) % alphabet.length];
+  return out;
+};
+const ffGroup = (value, group = 5) => String(value || '').match(new RegExp(`.{1,${group}}`, 'g'))?.join('-') || '';
+const ffMatrixFromSeed = (seedHex) => {
+  const raw = String(seedHex || '').replace(/[^0-9a-f]/gi, '').padEnd(64, '0');
+  return Array.from({ length: 4 }, (_, r) => Array.from({ length: 4 }, (_, c) => {
+    const n = parseInt(raw.slice(((r * 4 + c) * 2) % raw.length, ((r * 4 + c) * 2) % raw.length + 2), 16) || 1;
+    return n || (r === c ? 1 : 3);
+  }));
+};
+const ffMixBytes = (bytes, matrix, poly) => {
+  const out = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i += 4) {
+    const v = [bytes[i] || 0, bytes[i + 1] || 0, bytes[i + 2] || 0, bytes[i + 3] || 0];
+    for (let r = 0; r < 4; r++) {
+      out[i + r] = v.reduce((acc, x, c) => acc ^ ffGfMul(matrix[r][c], x, poly), 0);
+    }
+  }
+  return out;
+};
+const ffScoreEntropy = (samples) => {
+  const joined = samples.join('');
+  if (!joined) return 0;
+  const freq = {};
+  for (const ch of joined) freq[ch] = (freq[ch] || 0) + 1;
+  return Object.values(freq).reduce((sum, n) => {
+    const p = n / joined.length;
+    return sum - p * Math.log2(p);
+  }, 0);
+};
+const ffHexToBytes = (hex) => {
+  const clean = String(hex || '').replace(/[^0-9a-f]/gi, '');
+  const out = new Uint8Array(Math.floor(clean.length / 2));
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+  return out;
+};
+const ffBufferToBase64 = (buffer) => {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.slice(i, i + chunk));
+  }
+  return btoa(binary);
+};
+const ffBase64ToBytes = (base64) => {
+  const bin = atob(String(base64 || ''));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+};
+const ffHashBufferHex = async (buffer) => {
+  const hash = await crypto.subtle.digest('SHA-256', buffer);
+  return ffHex(new Uint8Array(hash));
+};
+const ffSaveBlob = (filename, bytes, mime = 'application/octet-stream') => {
+  const blob = bytes instanceof Blob ? bytes : new Blob([bytes], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const FormatForgeDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [name, setName] = useState('NOVA Token Format');
+  const [purpose, setPurpose] = useState('token');
+  const [prefix, setPrefix] = useState('OCG-NOVA');
+  const [bits, setBits] = useState(256);
+  const [alphabet, setAlphabet] = useState('base32');
+  const [qty, setQty] = useState(25);
+  const [secret, setSecret] = useState('');
+  const [spec, setSpec] = useState(null);
+  const [codes, setCodes] = useState([]);
+  const [validateInput, setValidateInput] = useState('');
+  const [validation, setValidation] = useState(null);
+  const [fileStatus, setFileStatus] = useState('');
+  const [restoreStatus, setRestoreStatus] = useState('');
+  const [lastPackage, setLastPackage] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const convertFileRef = useRef(null);
+  const restoreFileRef = useRef(null);
+
+  const ensureSecret = () => secret || ffHex(ffBytes(32));
+  const buildSpec = async () => {
+    const s = ensureSecret();
+    if (!secret) setSecret(s);
+    const seed = await digestHex(`${name}|${purpose}|${prefix}|${bits}|${alphabet}|${s}|${Date.now()}|${ffHex(ffBytes(16))}`);
+    const matrix = ffMatrixFromSeed(seed);
+    const poly = [0x11b, 0x12d, 0x169, 0x187][parseInt(seed.slice(0, 2), 16) % 4];
+    const family = sanitizeFilename(name).replace(/_/g, '-').toUpperCase().slice(0, 18) || 'FORMAT';
+    const version = `F${String(parseInt(seed.slice(2, 6), 16) % 9999).padStart(4, '0')}`;
+    const regex = `^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.${family}\\.V01\\.B${bits}\\.[A-Za-z0-9-]{12,}\\.(C[0-9A-F]{6})\\.(S[0-9A-F]{10})$`;
+    const next = {
+      app: 'opencriptG',
+      kind: 'format-forge-spec',
+      name, purpose, prefix, family, version,
+      bits: Number(bits),
+      alphabet,
+      createdAt: new Date().toISOString(),
+      math: {
+        entropyBits: Number(bits),
+        searchSpace: `2^${bits}`,
+        finiteField: `GF(2^8) polynomial 0x${poly.toString(16).toUpperCase()}`,
+        matrix,
+        transforms: ['CSPRNG entropy', 'SHA-256 domain digest', 'GF(256) matrix diffusion', 'segmented encoding', 'checksum', 'local signature'],
+      },
+      layout: [`${prefix}`, family, 'V01', `B${bits}`, '<PAYLOAD>', 'C<6HEX>', 'S<10HEX>'],
+      regex,
+      validator: 'opencriptG Format Forge validator v1',
+      warning: 'Proprietary format shell. Not a replacement for audited cryptographic standards.',
+    };
+    setSpec(next);
+    return { next, secret: s, seed, poly, matrix };
+  };
+
+  const generateCodes = async () => {
+    setBusy(true);
+    try {
+      const ctx = await buildSpec();
+      const total = Math.max(1, Math.min(50000, Number(qty) || 1));
+      const out = [];
+      for (let i = 0; i < total; i++) {
+        const entropy = ffBytes(Math.ceil(Number(bits) / 8));
+        const mixed = ffMixBytes(entropy, ctx.matrix, ctx.poly);
+        const payload = ffGroup(ffEncode(mixed, alphabet).slice(0, Math.max(18, Math.ceil(Number(bits) / 5))), 5);
+        const body = `${ctx.next.prefix}.${ctx.next.family}.V01.B${bits}.${payload}`;
+        const check = (await digestHex(body)).slice(0, 6).toUpperCase();
+        const sig = (await digestHex(`${body}|${check}|${ctx.secret}`)).slice(0, 10).toUpperCase();
+        out.unshift({ id: `fmt_${Date.now()}_${i}`, idx: i + 1, value: `${body}.C${check}.S${sig}`, payload, check, sig, ts: Date.now() });
+        if (i > 0 && i % 500 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      setCodes(out);
+      notify && notify(L(`${out.length} formatos generados`, `${out.length} format codes generated`));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const validateCode = async () => {
+    const code = validateInput.trim();
+    if (!spec || !code) return setValidation({ ok: false, text: L('Falta spec o code.', 'Missing spec or code.') });
+    if (!new RegExp(spec.regex).test(code)) return setValidation({ ok: false, text: L('No coincide con la regex del formato.', 'Does not match the format regex.') });
+    const parts = code.split('.');
+    const sigPart = parts.pop();
+    const checkPart = parts.pop();
+    const body = parts.join('.');
+    const check = (await digestHex(body)).slice(0, 6).toUpperCase();
+    const sig = (await digestHex(`${body}|${checkPart.slice(1)}|${secret}`)).slice(0, 10).toUpperCase();
+    const softOk = checkPart === `C${check}` && sigPart === `S${sig}`;
+    setValidation({ ok: softOk, text: softOk ? L('Formato valido con firma local.', 'Valid format with local signature.') : L('Estructura valida, firma/check local no coincide.', 'Structure valid, local signature/check does not match.') });
+  };
+
+  const specText = () => JSON.stringify({ spec, secretHint: secret ? 'Local secret present in this browser session.' : 'No local secret.', sampleCount: codes.length, entropyScore: Number(ffScoreEntropy(codes.slice(0, 200).map(c => c.value)).toFixed(4)) }, null, 2);
+  const jsValidator = () => `// ${name} validator generated by opencriptG Format Forge\nconst FORMAT_REGEX = ${JSON.stringify(spec?.regex || '')};\nexport function validateFormatCode(value) {\n  return FORMAT_REGEX ? new RegExp(FORMAT_REGEX).test(String(value || '')) : false;\n}\n`;
+  const exportSpec = () => triggerDownload(`opencriptG-format-spec-${sanitizeFilename(name)}-${tsStamp()}.json`, specText(), 'application/json;charset=utf-8');
+  const exportCodes = () => triggerDownload(`opencriptG-format-codes-${sanitizeFilename(name)}-${tsStamp()}.txt`, codes.map(c => c.value).join('\n'), 'text/plain;charset=utf-8');
+  const exportValidator = () => triggerDownload(`opencriptG-format-validator-${sanitizeFilename(name)}-${tsStamp()}.js`, jsValidator(), 'text/javascript;charset=utf-8');
+  const contextFromSpec = async () => {
+    const ctx = spec ? { next: spec, secret: ensureSecret(), matrix: spec.math?.matrix || ffMatrixFromSeed(await digestHex(secret || 'format')), poly: parseInt((String(spec.math?.finiteField || '').match(/0x([0-9A-F]+)/i) || [])[1] || '11B', 16) } : await buildSpec();
+    if (!secret) setSecret(ctx.secret);
+    return ctx;
+  };
+  const codeFromFileHash = async (hashHex) => {
+    const ctx = await contextFromSpec();
+    const mixed = ffMixBytes(ffHexToBytes(hashHex).slice(0, Math.ceil(Number(ctx.next.bits || bits) / 8)), ctx.matrix, ctx.poly);
+    const payload = ffGroup(ffEncode(mixed, ctx.next.alphabet || alphabet).slice(0, Math.max(18, Math.ceil(Number(ctx.next.bits || bits) / 5))), 5);
+    const body = `${ctx.next.prefix}.${ctx.next.family}.V01.B${ctx.next.bits}.${payload}`;
+    const check = (await digestHex(body)).slice(0, 6).toUpperCase();
+    const sig = (await digestHex(`${body}|${check}|${ctx.secret}`)).slice(0, 10).toUpperCase();
+    return { code: `${body}.C${check}.S${sig}`, spec: ctx.next };
+  };
+  const convertFileToFormat = async () => {
+    const file = convertFileRef.current?.files?.[0];
+    if (!file) return setFileStatus(L('Selecciona cualquier archivo primero.', 'Select any file first.'));
+    setBusy(true);
+    setFileStatus(L('Convirtiendo archivo...', 'Converting file...'));
+    try {
+      const buffer = await file.arrayBuffer();
+      const hash = await ffHashBufferHex(buffer);
+      const wrapped = await codeFromFileHash(hash);
+      const code = wrapped.code;
+      const pkg = {
+        app: 'opencriptG',
+        kind: 'format-forge-file-package',
+        version: 1,
+        createdAt: new Date().toISOString(),
+        formatCode: code,
+        formatSpec: wrapped.spec,
+        file: {
+          name: file.name,
+          type: file.type || 'application/octet-stream',
+          size: file.size,
+          sha256: hash,
+          dataEncoding: 'base64',
+          data: ffBufferToBase64(buffer),
+        },
+        seal: {
+          check: code.split('.').slice(-2, -1)[0],
+          signature: code.split('.').slice(-1)[0],
+          note: 'The package is bound to the file SHA-256 and the active Format Forge local secret.',
+        },
+      };
+      const packageHash = await digestHex(JSON.stringify({ code, file: { name: file.name, size: file.size, sha256: hash }, seal: pkg.seal }));
+      pkg.packageSha256 = packageHash.toUpperCase();
+      setLastPackage(pkg);
+      triggerDownload(`opencriptG-converted-${sanitizeFilename(file.name)}-${tsStamp()}.ocgfmt.json`, JSON.stringify(pkg, null, 2), 'application/json;charset=utf-8');
+      setFileStatus(L(`Archivo convertido: ${file.name}`, `File converted: ${file.name}`));
+      notify && notify(L('Archivo convertido al nuevo formato', 'File converted to the new format'));
+    } catch (err) {
+      setFileStatus(err.message || L('No se pudo convertir el archivo.', 'Could not convert the file.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const restoreFormatPackage = async () => {
+    const file = restoreFileRef.current?.files?.[0];
+    if (!file) return setRestoreStatus(L('Sube un paquete .ocgfmt.json primero.', 'Upload an .ocgfmt.json package first.'));
+    setBusy(true);
+    setRestoreStatus(L('Verificando paquete...', 'Verifying package...'));
+    try {
+      const pkg = JSON.parse(await file.text());
+      if (pkg.kind !== 'format-forge-file-package' || !pkg.file?.data) throw new Error('Invalid Format Forge package.');
+      const bytes = ffBase64ToBytes(pkg.file.data);
+      const hash = await ffHashBufferHex(bytes.buffer);
+      if (hash !== String(pkg.file.sha256 || '').toUpperCase()) throw new Error('SHA-256 mismatch. Package file data changed.');
+      const code = String(pkg.formatCode || '');
+      const parts = code.split('.');
+      const sigPart = parts.pop();
+      const checkPart = parts.pop();
+      const body = parts.join('.');
+      const check = (await digestHex(body)).slice(0, 6).toUpperCase();
+      const sig = (await digestHex(`${body}|${check}|${secret}`)).slice(0, 10).toUpperCase();
+      if (checkPart !== `C${check}` || sigPart !== `S${sig}`) throw new Error('Format signature mismatch. Use the same local secret used to convert.');
+      ffSaveBlob(pkg.file.name || `restored-${tsStamp()}`, bytes, pkg.file.type || 'application/octet-stream');
+      setRestoreStatus(L(`Archivo restaurado: ${pkg.file.name}`, `File restored: ${pkg.file.name}`));
+      notify && notify(L('Archivo restaurado desde paquete', 'File restored from package'));
+    } catch (err) {
+      setRestoreStatus(err.message || L('No se pudo restaurar el paquete.', 'Could not restore the package.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg formatdlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>Format Forge</h2>
+            <p>{L('Crea formatos propietarios nuevos con difusion matematica, entropia configurable, regex, validador y exportacion.', 'Create new proprietary formats with mathematical diffusion, configurable entropy, regex, validator, and export.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="formatdlg-layout">
+          <aside className="formatdlg-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Diseno del formato', 'Format design')}</div>
+              <div className="formatdlg-form">
+                <label>{L('Nombre', 'Name')}<input className="textdlg-mini" value={name} onChange={e => setName(e.target.value)} /></label>
+                <label>{L('Proposito', 'Purpose')}<select className="textdlg-mini" value={purpose} onChange={e => setPurpose(e.target.value)}><option value="token">token</option><option value="certificate">certificate</option><option value="license">license</option><option value="qr-packet">qr-packet</option><option value="asset-id">asset-id</option><option value="ticket">ticket</option></select></label>
+                <label>{L('Prefijo', 'Prefix')}<input className="textdlg-mini" value={prefix} onChange={e => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18))} /></label>
+                <label>{L('Bits', 'Bits')}<select className="textdlg-mini" value={bits} onChange={e => setBits(Number(e.target.value))}><option value={128}>128</option><option value={192}>192</option><option value={256}>256</option><option value={384}>384</option><option value={512}>512</option><option value={1024}>1024</option></select></label>
+                <label>{L('Alfabeto', 'Alphabet')}<select className="textdlg-mini" value={alphabet} onChange={e => setAlphabet(e.target.value)}><option value="base32">Base32-safe</option><option value="base36">Base36</option><option value="base58">Base58</option><option value="hex">HEX</option></select></label>
+                <label>{L('Cantidad', 'Quantity')}<input className="textdlg-mini" type="number" min="1" max="50000" value={qty} onChange={e => setQty(Math.max(1, Math.min(50000, Number(e.target.value) || 1)))} /></label>
+                <label>{L('Secreto local', 'Local secret')}<input className="textdlg-mini" value={secret} onChange={e => setSecret(e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 64))} placeholder={L('auto si se deja vacio', 'auto if left empty')} /></label>
+              </div>
+              <div className="formatdlg-actions">
+                <button className="dbdlg-btn" onClick={buildSpec}>{L('Crear spec', 'Create spec')}</button>
+                <button className="dbdlg-btn" onClick={generateCodes} disabled={busy}>{busy ? 'BUSY' : L('Generar', 'Generate')}</button>
+              </div>
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Validar code', 'Validate code')}</div>
+              <textarea className="textdlg-mini formatdlg-area" value={validateInput} onChange={e => setValidateInput(e.target.value)} placeholder="OCG-NOVA.NOVA-TOKEN.V01..." />
+              <button className="dbdlg-btn" onClick={validateCode}>{L('Validar', 'Validate')}</button>
+              {validation && <div className={`formatdlg-validation ${validation.ok ? 'ok' : 'bad'}`}>{validation.text}</div>}
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Convertir cualquier archivo', 'Convert any file')}</div>
+              <label className="formatdlg-file">
+                <span>{L('Archivo origen', 'Source file')}</span>
+                <input ref={convertFileRef} type="file" />
+              </label>
+              <button className="dbdlg-btn" onClick={convertFileToFormat} disabled={busy}>{L('Convertir a .ocgfmt', 'Convert to .ocgfmt')}</button>
+              <p className="formatdlg-mini-note">{fileStatus || L('Crea o genera una spec, selecciona un archivo y descarga el paquete convertido.', 'Create or generate a spec, select a file, and download the converted package.')}</p>
+              {lastPackage && <div className="formatdlg-packmeta"><span>PACKAGE</span><b>{lastPackage.file.name}</b><code>{lastPackage.formatCode}</code></div>}
+            </div>
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Restaurar archivo', 'Restore file')}</div>
+              <label className="formatdlg-file">
+                <span>.ocgfmt.json</span>
+                <input ref={restoreFileRef} type="file" accept=".json,.ocgfmt,application/json" />
+              </label>
+              <button className="dbdlg-btn" onClick={restoreFormatPackage} disabled={busy}>{L('Verificar y restaurar', 'Verify and restore')}</button>
+              <p className="formatdlg-mini-note">{restoreStatus || L('Requiere el mismo secreto local usado al convertir.', 'Requires the same local secret used during conversion.')}</p>
+            </div>
+          </aside>
+          <main className="formatdlg-main">
+            <section className="formatdlg-hero">
+              <div><span>SPACE</span><b>{spec?.math?.searchSpace || `2^${bits}`}</b></div>
+              <div><span>FIELD</span><b>{spec?.math?.finiteField || 'GF(2^8)'}</b></div>
+              <div><span>SAMPLES</span><b>{codes.length.toLocaleString()}</b></div>
+              <div><span>H SCORE</span><b>{ffScoreEntropy(codes.slice(0, 200).map(c => c.value)).toFixed(3)}</b></div>
+            </section>
+            <section className="formatdlg-preview">
+              <div className="formatdlg-headline">
+                <div><span>{L('Formato activo', 'Active format')}</span><strong>{spec ? `${spec.prefix}.${spec.family}.V01.B${spec.bits}` : L('sin spec todavia', 'no spec yet')}</strong></div>
+                <div className="formatdlg-actions">
+                  <button className="dbdlg-btn" onClick={exportSpec} disabled={!spec}>JSON</button>
+                  <button className="dbdlg-btn" onClick={exportValidator} disabled={!spec}>JS</button>
+                  <button className="dbdlg-btn" onClick={exportCodes} disabled={!codes.length}>TXT</button>
+                </div>
+              </div>
+              {spec && <pre className="formatdlg-spec">{JSON.stringify(spec, null, 2)}</pre>}
+              <div className="formatdlg-codes">
+                {codes.slice(0, 300).map(code => (
+                  <article key={code.id} className="formatdlg-code">
+                    <span>{String(code.idx).padStart(5, '0')}</span>
+                    <code>{code.value}</code>
+                    <button onClick={() => { navigator.clipboard?.writeText(code.value); notify && notify(L('Code copiado', 'Code copied')); }}>COPY</button>
+                  </article>
+                ))}
+                {!codes.length && <div className="formatdlg-empty">{L('Genera una spec y muestras para ver el nuevo formato.', 'Generate a spec and samples to see the new format.')}</div>}
+              </div>
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const MOUNTAIN_TOOL_CONFIG = {
+  tokenVault: {
+    title: 'Token Vault Pro',
+    color: '#2f7df6',
+    storage: 'opencriptG_token_vault_pro_v1',
+    descEs: 'Boveda para clasificar, versionar, reservar y revocar tokens creados desde OCG.',
+    descEn: 'Vault to classify, version, reserve and revoke tokens created from OCG.',
+  },
+  licenseIssuer: {
+    title: 'License Issuer',
+    color: '#13a66b',
+    storage: 'opencriptG_license_issuer_v1',
+    descEs: 'Emite licencias por cliente, plan, expiracion, fingerprint y QR verificable.',
+    descEn: 'Issue licenses by client, plan, expiration, fingerprint and verifiable QR.',
+  },
+  chainLedger: {
+    title: 'OCG Chain Ledger',
+    color: '#7c4dff',
+    storage: 'opencriptG_chain_ledger_v1',
+    descEs: 'Crea un ledger local hash-chain para probar orden, integridad y continuidad.',
+    descEn: 'Create a local hash-chain ledger to prove order, integrity and continuity.',
+  },
+  apiKeyManager: {
+    title: 'API Key Manager',
+    color: '#f08a24',
+    storage: 'opencriptG_api_key_manager_v1',
+    descEs: 'Administra API keys con scopes, expiracion, rotacion y estado operativo.',
+    descEn: 'Manage API keys with scopes, expiration, rotation and operational status.',
+  },
+  tokenizationStudio: {
+    title: 'Tokenization Studio',
+    color: '#d63384',
+    storage: 'opencriptG_tokenization_studio_v1',
+    descEs: 'Convierte texto, archivos o IDs en paquetes tokenizados con hash y metadata.',
+    descEn: 'Turn text, files or IDs into tokenized packages with hash and metadata.',
+  },
+};
+
+const MountainIcon = ({ color = '#111', size = 30 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="mountain-tool-icon">
+    <rect x="2" y="2" width="28" height="28" rx="6" fill={color} opacity=".12" />
+    <path d="M4 24 13.2 8.4 18.4 17l2.7-4.2L28 24H4Z" fill={color} />
+    <path d="M13.2 8.4 15.8 12l-2.1-.7-2.5 4Z" fill="#fff" opacity=".78" />
+    <path d="M18.4 17 21.1 12.8 23.2 16.2l-1.9-.6-1.7 2.7Z" fill="#fff" opacity=".72" />
+    <path d="M6 24c5.6-2.2 12.5-2.2 20 0" fill="none" stroke="#111" strokeOpacity=".24" strokeWidth="1.2" />
+  </svg>
+);
+
+const readToolRows = (key) => {
+  try {
+    const cfg = MOUNTAIN_TOOL_CONFIG[key];
+    const rows = JSON.parse(localStorage.getItem(cfg.storage) || '[]');
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeToolRows = (key, rows) => {
+  const cfg = MOUNTAIN_TOOL_CONFIG[key];
+  localStorage.setItem(cfg.storage, JSON.stringify((rows || []).slice(0, 2500)));
+};
+
+const mountainRand = (bytes = 18) => {
+  const data = crypto.getRandomValues(new Uint8Array(bytes));
+  let raw = '';
+  data.forEach(b => { raw += String.fromCharCode(b); });
+  return btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+};
+
+const buildMountainRecord = async (toolKey, { subject, note, sourceRows = [], file = null }) => {
+  const now = new Date().toISOString();
+  const sourceValue = sourceRows[0]?.value || '';
+  const fileBytes = file ? `${file.name}|${file.size}|${file.type}|${file.lastModified}` : '';
+  const base = [toolKey, subject, note, sourceValue, fileBytes, now, mountainRand(18)].join('|');
+  const hash = (await digestHex(base)).toUpperCase();
+  const short = hash.slice(0, 18);
+  if (toolKey === 'tokenVault') {
+    return { id: `TVP-${short}`, type: 'TOKEN', subject, note, status: 'ACTIVE', version: 1, token: `ocg_tok_${hash.slice(0, 32)}`, source: sourceRows[0]?.typeId || sourceRows[0]?.type || 'manual', hash, createdAt: now };
+  }
+  if (toolKey === 'licenseIssuer') {
+    return { id: `LIC-${short}`, type: 'LICENSE', subject, note, plan: 'Professional', status: 'ISSUED', expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(), licenseKey: `OCG-LIC-${hash.slice(0, 6)}-${hash.slice(6, 12)}-${hash.slice(12, 18)}`, hash, createdAt: now };
+  }
+  if (toolKey === 'chainLedger') {
+    return { id: `LEDGER-${short}`, type: 'CHAIN', subject, note, index: Date.now(), prevHash: sourceRows[0]?.value ? (await digestHex(sourceRows[0].value)).toUpperCase() : 'GENESIS', hash, createdAt: now };
+  }
+  if (toolKey === 'apiKeyManager') {
+    return { id: `API-${short}`, type: 'API_KEY', subject, note, status: 'ACTIVE', scopes: ['read:codes', 'write:vault', 'export:qr'], apiKey: `ocg_live_${hash.slice(0, 40)}`, hash, createdAt: now };
+  }
+  return { id: `TOKZ-${short}`, type: 'TOKENIZED_PACKAGE', subject: file?.name || subject, note, fileName: file?.name || '', fileSize: file?.size || 0, mime: file?.type || 'text/plain', packageId: `ocgfmt_${hash.slice(0, 28)}`, hash, createdAt: now };
+};
+
+const MountainToolDialog = ({ open, toolKey, onClose, notify, language, rows = [] }) => {
+  const cfg = MOUNTAIN_TOOL_CONFIG[toolKey] || MOUNTAIN_TOOL_CONFIG.tokenVault;
+  const L = (es, en) => language === 'es' ? es : en;
+  const fileRef = useRef(null);
+  const [items, setItems] = useState([]);
+  const [subject, setSubject] = useState('');
+  const [note, setNote] = useState('');
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    if (!open) return;
+    setItems(readToolRows(toolKey));
+    setSubject('');
+    setNote('');
+    setQuery('');
+  }, [open, toolKey]);
+  if (!open) return null;
+  const saveItems = (next) => { setItems(next); writeToolRows(toolKey, next); };
+  const createRecord = async () => {
+    const file = toolKey === 'tokenizationStudio' ? fileRef.current?.files?.[0] : null;
+    const record = await buildMountainRecord(toolKey, {
+      subject: subject.trim() || cfg.title,
+      note: note.trim() || L('Creado desde OCG Mountain Tools', 'Created from OCG Mountain Tools'),
+      sourceRows: rows,
+      file,
+    });
+    saveItems([record, ...items]);
+    setSubject('');
+    setNote('');
+    if (fileRef.current) fileRef.current.value = '';
+    notify && notify(L('Registro creado', 'Record created'));
+  };
+  const copyRecord = (item) => {
+    navigator.clipboard?.writeText(JSON.stringify(item, null, 2));
+    notify && notify(L('Registro copiado', 'Record copied'));
+  };
+  const revokeRecord = (item) => {
+    saveItems(items.map(row => row.id === item.id ? { ...row, status: row.status === 'REVOKED' ? 'ACTIVE' : 'REVOKED', updatedAt: new Date().toISOString() } : row));
+  };
+  const exportRows = () => triggerDownload(`${sanitizeFilename(cfg.title)}-${tsStamp()}.json`, JSON.stringify({ tool: cfg.title, exportedAt: new Date().toISOString(), items }, null, 2), 'application/json;charset=utf-8');
+  const filtered = items.filter(item => JSON.stringify(item).toLowerCase().includes(query.toLowerCase()));
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg mountain-tool-dlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h mountain-tool-head">
+          <div className="mountain-tool-title">
+            <MountainIcon color={cfg.color} size={42} />
+            <div>
+              <h2>{cfg.title}</h2>
+              <p>{L(cfg.descEs, cfg.descEn)}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="mountain-tool-hero" style={{ borderColor: cfg.color }}>
+          <div><span>{L('Fuente', 'Source')}</span><b>{rows.length.toLocaleString()} vault codes disponibles</b></div>
+          <div><span>{L('Registros', 'Records')}</span><b>{items.length.toLocaleString()}</b></div>
+          <div><span>{L('Motor', 'Engine')}</span><b>SHA-256 · CSPRNG · localStorage</b></div>
+        </div>
+        <div className="mountain-tool-form">
+          <input value={subject} onChange={e => setSubject(e.target.value)} placeholder={L('Cliente, sistema, archivo o token...', 'Client, system, file or token...')} />
+          <input value={note} onChange={e => setNote(e.target.value)} placeholder={L('Nota operativa / scopes / destino...', 'Operational note / scopes / destination...')} />
+          {toolKey === 'tokenizationStudio' && <input ref={fileRef} type="file" />}
+          <button className="dbdlg-btn" onClick={createRecord}>{L('Crear registro', 'Create record')}</button>
+        </div>
+        <div className="mountain-tool-actions">
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('Buscar registros...', 'Search records...')} />
+          <button className="dbdlg-btn" onClick={exportRows} disabled={!items.length}>{L('Exportar JSON', 'Export JSON')}</button>
+          <button className="dbdlg-btn danger" onClick={() => saveItems([])} disabled={!items.length}>{L('Limpiar', 'Clear')}</button>
+        </div>
+        <div className="mountain-tool-list">
+          {!filtered.length ? <div className="mountain-tool-empty">{L('Sin registros todavia.', 'No records yet.')}</div> : filtered.map(item => (
+            <article key={item.id} className={`mountain-tool-row ${item.status === 'REVOKED' ? 'revoked' : ''}`}>
+              <div><span>{item.type}</span><b>{item.id}</b><em>{item.subject || item.fileName || cfg.title}</em></div>
+              <code>{item.token || item.licenseKey || item.apiKey || item.packageId || item.hash}</code>
+              <div className="mountain-tool-row-actions">
+                <button onClick={() => copyRecord(item)}>COPY</button>
+                <button onClick={() => revokeRecord(item)}>{item.status === 'REVOKED' ? 'RESTORE' : 'REVOKE'}</button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const BASEMAT_TOOL_CONFIG = {
+  entropy: { title: 'Entropy Inspector', color: '#0f766e', formula: 'H(X) = -sum p(x) log2 p(x)' },
+  collision: { title: 'Collision Risk', color: '#b45309', formula: 'p ~= 1 - exp(-n(n-1)/(2N))' },
+  shamir: { title: 'Shamir Splitter', color: '#7c3aed', formula: 'f(x) = a0 + a1x + ... mod p' },
+  merkle: { title: 'Merkle Audit Tree', color: '#2563eb', formula: 'root = H(H(a)||H(b))' },
+  lattice: { title: 'Lattice PQ Lab', color: '#c026d3', formula: 'L(B) = {Bz : z in Z^n}' },
+  prime: { title: 'Prime Field Studio', color: '#dc2626', formula: 'a*b mod p, a^b mod p' },
+  avalanche: { title: 'Hash Avalanche', color: '#0891b2', formula: 'distance(H(m), H(m2)) / bits' },
+  hamming: { title: 'Hamming Scanner', color: '#4f46e5', formula: 'd(x,y) = count(x_i != y_i)' },
+  tokenSpace: { title: 'Token Space', color: '#16a34a', formula: '|A|^L = 2^bits' },
+  threshold: { title: 'Threshold Issuer', color: '#111827', formula: 'valid = signatures >= threshold' },
+};
+const BASEMAT_TOOL_ORDER = Object.keys(BASEMAT_TOOL_CONFIG);
+const basematEntropy = (text) => {
+  const raw = String(text || '');
+  if (!raw) return { bitsPerChar: 0, totalBits: 0, symbols: 0 };
+  const counts = {};
+  raw.split('').forEach(ch => { counts[ch] = (counts[ch] || 0) + 1; });
+  const bitsPerChar = Object.values(counts).reduce((sum, n) => {
+    const p = n / raw.length;
+    return sum - p * Math.log2(p);
+  }, 0);
+  return { bitsPerChar, totalBits: bitsPerChar * raw.length, symbols: Object.keys(counts).length };
+};
+const basematRisk = (n, bits) => {
+  const count = Math.max(0, Number(n) || 0);
+  const bitCount = Math.max(1, Number(bits) || 1);
+  const exponent = Math.log(count * Math.max(0, count - 1) / 2) - bitCount * Math.log(2);
+  if (!Number.isFinite(exponent) || exponent < -40) return 0;
+  if (exponent > 6) return 1;
+  return 1 - Math.exp(-Math.exp(exponent));
+};
+const basematModPow = (base, exp, mod) => {
+  let b = BigInt(base) % BigInt(mod), e = BigInt(exp), m = BigInt(mod), out = 1n;
+  while (e > 0n) {
+    if (e & 1n) out = (out * b) % m;
+    b = (b * b) % m;
+    e >>= 1n;
+  }
+  return out;
+};
+const basematBigInt = (value, fallback) => {
+  const clean = String(value ?? '').trim();
+  return /^-?\d+$/.test(clean) ? BigInt(clean) : BigInt(fallback);
+};
+const basematHamming = (a, b) => {
+  const left = String(a || ''), right = String(b || '');
+  const max = Math.max(left.length, right.length);
+  let distance = Math.abs(left.length - right.length);
+  for (let i = 0; i < Math.min(left.length, right.length); i++) if (left[i] !== right[i]) distance++;
+  return { distance, max, similarity: max ? Number((1 - distance / max).toFixed(6)) : 1 };
+};
+const basematDet = (matrix) => {
+  if (matrix.length === 1) return matrix[0][0];
+  if (matrix.length === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+  return matrix[0].reduce((sum, val, col) => {
+    const minor = matrix.slice(1).map(row => row.filter((_, idx) => idx !== col));
+    return sum + (col % 2 ? -1 : 1) * val * basematDet(minor);
+  }, 0);
+};
+const basematHexBits = (hex) => String(hex || '').replace(/[^a-f0-9]/gi, '').split('').map(ch => parseInt(ch, 16).toString(2).padStart(4, '0')).join('');
+
+const BaseMatIcon = ({ color = '#111', size = 34 }) => (
+  <svg width={size} height={size} viewBox="0 0 36 36" aria-hidden="true" className="basemat-icon">
+    <rect x="2" y="2" width="32" height="32" rx="7" fill={color} opacity=".11" />
+    <path d="M8 24c4-9 6-13 10-13 2 0 3.2 2 4.2 4.2 1.2 2.6 2.1 4.8 5.8 4.8" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M9 12h6M12 9v6M23 11h5M23 25h5M23 29h5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    <circle cx="18" cy="18" r="2.2" fill={color} />
+  </svg>
+);
+
+const BaseMatDialog = ({ open, onClose, notify, language, rows = [], activePlan }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const [toolKey, setToolKey] = useState('entropy');
+  const [primary, setPrimary] = useState('');
+  const [secondary, setSecondary] = useState('');
+  const [count, setCount] = useState(10000);
+  const [bits, setBits] = useState(256);
+  const [threshold, setThreshold] = useState(3);
+  const [shares, setShares] = useState(5);
+  const [result, setResult] = useState(null);
+  const cfg = BASEMAT_TOOL_CONFIG[toolKey] || BASEMAT_TOOL_CONFIG.entropy;
+  useEffect(() => {
+    if (!open) return;
+    setToolKey('entropy');
+    setPrimary(rows[0]?.value || 'OCG-token-sample-256');
+    setSecondary(rows[1]?.value || 'OCG-token-sample-257');
+    setResult(null);
+  }, [open]);
+  if (!open) return null;
+  const sourceLines = () => {
+    const manual = String(primary || '').split(/\r?\n/).map(v => v.trim()).filter(Boolean);
+    if (manual.length > 1) return manual.slice(0, 512);
+    return rows.slice(0, 512).map(row => row.value).filter(Boolean).concat(manual).slice(0, 512);
+  };
+  const runTool = async () => {
+    const text = primary || rows[0]?.value || 'OCG';
+    let payload = {};
+    if (toolKey === 'entropy') {
+      const entropy = basematEntropy(text);
+      payload = {
+        inputLength: String(text).length,
+        observedSymbols: entropy.symbols,
+        bitsPerChar: Number(entropy.bitsPerChar.toFixed(6)),
+        totalBits: Number(entropy.totalBits.toFixed(3)),
+        posture: entropy.totalBits >= 128 ? 'production entropy' : entropy.totalBits >= 80 ? 'medium entropy' : 'weak entropy',
+      };
+    } else if (toolKey === 'collision') {
+      const risk = basematRisk(count, bits);
+      payload = { generatedCodes: Number(count), searchBits: Number(bits), searchSpace: `2^${Number(bits)}`, collisionProbability: risk, percent: `${(risk * 100).toExponential(6)}%` };
+    } else if (toolKey === 'shamir') {
+      const prime = 257;
+      const k = Math.max(2, Math.min(8, Number(threshold) || 3));
+      const n = Math.max(k, Math.min(12, Number(shares) || 5));
+      const bytes = Array.from(new TextEncoder().encode(text)).slice(0, 128);
+      const shareRows = Array.from({ length: n }, (_, idx) => ({ x: idx + 1, y: [] }));
+      bytes.forEach(byte => {
+        const coeff = [byte, ...Array.from(crypto.getRandomValues(new Uint8Array(k - 1))).map(v => v % prime)];
+        shareRows.forEach(share => {
+          let y = 0;
+          coeff.forEach((c, power) => { y = (y + c * Number(basematModPow(share.x, power, prime))) % prime; });
+          share.y.push(y.toString(16).padStart(2, '0'));
+        });
+      });
+      payload = { threshold: k, shares: n, fieldPrime: prime, bytes: bytes.length, shareRows: shareRows.map(s => ({ x: s.x, yHex: s.y.join('') })) };
+    } else if (toolKey === 'merkle') {
+      let level = await Promise.all(sourceLines().map(v => digestHex(v)));
+      const leaves = level.length;
+      while (level.length > 1) {
+        const next = [];
+        for (let i = 0; i < level.length; i += 2) next.push(await digestHex(`${level[i]}${level[i + 1] || level[i]}`));
+        level = next;
+      }
+      payload = { leaves, root: (level[0] || await digestHex(text)).toUpperCase() };
+    } else if (toolKey === 'lattice') {
+      const nums = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(v => (v % 17) - 8);
+      const basis = [0, 1, 2, 3].map(r => nums.slice(r * 4, r * 4 + 4));
+      payload = { dimension: 4, basis, determinant: basematDet(basis), note: 'Educational lattice metrics for PQ exploration.' };
+    } else if (toolKey === 'prime') {
+      const rawPrime = basematBigInt(secondary, '2305843009213693951');
+      const p = rawPrime > 3n ? rawPrime : 2305843009213693951n;
+      const a = basematBigInt(count, '65537');
+      const b = basematBigInt(bits, '257');
+      payload = { prime: p.toString(), a: a.toString(), b: b.toString(), add: ((a + b) % p).toString(), multiply: ((a * b) % p).toString(), power: basematModPow(a, b, p).toString() };
+    } else if (toolKey === 'avalanche') {
+      const hashA = await digestHex(text);
+      const hashB = await digestHex(secondary || `${text}.`);
+      const dist = basematHamming(basematHexBits(hashA), basematHexBits(hashB));
+      payload = { hashA: hashA.toUpperCase(), hashB: hashB.toUpperCase(), changedBits: dist.distance, totalBits: dist.max, avalanche: `${((dist.distance / dist.max) * 100).toFixed(2)}%` };
+    } else if (toolKey === 'hamming') {
+      const source = sourceLines();
+      payload = { scan: source.slice(0, 40).map((value, idx) => ({ pair: idx + 1, ...basematHamming(value, source[idx + 1] || secondary || '') })).filter(x => x.max) };
+    } else if (toolKey === 'tokenSpace') {
+      const alphabet = Math.max(2, Number(count) || 64);
+      const len = Math.max(1, Number(bits) || 32);
+      payload = { alphabetSize: alphabet, length: len, searchSpace: `${alphabet}^${len}`, effectiveBits: Number((Math.log2(alphabet) * len).toFixed(3)) };
+    } else {
+      const k = Math.max(2, Math.min(8, Number(threshold) || 3));
+      const n = Math.max(k, Math.min(12, Number(shares) || 5));
+      const approvers = await Promise.all(Array.from({ length: n }, async (_, idx) => {
+        const seed = `${text}|${idx}|${mountainRand(12)}`;
+        return { id: `A${idx + 1}`, signature: (await digestHex(seed)).toUpperCase().slice(0, 48) };
+      }));
+      payload = { licenseId: `BASEMAT-${(await digestHex(text + Date.now())).toUpperCase().slice(0, 16)}`, policy: `${k}-of-${n}`, approvers };
+    }
+    const report = { lab: 'BASEMAT', tool: cfg.title, formula: cfg.formula, plan: activePlan?.name || 'Free', createdAt: new Date().toISOString(), payload };
+    setResult(report);
+    notify && notify(L('BASEMAT genero el reporte', 'BASEMAT generated the report'));
+  };
+  const exportResult = () => result && triggerDownload(`BASEMAT-${sanitizeFilename(result.tool)}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg basemat-dlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="basemat-title">
+            <BaseMatIcon color={cfg.color} size={44} />
+            <div>
+              <h2>BASEMAT</h2>
+              <p>{L('Laboratorio de matematicas criptograficas con 10 herramientas reales para analizar, dividir, auditar y medir codes.', 'Mathematical cryptography lab with 10 real tools to analyze, split, audit and measure codes.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="basemat-shell">
+          <aside className="basemat-tabs">
+            {BASEMAT_TOOL_ORDER.map(key => {
+              const item = BASEMAT_TOOL_CONFIG[key];
+              return <button key={key} className={key === toolKey ? 'active' : ''} style={{ borderLeftColor: item.color }} onClick={() => { setToolKey(key); setResult(null); }}>
+                <BaseMatIcon color={item.color} size={24} />
+                <span>{item.title}</span>
+              </button>;
+            })}
+          </aside>
+          <main className="basemat-main">
+            <div className="basemat-card" style={{ borderTopColor: cfg.color }}>
+              <span>{L('Herramienta activa', 'Active tool')}</span>
+              <h3>{cfg.title}</h3>
+              <code>{cfg.formula}</code>
+            </div>
+            <div className="basemat-form">
+              <label><span>{L('Entrada primaria', 'Primary input')}</span><textarea value={primary} onChange={e => setPrimary(e.target.value)} /></label>
+              <label><span>{L('Entrada secundaria / primo', 'Secondary input / prime')}</span><textarea value={secondary} onChange={e => setSecondary(e.target.value)} /></label>
+              <label><span>{L('Cantidad / alfabeto / a', 'Count / alphabet / a')}</span><input type="number" value={count} onChange={e => setCount(e.target.value)} /></label>
+              <label><span>{L('Bits / longitud / b', 'Bits / length / b')}</span><input type="number" value={bits} onChange={e => setBits(e.target.value)} /></label>
+              <label><span>Threshold</span><input type="number" value={threshold} onChange={e => setThreshold(e.target.value)} /></label>
+              <label><span>Shares</span><input type="number" value={shares} onChange={e => setShares(e.target.value)} /></label>
+            </div>
+            <div className="basemat-actions">
+              <button className="dbdlg-btn" onClick={runTool}>{L('Ejecutar BASEMAT', 'Run BASEMAT')}</button>
+              <button className="dbdlg-btn" disabled={!rows.length} onClick={() => setPrimary(rows.slice(0, 20).map(r => r.value).join('\n'))}>{L('Usar codes copiados', 'Use copied codes')}</button>
+              <button className="dbdlg-btn" disabled={!result} onClick={exportResult}>{L('Exportar JSON', 'Export JSON')}</button>
+            </div>
+            <pre className="basemat-output">{result ? JSON.stringify(result, null, 2) : L('Ejecuta una herramienta para ver el reporte.', 'Run a tool to see the report.')}</pre>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const DeskWorkbenchDialog = ({ open, onClose, notify, language, onOpenDatabase, onOpenQr, onOpenText, onOpenDrive, onOpenPandora, onOpenOSDGRest, onOpenMarkdown, onOpenMarketNotes, onOpenCertificates, onOpenCommandManual, onOpenColorForge, onOpenFormatForge, onOpenIvoryIdeas, onOpenOcgUnits }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const STORAGE_KEY = 'opencriptG_desk_workbench_v1';
+  const defaultSlots = [
+    { id: 'slot-1', title: 'Module 01', type: L('Reservado', 'Reserved'), note: L('Espacio listo para tu próxima herramienta.', 'Space ready for your next tool.') },
+    { id: 'slot-2', title: 'Module 02', type: L('Reservado', 'Reserved'), note: L('Puedes convertirlo en visor, editor o analizador.', 'You can turn it into a viewer, editor, or analyzer.') },
+    { id: 'slot-3', title: 'Module 03', type: L('Reservado', 'Reserved'), note: L('Diseñado para crecer con OpencriptG.', 'Designed to grow with OpencriptG.') },
+    { id: 'slot-4', title: 'Module 04', type: L('Reservado', 'Reserved'), note: L('Ideal para nuevas utilidades de productividad.', 'Ideal for new productivity utilities.') },
+  ];
+  const [slots, setSlots] = useState(defaultSlots);
+  const [notes, setNotes] = useState('');
+  const [slotTitle, setSlotTitle] = useState('');
+  const [slotType, setSlotType] = useState('Tool');
+  const [slotNote, setSlotNote] = useState('');
+  const [deskTitle, setDeskTitle] = useState('Desk');
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed) {
+          setSlots(Array.isArray(parsed.slots) && parsed.slots.length ? parsed.slots : defaultSlots);
+          setNotes(parsed.notes || '');
+          setDeskTitle(parsed.deskTitle || 'Desk');
+          return;
+        }
+      }
+    } catch {}
+    setSlots(defaultSlots);
+    setNotes('');
+    setDeskTitle('Desk');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ slots, notes, deskTitle }));
+  }, [open, slots, notes, deskTitle]);
+
+  const addSlot = () => {
+    const next = {
+      id: `slot_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title: slotTitle.trim() || `Module ${String(slots.length + 1).padStart(2, '0')}`,
+      type: slotType.trim() || 'Tool',
+      note: slotNote.trim() || L('Listo para futuras funciones.', 'Ready for future features.'),
+    };
+    setSlots((prev) => [...prev, next]);
+    setSlotTitle(''); setSlotType('Tool'); setSlotNote('');
+    notify && notify(L('Espacio agregado al Desk', 'Desk slot added'));
+  };
+
+  const removeSlot = (id) => {
+    setSlots((prev) => prev.filter((s) => s.id !== id));
+    notify && notify(L('Espacio eliminado', 'Slot removed'));
+  };
+
+  const clearDesk = () => {
+    setSlots(defaultSlots);
+    setNotes('');
+    setDeskTitle('Desk');
+    notify && notify(L('Desk reiniciado', 'Desk reset'));
+  };
+
+  const quickTools = [
+    { key: 'db', title: L('Base de datos', 'Database'), desc: L('Abre los códigos copiados y guardados.', 'Open copied and stored codes.'), action: onOpenDatabase },
+    { key: 'qr', title: 'QR Vault', desc: L('Construye paquetes y QR avanzados.', 'Build advanced bundles and QR packages.'), action: onOpenQr },
+    { key: 'text', title: 'Text Lab', desc: L('Escribe, edita y documenta.', 'Write, edit, and document.'), action: onOpenText },
+    { key: 'drive', title: L('Disco Lab', 'Drive Lab'), desc: L('Administra unidades virtuales.', 'Manage virtual drives.'), action: onOpenDrive },
+    { key: 'pandora', title: 'P - ANDORA', desc: L('Trabaja con hojas y fórmulas.', 'Work with sheets and formulas.'), action: onOpenPandora },
+    { key: 'osdg', title: 'OSDG -rest', desc: L('Cifra y desbloquea archivos con key visible y nonce oculta.', 'Encrypt and unlock files with a visible key and hidden nonce.'), action: onOpenOSDGRest },
+    { key: 'markdown', title: 'Markdown Desk', desc: L('Editor Markdown con vista HTML en vivo.', 'Markdown editor with live HTML preview.'), action: onOpenMarkdown },
+    { key: 'sequence', title: 'sequence - A', desc: L('Notas con valor basado en codes de la base de datos.', 'Notes valued with database codes.'), action: onOpenMarketNotes },
+    { key: 'certificates', title: L('Certificados', 'Certificates'), desc: L('Crea certificados privados de code con RNC y diseño OpencriptG.', 'Create private code certificates with RNC and OpencriptG design.'), action: onOpenCertificates },
+    { key: 'ivory', title: 'Ivory DID Ideas', desc: L('Recibe ideas de colaboradores con DID, QR y documento verificable.', 'Receive collaborator ideas with DID, QR and verifiable document.'), action: onOpenIvoryIdeas },
+    { key: 'ocgunits', title: 'OCG Units', desc: L('Emite billetes internos verificables con QR y ledger.', 'Issue verifiable internal bills with QR and ledger.'), action: onOpenOcgUnits },
+    { key: 'color', title: 'Color Forge', desc: L('Crea paletas, contraste y CSS para la interfaz.', 'Create palettes, contrast and CSS for the interface.'), action: onOpenColorForge },
+    { key: 'formatforge', title: 'Format Forge', desc: L('Inventa formatos propietarios con matematicas avanzadas y validador.', 'Invent proprietary formats with advanced math and validator.'), action: onOpenFormatForge },
+    { key: 'cmd', title: 'CMD / IDE', desc: L('Opera la plataforma por comandos y automatiza lotes.', 'Operate the platform by command and automate batches.'), action: onOpenCommandManual },
+    { key: 'enterprise', title: 'Enterprise Gate', desc: L('Revisa self-tests, manifest y estado production.', 'Review self-tests, manifest and production state.'), action: () => {
+      const status = window.OCGEnterprise?.lastStatus?.();
+      notify && notify(status?.ok ? L('Enterprise gate: PASS', 'Enterprise gate: PASS') : L('Enterprise gate: revisar self-tests', 'Enterprise gate: review self-tests'));
+      window.open?.('/enterprise/manifest.json', '_blank');
+    } },
+  ];
+
+  if (!open) return null;
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg deskdlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{deskTitle || 'Desk'}</h2>
+            <p>{L('Espacio central de trabajo para OpencriptG. Aquí podrás ir agregando herramientas nuevas más adelante, con accesos rápidos y zonas reservadas.', 'Central workspace for OpencriptG. Here you can keep adding new tools later, with shortcuts and reserved zones.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="deskdlg-layout">
+          <aside className="deskdlg-side">
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Identidad del Desk', 'Desk identity')}</div>
+              <div className="deskdlg-form">
+                <input className="textdlg-mini" value={deskTitle} onChange={(e) => setDeskTitle(e.target.value)} placeholder="Desk" />
+                <textarea className="textdlg-mini deskdlg-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={L('Notas rápidas del escritorio...', 'Quick desk notes...')} />
+                <button className="dbdlg-btn danger" onClick={clearDesk}>{L('Reiniciar Desk', 'Reset Desk')}</button>
+              </div>
+            </div>
+
+            <div className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Crear nuevo espacio', 'Create new slot')}</div>
+              <div className="deskdlg-form">
+                <input className="textdlg-mini" value={slotTitle} onChange={(e) => setSlotTitle(e.target.value)} placeholder={L('Nombre del módulo', 'Module name')} />
+                <input className="textdlg-mini" value={slotType} onChange={(e) => setSlotType(e.target.value)} placeholder={L('Tipo', 'Type')} />
+                <textarea className="textdlg-mini deskdlg-note-small" value={slotNote} onChange={(e) => setSlotNote(e.target.value)} placeholder={L('Descripción breve del espacio...', 'Short slot description...')} />
+                <button className="dbdlg-btn" onClick={addSlot}>{L('Agregar espacio', 'Add slot')}</button>
+              </div>
+            </div>
+          </aside>
+
+          <div className="deskdlg-main">
+            <section className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Lanzadores rápidos', 'Quick launchers')}</div>
+              <div className="deskdlg-launchers">
+                {quickTools.map((tool) => (
+                  <button key={tool.key} className="deskdlg-launch adaptive" onClick={() => { onClose(); tool.action && tool.action(); }}>
+                    <AdaptiveToolCard toolKey={tool.key} title={tool.title} language={language} compact />
+                    <em>{tool.desc}</em>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="textdlg-panel">
+              <div className="textdlg-panel-k">{L('Módulos del Desk', 'Desk modules')}</div>
+              <div className="deskdlg-grid">
+                {slots.map((slot) => (
+                  <article key={slot.id} className="deskdlg-card">
+                    <div className="deskdlg-card-head">
+                      <div>
+                        <strong>{slot.title}</strong>
+                        <small>{slot.type}</small>
+                      </div>
+                      <button className="deskdlg-del" onClick={() => removeSlot(slot.id)}>×</button>
+                    </div>
+                    <p>{slot.note}</p>
+                    <div className="deskdlg-card-foot">
+                      <span>{L('Preparado para expansión', 'Prepared for expansion')}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+
+const CommandManualDialog = ({ open, onClose, language, onCommand, codeCatalog = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const groups = [
+    {
+      name: L('Básicos del IDE', 'IDE basics'),
+      items: [
+        ['help', L('Abre ayuda rápida del sistema.', 'Opens quick system help.'), 'help'],
+        ['manual', L('Abre este formulario de comandos.', 'Opens this command form.'), 'manual'],
+        ['status', L('Muestra tipo activo, salida, base de datos y total generado.', 'Shows active type, output, database, and generated totals.'), 'status'],
+        ['new', L('Inicia una sesión limpia.', 'Starts a clean session.'), 'new'],
+        ['save', L('Exporta la sesión actual como archivo JSON.', 'Exports the current session as JSON.'), 'save'],
+        ['load', L('Abre el selector para cargar una sesión guardada.', 'Opens a picker to load a saved session.'), 'load'],
+      ],
+    },
+    {
+      name: L('Generación de codes', 'Code generation'),
+      items: [
+        ['gen <cantidad>', L('Genera codes con el tipo activo.', 'Generates codes using the active type.'), 'gen 10'],
+        ['gen 100', L('Genera 100 codes con el tipo activo.', 'Generates 100 codes with the active type.'), 'gen 100'],
+        ['code001 <cantidad>', L('Genera codes usando el comando directo 001.', 'Generates codes using direct command 001.'), 'code001 5'],
+        ['code619 <cantidad>', L('Genera codes usando el último comando del rango 619.', 'Generates codes using the final command in the 619 range.'), 'code619 1'],
+        ['code <número> <cantidad>', L('Genera por número del catálogo 1-619.', 'Generates by catalog number 1-619.'), 'code 250 10'],
+        ['gen type <id|número> <cantidad>', L('Genera por ID técnico o número.', 'Generates by technical ID or number.'), 'gen type aes256 10'],
+        ['gen all619', L('Genera 1 code por cada uno de los 619 tipos.', 'Generates 1 code for each of the 619 types.'), 'gen all619'],
+      ],
+    },
+    {
+      name: L('Catálogo y búsqueda', 'Catalog and search'),
+      items: [
+        ['types', L('Muestra una lista corta de tipos disponibles.', 'Shows a short list of available types.'), 'types'],
+        ['codes619', L('Muestra la página 1 del catálogo de 619 comandos.', 'Shows page 1 of the 619-command catalog.'), 'codes619'],
+        ['codes619 <página>', L('Muestra una página específica del catálogo.', 'Shows a specific catalog page.'), 'codes619 2'],
+        ['cmd619', L('Descarga la lista completa code001-code619.', 'Downloads the complete code001-code619 list.'), 'cmd619'],
+        ['export commands619', L('Descarga la lista completa de comandos 619.', 'Downloads the complete 619 command list.'), 'export commands619'],
+        ['names619', L('Muestra y descarga la lista code000/nombre de los 619 codes.', 'Shows and downloads the code000/name list for the 619 codes.'), 'names619'],
+        ['search <texto>', L('Filtra el catálogo por texto.', 'Filters the catalog by text.'), 'search ascon'],
+      ],
+    },
+    {
+      name: L('Configuración', 'Configuration'),
+      items: [
+        ['set type <id|número>', L('Cambia el tipo activo de generación.', 'Changes the active generation type.'), 'set type code250'],
+        ['set len <n>', L('Cambia longitud para tipos que aceptan longitud.', 'Changes length for types that accept length.'), 'set len 64'],
+        ['set qty <n>', L('Cambia cantidad por defecto.', 'Changes default quantity.'), 'set qty 25'],
+        ['set prefix <texto>', L('Cambia el prefijo usado por ciertos generadores.', 'Changes the prefix used by some generators.'), 'set prefix ocg_'],
+        ['set density compact', L('Cambia la densidad visual a compacta.', 'Switches visual density to compact.'), 'set density compact'],
+        ['lang es', L('Cambia el idioma a español.', 'Changes language to Spanish.'), 'lang es'],
+      ],
+    },
+    {
+      name: L('Base de datos y exportación', 'Database and export'),
+      items: [
+        ['copy all', L('Copia todos los codes generados y los guarda en la base de datos.', 'Copies all generated codes and saves them to the database.'), 'copy all'],
+        ['export md', L('Exporta los codes generados en Markdown.', 'Exports generated codes as Markdown.'), 'export md'],
+        ['export txt', L('Exporta los codes generados en TXT.', 'Exports generated codes as TXT.'), 'export txt'],
+        ['export json', L('Exporta los codes generados en JSON.', 'Exports generated codes as JSON.'), 'export json'],
+        ['export csv', L('Exporta los codes generados en CSV.', 'Exports generated codes as CSV.'), 'export csv'],
+        ['clear output', L('Limpia la salida actual.', 'Clears current output.'), 'clear output'],
+        ['clear db', L('Limpia la base de datos de codes copiados.', 'Clears the copied-code database.'), 'clear db'],
+      ],
+    },
+    {
+      name: L('Color Forge / Diseño', 'Color Forge / Design'),
+      items: [
+        ['open color', L('Abre la herramienta avanzada de colores.', 'Opens the advanced color tool.'), 'open color'],
+        ['color help', L('Muestra los comandos internos de Color Forge.', 'Shows Color Forge internal commands.'), 'color help'],
+        ['palette analogous #2F6BFF 8', L('Crea una paleta análoga desde un color base.', 'Creates an analogous palette from a base color.'), 'palette analogous #2F6BFF 8'],
+        ['palette triadic #7D3CFF 9', L('Crea una paleta triádica para interfaces fuertes.', 'Creates a triadic palette for strong interfaces.'), 'palette triadic #7D3CFF 9'],
+        ['palette complement #00A676 8', L('Crea una paleta complementaria.', 'Creates a complementary palette.'), 'palette complement #00A676 8'],
+        ['gradient #111111 #F2F2F2 10', L('Crea un gradiente en pasos para diseño UI.', 'Creates a stepped gradient for UI design.'), 'gradient #111111 #F2F2F2 10'],
+        ['contrast #111111 #FFFFFF', L('Calcula contraste y nivel AA/AAA.', 'Calculates contrast and AA/AAA level.'), 'contrast #111111 #FFFFFF'],
+        ['export css', L('Exporta variables CSS de la paleta.', 'Exports CSS variables from the palette.'), 'export css'],
+        ['export json', L('Exporta datos de color en JSON.', 'Exports color data as JSON.'), 'export json'],
+      ],
+    },
+    {
+      name: L('Abrir módulos', 'Open modules'),
+      items: [
+        ['open db', L('Abre la base de datos de codes.', 'Opens the code database.'), 'open db'],
+        ['open qr', L('Abre QR Vault.', 'Opens QR Vault.'), 'open qr'],
+        ['open text', L('Abre Text Lab.', 'Opens Text Lab.'), 'open text'],
+        ['open drive', L('Abre Disco Lab.', 'Opens Drive Lab.'), 'open drive'],
+        ['open pandora', L('Abre P - ANDORA.', 'Opens P - ANDORA.'), 'open pandora'],
+        ['open desk', L('Abre DESK.', 'Opens DESK.'), 'open desk'],
+        ['open osdg', L('Abre OSDG -rest.', 'Opens OSDG -rest.'), 'open osdg'],
+        ['open markdown', L('Abre Markdown Desk.', 'Opens Markdown Desk.'), 'open markdown'],
+        ['open sequence', L('Abre sequence - A.', 'Opens sequence - A.'), 'open sequence'],
+        ['open certificates', L('Abre Certificados de Code.', 'Opens Code Certificates.'), 'open certificates'],
+        ['open color', L('Abre Color Forge.', 'Opens Color Forge.'), 'open color'],
+        ['open formatforge', L('Abre Format Forge para crear formatos nuevos.', 'Opens Format Forge to create new formats.'), 'open formatforge'],
+      ],
+    },
+  ];
+
+  const codeNameText = (codeCatalog || []).map((item, idx) => {
+    const n = String(idx + 1).padStart(3, '0');
+    return `code${n}  |  ${item.name || item.id}  |  id:${item.id}  |  categoría:${item.category || '-'}`;
+  }).join('\n');
+
+  const allCommandsText = groups.map(g => `# ${g.name}\n` + g.items.map(([cmd, desc, ex]) => `${cmd}\n  ${desc}\n  ejemplo: ${ex}`).join('\n')).join('\n\n') + `\n\n# Catálogo numerado code001-code619\n${codeNameText}`;
+
+  const runExample = (ex) => {
+    if (onCommand) onCommand(ex);
+    onClose();
+  };
+
+  const downloadManual = () => {
+    triggerDownload(`opencriptG-comandos-${tsStamp()}.txt`, allCommandsText, 'text/plain;charset=utf-8');
+  };
+
+  const downloadCodeNames = () => {
+    triggerDownload(`opencriptG-code001-code619-nombres-${tsStamp()}.txt`, codeNameText, 'text/plain;charset=utf-8');
+  };
+
+  const printManual = () => {
+    const rows = groups.map(g => `<h2>${g.name}</h2><table>${g.items.map(([cmd, desc, ex]) => `<tr><td><code>${cmd}</code></td><td>${desc}</td><td><code>${ex}</code></td></tr>`).join('')}</table>`).join('');
+    const catalogRows = (codeCatalog || []).map((item, idx) => `<tr><td><code>code${String(idx + 1).padStart(3, '0')}</code></td><td>${item.name || item.id}</td><td>${item.id}</td><td>${item.category || '-'}</td></tr>`).join('');
+    const w = window.open('', '_blank', 'width=1200,height=900');
+    if (!w) return;
+    w.document.open();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OpencriptG Command Form</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:34px;letter-spacing:6px;text-transform:uppercase;}h2{font-size:13px;letter-spacing:4px;text-transform:uppercase;border-top:2px solid #111;padding-top:18px;margin-top:28px;}table{width:100%;border-collapse:collapse;margin-top:10px;}td{border:1px solid #ddd;padding:10px;vertical-align:top;font-size:12px;}code{font-family:Consolas,monospace;font-weight:700;}button{padding:10px 18px;margin-bottom:20px;}@media print{button{display:none;}}</style></head><body><button onclick="window.print()">Guardar como PDF</button><h1>OpencriptG Command Form</h1><p>Formulario de comandos del modo IDE/CMD. Rango principal: code001-code619.</p>${rows}<h2>Catálogo numerado code001-code619</h2><table><tr><td><b>Comando</b></td><td><b>Nombre</b></td><td><b>ID técnico</b></td><td><b>Categoría</b></td></tr>${catalogRows}</table></body></html>`);
+    w.document.close();
+  };
+
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg cmdformdlg" onClick={(e) => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Formulario de comandos', 'Command form')}</h2>
+            <p>{L('Guía completa para manejar OpencriptG por comandos dentro del modo IDE/CMD.', 'Complete guide to control OpencriptG through commands inside IDE/CMD mode.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="cmdform-actions">
+          <button className="dbdlg-btn" onClick={downloadManual}>{L('Descargar TXT', 'Download TXT')}</button>
+          <button className="dbdlg-btn" onClick={printManual}>{L('PDF / Imprimir', 'PDF / Print')}</button>
+          <button className="dbdlg-btn" onClick={() => runExample('codes619')}>codes619</button>
+          <button className="dbdlg-btn" onClick={() => runExample('cmd619')}>cmd619</button>
+          <button className="dbdlg-btn" onClick={downloadCodeNames}>{L('Nombres 619', '619 names')}</button>
+        </div>
+        <div className="cmdform-grid">
+          {groups.map((group) => (
+            <section className="cmdform-card" key={group.name}>
+              <div className="cmdform-k">{group.name}</div>
+              <div className="cmdform-list">
+                {group.items.map(([cmd, desc, ex]) => (
+                  <article className="cmdform-row" key={cmd}>
+                    <div>
+                      <code>{cmd}</code>
+                      <p>{desc}</p>
+                      <small>{L('Ejemplo', 'Example')}: <b>{ex}</b></small>
+                    </div>
+                    <button onClick={() => runExample(ex)}>{L('Usar', 'Use')}</button>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+          <section className="cmdform-card cmdform-card-wide">
+            <div className="cmdform-k">{L('Catálogo numerado: code001 - code619', 'Numbered catalog: code001 - code619')}</div>
+            <p className="cmdform-note">{L('Cada número tiene su nombre real, ID técnico y categoría. Ejemplo: code001 5 genera 5 codes del primer tipo.', 'Each number has its real name, technical ID, and category. Example: code001 5 generates 5 codes of the first type.')}</p>
+            <div className="cmdform-codecatalog">
+              {(codeCatalog || []).map((item, idx) => (
+                <article key={`${item.id}-${idx}`} className="cmdform-coderow">
+                  <code>code{String(idx + 1).padStart(3, '0')}</code>
+                  <strong>{item.name || item.id}</strong>
+                  <span>{item.id}</span>
+                  <em>{item.category || '-'}</em>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+
+const CommandIDE = ({
+  log, cmdInput, setCmdInput, onCommand, output, selectedType, selectedCat, stats, copyDb,
+  language, t, clock, busy, onQuickGenerate, onCopyAll, onClearOutput
+}) => {
+  const terminalRef = useRef(null);
+  useEffect(() => {
+    if (terminalRef.current) terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+  }, [log, output.length]);
+  const submit = (e) => {
+    e.preventDefault();
+    const v = cmdInput.trim();
+    if (!v) return;
+    onCommand(v);
+    setCmdInput('');
+  };
+  const quick = ['help', 'commands1000', 'manual', 'codes619', 'code001 gen --qty 1', 'ocg code gen ascon-key --qty 5 --save', 'gen all619', 'db list', 'qr create last', 'cert create last', 'osdg encrypt file.pdf --key last', 'open color', 'open formatforge'];
+  return (
+    <main className="cmdide">
+      <section className="cmdide-head">
+        <div>
+          <div className="cmd-k">OPENCRIPTG IDE / COMMAND MODE</div>
+          <h1>CMD WORKSPACE</h1>
+          <p>{language === 'es' ? 'Toda la plataforma se maneja por comandos. Escribe help para ver las órdenes disponibles.' : 'The entire platform is controlled by commands. Type help to see available orders.'}</p>
+        </div>
+        <div className="cmdide-status">
+          <span>{clock}</span>
+          <b>{busy ? 'BUSY' : 'READY'}</b>
+        </div>
+      </section>
+
+      <div className="cmdide-grid">
+        <aside className="cmdide-left">
+          <div className="cmd-panel">
+            <div className="cmd-panel-k">{language === 'es' ? 'Comandos rápidos' : 'Quick commands'}</div>
+            <div className="cmdchips">
+              {quick.map(q => <button key={q} onClick={() => { setCmdInput(q); onCommand(q); }}>{q}</button>)}
+            </div>
+          </div>
+          <div className="cmd-panel">
+            <div className="cmd-panel-k">{language === 'es' ? 'Generación' : 'Generation'}</div>
+            <button className="cmd-btn" onClick={() => onQuickGenerate(10)}>gen 10</button>
+            <button className="cmd-btn" onClick={() => onQuickGenerate(100)}>gen 100</button>
+            <button className="cmd-btn" onClick={onCopyAll} disabled={!output.length}>copy all</button>
+            <button className="cmd-btn danger" onClick={onClearOutput} disabled={!output.length}>clear output</button>
+          </div>
+          <div className="cmd-panel">
+            <div className="cmd-panel-k">{language === 'es' ? 'Estado' : 'Status'}</div>
+            <div className="cmd-stat"><span>TYPE</span><b>{selectedType?.id || '—'}</b></div>
+            <div className="cmd-stat"><span>CATEGORY</span><b>{getCategoryLabel(selectedCat, language)}</b></div>
+            <div className="cmd-stat"><span>OUTPUT</span><b>{output.length}</b></div>
+            <div className="cmd-stat"><span>DATABASE</span><b>{copyDb.length}</b></div>
+            <div className="cmd-stat"><span>GENERATED</span><b>{stats.generated}</b></div>
+          </div>
+        </aside>
+
+        <section className="cmdide-center">
+          <div className="cmd-window">
+            <div className="cmd-window-bar">
+              <span className="dot"/><span className="dot"/><span className="dot"/>
+              <b>opencriptG://ide/session</b>
+              <i>{selectedType?.label || selectedType?.id || 'none'}</i>
+            </div>
+            <div className="cmd-terminal" ref={terminalRef}>
+              {log.map((item, idx) => (
+                <div key={idx} className={`cmd-line ${item.kind || ''}`}>
+                  <span className="cmd-prompt">{item.prompt || '>'}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+              {!!output.length && <div className="cmd-output-title">{language === 'es' ? 'Últimos codes generados' : 'Latest generated codes'}</div>}
+              {output.slice(0, 12).map(row => (
+                <div key={row.id} className="cmd-code-row">
+                  <span>{String(row.idx).padStart(3, '0')}</span>
+                  <code>{row.value}</code>
+                  <b>{row.type}</b>
+                </div>
+              ))}
+            </div>
+            <form className="cmd-inputbar" onSubmit={submit}>
+              <span>ocg$</span>
+              <input value={cmdInput} onChange={(e) => setCmdInput(e.target.value)} placeholder="help · commands1000 · ocg code gen ascon-key --qty 5 --save · db list · qr create last" autoFocus />
+              <button type="submit">RUN</button>
+            </form>
+          </div>
+        </section>
+
+        <aside className="cmdide-right">
+          <div className="cmd-panel">
+            <div className="cmd-panel-k">MODULES</div>
+            {['db','qr','text','drive','pandora','desk','osdg','markdown','sequence','certificates','color','formatforge'].map(m => (
+              <button key={m} className="cmd-module" onClick={() => onCommand(`open ${m}`)}>open {m}</button>
+            ))}
+          </div>
+          <div className="cmd-panel">
+            <div className="cmd-panel-k">SYNTAX</div>
+            <pre className="cmd-help-mini">{`help
+commands1000
+ocg code gen ascon-key --qty 10 --save
+ocg code001 gen --qty 5
+ocg code range 001 100
+ocg code all619 gen
+ocg db list/search/export/stats
+ocg qr create last
+ocg cert create last
+ocg osdg encrypt file.pdf --key last
+ocg sequence create --from-code last
+ocg color palette triadic #7D3CFF 9
+ocg format forge --bits 256
+ocg report security
+ocg audit legal
+open <module>`}</pre>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+};
+
+
+const App = () => {
+  const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(window.OCG_DEFAULTS) : [{}, () => {}];
+  const density = tweaks.density || 'comfortable';
+
+  const catalog = window.OCG_CATALOG;
+  const [selectedId, setSelectedId] = useState('aes256');
+  const [selectedCatId, setSelectedCatId] = useState('symmetric');
+  const [query, setQuery] = useState('');
+  const [length, setLength] = useState(32);
+  const [qty, setQty] = useState(10);
+  const [prefix, setPrefix] = useState('ocg_');
+  const [charset, setCharset] = useState({ upper: true, lower: true, num: true, sym: false });
+  const [output, setOutput] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [stats, setStats] = useState({ generated: 0, unique: 0, sessionStart: Date.now() });
+  const [clock, setClock] = useState('');
+  const idRef = useRef(0);
+  const outRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const searchRef = useRef(null);
+  const topNavRef = useRef(null);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [dbOpen, setDbOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const [pandoraOpen, setPandoraOpen] = useState(false);
+  const [deskOpen, setDeskOpen] = useState(false);
+  const [osdgRestOpen, setOsdgRestOpen] = useState(false);
+  const [markdownOpen, setMarkdownOpen] = useState(false);
+  const [marketNotesOpen, setMarketNotesOpen] = useState(false);
+  const [certificatesOpen, setCertificatesOpen] = useState(false);
+  const [commandManualOpen, setCommandManualOpen] = useState(false);
+  const [colorForgeOpen, setColorForgeOpen] = useState(false);
+  const [formatForgeOpen, setFormatForgeOpen] = useState(false);
+  const [mountainToolOpen, setMountainToolOpen] = useState(null);
+  const [baseMatOpen, setBaseMatOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [planFocus, setPlanFocus] = useState(null);
+  const [planLicense, setPlanLicense] = useState(() => readPlanLicense());
+  const [freeNudge, setFreeNudge] = useState({ open: false, index: 0 });
+  const [freeDailyUsage, setFreeDailyUsage] = useState(() => readFreeDailyUsage());
+  const [ivoryIdeasOpen, setIvoryIdeasOpen] = useState(false);
+  const [ocgUnitsOpen, setOcgUnitsOpen] = useState(false);
+  const [dbQuery, setDbQuery] = useState('');
+  const [copyDb, setCopyDb] = useState(() => COPY_DB.list());
+  const [toast, setToast] = useState('');
+  const [language, setLanguage] = useState(() => localStorage.getItem(LANG_STORAGE_KEY) || 'en');
+  const [cmdInput, setCmdInput] = useState('');
+  const [cmdLog, setCmdLog] = useState(() => [
+    { kind: 'sys', prompt: 'boot', text: 'OpencriptG IDE CMD inicializado. Escribe help para ver comandos.' },
+    { kind: 'sys', prompt: 'boot', text: 'Todos los módulos siguen disponibles: db, qr, text, drive, pandora, desk, osdg, markdown, sequence, certificates.' },
+  ]);
+  const t = useCallback((key, vars = {}) => uiText(language, key, vars), [language]);
+  const activePlan = useMemo(() => activePlanFromLicense(planLicense), [planLicense]);
+  const visibleCatalog = useMemo(() => limitCatalogByPlan(catalog, activePlan), [catalog, activePlan]);
+  const visibleTypeIds = useMemo(() => new Set(visibleCatalog.flatMap(cat => cat.types.map(type => type.id))), [visibleCatalog]);
+
+  const handleTopNavWheel = useCallback((e) => {
+    const node = topNavRef.current;
+    if (!node) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      e.preventDefault();
+      node.scrollLeft += e.deltaY;
+    }
+  }, []);
+
+
+  useEffect(() => {
+    localStorage.setItem(LANG_STORAGE_KEY, language);
+  }, [language]);
+
+  useEffect(() => {
+    const usage = readFreeDailyUsage();
+    setFreeDailyUsage(usage);
+  }, [activePlan.id]);
+
+  useEffect(() => {
+    if (!visibleCatalog.length || visibleTypeIds.has(selectedId)) return;
+    const firstCat = visibleCatalog[0];
+    const firstType = firstCat?.types?.[0];
+    if (firstType) {
+      setSelectedCatId(firstCat.id);
+      setSelectedId(firstType.id);
+    }
+  }, [visibleCatalog, visibleTypeIds, selectedId]);
+
+  const syncCopyDb = useCallback(() => setCopyDb(COPY_DB.list()), []);
+  const rememberCopied = useCallback((rows, mode = 'single') => {
+    const items = Array.isArray(rows) ? rows : [rows];
+    if (!items.length) return;
+    COPY_DB.addMany(items, mode);
+    syncCopyDb();
+  }, [syncCopyDb]);
+
+  // Find selected type
+  const { selectedType, selectedCat } = useMemo(() => {
+    for (const c of visibleCatalog) {
+      const t = c.types.find(t => t.id === selectedId);
+      if (t) return { selectedType: t, selectedCat: c };
+    }
+    return { selectedType: null, selectedCat: null };
+  }, [visibleCatalog, selectedId]);
+
+  // Clock
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      setClock(`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Adjust length defaults when type changes
+  useEffect(() => {
+    if (!selectedType?.hasLen) return;
+    if (selectedType.id === 'nanoid') setLength(21);
+    else if (selectedType.id === 'shortid') setLength(12);
+    else if (selectedType.id === 'invite') setLength(12);
+    else setLength(32);
+  }, [selectedId]);
+
+  const notify = useCallback((message) => {
+    setToast(message);
+    window.clearTimeout(window.__ocgToastTimer);
+    window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
+  }, []);
+  const planAllows = useCallback((feature, message = '') => {
+    if (activePlan.features?.[feature]) return true;
+    notify(message || (language === 'es' ? `Tu plan ${activePlan.name} no incluye esta funcion.` : `Your ${activePlan.name} plan does not include this feature.`));
+    setPlanOpen(true);
+    return false;
+  }, [activePlan, language, notify]);
+  const activatePlan = useCallback((nextLicense) => {
+    writePlanLicense(nextLicense);
+    setPlanLicense(nextLicense);
+    notify(`${PLAN_DEFINITIONS[nextLicense.plan]?.name || 'Plan'} activo`);
+  }, [notify]);
+  const resetPlan = useCallback(() => {
+    const next = { plan: 'free' };
+    writePlanLicense(next);
+    setPlanLicense(next);
+    notify(language === 'es' ? 'Plan Free activo' : 'Free plan active');
+  }, [language, notify]);
+
+  const reserveFreeDailyCodes = useCallback((requested) => {
+    if (activePlan.id !== 'free') return requested;
+    const usage = readFreeDailyUsage();
+    const remaining = Math.max(0, FREE_DAILY_CODE_LIMIT - Number(usage.count || 0));
+    if (remaining <= 0) {
+      notify(language === 'es'
+        ? `Free llego al limite diario de ${FREE_DAILY_CODE_LIMIT} codes. Cambia de plan para seguir generando hoy.`
+        : `Free reached the daily limit of ${FREE_DAILY_CODE_LIMIT} codes. Upgrade to keep generating today.`);
+      setPlanOpen(true);
+      setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
+      return 0;
+    }
+    const allowed = Math.min(requested, remaining);
+    const next = { date: usage.date || todayKey(), count: Number(usage.count || 0) + allowed };
+    writeFreeDailyUsage(next);
+    setFreeDailyUsage(next);
+    if (requested > allowed) {
+      notify(language === 'es'
+        ? `Free solo permite ${FREE_DAILY_CODE_LIMIT} codes diarios. Quedan ${allowed} para hoy.`
+        : `Free allows only ${FREE_DAILY_CODE_LIMIT} codes daily. ${allowed} remain for today.`);
+    }
+    return allowed;
+  }, [activePlan.id, language, notify]);
+
+  const generate = useCallback(async (amount) => {
+    if (!selectedType || busy) return;
+    if (!visibleTypeIds.has(selectedType.id)) {
+      notify(language === 'es' ? `El plan ${activePlan.name} no incluye este code criptografico.` : `The ${activePlan.name} plan does not include this cryptographic code.`);
+      setPlanOpen(true);
+      return;
+    }
+    const requested = Number(typeof amount === 'number' ? amount : qty) || qty || 1;
+    const planLimitedTotal = Math.max(1, Math.min(activePlan.maxBatch, requested));
+    if (requested > activePlan.maxBatch) notify(language === 'es' ? `Tu plan ${activePlan.name} limita el lote a ${activePlan.maxBatch.toLocaleString()} codes.` : `Your ${activePlan.name} plan limits the batch to ${activePlan.maxBatch.toLocaleString()} codes.`);
+    if (qty > activePlan.maxBatch) setQty(activePlan.maxBatch);
+    const total = reserveFreeDailyCodes(planLimitedTotal);
+    if (total <= 0) return;
+    setBusy(true);
+    const items = [];
+    const seen = new Set(output.map(o => o.value));
+    for (let i = 0; i < total; i++) {
+      const v = await window.OCG_GEN.generate(selectedType.id, length, { ...charset, prefix });
+      idRef.current += 1;
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: selectedType.id, ts: Date.now() });
+      seen.add(v);
+      if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+    setOutput(prev => [...items.reverse(), ...prev]);
+    setStats(prev => ({
+      ...prev,
+      generated: prev.generated + total,
+      unique: seen.size,
+    }));
+    setBusy(false);
+    if (outRef.current) outRef.current.scrollTop = 0;
+    if (activePlan.id === 'free') {
+      setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
+    }
+  }, [selectedType, length, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
+
+  const clearOutput = () => { setOutput([]); notify(t('outputCleared')); };
+  const newSession = () => {
+    setOutput([]);
+    setQuery('');
+    setSelectedId('aes256');
+    setSelectedCatId('symmetric');
+    setLength(32);
+    setQty(10);
+    setPrefix('ocg_');
+    setCharset({ upper: true, lower: true, num: true, sym: false });
+    setStats({ generated: 0, unique: 0, sessionStart: Date.now() });
+    idRef.current = 0;
+    notify(t('newSessionReady'));
+  };
+  const copyAll = () => {
+    if (!output.length) return;
+    if (copyDb.length + output.length > activePlan.maxVault) {
+      notify(language === 'es' ? `Vault limitado a ${activePlan.maxVault.toLocaleString()} codes en plan ${activePlan.name}.` : `Vault is limited to ${activePlan.maxVault.toLocaleString()} codes on ${activePlan.name}.`);
+      setPlanOpen(true);
+      return;
+    }
+    const text = activePlan.id === 'free'
+      ? output.map(o => withFreeWatermark(o.value)).join('\n\n---\n\n')
+      : output.map(o => o.value).join('\n');
+    navigator.clipboard?.writeText(text);
+    rememberCopied(output, 'batch');
+    notify(t('valuesCopied', { count: output.length }));
+  };
+  const deleteRow = (id) => setOutput(p => p.filter(o => o.id !== id));
+
+  // Downloads and session I/O
+  const downloadOne = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar codes requiere Starter o superior.' : 'Code downloads require Starter or higher.')) return;
+    const md = rowToMarkdown(row);
+    const name = `opencriptG-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.md`;
+    triggerDownload(name, md);
+  };
+
+  const downloadRowLog = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar LOG requiere Starter o superior.' : 'LOG download requires Starter or higher.')) return;
+    const log = rowToLog(row, language);
+    const name = `opencriptG-log-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.log`;
+    triggerDownload(name, log, 'text/plain;charset=utf-8');
+    notify(language === 'es' ? 'LOG descargado' : language === 'ko' ? 'LOG 다운로드됨' : language === 'zh' ? 'LOG 已下载' : 'LOG downloaded');
+  };
+
+
+  const downloadRowJson = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar JSON requiere Starter o superior.' : 'JSON download requires Starter or higher.')) return;
+    const json = JSON.stringify(rowToJsonObject(row, language), null, 2);
+    const name = `opencriptG-json-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.json`;
+    triggerDownload(name, json, 'application/json;charset=utf-8');
+    notify(language === 'es' ? 'JSON descargado' : language === 'ko' ? 'JSON 다운로드됨' : language === 'zh' ? 'JSON 已下载' : 'JSON downloaded');
+  };
+
+
+  const downloadRowTxt = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar TXT requiere Starter o superior.' : 'TXT download requires Starter or higher.')) return;
+    const txt = rowToTxt(row, language);
+    const name = `opencriptG-txt-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.txt`;
+    triggerDownload(name, txt, 'text/plain;charset=utf-8');
+    notify(language === 'es' ? 'TXT descargado' : language === 'ko' ? 'TXT 다운로드됨' : language === 'zh' ? 'TXT 已下载' : 'TXT downloaded');
+  };
+
+  const qrCanvasFromNode = async (node) => {
+    if (!node) return null;
+    if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
+    return await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width || 320;
+        c.height = img.naturalHeight || img.height || 320;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(c);
+      };
+      img.onerror = reject;
+      img.src = node.src;
+    });
+  };
+
+  const buildQrCanvasForValue = async (value, size = 320, correctLevel = 'Q') => {
+    if (!window.QRCode) throw new Error('QRCode unavailable');
+    const host = document.createElement('div');
+    host.style.position = 'fixed';
+    host.style.left = '-99999px';
+    host.style.top = '0';
+    host.style.width = `${size}px`;
+    host.style.height = `${size}px`;
+    document.body.appendChild(host);
+    try {
+      const { node } = await tryRenderQr(host, value, size, correctLevel);
+      return await qrCanvasFromNode(node);
+    } finally {
+      host.remove();
+    }
+  };
+
+  const qrPayloadForRow = async (row) => {
+    const value = String(row?.value || '');
+    const type = String(row?.type || 'code');
+    if (!type.startsWith('neo_code_')) return value;
+    const header = value.split('\n')[0] || `OCG-NEO.${type}`;
+    const family = (header.match(/^OCG-NEO\.([^.]+)/) || [])[1] || 'NEO';
+    const serial = (header.match(/\.v\d+\.(N\d{3})/) || [])[1] || `N${String(row?.idx || 0).padStart(3, '0')}`;
+    const check = (value.match(/^CHECK=(.+)$/m) || [])[1] || '';
+    const hash = (await digestHex(value)).slice(0, 20).toUpperCase();
+    return `OCGNEO1:${serial}:${family}:C${check}:H${hash}`;
+  };
+
+  const downloadRowQrPng = async (row) => {
+    if (!planAllows('qr', language === 'es' ? 'Descargar QR requiere Starter o superior.' : 'QR download requires Starter or higher.')) return;
+    try {
+      const qrPayload = await qrPayloadForRow(row);
+      const isNeo = String(row?.type || '').startsWith('neo_code_');
+      const qrCanvas = await buildQrCanvasForValue(qrPayload, 320, isNeo ? 'L' : 'Q');
+      if (!qrCanvas) return;
+      const pad = 24;
+      const labelH = 46;
+      const out = document.createElement('canvas');
+      out.width = qrCanvas.width + pad * 2;
+      out.height = qrCanvas.height + pad * 2 + labelH;
+      const ctx = out.getContext('2d');
+      ctx.fillStyle = '#f3f3f1';
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.strokeStyle = '#1b1b1b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, out.width - 1, out.height - 1);
+      ctx.drawImage(qrCanvas, pad, pad, qrCanvas.width, qrCanvas.height);
+      ctx.fillStyle = '#7f7f7f';
+      ctx.font = '500 11px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(String(row.idx).padStart(3, '0') + ' · QR PNG', pad, qrCanvas.height + pad + 18);
+      ctx.fillStyle = '#111111';
+      ctx.font = '600 10px "IBM Plex Mono", "Courier New", monospace';
+      const display = window.OCG_GEN.display(row.value, 42);
+      ctx.fillText(display, pad, qrCanvas.height + pad + 34);
+      const a = document.createElement('a');
+      a.href = out.toDataURL('image/png');
+      a.download = `opencriptG-qr-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
+      a.click();
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo descargar el QR' : language === 'ko' ? 'QR을 다운로드할 수 없습니다' : language === 'zh' ? '无法下载二维码' : 'Could not download the QR');
+    }
+  };
+
+  const downloadRowScreenshotPng = async (row) => {
+    try {
+      const story = storyForRow(row, language);
+      const padX = 28;
+      const padY = 20;
+      const width = 1180;
+      const codeAreaWidth = width - 360;
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const wrapByChars = (value, maxWidth, font) => {
+        ctx.font = font;
+        const raw = String(value || '');
+        const lines = [];
+        let line = '';
+        for (const ch of raw) {
+          const test = line + ch;
+          if (line && ctx.measureText(test).width > maxWidth) {
+            lines.push(line);
+            line = ch;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.length ? lines : [''];
+      };
+
+      const wrapByWords = (value, maxWidth, font) => {
+        ctx.font = font;
+        const words = String(value || '').split(/\s+/);
+        const lines = [];
+        let line = '';
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (line && ctx.measureText(test).width > maxWidth) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.length ? lines : [''];
+      };
+
+      const codeLines = wrapByChars(row.value, codeAreaWidth, '500 24px "IBM Plex Mono", "Courier New", monospace');
+      const storyLabel = (language === 'es') ? 'MODO HISTORIA · PASA EL CURSOR' : (language === 'ko') ? '스토리 모드 · 호버' : (language === 'zh') ? '故事模式 · 悬停提示' : 'STORY MODE · HOVER';
+      const storyLine1 = wrapByWords(story[0], width - 120, '500 16px "IBM Plex Mono", "Courier New", monospace');
+      const storyLine2 = wrapByWords(story[1], width - 120, '500 16px "IBM Plex Mono", "Courier New", monospace');
+
+      const headerH = 52;
+      const codeBlockH = Math.max(34, codeLines.length * 30);
+      const storyTop = padY + headerH + codeBlockH + 12;
+      const storyH = 24 + storyLine1.length * 22 + storyLine2.length * 22 + 18;
+      const height = storyTop + storyH + 14;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.fillStyle = '#f3f3f1';
+      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = '#dbdbd8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
+
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '500 18px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(String(row.idx).padStart(3, '0'), padX, padY + 3);
+
+      ctx.fillStyle = '#111111';
+      ctx.font = '500 24px "IBM Plex Mono", "Courier New", monospace';
+      let y = padY;
+      for (const line of codeLines) {
+        ctx.fillText(line, 78, y);
+        y += 30;
+      }
+
+      ctx.fillStyle = '#8a8a86';
+      ctx.font = '500 18px "IBM Plex Mono", "Courier New", monospace';
+      const chText = `${row.value.length} ch`;
+      const chW = ctx.measureText(chText).width;
+      ctx.fillText(chText, width - 260 - chW, padY + 3);
+
+      const iconY = padY + 2;
+      const iconSize = 20;
+      await drawInlineIcon(ctx, COPY_ICON, width - 214, iconY, iconSize, '#8a8a86');
+      await drawInlineIcon(ctx, QR_ICON, width - 174, iconY, iconSize, '#8a8a86');
+      await drawInlineIcon(ctx, SHOT_ICON, width - 134, iconY, iconSize, '#111111');
+      await drawInlineIcon(ctx, DL_ICON, width - 94, iconY, iconSize, '#8a8a86');
+      await drawInlineIcon(ctx, X_ICON, width - 54, iconY, iconSize, '#8a8a86');
+
+      ctx.strokeStyle = '#ececea';
+      ctx.beginPath();
+      ctx.moveTo(0, storyTop - 8);
+      ctx.lineTo(width, storyTop - 8);
+      ctx.stroke();
+
+      ctx.fillStyle = '#b7aea2';
+      ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
+      ctx.fillText(storyLabel, 78, storyTop);
+
+      let sy = storyTop + 24;
+      ctx.fillStyle = '#5b5146';
+      ctx.font = '500 16px "IBM Plex Mono", "Courier New", monospace';
+      for (const line of storyLine1) {
+        ctx.fillText(line, 78, sy);
+        sy += 22;
+      }
+      for (const line of storyLine2) {
+        ctx.fillText(line, 78, sy + 2);
+        sy += 22;
+      }
+
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `opencriptG-shot-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
+      a.click();
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo capturar el code' : language === 'ko' ? '코드를 캡처할 수 없습니다' : language === 'zh' ? '无法捕获代码' : 'Could not capture the code');
+    }
+  };
+
+
+  const printRowTicket = async (row) => {
+    try {
+      const { cat, type } = findTypeMeta(row.type);
+      const profile = ticketProfileForRow(row, language);
+      const story = storyForRow(row, language);
+      const qrCanvas = await buildQrCanvasForValue(row.value, 240, 'Q');
+      const qrUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : '';
+      const titleText = language === 'es' ? 'Ticket del code generado' : language === 'ko' ? '생성 코드 티켓' : language === 'zh' ? '生成代码票据' : 'Generated code ticket';
+      const safe = (v) => String(v ?? '—').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s] || s));
+      const codeWrapped = safe(row.value).replace(/(.{1,58})/g, '$1<br/>');
+      const w = window.open('', '_blank', 'width=540,height=900');
+      if (!w) { notify(language === 'es' ? 'Permite ventanas emergentes para imprimir el ticket' : 'Allow pop-ups to print the ticket'); return; }
+      const html = `<!doctype html><html><head><meta charset="utf-8" /><title>${safe(titleText)}</title><style>
+        @page{size:80mm auto;margin:8mm;}
+        body{margin:0;background:#efefec;font-family:'IBM Plex Mono','Courier New',monospace;color:#111;}
+        .ticket{width:74mm;margin:0 auto;background:#f7f7f4;border:1px solid #1f1f1f;padding:10px 10px 12px;box-sizing:border-box;}
+        .brand{font-size:11px;letter-spacing:.28em;color:#7d7d78;text-transform:uppercase;margin-bottom:6px;}
+        .logo{display:flex;align-items:center;gap:8px;border-bottom:1px solid #d6d6d0;padding-bottom:8px;margin-bottom:10px;}
+        .logo strong{font-size:14px;letter-spacing:.16em;}
+        .k{font-size:10px;color:#8f8678;letter-spacing:.24em;text-transform:uppercase;margin:10px 0 4px;}
+        .v{font-size:12px;line-height:1.45;word-break:break-word;}
+        .code{font-size:14px;line-height:1.45;font-weight:600;word-break:break-all;border:1px solid #dbdbd5;padding:8px;background:#fcfcfa;}
+        .qr{display:flex;justify-content:center;padding:10px 0 4px;}
+        .qr img{width:44mm;height:44mm;border:1px solid #171717;padding:4px;background:#fff;}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;}
+        .note{font-size:11px;line-height:1.55;color:#4e4e4b;}
+        .story{border-top:1px solid #d6d6d0;margin-top:10px;padding-top:8px;}
+        .foot{border-top:1px dashed #b8b8b1;margin-top:10px;padding-top:8px;font-size:10px;color:#666;line-height:1.5;}
+        .pel{width:20px;height:20px;}
+        @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
+      </style></head><body><div class="ticket">
+        <div class="brand">opencriptG · pelican ticket</div>
+        <div class="logo"><span class="pel">${PELICAN_ICON.replace('width="12" height="12"','width="20" height="20"')}</span><strong>OPENCRIPTG</strong></div>
+        <div class="k">${safe(titleText)}</div>
+        <div class="k">${safe(language === 'es' ? 'Índice' : 'Index')}</div><div class="v">${safe(String(row.idx).padStart(3,'0'))}</div>
+        <div class="k">${safe(language === 'es' ? 'Primitiva' : 'Primitive')}</div><div class="v">${safe(type?.label || row.primitiveLabel || row.type)}</div>
+        <div class="k">ID</div><div class="v">${safe(type?.id || row.type)}</div>
+        <div class="k">${safe(language === 'es' ? 'Categoría' : 'Category')}</div><div class="v">${safe(getCategoryLabel(cat, language))}</div>
+        <div class="k">${safe(language === 'es' ? 'Estándar' : 'Standard')}</div><div class="v">${safe(type?.std || type?.badge || '—')}</div>
+        <div class="k">${safe(language === 'es' ? 'Longitud' : 'Length')}</div><div class="v">${safe(String((row.value || '').length))} ch</div>
+        <div class="k">${safe(language === 'es' ? 'Generado' : 'Generated')}</div><div class="v">${safe(new Date(row.ts || Date.now()).toLocaleString())}</div>
+        <div class="k">${safe(language === 'es' ? 'Postura' : 'Security posture')}</div><div class="v">${safe(profile.security)}</div>
+        <div class="k">${safe(language === 'es' ? 'Úsalo para' : 'Use it for')}</div><div class="note">${safe(profile.useFor)}</div>
+        <div class="k">${safe(language === 'es' ? 'No lo uses para' : 'Avoid')}</div><div class="note">${safe(profile.avoid)}</div>
+        <div class="k">${safe(language === 'es' ? 'Code generado' : 'Generated code')}</div><div class="code">${codeWrapped}</div>
+        <div class="qr"><img src="${qrUrl}" alt="QR" /></div>
+        <div class="story">
+          <div class="k">${safe(language === 'es' ? 'Modo historia' : 'Story mode')}</div>
+          <div class="note">${safe(story[0])}</div>
+          <div class="note">${safe(story[1])}</div>
+        </div>
+        <div class="foot">opencriptG · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
+      </div><script>window.onload=()=>setTimeout(()=>window.print(),220);<\/script></body></html>`;
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo imprimir el ticket' : language === 'ko' ? '티켓을 인쇄할 수 없습니다' : language === 'zh' ? '无法打印票据' : 'Could not print the ticket');
+    }
+  };
+
+  const drawInlineIcon = (ctx, svgText, x, y, size, color) => {
+    const encoded = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgText.replace(/currentColor/g, color));
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, x, y, size, size); resolve(); };
+      img.onerror = () => resolve();
+      img.src = encoded;
+    });
+  };
+  const downloadAll = () => {
+    if (!output.length) return;
+    if (!planAllows('export', language === 'es' ? 'Exportar lotes requiere Starter o superior.' : 'Batch export requires Starter or higher.')) return;
+    const md = allRowsToMarkdown(output);
+    const name = `opencriptG-export-${tsStamp()}.md`;
+    triggerDownload(name, md);
+    notify(t('markdownExported'));
+  };
+  const exportFormat = (format) => {
+    if (!output.length) return;
+    if (!planAllows('export', language === 'es' ? 'Exportar lotes requiere Starter o superior.' : 'Batch export requires Starter or higher.')) return;
+    const stamp = tsStamp();
+    if (format === 'txt') {
+      triggerDownload(`opencriptG-export-${stamp}.txt`, rowsToText(output), 'text/plain;charset=utf-8');
+      notify(t('txtExported'));
+    } else if (format === 'json') {
+      triggerDownload(`opencriptG-export-${stamp}.json`, rowsToJson(output), 'application/json;charset=utf-8');
+      notify(t('jsonExported'));
+    } else if (format === 'csv') {
+      triggerDownload(`opencriptG-export-${stamp}.csv`, rowsToCsv(output), 'text/csv;charset=utf-8');
+      notify(t('csvExported'));
+    } else downloadAll();
+  };
+  const saveSession = () => {
+    if (activePlan.id === 'free') {
+      notify(language === 'es' ? 'Guardar sesiones requiere Starter o superior.' : 'Saving sessions requires Starter or higher.');
+      setPlanOpen(true);
+      return;
+    }
+    const payload = sessionToJson({ output, selectedId, selectedCatId, length, qty, prefix, charset, stats });
+    triggerDownload(`opencriptG-session-${tsStamp()}.ocg.json`, payload, 'application/json;charset=utf-8');
+    notify(t('sessionSaved'));
+  };
+  const openSession = () => {
+    if (activePlan.id === 'free') {
+      notify(language === 'es' ? 'Cargar sesiones requiere Starter o superior.' : 'Loading sessions requires Starter or higher.');
+      setPlanOpen(true);
+      return;
+    }
+    fileInputRef.current && fileInputRef.current.click();
+  };
+  const handleSessionFile = (event) => {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_TEXT_IMPORT_BYTES) {
+      notify(language === 'es' ? 'Sesion demasiado grande para importar con seguridad.' : 'Session too large to import safely.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || '{}'));
+        const st = parsed.state || parsed;
+        if (!Array.isArray(st.output)) throw new Error('Invalid session');
+        const cleanOutput = st.output.slice(0, MAX_SESSION_IMPORT_ROWS).map((row, idx) => ({
+          id: Number(row.id || row.idx || idx + 1) || idx + 1,
+          idx: Number(row.idx || row.id || idx + 1) || idx + 1,
+          value: String(row.value || '').slice(0, 20000),
+          type: String(row.type || 'imported').replace(/[^a-z0-9_\-.]+/gi, '').slice(0, 80) || 'imported',
+          ts: Number(row.ts || Date.now()) || Date.now(),
+        })).filter(row => row.value);
+        setOutput(cleanOutput);
+        setSelectedId(st.selectedId || 'aes256');
+        setSelectedCatId(st.selectedCatId || 'symmetric');
+        setLength(st.length || 32);
+        setQty(st.qty || 10);
+        setPrefix(st.prefix || 'ocg_');
+        setCharset(st.charset || { upper: true, lower: true, num: true, sym: false });
+        setStats(st.stats || { generated: cleanOutput.length, unique: new Set(cleanOutput.map(r => r.value)).size, sessionStart: Date.now() });
+        idRef.current = Math.max(0, ...cleanOutput.map(r => Number(r.id || r.idx || 0)));
+        notify(t('sessionLoaded'));
+      } catch (err) {
+        notify(t('invalidSession'));
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); generate(); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); clearOutput(); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); setQty(100); generate(100); }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); downloadAll(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [generate, output]);
+
+  const sessionTime = useMemo(() => {
+    const s = Math.floor((Date.now() - stats.sessionStart) / 1000);
+    const m = Math.floor(s / 60), ss = s % 60;
+    return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  }, [stats.sessionStart, clock]);
+
+  const withQty = (n) => { const next = Math.max(1, Math.min(activePlan.maxBatch, Number(n) || 1)); setQty(next); generate(next); };
+  const visibleOutput = useMemo(() => output.slice(0, MAX_RENDERED_OUTPUT), [output]);
+  const similarityMap = useMemo(() => buildSimilarityMap(visibleOutput, activePlan), [visibleOutput, activePlan]);
+  const scrollTop = () => { if (outRef.current) outRef.current.scrollTop = 0; notify(t('showingNewest')); };
+  const focusSearch = () => { searchRef.current && searchRef.current.focus(); };
+
+  const changeLanguage = (code) => {
+    setLanguage(code);
+    const langName = LANGUAGE_OPTIONS.find(l => l.code === code)?.native || code;
+    notify(uiText(code, 'languageChanged', { name: langName }));
+  };
+
+  const openDatabase = () => setDbOpen(true);
+  const openPlans = (planId = null) => {
+    setPlanFocus(PLAN_DEFINITIONS[planId]?.id || null);
+    setPlanOpen(true);
+  };
+  const openPlansFromFreeNudge = () => {
+    setFreeNudge(prev => ({ ...prev, open: false }));
+    openPlans('starter');
+  };
+  const skipFreeNudge = () => setFreeNudge(prev => ({ ...prev, open: false }));
+  const openQrVault = () => planAllows('qr', language === 'es' ? 'QR Vault requiere Starter o superior.' : 'QR Vault requires Starter or higher.') && setQrOpen(true);
+  const openTextLab = () => setTextOpen(true);
+  const openDriveLab = () => setDriveOpen(true);
+  const openPandora = () => setPandoraOpen(true);
+  const openDesk = () => setDeskOpen(true);
+  const openOSDGRest = () => setOsdgRestOpen(true);
+  const openMarkdownDesk = () => setMarkdownOpen(true);
+  const openMarketNotes = () => setMarketNotesOpen(true);
+  const openCertificates = () => planAllows('certificates', language === 'es' ? 'Certificados requiere Professional o Enterprise.' : 'Certificates require Professional or Enterprise.') && setCertificatesOpen(true);
+  const openCommandManual = () => setCommandManualOpen(true);
+  const openColorForge = () => setColorForgeOpen(true);
+  const openFormatForge = () => planAllows('formatForge', language === 'es' ? 'Format Forge requiere Professional o Enterprise.' : 'Format Forge requires Professional or Enterprise.') && setFormatForgeOpen(true);
+  const openIvoryIdeas = () => setIvoryIdeasOpen(true);
+  const openOcgUnits = () => setOcgUnitsOpen(true);
+  const openBaseMat = () => setBaseMatOpen(true);
+  const openMountainTool = (key) => {
+    if (!MOUNTAIN_TOOL_CONFIG[key]) return;
+    setMountainToolOpen(key);
+  };
+  const clearDatabase = () => { COPY_DB.clear(); syncCopyDb(); notify(t('databaseCleared')); };
+  const deleteDatabaseRow = (id) => { COPY_DB.remove(id); syncCopyDb(); };
+  const exportDatabase = () => {
+    if (!planAllows('databaseExport', language === 'es' ? 'Exportar base de datos requiere Starter o superior.' : 'Database export requires Starter or higher.')) return;
+    const payload = JSON.stringify(copyDb, null, 2);
+    triggerDownload(`opencriptG-copy-database-${tsStamp()}.json`, payload, 'application/json;charset=utf-8');
+    notify(t('databaseExported'));
+  };
+  const copyDatabaseRow = (row) => {
+    navigator.clipboard?.writeText(row.value);
+    notify(t('valuesCopied', { count: 1 }));
+  };
+
+  const fileItems = [
+    { label: t('newSession'), key: 'Ctrl K', onClick: newSession },
+    { label: t('openSession'), onClick: openSession },
+    { label: t('saveSession'), onClick: saveSession },
+    { type: 'sep' },
+    { label: t('clearOutput'), disabled: !output.length, onClick: clearOutput },
+  ];
+  const generateItems = [
+    { label: t('generateSelected'), key: 'Ctrl ↵', onClick: generate },
+    { label: t('generate10'), onClick: () => withQty(10) },
+    { label: t('generate100'), key: 'Ctrl B', onClick: () => withQty(100), disabled: activePlan.maxBatch < 100 },
+    { label: t('generate500'), onClick: () => withQty(500), disabled: activePlan.maxBatch < 500 },
+    { label: t('generate1000'), onClick: () => withQty(1000), disabled: activePlan.maxBatch < 1000 },
+    { label: language === 'es' ? 'Generar 10,000' : 'Generate 10,000', onClick: () => withQty(10000), disabled: activePlan.maxBatch < 10000 },
+    { label: language === 'es' ? 'Generar 50,000' : 'Generate 50,000', onClick: () => withQty(50000), disabled: activePlan.maxBatch < 50000 },
+    { type: 'sep' },
+    { label: t('copyAll'), disabled: !output.length, onClick: copyAll },
+  ];
+  const exportItems = [
+    { label: t('exportMarkdown'), key: 'Ctrl ⇧ S', disabled: !output.length, onClick: () => exportFormat('md') },
+    { label: t('exportTxt'), disabled: !output.length, onClick: () => exportFormat('txt') },
+    { label: t('exportJson'), disabled: !output.length, onClick: () => exportFormat('json') },
+    { label: t('exportCsv'), disabled: !output.length, onClick: () => exportFormat('csv') },
+  ];
+  const viewItems = [
+    { label: t('compactDensity'), onClick: () => setTweak('density', 'compact') },
+    { label: t('comfortableDensity'), onClick: () => setTweak('density', 'comfortable') },
+    { type: 'sep' },
+    { label: t('focusSearch'), onClick: focusSearch },
+    { label: t('newestOutput'), disabled: !output.length, onClick: scrollTop },
+    { label: t('replayTour'), onClick: () => window.__startTour && window.__startTour() },
+  ];
+  const helpItems = [
+    { label: t('openHelp'), onClick: () => setHelpOpen(true) },
+    { label: t('shortcuts'), onClick: () => setHelpOpen(true) },
+    { label: t('aboutApp'), onClick: () => setHelpOpen(true) },
+  ];
+
+  const languageItems = LANGUAGE_OPTIONS.map(opt => ({
+    label: `${language === opt.code ? '✓ ' : ''}${opt.native}`,
+    onClick: () => changeLanguage(opt.code),
+  }));
+
+  const planItems = [
+    { label: `${language === 'es' ? 'Plan activo' : 'Active plan'}: ${activePlan.name}`, onClick: openPlans },
+    { label: `${language === 'es' ? 'Limite lote' : 'Batch limit'}: ${activePlan.maxBatch.toLocaleString()}`, onClick: openPlans },
+    ...(activePlan.id === 'free' ? [{ label: `${language === 'es' ? 'Free hoy' : 'Free today'}: ${Math.max(0, FREE_DAILY_CODE_LIMIT - Number(freeDailyUsage.count || 0)).toLocaleString()} / ${FREE_DAILY_CODE_LIMIT.toLocaleString()}`, onClick: openPlans }] : []),
+    { type: 'sep' },
+    { label: language === 'es' ? 'Comparar todos los planes' : 'Compare all plans', onClick: () => openPlans(activePlan.id) },
+    { label: language === 'es' ? 'Ver Starter: QR + exportaciones' : 'View Starter: QR + exports', onClick: () => openPlans('starter') },
+    { label: language === 'es' ? 'Ver Professional: certificados + Forge' : 'View Professional: certificates + Forge', onClick: () => openPlans('professional') },
+    { label: language === 'es' ? 'Ver Enterprise: plataforma completa' : 'View Enterprise: full platform', onClick: () => openPlans('enterprise') },
+    { label: language === 'es' ? 'Ver por que Free limita' : 'See why Free is limited', onClick: () => openPlans('free') },
+  ];
+
+  const databaseItems = [
+    { label: t('openDatabase'), onClick: openDatabase },
+    { label: t('exportDatabase'), disabled: !copyDb.length, onClick: exportDatabase },
+    { type: 'sep' },
+    { label: t('clearDatabase'), disabled: !copyDb.length, onClick: clearDatabase },
+  ];
+  const qrItems = [
+    { label: t('openQrVault'), disabled: !copyDb.length, onClick: openQrVault },
+  ];
+  const textItems = [
+    { label: language === 'es' ? 'Abrir Text Lab' : 'Open Text Lab', onClick: openTextLab },
+  ];
+  const driveItems = [
+    { label: language === 'es' ? 'Abrir Virtual Drive Lab' : 'Open Virtual Drive Lab', onClick: openDriveLab },
+  ];
+  const pandoraItems = [
+    { label: language === 'es' ? 'Abrir P-andora' : 'Open P-andora', onClick: openPandora },
+    { label: language === 'es' ? 'Insertar codes de la base de datos' : 'Insert database codes', onClick: openPandora, disabled: !copyDb.length },
+  ];
+  const deskItems = [
+    { label: language === 'es' ? 'Abrir Desk' : 'Open Desk', onClick: openDesk },
+    { label: language === 'es' ? 'Crear espacio de módulo' : 'Create module slot', onClick: openDesk },
+  ];
+  const osdgRestItems = [
+    { label: language === 'es' ? 'Abrir cifrador OSDG -rest' : 'Open OSDG -rest encryptor', onClick: openOSDGRest },
+    { label: language === 'es' ? 'Cifrar / desbloquear archivos' : 'Encrypt / unlock files', onClick: openOSDGRest },
+  ];
+  const markdownItems = [
+    { label: language === 'es' ? 'Abrir Markdown Desk' : 'Open Markdown Desk', onClick: openMarkdownDesk },
+    { label: language === 'es' ? 'Editor dividido Markdown/HTML' : 'Split Markdown/HTML editor', onClick: openMarkdownDesk },
+  ];
+  const marketNotesItems = [
+    { label: language === 'es' ? 'Abrir sequence - A' : 'Open sequence - A', onClick: openMarketNotes },
+    { label: language === 'es' ? 'Crear nota con codes' : 'Create note with codes', onClick: openMarketNotes },
+  ];
+  const certificateItems = [
+    { label: language === 'es' ? 'Abrir certificados de code' : 'Open code certificates', onClick: openCertificates },
+    { label: language === 'es' ? 'Crear certificado privado' : 'Create private certificate', onClick: openCertificates, disabled: !copyDb.length },
+  ];
+
+  const ivoryIdeaItems = [
+    { label: language === 'es' ? 'Abrir Ivory DID Idea Vault' : 'Open Ivory DID Idea Vault', onClick: openIvoryIdeas },
+    { label: language === 'es' ? 'Crear solicitud de idea' : 'Create idea request', onClick: openIvoryIdeas, disabled: !copyDb.length },
+  ];
+
+
+  const ocgUnitsItems = [
+    { label: language === 'es' ? 'Abrir OCG Code Units' : 'Open OCG Code Units', onClick: openOcgUnits },
+    { label: language === 'es' ? 'Crear moneda 5 / 10 / 25 / 50' : 'Create 5 / 10 / 25 / 50 coin', onClick: openOcgUnits },
+  ];
+
+  const formatForgeItems = [
+    { label: language === 'es' ? 'Abrir Format Forge' : 'Open Format Forge', onClick: openFormatForge },
+    { label: language === 'es' ? 'Crear formato propietario nuevo' : 'Create new proprietary format', onClick: openFormatForge },
+  ];
+  const mountainToolItems = (key) => [
+    { label: language === 'es' ? `Abrir ${MOUNTAIN_TOOL_CONFIG[key].title}` : `Open ${MOUNTAIN_TOOL_CONFIG[key].title}`, onClick: () => openMountainTool(key) },
+    { label: language === 'es' ? 'Crear registro nuevo' : 'Create new record', onClick: () => openMountainTool(key) },
+    { label: language === 'es' ? 'Exportar registros desde la ventana' : 'Export records from dialog', onClick: () => openMountainTool(key) },
+  ];
+  const baseMatItems = [
+    { label: language === 'es' ? 'Abrir BASEMAT' : 'Open BASEMAT', onClick: openBaseMat },
+    { label: language === 'es' ? 'Entropia, colisiones y avalanche' : 'Entropy, collisions and avalanche', onClick: openBaseMat },
+    { label: language === 'es' ? 'Shamir, Merkle, lattice y campos primos' : 'Shamir, Merkle, lattice and prime fields', onClick: openBaseMat },
+    { label: language === 'es' ? '10 herramientas matematicas' : '10 mathematical tools', onClick: openBaseMat },
+  ];
+
+  const pushCmd = useCallback((text, kind = 'out', prompt = 'ocg') => {
+    setCmdLog((prev) => [...prev.slice(-120), { text, kind, prompt }]);
+  }, []);
+
+  const findTypeById = useCallback((id) => {
+    const needle = String(id || '').toLowerCase();
+    for (const cat of catalog) {
+      const found = cat.types.find((type) => String(type.id).toLowerCase() === needle || String(type.label || '').toLowerCase() === needle);
+      if (found) return { type: found, cat };
+    }
+    return null;
+  }, [catalog]);
+
+  const cmdTypes619 = useMemo(() => {
+    return catalog.flatMap((cat) => cat.types.map((type) => ({ cat, type }))).slice(0, 619);
+  }, [catalog]);
+
+  const resolveCmdType = useCallback((ref) => {
+    const raw = String(ref || '').trim().toLowerCase();
+    if (!raw) return null;
+    const codeMatch = raw.match(/^code\s*0*(\d{1,3})$/) || raw.match(/^c\s*0*(\d{1,3})$/) || raw.match(/^0*(\d{1,3})$/);
+    if (codeMatch) {
+      const index = Number(codeMatch[1]) - 1;
+      return cmdTypes619[index] || null;
+    }
+    const direct = findTypeById(raw);
+    if (direct) return direct;
+    return cmdTypes619.find(({ type }) => String(type.id).toLowerCase().includes(raw) || String(type.label || '').toLowerCase().includes(raw)) || null;
+  }, [cmdTypes619, findTypeById]);
+
+  const cmd619Text = useMemo(() => {
+    return cmdTypes619.map(({ type, cat }, idx) => {
+      const n = String(idx + 1).padStart(3, '0');
+      return `code${n} <cantidad>  |  ${type.id}  |  ${type.label || type.id}  |  ${cat.id}`;
+    }).join('\n');
+  }, [cmdTypes619]);
+
+  const generateForType = useCallback(async (typePack, amount = 1) => {
+    if (!typePack || busy) return [];
+    const type = typePack.type;
+    const cat = typePack.cat;
+    const planLimitedTotal = Math.max(1, Math.min(activePlan.maxBatch, Number(amount) || 1));
+    const total = reserveFreeDailyCodes(planLimitedTotal);
+    if (total <= 0) return [];
+    setSelectedId(type.id);
+    setSelectedCatId(cat.id);
+    setQty(total);
+    setBusy(true);
+    const items = [];
+    const seen = new Set(output.map(o => o.value));
+    for (let i = 0; i < total; i++) {
+      const v = await window.OCG_GEN.generate(type.id, type.hasLen ? length : 32, { ...charset, prefix });
+      idRef.current += 1;
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now() });
+      seen.add(v);
+      if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+    setOutput(prev => [...items.reverse(), ...prev]);
+    setStats(prev => ({ ...prev, generated: prev.generated + total, unique: seen.size }));
+    setBusy(false);
+    if (activePlan.id === 'free') {
+      setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
+    }
+    return items;
+  }, [busy, output, length, charset, prefix, activePlan, reserveFreeDailyCodes]);
+
+  const generateAll619 = useCallback(async () => {
+    if (busy) return;
+    if (activePlan.maxBatch < cmdTypes619.length) {
+      notify(language === 'es' ? `gen all619 requiere Professional o Enterprise. Tu plan permite ${activePlan.maxBatch.toLocaleString()}.` : `gen all619 requires Professional or Enterprise. Your plan allows ${activePlan.maxBatch.toLocaleString()}.`);
+      setPlanOpen(true);
+      return [];
+    }
+    setBusy(true);
+    const items = [];
+    const seen = new Set(output.map(o => o.value));
+    for (const { type } of cmdTypes619) {
+      const v = await window.OCG_GEN.generate(type.id, type.hasLen ? length : 32, { ...charset, prefix });
+      idRef.current += 1;
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now() });
+      seen.add(v);
+    }
+    setOutput(prev => [...items.reverse(), ...prev]);
+    setStats(prev => ({ ...prev, generated: prev.generated + items.length, unique: seen.size }));
+    setBusy(false);
+    return items;
+  }, [busy, output, cmdTypes619, length, charset, prefix, activePlan, notify, language]);
+
+  const OCG_COMMAND_HELP_1000 = useMemo(() => {
+    const named = [
+      'aes256','aes512','chacha20','xchacha20','ascon-key','ascon-nonce','kuznyechik-key','sm4-key','camellia-key','serpent-key','twofish-key','seed-phrase','recovery-code','license-key','api-key','jwt-secret','csrf-token','hmac-key','blake3-hash','keccak-hash','zk-seed','pq-session-key','kyber-seed','dilithium-ticket','threshold-share','hsm-slot-key','secure-enclave-ticket','did-anchor','certificate-seal','vault-master-key','qr-bundle-secret','storage-lock-key','webdav-access-key','deploy-token','webhook-secret','database-password','audit-session-id','backup-chain-key','cold-storage-key','universal-secure-code'
+    ];
+    const lines = [];
+    lines.push('OPENCRIPTG IDE/CMD · 1000 COMMAND SYSTEM');
+    lines.push('Formato general: ocg <modulo> <accion> [opciones]');
+    lines.push('');
+    named.forEach((name, i) => lines.push(`${String(i + 1).padStart(3, '0')} ocg code gen ${name} --qty 10 --save`));
+    for (let i = 1; i <= 619; i++) lines.push(`${String(100 + i).padStart(3, '0')} ocg code${String(i).padStart(3, '0')} gen --qty 1`);
+    ['db','qr','cert','osdg','sequence','color','markdown','desk','pandora','text','drive','report','audit','backup','workflow','legal','system'].forEach((m, mi) => {
+      ['open','list','create','export','verify','audit','help','status','clear','download','print','copy','save','load','reset','guide','json','pdf','html','txt','csv','manifest'].forEach((a, ai) => {
+        lines.push(`${String(720 + mi * 20 + ai).padStart(3, '0')} ocg ${m} ${a}`);
+      });
+    });
+    return lines.slice(0, 1000).join('\n');
+  }, []);
+
+  const runCommand = useCallback(async (raw) => {
+    const original = String(raw || '').trim();
+    if (!original) return;
+    pushCmd(original, 'in', 'ocg$');
+
+    const tokenize = (value) => (String(value || '').match(/(?:[^\s"]+|"[^"]*")+/g) || []).map(x => x.replace(/^"|"$/g, ''));
+    let parts = tokenize(original);
+    if (String(parts[0] || '').toLowerCase() === 'ocg') parts = parts.slice(1);
+    const cmd = String(parts[0] || '').toLowerCase();
+    const sub = String(parts[1] || '').toLowerCase();
+    const arg = parts.slice(1).join(' ');
+    const getOpt = (names, fallback = '') => {
+      const arr = Array.isArray(names) ? names : [names];
+      for (const name of arr) {
+        const idx = parts.indexOf(name);
+        if (idx >= 0 && parts[idx + 1] != null) return parts[idx + 1];
+      }
+      return fallback;
+    };
+    const hasFlag = (name) => parts.includes(name);
+    const clampQty = (value, fallback = 1, max = activePlan.maxBatch) => Math.max(1, Math.min(Math.min(max, activePlan.maxBatch), Number(value || fallback) || fallback));
+    const clampLen = (value, fallback = length) => Math.max(4, Math.min(4096, Number(value || fallback) || fallback));
+    const secureRandom = (len = 48, prefixValue = '') => {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789_-#$%';
+      const bytes = new Uint8Array(len);
+      try { crypto.getRandomValues(bytes); } catch { for (let i = 0; i < len; i++) bytes[i] = Math.floor(Math.random() * 256); }
+      return `${prefixValue || 'OCG'}-${Array.from(bytes, b => alphabet[b % alphabet.length]).join('')}`;
+    };
+    const makeCustomRows = async (typeLabel, amount = 1, opts = {}) => {
+      const n = clampQty(amount, 1, MAX_GENERATION_BATCH);
+      const codeLen = clampLen(opts.len || getOpt(['--len','--length'], length), length);
+      const normalized = String(typeLabel || 'universal-secure-code').replace(/^code\s+gen\s+/i, '').replace(/[^a-z0-9_\-]+/gi, '-').toLowerCase();
+      const found = resolveCmdType(normalized) || findTypeById(normalized);
+      if (found && found.type) return await generateForType(found, n);
+      const rows = [];
+      const seen = new Set(output.map(o => o.value));
+      for (let i = 0; i < n; i++) {
+        idRef.current += 1;
+        const salt = secureRandom(12, 'SALT');
+        const nonce = secureRandom(12, 'NONCE');
+        const core = secureRandom(Math.max(16, codeLen), String(opts.prefix || prefix || 'OCG'));
+        const value = `${core}.${salt.split('-').pop()}.${nonce.split('-').pop()}`;
+        rows.push({ id: idRef.current, idx: idRef.current, value, type: normalized, primitiveLabel: normalized, ts: Date.now(), meta: { salt, nonce, engine: 'OpencriptG CMD Advanced Generator' } });
+        seen.add(value);
+        if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
+      setOutput(prev => [...rows.reverse(), ...prev]);
+      setStats(prev => ({ ...prev, generated: prev.generated + rows.length, unique: seen.size }));
+      if (hasFlag('--save')) rememberCopied(rows, 'cmd-generated');
+      return rows;
+    };
+    const openModule = (key) => {
+      const moduleMap = {
+        db: openDatabase, database: openDatabase, base: openDatabase,
+        qr: openQrVault, qrvault: openQrVault, vault: openQrVault,
+        text: openTextLab, textlab: openTextLab,
+        drive: openDriveLab, disk: openDriveLab, disco: openDriveLab,
+        pandora: openPandora, 'p-andora': openPandora,
+        desk: openDesk,
+        osdg: openOSDGRest, rest: openOSDGRest,
+        markdown: openMarkdownDesk, md: openMarkdownDesk,
+        sequence: openMarketNotes, 'sequence-a': openMarketNotes,
+        certificates: openCertificates, certificado: openCertificates, certificados: openCertificates, cert: openCertificates,
+        color: openColorForge, colors: openColorForge, colorforge: openColorForge, palette: openColorForge, colores: openColorForge,
+        formatforge: openFormatForge, format: openFormatForge, formats: openFormatForge, forge: openFormatForge, formato: openFormatForge, formatos: openFormatForge,
+        basemat: openBaseMat, math: openBaseMat, matematicas: openBaseMat,
+        manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
+        help: () => setHelpOpen(true), ayuda: () => setHelpOpen(true), report: openCommandManual, audit: openCommandManual, workflow: openCommandManual, legal: openCommandManual, system: openCommandManual, backup: openCommandManual,
+      };
+      if (moduleMap[key]) { moduleMap[key](); pushCmd(`Módulo abierto: ${key}`, 'ok'); return true; }
+      return false;
+    };
+    const dbRows = COPY_DB.list();
+    const latest = () => output[0] || dbRows[0] || null;
+    const downloadText = (name, content, type = 'text/plain;charset=utf-8') => triggerDownload(name, content, type);
+
+    if (cmd === 'help' || cmd === '?' || cmd === 'guide') {
+      pushCmd('Sistema CMD 1000 activo. Usa: ocg help-all, ocg code gen ascon-key --qty 10 --save, ocg code001 gen --qty 5, ocg db list, ocg qr create last, ocg cert create last, ocg osdg encrypt archivo.pdf --key last --nonce auto, ocg color palette triadic #7D3CFF 9.', 'sys');
+      return;
+    }
+    if (cmd === 'help-all' || cmd === 'commands1000' || (cmd === 'system' && sub === 'help-all')) {
+      downloadText(`opencriptG-1000-cmd-system-${tsStamp()}.txt`, OCG_COMMAND_HELP_1000);
+      pushCmd('Catálogo de 1000 comandos descargado.', 'ok');
+      return;
+    }
+    if (cmd === 'manual' || cmd === 'comandos' || cmd === 'cmdform') { openCommandManual(); pushCmd('Formulario de comandos abierto.', 'ok'); return; }
+    if (cmd === 'status' || (cmd === 'system' && sub === 'status') || cmd === 'health' || cmd === 'diagnostics') {
+      pushCmd(`OK · type=${selectedType?.id || 'none'} · output=${output.length} · database=${copyDb.length} · generated=${stats.generated} · session=${sessionTime}`, 'ok');
+      return;
+    }
+    if (cmd === 'version' || cmd === 'about') { pushCmd('OpencriptG IDE/CMD · v12 · SipHash-2-4 Gate · 1000 Command System · local-first cryptographic code workstation.', 'sys'); return; }
+
+    if (cmd === 'lang') { changeLanguage(parts[1] || 'es'); pushCmd(`Idioma cambiado: ${parts[1] || 'es'}`, 'ok'); return; }
+    if (cmd === 'theme') { setTweak('theme', parts[1] || 'mono'); pushCmd(`theme=${parts[1] || 'mono'}`, 'ok'); return; }
+    if (cmd === 'open') { if (!openModule(String(parts[1] || '').toLowerCase())) pushCmd('Módulo no encontrado. Usa: db, qr, text, drive, pandora, desk, osdg, markdown, sequence, certificates, color, formatforge.', 'err'); return; }
+    if (['color','palette','gradient','contrast','colores'].includes(cmd)) { openColorForge(); pushCmd(`Color Forge abierto. Comando recibido: ${parts.join(' ')}`, 'ok'); return; }
+    if (['format','formats','formatforge','forge','formato','formatos'].includes(cmd)) { openFormatForge(); pushCmd(`Format Forge abierto. Comando recibido: ${parts.join(' ')}`, 'ok'); return; }
+
+    if (cmd === 'codes619' || cmd === 'codes' || cmd === 'list619') {
+      const page = Math.max(1, Number(parts[1] || 1) || 1);
+      const per = 28;
+      const start = (page - 1) * per;
+      const chunk = cmdTypes619.slice(start, start + per).map(({ type, cat }, idx) => `code${String(start + idx + 1).padStart(3, '0')} → ${type.id} · ${type.label || type.id} · ${cat.id}`).join(' | ');
+      pushCmd(chunk || 'No hay más codes en esa página.', 'out');
+      pushCmd(`Página ${page}/${Math.ceil(cmdTypes619.length / per)} · total=${cmdTypes619.length}.`, 'sys');
+      return;
+    }
+    if (cmd === 'cmd619' || (cmd === 'export' && parts[1] === 'commands619')) {
+      downloadText(`opencriptG-619-code-commands-${tsStamp()}.txt`, cmd619Text);
+      pushCmd('Lista completa de comandos code001-code619 descargada.', 'ok'); return;
+    }
+    if (cmd === 'names619' || (cmd === 'export' && parts[1] === 'names619')) {
+      const names = cmdTypes619.map(({ type, cat }, idx) => `code${String(idx + 1).padStart(3, '0')} | ${type.label || type.id} | id:${type.id} | categoría:${cat.label || cat.id}`).join('\n');
+      downloadText(`opencriptG-code001-code619-nombres-${tsStamp()}.txt`, names);
+      pushCmd('Lista code001-code619 con nombres descargada.', 'ok'); return;
+    }
+
+    if (/^code\d{1,3}$/.test(cmd) || /^c\d{1,3}$/.test(cmd)) {
+      const found = resolveCmdType(cmd);
+      if (!found) { pushCmd(`Comando fuera de rango: ${cmd}. Usa code001 hasta code619.`, 'err'); return; }
+      const n = clampQty(getOpt(['--qty','-q'], parts[2] || parts[1] || 1), 1, MAX_GENERATION_BATCH);
+      await generateForType(found, n);
+      pushCmd(`${cmd} ejecutado → ${found.type.id} · ${n} code(s) generados.`, 'ok'); return;
+    }
+    if (cmd === 'code' && sub === 'gen') {
+      const typeName = parts[2] || 'universal-secure-code';
+      const n = clampQty(getOpt(['--qty','-q'], parts[3] || 1), 1, MAX_GENERATION_BATCH);
+      const rows = await makeCustomRows(typeName, n, { len: getOpt(['--len','--length'], length), prefix: getOpt('--prefix', prefix) });
+      pushCmd(`code gen ${typeName} → ${rows.length} code(s) generados${hasFlag('--save') ? ' y guardados' : ''}.`, 'ok'); return;
+    }
+    if (cmd === 'code' && sub === 'range') {
+      const a = Math.max(1, Math.min(619, Number(parts[2] || 1) || 1));
+      const b = Math.max(1, Math.min(619, Number(parts[3] || a) || a));
+      const from = Math.min(a, b), to = Math.max(a, b);
+      let count = 0;
+      for (let i = from; i <= to; i++) { const f = resolveCmdType(String(i).padStart(3, '0')); if (f) { await generateForType(f, 1); count++; } }
+      pushCmd(`Rango code${String(from).padStart(3,'0')}-code${String(to).padStart(3,'0')} generado (${count} codes).`, 'ok'); return;
+    }
+    if (cmd === 'code' && (sub === 'all619' || parts[1] === '001-619')) { const items = await generateAll619(); pushCmd(`Generados ${items?.length || cmdTypes619.length} codes: 1 por cada tipo.`, 'ok'); return; }
+    if (cmd === 'code') {
+      const found = resolveCmdType(parts[1]);
+      if (!found) { pushCmd(`Tipo/code no encontrado: ${parts[1]}. Usa codes619.`, 'err'); return; }
+      const n = clampQty(getOpt(['--qty','-q'], parts[2] || 1), 1, MAX_GENERATION_BATCH);
+      await generateForType(found, n); pushCmd(`code ${parts[1]} → ${found.type.id} · ${n} code(s).`, 'ok'); return;
+    }
+    if ((cmd === 'gen' || cmd === 'generate') && String(parts[1] || '').toLowerCase() === 'all619') { const items = await generateAll619(); pushCmd(`Generados ${items?.length || cmdTypes619.length} codes: 1 por cada comando code001-code619.`, 'ok'); return; }
+    if ((cmd === 'gen' || cmd === 'generate') && String(parts[1] || '').toLowerCase() === 'type') {
+      const found = resolveCmdType(parts[2]);
+      const n = clampQty(getOpt(['--qty','-q'], parts[3] || 1), 1, MAX_GENERATION_BATCH);
+      if (found) { await generateForType(found, n); pushCmd(`gen type ${parts[2]} → ${found.type.id} · ${n} code(s).`, 'ok'); }
+      else { const rows = await makeCustomRows(parts[2], n, { len: getOpt(['--len','--length'], length) }); pushCmd(`gen type ${parts[2]} → ${rows.length} code(s) avanzados.`, 'ok'); }
+      return;
+    }
+    if (cmd === 'gen' || cmd === 'generate') { const n = clampQty(parts[1] || qty, qty, MAX_GENERATION_BATCH); setQty(n); generate(n); pushCmd(`Generando ${n} codes con ${selectedType?.id || 'tipo actual'}...`, 'ok'); return; }
+
+    if (cmd === 'types') { pushCmd(catalog.flatMap((cat) => cat.types.map((type) => type.id)).slice(0, 180).join(', '), 'out'); pushCmd('Para lista completa: codes619 o names619.', 'sys'); return; }
+    if (cmd === 'search') { setQuery(arg); pushCmd(`Filtro aplicado: ${arg || 'vacío'}`, 'ok'); return; }
+    if (cmd === 'set') {
+      const k = String(parts[1] || '').toLowerCase(); const v = parts.slice(2).join(' ');
+      if (k === 'type') { const found = resolveCmdType(v); if (!found) { pushCmd(`Tipo no encontrado: ${v}`, 'err'); return; } setSelectedId(found.type.id); setSelectedCatId(found.cat.id); pushCmd(`Tipo activo: ${found.type.id}`, 'ok'); return; }
+      if (['len','length'].includes(k)) { setLength(clampLen(v, 32)); pushCmd(`length=${clampLen(v,32)}`, 'ok'); return; }
+      if (k === 'qty') { setQty(clampQty(v, 10, MAX_GENERATION_BATCH)); pushCmd(`qty=${clampQty(v,10,MAX_GENERATION_BATCH)}`, 'ok'); return; }
+      if (k === 'prefix') { setPrefix(v); pushCmd(`prefix=${v}`, 'ok'); return; }
+      if (k === 'density') { setTweak('density', v === 'compact' ? 'compact' : 'comfortable'); pushCmd(`density=${v}`, 'ok'); return; }
+      pushCmd('Uso: set type <id> | set len <n> | set qty <n> | set prefix <txt> | set density compact', 'err'); return;
+    }
+
+    if (cmd === 'db' || cmd === 'database') {
+      if (['open','show'].includes(sub)) { openDatabase(); pushCmd('Base de datos abierta.', 'ok'); return; }
+      if (['list','latest','recent'].includes(sub)) { const txt = dbRows.slice(0, 20).map((r,i)=>`${i+1}. ${r.type || r.primitiveLabel || 'code'} · ${String(r.value || '').slice(0,80)}`).join(' | '); pushCmd(txt || 'Base de datos vacía.', 'out'); return; }
+      if (sub === 'search' || sub === 'filter') { setDbQuery(parts.slice(2).join(' ')); openDatabase(); pushCmd(`Búsqueda en DB: ${parts.slice(2).join(' ')}`, 'ok'); return; }
+      if (sub === 'copy') { const row = parts[2] === 'last' ? latest() : dbRows[Number(parts[2])-1]; if (row) { navigator.clipboard?.writeText(row.value || ''); pushCmd('Code copiado desde DB.', 'ok'); } else pushCmd('No encontré ese code.', 'err'); return; }
+      if (sub === 'clear') { clearDatabase(); pushCmd('Base de datos limpiada.', 'ok'); return; }
+      if (sub === 'stats' || sub === 'count') { pushCmd(`DB=${dbRows.length} · OUTPUT=${output.length} · Tipos=${new Set(dbRows.map(r=>r.type)).size}`, 'ok'); return; }
+      if (sub === 'export' || sub === 'backup' || sub === 'manifest' || sub === 'report') { exportDatabase(); pushCmd('Base de datos exportada.', 'ok'); return; }
+      if (['certify','qr','sequence'].includes(sub)) { ({ certify: openCertificates, qr: openQrVault, sequence: openMarketNotes }[sub])(); pushCmd(`DB → ${sub} abierto.`, 'ok'); return; }
+      openDatabase(); pushCmd('Comando DB preparado. Usa db list/search/copy/export/stats/clear.', 'sys'); return;
+    }
+
+    const moduleActions = {
+      qr: { open: openQrVault, label: 'QR Vault', verbs: ['create','bundle','export','verify','render','decode','scan-file','template','audit','help','pdf','png','svg','payload','copy-payload'] },
+      cert: { open: openCertificates, label: 'Certificados', verbs: ['create','set-owner','set-license','export','verify','revoke','list','legal','terms','audit','template','print','preview','registry','help'] },
+      certificates: { open: openCertificates, label: 'Certificados', verbs: [] },
+      osdg: { open: openOSDGRest, label: 'OSDG -rest', verbs: ['encrypt','decrypt','unlock','verify-nonce','copy-key','copy-nonce','download-unlocked','inspect-lock','audit','legal','help'] },
+      sequence: { open: openMarketNotes, label: 'sequence - A', verbs: ['create','add-code','calc-index','export','key','formula','verify','download-pdf','help'] },
+      markdown: { open: openMarkdownDesk, label: 'Markdown Desk', verbs: ['new','export','preview','theme','insert','save','load','clear','help'] },
+      desk: { open: openDesk, label: 'Desk', verbs: ['add-slot','remove-slot','notes','rename','reset','launcher','help'] },
+      pandora: { open: openPandora, label: 'P - ANDORA', verbs: ['new-sheet','formula','export','print','filter','sort','merge','chart','template','help'] },
+      text: { open: openTextLab, label: 'Text Lab', verbs: ['new','export','dark','light','ai','autocorrect','stats','help'] },
+      drive: { open: openDriveLab, label: 'Disco Lab', verbs: ['create','add-file','delete-file','download','export','manifest','import-db','stats','help'] },
+      color: { open: openColorForge, label: 'Color Forge', verbs: ['palette','gradient','contrast','export','copy','inspect','convert','wcag','save','load','help'] },
+      formatforge: { open: openFormatForge, label: 'Format Forge', verbs: ['create','generate','validate','regex','export','validator','spec','samples','math','help'] },
+      format: { open: openFormatForge, label: 'Format Forge', verbs: ['create','generate','validate','regex','export','validator','spec','samples','math','help'] },
+      basemat: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
+      math: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
+    };
+    if (moduleActions[cmd]) {
+      const mod = moduleActions[cmd]; mod.open();
+      if (sub === 'export' && ['json','txt','html','pdf','csv','md'].includes(parts[2])) pushCmd(`${mod.label}: export ${parts[2]} preparado desde su ventana.`, 'ok');
+      else if (sub && sub !== 'open') pushCmd(`${mod.label}: comando ${sub} recibido. La herramienta se abrió para completar la acción con diseño.`, 'ok');
+      else pushCmd(`${mod.label} abierto.`, 'ok');
+      return;
+    }
+
+    if (cmd === 'report') { const body = `OPENCRIPTG REPORT\nFecha: ${new Date().toLocaleString()}\nOutput: ${output.length}\nDatabase: ${copyDb.length}\nGenerated: ${stats.generated}\nComando: ${original}`; downloadText(`opencriptG-report-${tsStamp()}.txt`, body); pushCmd('Reporte generado y descargado.', 'ok'); return; }
+    if (cmd === 'audit') { pushCmd(`Auditoría ${sub || 'general'}: output=${output.length}, db=${copyDb.length}, módulo seguro local-first.`, 'ok'); return; }
+    if (cmd === 'backup') { saveSession(); pushCmd('Backup/sesión exportada.', 'ok'); return; }
+    if (cmd === 'workflow') { pushCmd(`Workflow ${sub || 'create'} simulado: usa módulos DB → Cert → QR → OSDG desde la interfaz CMD.`, 'ok'); return; }
+    if (cmd === 'legal') { downloadText(`opencriptG-legal-notes-${tsStamp()}.txt`, 'OpencriptG legal notes: conservar licencias de terceros, avisos de copyright, y términos privados de certificados.'); pushCmd('Notas legales exportadas.', 'ok'); return; }
+    if (cmd === 'entropy' || cmd === 'hash' || cmd === 'checksum' || cmd === 'validate' || cmd === 'compare' || cmd === 'similarity') { pushCmd(`${cmd}: análisis local registrado. Para análisis avanzado abre report/audit o DB.`, 'ok'); return; }
+    if (cmd === 'copy') { if (parts[1] === 'all') { copyAll(); pushCmd('Output copiado y guardado en base de datos.', 'ok'); } else if (parts[1] === 'last' && latest()) { navigator.clipboard?.writeText(latest().value || ''); pushCmd('Último code copiado.', 'ok'); } else pushCmd('Uso: copy all | copy last', 'err'); return; }
+    if (cmd === 'export') { const fmt = String(parts[1] || 'md').toLowerCase(); if (fmt === 'commands1000') { downloadText(`opencriptG-1000-cmd-system-${tsStamp()}.txt`, OCG_COMMAND_HELP_1000); pushCmd('1000 comandos exportados.', 'ok'); return; } if (!['md','txt','json','csv'].includes(fmt)) { pushCmd('Formato válido: md, txt, json, csv, commands1000.', 'err'); return; } exportFormat(fmt); pushCmd(`Export solicitado: ${fmt}`, 'ok'); return; }
+    if (cmd === 'clear') { const what = String(parts[1] || '').toLowerCase(); if (what === 'db' || what === 'database') { clearDatabase(); pushCmd('Base de datos limpiada.', 'ok'); return; } if (what === 'log' || what === 'terminal') { setCmdLog([]); return; } clearOutput(); pushCmd('Output limpiado.', 'ok'); return; }
+    if (cmd === 'new' || (cmd === 'session' && sub === 'new')) { newSession(); pushCmd('Nueva sesión iniciada.', 'ok'); return; }
+    if (cmd === 'save' || (cmd === 'session' && sub === 'save')) { saveSession(); pushCmd('Sesión exportada.', 'ok'); return; }
+    if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
+
+    pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+
+  return (
+    <>
+      <Tweaks tweaks={tweaks} setTweak={setTweak} />
+      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} t={t} />
+      <PlanLicenseDialog open={planOpen} onClose={() => setPlanOpen(false)} license={planLicense} onActivate={activatePlan} onReset={resetPlan} language={language} initialPlan={planFocus} />
+      <DatabaseDialog open={dbOpen} onClose={() => setDbOpen(false)} rows={copyDb} query={dbQuery} setQuery={setDbQuery} onExport={exportDatabase} onClear={clearDatabase} onDelete={deleteDatabaseRow} onCopyAgain={copyDatabaseRow} t={t} language={language} />
+      <QrVaultDialog open={qrOpen} onClose={() => setQrOpen(false)} rows={copyDb} t={t} language={language} />
+      <TextStudioDialog open={textOpen} onClose={() => setTextOpen(false)} notify={notify} language={language} />
+      <VirtualDriveDialog open={driveOpen} onClose={() => setDriveOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <PandoraSpreadsheetDialog open={pandoraOpen} onClose={() => setPandoraOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <DeskWorkbenchDialog open={deskOpen} onClose={() => setDeskOpen(false)} notify={notify} language={language} onOpenDatabase={openDatabase} onOpenQr={openQrVault} onOpenText={openTextLab} onOpenDrive={openDriveLab} onOpenPandora={openPandora} onOpenOSDGRest={openOSDGRest} onOpenMarkdown={openMarkdownDesk} onOpenMarketNotes={openMarketNotes} onOpenCertificates={openCertificates} onOpenCommandManual={openCommandManual} onOpenColorForge={openColorForge} onOpenFormatForge={openFormatForge} onOpenIvoryIdeas={openIvoryIdeas} onOpenOcgUnits={openOcgUnits} />
+      <OSDGRestDialog open={osdgRestOpen} onClose={() => setOsdgRestOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <MarkdownDeskDialog open={markdownOpen} onClose={() => setMarkdownOpen(false)} notify={notify} language={language} />
+      <MarketNotesDialog open={marketNotesOpen} onClose={() => setMarketNotesOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <CodeCertificateDialog open={certificatesOpen} onClose={() => setCertificatesOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <FormatForgeDialog open={formatForgeOpen} onClose={() => setFormatForgeOpen(false)} notify={notify} language={language} />
+      <MountainToolDialog open={!!mountainToolOpen} toolKey={mountainToolOpen || 'tokenVault'} onClose={() => setMountainToolOpen(null)} notify={notify} language={language} rows={copyDb} />
+      <BaseMatDialog open={baseMatOpen} onClose={() => setBaseMatOpen(false)} notify={notify} language={language} rows={copyDb} activePlan={activePlan} />
+      <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
+      <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
+      {toast && <div className="ocg-toast">{toast}</div>}
+      <FreeUpgradeNudge
+        open={activePlan.id === 'free' && freeNudge.open}
+        story={FREE_UPGRADE_STORIES[freeNudge.index]}
+        onUpgrade={openPlansFromFreeNudge}
+        onSkip={skipFreeNudge}
+        language={language}
+      />
+
+      <div className={`app ${density}`} onClick={() => activeMenu && setActiveMenu(null)}>
+        {/* Title bar */}
+        <header className="tb">
+          <div className="tb-brand">
+            <span className="tb-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(20)}} />
+            <span className="tb-name"><b>OCG</b><i>OpencriptG</i></span>
+            <span className="tb-tag">Open Cryptographic Generator · v12</span>
+          </div>
+          <nav ref={topNavRef} className="tb-nav" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
+            <MenuButton label={t('menuFile')} items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuGenerate')} items={generateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuExport')} items={exportItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuView')} items={viewItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuHelp')} items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuLanguages')} items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label="PLANS" items={planItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPlans} />
+            <MenuButton label={t('menuDatabase')} items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
+            <MenuButton label={t('qrMenu')} items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
+            <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
+            <MenuButton label={language === 'es' ? 'DISCO LAB' : 'DRIVE LAB'} items={driveItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDriveLab} />
+            <MenuButton label={language === 'es' ? 'P - ANDORA' : 'P - ANDORA'} items={pandoraItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPandora} />
+            <MenuButton label={language === 'es' ? 'DESK' : 'DESK'} items={deskItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDesk} />
+            <MenuButton label={language === 'es' ? 'OSDG -REST' : 'OSDG -REST'} items={osdgRestItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOSDGRest} />
+            <MenuButton label={language === 'es' ? 'MARKDOWN' : 'MARKDOWN'} items={markdownItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openMarkdownDesk} />
+            <MenuButton label={language === 'es' ? 'SEQUENCE - A' : 'SEQUENCE - A'} items={marketNotesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openMarketNotes} />
+            <MenuButton label={language === 'es' ? 'CERTIFICADOS' : 'CERTIFICATES'} items={certificateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCertificates} />
+            <MenuButton label="IVORY DID" items={ivoryIdeaItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openIvoryIdeas} />
+            <MenuButton label="OCG UNITS" items={ocgUnitsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOcgUnits} />
+            <MenuButton label="FORMAT FORGE" items={formatForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFormatForge} />
+            <MenuButton label="BASEMAT" items={baseMatItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBaseMat} />
+            <MenuButton label="TOKEN VAULT PRO" items={mountainToolItems('tokenVault')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenVault')} />
+            <MenuButton label="LICENSE ISSUER" items={mountainToolItems('licenseIssuer')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('licenseIssuer')} />
+            <MenuButton label="CHAIN LEDGER" items={mountainToolItems('chainLedger')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('chainLedger')} />
+            <MenuButton label="API KEY MANAGER" items={mountainToolItems('apiKeyManager')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('apiKeyManager')} />
+            <MenuButton label="TOKENIZATION STUDIO" items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
+          </nav>
+          <div className="tb-right">
+            <button className="tb-plan" onClick={openPlans} title="Plans & Licensing">
+              <span>{activePlan.name}</span>
+              <b>{activePlan.maxBatch.toLocaleString()}</b>
+            </button>
+            <div className="tb-stat">
+              <span className="tb-dot" />
+              <span>{t('webCrypto')}</span>
+            </div>
+            <div className="tb-stat">
+              <span>{t('localOffline')}</span>
+            </div>
+            <div className="tb-clk">{clock}</div>
+          </div>
+        </header>
+
+        {/* Status / breadcrumb bar */}
+        <div className="bcr">
+          <span className="bcr-l">{getCategoryLabel(selectedCat, language)}</span>
+          <span className="bcr-sep" dangerouslySetInnerHTML={{__html: CHEV_R}} />
+          <span className="bcr-c">{selectedType?.label || '—'}</span>
+          <span className="bcr-spacer" />
+          <span className="bcr-st"><b>{stats.generated}</b> {t('generated')}</span>
+          <span className="bcr-st"><b>{stats.unique}</b> {t('unique')}</span>
+          <span className="bcr-st">{t('session')} <b>{sessionTime}</b></span>
+        </div>
+
+        {/* Main body */}
+        <div className="body">
+          <Sidebar
+            catalog={visibleCatalog}
+            selectedId={selectedId}
+            onSelect={(id, catId) => { setSelectedId(id); setSelectedCatId(catId); }}
+            query={query}
+            onQuery={setQuery}
+            density={density}
+            searchRef={searchRef}
+            language={language}
+            t={t}
+          />
+
+          <main className="ed">
+            <ConfigBar
+              type={selectedType}
+              length={length} setLength={setLength}
+              qty={qty} setQty={setQty}
+              prefix={prefix} setPrefix={setPrefix}
+              charset={charset} setCharset={setCharset}
+              onGen={generate} onClear={clearOutput} onCopy={copyAll} onDownload={downloadAll}
+              busy={busy} hasOut={output.length > 0}
+              t={t}
+              plan={activePlan}
+            />
+
+            <div className="out-tb">
+              <span className="out-tb-l">{t('output')}</span>
+              <span className="out-tb-n">{output.length} {output.length === 1 ? t('value') : t('values')}</span>
+              <span className="out-tb-spacer" />
+              <span className="out-tb-hint">{t('hoverHint')}</span>
+            </div>
+
+            <div className="out" ref={outRef}>
+              {output.length === 0 ? (
+                <div className="out-empty">
+                  <div className="out-empty-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(92)}} />
+                  <div className="out-empty-t">{t('nothingGenerated')}</div>
+                  <div className="out-empty-d">
+                    {t('emptyGenerateHint')}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {output.length > visibleOutput.length && (
+                    <div className="out-window-note">
+                      {language === 'es'
+                        ? `Mostrando los ${visibleOutput.length.toLocaleString()} codes mas recientes de ${output.length.toLocaleString()}. Exportar/copiar usa el lote completo.`
+                        : `Showing the latest ${visibleOutput.length.toLocaleString()} codes out of ${output.length.toLocaleString()}. Export/copy uses the full batch.`}
+                    </div>
+                  )}
+                  {visibleOutput.map(row => (
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} density={density} t={t} language={language} />
+                  ))}
+                </>
+              )}
+            </div>
+          </main>
+
+          <aside className="rp">
+            <TechInfo type={selectedType} category={selectedCat} density={density} language={language} t={t} />
+          </aside>
+        </div>
+
+        {/* Status bar */}
+        <footer className="sf">
+          <span className="sf-l">
+            <span className="sf-dot" />
+            {t('csprng')}
+          </span>
+          <span className="sf-sep">·</span>
+          <span>{selectedType?.std || '—'}</span>
+          <span className="sf-spacer" />
+          <button className="sf-tour" onClick={() => window.__startTour && window.__startTour()} title="Replay the guided tour">
+            {t('tour')}
+          </button>
+          <span className="sf-r">{selectedType?.id || '—'}</span>
+          <span className="sf-sep">·</span>
+          <span>diktatcart® 2026 · Emil E. P. Mora</span>
+        </footer>
+      </div>
+    </>
+  );
+};
+// ── Tweaks panel ──
+window.OCG_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "density": "comfortable"
+}/*EDITMODE-END*/;
+
+const Tweaks = ({ tweaks, setTweak }) => {
+  if (!window.TweaksPanel) return null;
+  const TP = window.TweaksPanel;
+  const TR = window.TweakRadio;
+  const TS = window.TweakSection;
+  return (
+    <TP title="Tweaks">
+      <TS title="Density">
+        <TR
+          value={tweaks.density}
+          onChange={v => setTweak('density', v)}
+          options={[
+            { value: 'compact', label: 'Compact' },
+            { value: 'comfortable', label: 'Comfortable' },
+          ]}
+        />
+      </TS>
+    </TP>
+  );
+};
+
+// ── Inline UI icons (chevrons, search, etc) ──
+const SEARCH_ICON = `<svg width="13" height="13" viewBox="0 0 16 16"><path fill="currentColor" d="M11.5 10h-.8l-.3-.3a4.5 4.5 0 1 0-.8.8l.3.3v.8L13.4 15l1.6-1.6Zm-4.5 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>`;
+const CHEV = `<svg width="9" height="9" viewBox="0 0 16 16"><path fill="currentColor" d="M3 5h10L8 11Z"/></svg>`;
+const CHEV_R = `<svg width="9" height="9" viewBox="0 0 16 16"><path fill="currentColor" d="M5 3v10l6-5Z"/></svg>`;
+const COPY_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M5 1h8v10h-2V3H5Zm-2 3h8v11H3Z"/></svg>`;
+const TRASH_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M6 1h4v1h4v2H2V2h4Zm-3 4h10l-1 10H4Z"/></svg>`;
+const PLAY_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M3 2v12l11-6Z"/></svg>`;
+const X_ICON = `<svg width="11" height="11" viewBox="0 0 16 16"><path fill="currentColor" d="m4 5.4 1.4-1.4L8 6.6 10.6 4 12 5.4 9.4 8 12 10.6 10.6 12 8 9.4 5.4 12 4 10.6 6.6 8Z"/></svg>`;
+const CHECK_ICON = `<svg width="11" height="11" viewBox="0 0 16 16"><path fill="currentColor" d="m6.4 11.4-3.7-3.7 1.4-1.4 2.3 2.3 5-5 1.4 1.4Z"/></svg>`;
+const DL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M7 1h2v6h2.5L8 11 4.5 7H7Zm-5 11h12v2H2Z"/></svg>`;
+const QR_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M1 1h5v5H1Zm1.4 1.4v2.2h2.2V2.4Zm7.6-1.4h5v5h-5Zm1.4 1.4v2.2h2.2V2.4ZM1 10h5v5H1Zm1.4 1.4v2.2h2.2v-2.2ZM8.5 8.5h1.5V10H8.5Zm2 0H12V9.8h-1.5Zm2 0H14v1.5h-1.5Zm-4 2H10V12H8.5Zm2 0H12v1.5h-1.5Zm2 0H14v3h-1.5Zm-4 2H10V14H8.5Zm2 1.5H12V14h-1.5Z"/></svg>`;
+const SHOT_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M5 3 6.2 1.7h3.6L11 3h2v10H3V3Zm1.8 1.2H4.4v7.6h7.2V4.2H9.2l-.8-.9H7.6Zm.8 1.4h1.8v1h1v1.8h-1v1h-1.8v-1h-1V6.6h1Z"/></svg>`;
+const PELICAN_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M11.9 2.2c-1.6-.3-3.1.2-4.2 1.3L5.8 5.4c-.7.6-1.1 1.5-1.1 2.5v3c0 .6.4 1 1 1h4.4c1.7 0 3.2-1.4 3.2-3.1V6.4c0-1.2-.5-2.5-1.4-4.2Zm-1.1 1.6c.4.8.7 1.6.8 2.3-.9.2-2 .2-3 .1.6-1.1 1.4-1.9 2.2-2.4ZM6.2 9.7V8c0-.7.2-1.2.7-1.7.9.2 2.6.3 4.1 0v2.5c0 .8-.7 1.5-1.6 1.5H6.2v-.6Zm6.2 1.8c-.4.9-1.2 1.5-2.2 1.7l.6.8h-1.5l-.6-.8H7.5l-.6.8H5.4l.7-.9c-1-.3-1.7-1.2-1.7-2.3h1.5c0 .3.3.6.6.6h5.1c.4 0 .7-.3.8-.7h1.5Z"/></svg>`;
+
+const LOGBOOK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3 2.2c0-.7.5-1.2 1.2-1.2h7.7c.6 0 1.1.5 1.1 1.1v11.7c0 .7-.5 1.2-1.2 1.2H4.1C3.5 15 3 14.5 3 13.8V2.2Zm1.4.2v10.4c.2-.1.4-.2.7-.2h6.5V2.4H4.4Zm.7 11.2c-.4 0-.7.2-.7.5s.3.5.7.5h6.5v-1H5.1Z"/><path fill="currentColor" d="M5.6 4.2h4.7v1H5.6Zm0 2h4.7v1H5.6Zm0 2h3.4v1H5.6Z" opacity=".75"/></svg>`;
+const JSON_BRACKETS_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.1 2.2c-1.4 0-2.2.8-2.2 2.2v1.3c0 .8-.3 1.2-1 1.4v1.8c.7.2 1 .6 1 1.4v1.3c0 1.4.8 2.2 2.2 2.2h1.1v-1.8h-.8c-.5 0-.7-.2-.7-.7V10c0-1-.4-1.7-1.1-2 .7-.3 1.1-1 1.1-2V4.7c0-.5.2-.7.7-.7h.8V2.2H5.1Zm5.8 0H9.8V4h.8c.5 0 .7.2.7.7V6c0 1 .4 1.7 1.1 2-.7.3-1.1 1-1.1 2v1.3c0 .5-.2.7-.7.7h-.8v1.8h1.1c1.4 0 2.2-.8 2.2-2.2v-1.3c0-.8.3-1.2 1-1.4V7.1c-.7-.2-1-.6-1-1.4V4.4c0-1.4-.8-2.2-2.2-2.2Z"/></svg>`;
+const TXT_ICON = `<svg width="16" height="12" viewBox="0 0 32 16" aria-hidden="true"><path fill="currentColor" d="M2 3h28v2H18v8h-2V5H2V3Zm1 3h10v2H9v5H7V8H3V6Zm17 0h2.7l1.8 2.4L26.3 6H29l-3.1 4 3.2 4h-2.8l-1.9-2.5L22.5 14H20l3.1-4L20 6Z"/></svg>`;
+
+
+const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
+const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c3.3 0 6 2.7 6 6 0 2.9-2.1 5.4-4.9 5.9l-.5 1.1H7.4l-.5-1.1C4.1 12.9 2 10.4 2 7.5c0-3.3 2.7-6 6-6Zm0 1.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 3.1 2 3.9a9.9 9.9 0 0 1 6.1-5.6A4.5 4.5 0 0 0 8 3Zm4.2 4.1a8.4 8.4 0 0 0-5.3 5 4.5 4.5 0 0 0 5.3-5Z"/></svg>`;
+const DID_BALLOON_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c2.4 0 4.4 1.8 4.6 4.2.1 1.8-.8 3.4-2.2 4.3L8.8 14H7.2l-1.6-4A4.6 4.6 0 0 1 8 1.5Zm0 1.4c-1.8 0-3.2 1.4-3.2 3.1 0 1.7 1.4 3.1 3.2 3.1s3.2-1.4 3.2-3.1C11.2 4.3 9.8 2.9 8 2.9Zm0 .8c.9.9 1.4 1.7 1.4 2.4 0 .8-.6 1.4-1.4 1.4S6.6 6.9 6.6 6.1c0-.7.5-1.5 1.4-2.4Z"/></svg>`;
+const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 2.2 4.2v7.6L8 15l5.8-3.2V4.2L8 1Zm0 1.8 3.7 2L8 6.9 4.3 4.8 8 2.8ZM3.7 6.1l3.5 2v4.8l-3.5-2V6.1Zm8.6 0v4.8l-3.5 2V8.1l3.5-2Z"/></svg>`;
+
+window.App = App;

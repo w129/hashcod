@@ -1,0 +1,7 @@
+OpencriptG integration changes:
+- Renamed the tool UI to OSDG -rest.
+- Removed original repository/project branding from visible interface.
+- Added license acceptance gate before use.
+- Adapted Rust workspace template names to OpencriptG-style neutral module names.
+- Added Sphinx Makefile/documentation builder analysis and export.
+- Added 5-tool layout: analyzer, dependencies, licenses, docs builder, export/build.

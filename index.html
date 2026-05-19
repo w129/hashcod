@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OCG - OpencriptG - Open Cryptographic Generator v12</title>
+
+  <link rel="icon" type="image/png" href="app/ocg-platform-icon.png?v=platform-icon-3" />
+  <link rel="apple-touch-icon" href="app/ocg-platform-icon.png?v=platform-icon-3" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="app/styles.css?v=v12-siphash-1" />
+  <link rel="stylesheet" href="app/vault.css?v=v12-siphash-1" />
+  <link rel="stylesheet" href="app/tour.css?v=plans-tour-1" />
+</head>
+<body>
+  <script>
+    window.addEventListener('error', function(e){
+      console.error('[opencriptG]', e.message, e.error || '');
+      var root = document.getElementById('root');
+      if(root && !root.dataset.mounted){
+        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt=""><div>OCG <span>OpencriptG</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
+      }
+    });
+  </script>
+  <div id="root"></div>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Data layer -->
+  <script src="data/icons.js?v=platform-icon-3"></script>
+  <script src="data/catalog.js"></script>
+  <script src="data/generators.js"></script>
+
+  <!-- Security core -->
+  <script src="app/security.js"></script>
+  <script src="app/enterprise.js?v=enterprise-production-1"></script>
+
+  <!-- Tweaks shell -->
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- App -->
+  <script type="text/babel" src="app/tech-info.jsx?v=truth-sidebar-2"></script>
+  <script type="text/babel" src="app/vault.jsx?v=v12-siphash-1"></script>
+  <script type="text/babel" src="app/tour.jsx?v=plans-tour-1"></script>
+  <script type="text/babel" src="app/app.jsx?v=v12-siphash-1"></script>
+
+  <script type="text/babel">
+    const Root = () => {
+      React.useEffect(() => { document.getElementById('root')?.setAttribute('data-mounted','1'); }, []);
+      const [sipHashReady, setSipHashReady] = React.useState(() => sessionStorage.getItem('ocg_v12_siphash_gate') === '1');
+      const [unlocked, setUnlocked] = React.useState(false);
+      const [tourOpen, setTourOpen] = React.useState(false);
+      const [enterprise, setEnterprise] = React.useState({ ready: false, status: null });
+      const handleUnlock = () => {
+        setUnlocked(true);
+        setTimeout(() => {
+          if (window.AppTour && !window.hasSeenTour?.()) setTourOpen(true);
+        }, 420);
+      };
+      React.useEffect(() => {
+        let alive = true;
+        (async () => {
+          if (!window.OCGEnterprise) {
+            setEnterprise({ ready: true, status: { ok: false, failed: [{ id: 'enterprise-module-missing', detail: 'app/enterprise.js not loaded' }] } });
+            return;
+          }
+          const status = await window.OCGEnterprise.runSelfTests();
+          if (alive) setEnterprise({ ready: true, status });
+        })();
+        return () => { alive = false; };
+      }, []);
+      React.useEffect(() => {
+        window.__startTour = () => {
+          if (window.resetTourSeen) window.resetTourSeen();
+          setTourOpen(true);
+        };
+        return () => { delete window.__startTour; };
+      }, []);
+
+      if (!enterprise.ready) {
+        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" /><div>OCG <span>OpencriptG</span></div></div><div className="boot-text">Ejecutando self-tests enterprise de criptografía...</div></div></div>;
+      }
+      if (!enterprise.status?.ok) {
+        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" /><div>OCG <span>OpencriptG</span></div></div><div className="boot-text">Enterprise gate bloqueó el arranque. Revisa los self-tests fallidos.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
+      }
+
+      if (!sipHashReady && window.SipHashGate) {
+        return <SipHashGate onUnlock={() => { sessionStorage.setItem('ocg_v12_siphash_gate', '1'); setSipHashReady(true); }} />;
+      }
+      if (!unlocked) return <VaultLock onUnlock={handleUnlock} />;
+      return <>
+        <App />
+        {window.AppTour ? <AppTour active={tourOpen} onClose={() => setTourOpen(false)} /> : null}
+      </>;
+    };
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Root />);
+  </script>
+</body>
+</html>

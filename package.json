@@ -1,0 +1,13 @@
+{
+  "name": "opencriptg-local",
+  "version": "2.1.0",
+  "private": true,
+  "description": "opencriptG ejecutable en servidor local con Node.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "start:5600": "PORT=5600 node server.js",
+    "test:enterprise": "node scripts/enterprise-selftest.js"
+  },
+  "dependencies": {}
+}

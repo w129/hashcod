@@ -1,0 +1,11 @@
+BSD-3-Clause Compliance Summary for OSDG -rest
+
+Redistribution and use in source and binary forms, with or without modification, are permitted when these conditions are met:
+
+1. Source redistribution retains copyright notices, conditions, and disclaimer.
+2. Binary redistribution reproduces copyright notices, conditions, and disclaimer in documentation or accompanying materials.
+3. Original project, author, and contributor names may not be used to endorse or promote derived products without prior written permission.
+
+The software is provided AS IS, without warranties. Contributors are not liable for damages from use.
+
+Note: If actual third-party source code is integrated, preserve the exact original BSD license file from that project in this folder.
