@@ -117,6 +117,21 @@ kbd {
   transition: color .12s, background .12s;
 }
 .tb-n:hover { color: #fff; background: #1f1f1f; }
+.tb-n-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  opacity: .92;
+  flex: 0 0 14px;
+}
+.tb-n-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
 .tb-n-tool { display:flex; align-items:center; gap:6px; }
 .tb-n-caret { font-size: 9px; opacity: .55; transform: translateY(-1px); }
 .tb-n-tool:hover .tb-n-caret, .tb-n.on .tb-n-caret { opacity: .9; }
