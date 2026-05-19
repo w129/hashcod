@@ -66,14 +66,14 @@ const SipHashGate = ({ onUnlock }) => {
     if (locked) return;
     if (timingSafeStr(normalized, SIPHASH_GATE_CODE)) {
       sessionStorage.setItem('ocg_v12_siphash_gate', '1');
-      setStatus('SipHash-2-4 accepted. Opening OCG v12...');
+      setStatus('Access verified. Opening OCG v12...');
       setTimeout(() => onUnlock && onUnlock(), 180);
       return;
     }
     const nextFails = fails + 1;
     setFails(nextFails);
     setValue('');
-    setStatus('Invalid SipHash-2-4 code.');
+    setStatus('Access code rejected. Check the private key and try again.');
     if (nextFails >= 3) {
       setCooldownUntil(Date.now() + Math.min(30000, 4000 * (nextFails - 2)));
     }
@@ -83,21 +83,26 @@ const SipHashGate = ({ onUnlock }) => {
     <main className="siphash-gate">
       <section className="siphash-card">
         <div className="siphash-brand">
-          <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
+          <div className="siphash-mark">
+            <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
+          </div>
           <div>
             <p>OCG OpencriptG v12</p>
-            <h1>SipHash-2-4 Gate</h1>
+            <h1>Private Access</h1>
+            <small>Enterprise cryptographic workspace</small>
           </div>
         </div>
         <form onSubmit={submit} className="siphash-form">
           <label>
-            <span>SIPHASH-2-4 ACCESS CODE</span>
+            <span>SECURE ACCESS KEY</span>
             <input
               ref={inputRef}
+              type="password"
+              inputMode="text"
               value={value}
               onChange={e => setValue(e.target.value)}
-              placeholder="5f202c27a52e8211"
-              autoComplete="off"
+              placeholder="Enter private access key"
+              autoComplete="new-password"
               spellCheck="false"
               disabled={locked}
             />
@@ -107,11 +112,11 @@ const SipHashGate = ({ onUnlock }) => {
           </button>
         </form>
         <div className="siphash-meta">
-          <div><span>Required primitive</span><b>SipHash-2-4</b></div>
-          <div><span>Expected digest</span><b>64-bit hex</b></div>
-          <div><span>Session</span><b>Local browser gate</b></div>
+          <div><span>Protection</span><b>SipHash-2-4 gate</b></div>
+          <div><span>Access scope</span><b>Private v12 session</b></div>
+          <div><span>Workspace</span><b>OCG cryptographic lab</b></div>
         </div>
-        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter the required SipHash-2-4 code to access the platform.'}</p>
+        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter your private access key to continue into the OCG v12 platform.'}</p>
       </section>
     </main>
   );

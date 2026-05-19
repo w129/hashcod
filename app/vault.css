@@ -17,37 +17,52 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 28px;
+  padding: 32px;
   color: var(--access-ink);
   font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   background:
-    linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(0,0,0,.032) 1px, transparent 1px),
-    radial-gradient(circle at 50% 36%, rgba(255,255,255,.9), transparent 34%),
+    linear-gradient(90deg, rgba(0,0,0,.035) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0,0,0,.028) 1px, transparent 1px),
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,.92), transparent 34%),
+    radial-gradient(circle at 14% 18%, rgba(15,15,15,.08), transparent 20%),
     var(--access-bg);
   background-size: 26px 26px, 26px 26px, auto, auto;
 }
 
 .siphash-card {
-  width: min(760px, calc(100vw - 34px));
+  width: min(860px, calc(100vw - 34px));
   border: 1px solid var(--access-line);
   background: rgba(251,250,247,.96);
-  box-shadow: 0 24px 80px rgba(0,0,0,.16);
+  box-shadow: 0 28px 90px rgba(0,0,0,.16);
+  overflow: hidden;
 }
 
 .siphash-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 28px;
+  gap: 22px;
+  padding: 34px 36px;
   border-bottom: 1px solid var(--access-line);
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.72), rgba(239,239,237,.45)),
+    var(--access-panel);
+}
+
+.siphash-mark {
+  width: 74px;
+  height: 74px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--access-line);
+  background: #f5f4f1;
+  box-shadow: inset 0 0 0 8px rgba(255,255,255,.36), 0 16px 36px rgba(0,0,0,.12);
 }
 
 .siphash-brand img {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
-  filter: drop-shadow(0 12px 18px rgba(0,0,0,.22));
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,.22));
 }
 
 .siphash-brand p,
@@ -63,18 +78,26 @@ body {
 .siphash-brand h1 {
   margin: 0;
   font-family: "IBM Plex Serif", Georgia, serif;
-  font-size: clamp(32px, 5vw, 58px);
+  font-size: clamp(36px, 5vw, 64px);
   font-weight: 500;
   line-height: 1;
+}
+
+.siphash-brand small {
+  display: block;
+  margin-top: 12px;
+  color: var(--access-muted);
+  font-size: 13px;
 }
 
 .siphash-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  padding: 24px 28px;
+  gap: 14px;
+  padding: 28px 36px;
   border-bottom: 1px solid var(--access-line);
   align-items: end;
+  background: rgba(255,255,255,.5);
 }
 
 .siphash-form label {
@@ -83,14 +106,19 @@ body {
 
 .siphash-form input {
   width: 100%;
-  height: 48px;
-  border: 1px solid var(--access-line);
+  height: 54px;
+  border: 1px solid #1a1a1a;
   background: #fff;
   color: var(--access-ink);
-  padding: 0 14px;
+  padding: 0 16px;
   font: inherit;
   font-size: 15px;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
+}
+
+.siphash-form input::placeholder {
+  color: #9a9690;
+  letter-spacing: 0;
 }
 
 .siphash-form input:focus {
@@ -99,16 +127,17 @@ body {
 }
 
 .siphash-form button {
-  height: 48px;
+  height: 54px;
   border: 1px solid var(--access-dark);
-  background: var(--access-dark);
+  background: linear-gradient(180deg, #202020, #050505);
   color: #fff;
-  padding: 0 18px;
+  padding: 0 22px;
   font: inherit;
   font-size: 11px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
   cursor: pointer;
+  box-shadow: 0 12px 24px rgba(0,0,0,.18);
 }
 
 .siphash-form button:disabled,
@@ -124,7 +153,7 @@ body {
 }
 
 .siphash-meta div {
-  padding: 15px 18px;
+  padding: 18px 22px;
   border-right: 1px solid var(--access-line);
 }
 
@@ -140,14 +169,63 @@ body {
 
 .siphash-status {
   margin: 0;
-  padding: 16px 28px;
+  padding: 18px 36px;
   color: var(--access-muted);
   font-size: 12px;
   line-height: 1.5;
+  background: rgba(255,255,255,.36);
 }
 
 .siphash-status.is-visible {
   color: var(--access-ink);
+}
+
+@media (max-width: 680px) {
+  .siphash-gate {
+    padding: 18px;
+  }
+
+  .siphash-brand {
+    align-items: flex-start;
+    padding: 26px 22px;
+  }
+
+  .siphash-mark {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 auto;
+  }
+
+  .siphash-brand img {
+    width: 39px;
+    height: 39px;
+  }
+
+  .siphash-form {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .siphash-form button {
+    width: 100%;
+  }
+
+  .siphash-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .siphash-meta div {
+    border-right: 0;
+    border-bottom: 1px solid var(--access-line);
+  }
+
+  .siphash-meta div:last-child {
+    border-bottom: 0;
+  }
+
+  .siphash-status {
+    padding: 16px 22px;
+  }
 }
 
 .access-gate {
