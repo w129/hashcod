@@ -76,7 +76,7 @@
   }
 
   function renderBrandIcon(s=20) {
-    return `<img class="ocg-brand-icon" src="app/ocg-platform-icon.png?v=platform-icon-3" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
+    return `<img class="ocg-brand-icon" src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
   }
 
   function renderBadge(meta={}, s=18, category=false) {

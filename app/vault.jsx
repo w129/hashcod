@@ -84,7 +84,7 @@ const SipHashGate = ({ onUnlock }) => {
       <section className="siphash-card">
         <div className="siphash-brand">
           <div className="siphash-mark">
-            <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
           </div>
           <div>
             <p>Hashcod v12</p>
@@ -349,7 +349,7 @@ const VaultLock = ({ onUnlock }) => {
       <section className="access-shell">
         <header className="access-head">
           <div className="access-brand">
-            <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
             <div>
             <p>Hashcod enterprise access</p>
             <h1>{mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'}</h1>

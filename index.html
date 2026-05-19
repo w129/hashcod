@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hashcod - Cryptographic Generator v12</title>
 
-  <link rel="icon" type="image/png" href="app/ocg-platform-icon.png?v=platform-icon-3" />
-  <link rel="apple-touch-icon" href="app/ocg-platform-icon.png?v=platform-icon-3" />
+  <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
+  <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,7 +22,7 @@
       console.error('[Hashcod]', e.message, e.error || '');
       var root = document.getElementById('root');
       if(root && !root.dataset.mounted){
-        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt=""><div>Hashcod <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
+        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt=""><div>Hashcod <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
       }
     });
   </script>
@@ -88,10 +88,10 @@
       }, []);
 
       if (!enterprise.ready) {
-        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Ejecutando self-tests enterprise de criptografía...</div></div></div>;
+        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Ejecutando self-tests enterprise de criptografía...</div></div></div>;
       }
       if (!enterprise.status?.ok) {
-        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate bloqueó el arranque. Revisa los self-tests fallidos.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
+        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate bloqueó el arranque. Revisa los self-tests fallidos.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
       }
 
       if (!sipHashReady && window.SipHashGate) {

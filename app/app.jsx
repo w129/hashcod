@@ -5330,7 +5330,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
   };
 
   const certificateHtml = (cert) => {
-    const logoUrl = window.location.origin + '/app/ocg-platform-icon.png?v=platform-icon-3';
+    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=hashcod-icon-1';
     const legal = L(
       'Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema Hashcod operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de Hashcod.',
       'This private certificate states that the identified code was generated or registered inside the Hashcod ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private Hashcod verification.'
@@ -5417,7 +5417,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
 
           <main className="certdlg-main">
             <section className="certdlg-preview">
-              <div className="certdlg-logo-wrap"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="Hashcod" /></div>
+              <div className="certdlg-logo-wrap"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="Hashcod" /></div>
               <div className="certdlg-k">OPENCRIPTG · DIKTATCART · RNC 402-0936929-3</div>
               <h3>{L('Certificado Privado de Code', 'Private Code Certificate')}</h3>
               <p>{L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema Hashcod.', 'Private document for authenticity, issuance, and use license inside the Hashcod ecosystem.')}</p>
