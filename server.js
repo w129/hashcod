@@ -1,4 +1,4 @@
-// opencriptG local server — no external npm packages required.
+// Hashcod local server — no external npm packages required.
 // Run: npm start
 const http = require('http');
 const fs = require('fs');
@@ -54,7 +54,7 @@ function enterpriseManifest() {
   const catalogPath = path.join(ROOT, 'data', 'catalog.js');
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
   return JSON.stringify({
-    app: 'opencriptG',
+    app: 'Hashcod',
     profile: 'enterprise-production-baseline',
     servedAt: new Date().toISOString(),
     host: HOST,
@@ -120,7 +120,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log('────────────────────────────────────────');
-  console.log(' opencriptG servidor local iniciado');
+  console.log(' Hashcod servidor local iniciado');
   console.log(` URL: http://${HOST}:${PORT}`);
   console.log(' Para cerrar: Ctrl + C');
   console.log('────────────────────────────────────────');

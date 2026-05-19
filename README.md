@@ -1,4 +1,4 @@
-# opencriptG — servidor local
+# Hashcod — servidor local
 
 Este paquete deja el software listo para ejecutarse en un servidor local con Node.js.
 
@@ -58,7 +58,7 @@ El menú superior ahora funciona según cada nombre:
 
 ## SipHash + Mythos Gate v12 security update
 
-This package includes the hardened opencriptG entry layer:
+This package includes the hardened Hashcod entry layer:
 
 - SipHash-2-4 64-bit access gate before the local vault flow.
 - PBKDF2-SHA-512 with 1,250,000 iterations.

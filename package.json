@@ -2,7 +2,7 @@
   "name": "opencriptg-local",
   "version": "2.1.0",
   "private": true,
-  "description": "opencriptG ejecutable en servidor local con Node.js",
+  "description": "Hashcod ejecutable en servidor local con Node.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",

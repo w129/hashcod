@@ -66,7 +66,7 @@ const SipHashGate = ({ onUnlock }) => {
     if (locked) return;
     if (timingSafeStr(normalized, SIPHASH_GATE_CODE)) {
       sessionStorage.setItem('ocg_v12_siphash_gate', '1');
-      setStatus('Access verified. Opening OCG v12...');
+      setStatus('Access verified. Opening Hashcod v12...');
       setTimeout(() => onUnlock && onUnlock(), 180);
       return;
     }
@@ -87,7 +87,7 @@ const SipHashGate = ({ onUnlock }) => {
             <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
           </div>
           <div>
-            <p>OCG OpencriptG v12</p>
+            <p>Hashcod v12</p>
             <h1>Private Access</h1>
             <small>Enterprise cryptographic workspace</small>
           </div>
@@ -114,9 +114,9 @@ const SipHashGate = ({ onUnlock }) => {
         <div className="siphash-meta">
           <div><span>Protection</span><b>SipHash-2-4 gate</b></div>
           <div><span>Access scope</span><b>Private v12 session</b></div>
-          <div><span>Workspace</span><b>OCG cryptographic lab</b></div>
+          <div><span>Workspace</span><b>Hashcod cryptographic lab</b></div>
         </div>
-        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter your private access key to continue into the OCG v12 platform.'}</p>
+        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter your private access key to continue into Hashcod v12.'}</p>
       </section>
     </main>
   );
@@ -154,7 +154,7 @@ function canonicalPayload(log) {
 }
 
 function validateKeyShape(log) {
-  if (!log || log.format !== ACCESS_LOG_FORMAT || log.version !== ACCESS_LOG_VERSION) throw new Error('This is not a valid opencriptG access log.');
+  if (!log || log.format !== ACCESS_LOG_FORMAT || log.version !== ACCESS_LOG_VERSION) throw new Error('This is not a valid Hashcod access log.');
   if (!/^[0-9A-F]{64}$/.test(log.keys?.aes256 || '')) throw new Error('AES-256 key is missing or invalid.');
   if (!/^[0-9A-F]{32}$/.test(log.keys?.sm4 || '')) throw new Error('SM4 key is missing or invalid.');
   if (!/^[0-9A-F]{64}$/.test(log.keys?.serpent || '')) throw new Error('Serpent key is missing or invalid.');
@@ -245,7 +245,7 @@ const VaultLock = ({ onUnlock }) => {
         createdAt,
         expiresAt,
         requiredAction: 'Upload this file in Register, then use it to Sign In.',
-        warning: 'Keep this log private. Anyone with this file can access this local opencriptG vault.',
+        warning: 'Keep this log private. Anyone with this file can access this local Hashcod vault.',
         keys: {
           aes256: randHex(32),
           sm4: randHex(16),
@@ -267,7 +267,7 @@ const VaultLock = ({ onUnlock }) => {
   const downloadLog = () => {
     if (!issuedLog) return;
     const text = JSON.stringify(issuedLog, null, 2);
-    saveFile(`opencriptG-access-log-${issuedLog.issueId}.json`, text);
+    saveFile(`Hashcod-access-log-${issuedLog.issueId}.json`, text);
     setStatus('Access-key log downloaded. Upload it in Register to activate the vault.');
   };
 
@@ -351,7 +351,7 @@ const VaultLock = ({ onUnlock }) => {
           <div className="access-brand">
             <img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="" />
             <div>
-            <p>OCG · OpencriptG enterprise access</p>
+            <p>Hashcod enterprise access</p>
             <h1>{mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'}</h1>
             </div>
           </div>

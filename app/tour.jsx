@@ -1,4 +1,4 @@
-/* OCG OpencriptG - advanced guided tour with plan education. */
+/* Hashcod - advanced guided tour with plan education. */
 
 const { useState, useEffect, useLayoutEffect, useRef } = React;
 
@@ -21,16 +21,16 @@ const PlanTourGrid = () => (
 
 const TOUR_STEPS = [
   {
-    id: 'welcome', selector: null, title: 'TOUR OCG OPENCRIPTG',
+    id: 'welcome', selector: null, title: 'TOUR HASHCOD',
     body: <>
       <p>Este tour explica como funciona la plataforma completa: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y planes.</p>
       <p>Tambien muestra por que <b>Free es solo una prueba</b> y que tendria el usuario si activa Starter, Professional o Enterprise con su <b>GOST EC Key</b>.</p>
       <PlatformPillList />
-      <div className="tour-meta"><span>OCG</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>PLANES</span></div>
+      <div className="tour-meta"><span>HASHCOD</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>PLANES</span></div>
     </>,
   },
   { id:'brand', selector:'.tb-brand', place:'bottom-start', title:'IDENTIDAD DE LA PLATAFORMA', body:<>
-    <p>OCG OpencriptG es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos.</p>
+    <p>Hashcod es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos.</p>
     <p>No es solo un generador: es un entorno operativo con catalogo, vault, QR, certificados, formatos propietarios y herramientas internas.</p>
   </>},
   { id:'plans-menu', selector:'.tb-nav', place:'bottom', title:'MENU PLANS: DONDE SE DESBLOQUEA TODO', body:<>

@@ -1,4 +1,4 @@
-/* opencriptG v12 — main React app */
+/* Hashcod v12 — main React app */
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const APP_VERSION = 12;
@@ -37,9 +37,9 @@ const I18N = {
     generateSelected: 'Generate selected', generate10: 'Generate 10', generate100: 'Generate 100', generate500: 'Generate 500', generate1000: 'Generate 1000',
     exportMarkdown: 'Export Markdown', exportTxt: 'Export TXT', exportJson: 'Export JSON', exportCsv: 'Export CSV',
     compactDensity: 'Compact density', comfortableDensity: 'Comfortable density', focusSearch: 'Focus search', newestOutput: 'Newest output', replayTour: 'Replay tour',
-    openHelp: 'Open help', shortcuts: 'Shortcuts', aboutApp: 'About opencriptG',
-    helpTitle: 'opencriptG Help', helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
-    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved opencriptG session.',
+    openHelp: 'Open help', shortcuts: 'Shortcuts', aboutApp: 'About Hashcod',
+    helpTitle: 'Hashcod Help', helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
+    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved Hashcod session.',
     helpGenerateDesc: 'Generate the selected primitive, change batch size quickly, copy results, or clear the output.',
     helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
     helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
@@ -65,9 +65,9 @@ const I18N = {
     generateSelected: 'Generar seleccionado', generate10: 'Generar 10', generate100: 'Generar 100', generate500: 'Generar 500', generate1000: 'Generar 1000',
     exportMarkdown: 'Exportar Markdown', exportTxt: 'Exportar TXT', exportJson: 'Exportar JSON', exportCsv: 'Exportar CSV',
     compactDensity: 'Densidad compacta', comfortableDensity: 'Densidad cómoda', focusSearch: 'Enfocar búsqueda', newestOutput: 'Salida más reciente', replayTour: 'Repetir tour',
-    openHelp: 'Abrir ayuda', shortcuts: 'Atajos', aboutApp: 'Acerca de opencriptG',
-    helpTitle: 'Ayuda de opencriptG', helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
-    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de opencriptG.',
+    openHelp: 'Abrir ayuda', shortcuts: 'Atajos', aboutApp: 'Acerca de Hashcod',
+    helpTitle: 'Ayuda de Hashcod', helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
+    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de Hashcod.',
     helpGenerateDesc: 'Genera la primitiva seleccionada, cambia el tamaño del lote rápidamente, copia resultados o limpia la salida.',
     helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
     helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
@@ -1005,7 +1005,7 @@ const rowToMarkdown = (row) => {
   const { cat, type } = findTypeMeta(row.type);
   const date = new Date(row.ts || Date.now()).toISOString();
   const lines = [
-    `# opencriptG — Generated value · v12`,
+    `# Hashcod — Generated value · v12`,
     ``,
     `- **Index:** ${String(row.idx).padStart(3, '0')}`,
     `- **Primitive:** ${type ? type.label : row.type}`,
@@ -1021,7 +1021,7 @@ const rowToMarkdown = (row) => {
     '```',
     ``,
     `---`,
-    `_opencriptG · Open Cryptographic Generator v12 · diktatcart® 2026_`,
+    `_opencriptG · Hashcod Cryptographic Generator v12 · diktatcart® 2026_`,
     ``,
   ];
   return lines.join('\n');
@@ -1156,7 +1156,7 @@ const allRowsToMarkdown = (rows) => {
 
   const now = new Date().toISOString();
   const out = [
-    `# opencriptG — Generated values export · v12`,
+    `# Hashcod — Generated values export · v12`,
     ``,
     `- **Exported:** ${now}`,
     `- **Total values:** ${rows.length}`,
@@ -1191,7 +1191,7 @@ const allRowsToMarkdown = (rows) => {
   });
 
   out.push(`---`);
-  out.push(`_opencriptG · Open Cryptographic Generator v12 · diktatcart® 2026_`);
+  out.push(`_opencriptG · Hashcod Cryptographic Generator v12 · diktatcart® 2026_`);
   out.push(``);
   return out.join('\n');
 };
@@ -1949,7 +1949,7 @@ const IvoryIdeaVaultDialog = ({ open, onClose, notify, language, rows = [] }) =>
     problem: '',
     description: '',
     operation: '',
-    relatedModule: 'OpencriptG',
+    relatedModule: 'Hashcod',
     category: 'Productividad criptográfica',
     difficulty: 'Media',
     monetization: '',
@@ -2003,8 +2003,8 @@ const IvoryIdeaVaultDialog = ({ open, onClose, notify, language, rows = [] }) =>
     const codeValue = selectedRow?.value || '';
     const codePreview = safe(codeValue).replace(/(.{1,96})/g, '$1<br/>');
     const clause = L(
-      'Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a OpencriptG/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.',
-      'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate OpencriptG/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.'
+      'Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a Hashcod/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.',
+      'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate Hashcod/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.'
     );
     return `<!doctype html><html><head><meta charset="utf-8"><title>${safe(ideaId)}</title><style>
       @page{size:A4;margin:14mm}
@@ -2056,8 +2056,8 @@ const IvoryIdeaVaultDialog = ({ open, onClose, notify, language, rows = [] }) =>
           <div class="box wide"><b>${L('Code de base de datos usado para QR','Database code used for QR')}</b><div class="code">${codePreview || '—'}</div></div>
         </div>
         <div class="clause">${safe(clause)}</div>
-        <div class="sign"><div class="line">${L('Firma del colaborador','Collaborator signature')}<br/>${safe(form.signature || '')}</div><div class="line">${L('Revisión OpencriptG','OpencriptG review')}<br/>${safe(form.reviewer || '')}</div></div>
-        <div class="footer">OpencriptG · diktatcart · RNC 402-0936929-3 · ${new Date().toLocaleString()}</div>
+        <div class="sign"><div class="line">${L('Firma del colaborador','Collaborator signature')}<br/>${safe(form.signature || '')}</div><div class="line">${L('Revisión Hashcod','Hashcod review')}<br/>${safe(form.reviewer || '')}</div></div>
+        <div class="footer">Hashcod · diktatcart · RNC 402-0936929-3 · ${new Date().toLocaleString()}</div>
       </div></section>${printMode ? '<script>window.onload=()=>setTimeout(()=>window.print(),250);</script>' : ''}</body></html>`;
   };
 
@@ -2208,9 +2208,9 @@ const IvoryIdeaVaultDialog = ({ open, onClose, notify, language, rows = [] }) =>
               <label className="wide"><span>{L('Posible monetización','Possible monetization')}</span><textarea value={form.monetization} onChange={e => update('monetization', e.target.value)} /></label>
               <label className="wide"><span>{L('Originalidad o referencias','Originality or references')}</span><textarea value={form.originality} onChange={e => update('originality', e.target.value)} /></label>
               <label><span>{L('Firma del colaborador','Collaborator signature')}</span><input value={form.signature} onChange={e => update('signature', e.target.value)} /></label>
-              <label><span>{L('Revisión OpencriptG','OpencriptG review')}</span><input value={form.reviewer} onChange={e => update('reviewer', e.target.value)} /></label>
+              <label><span>{L('Revisión Hashcod','Hashcod review')}</span><input value={form.reviewer} onChange={e => update('reviewer', e.target.value)} /></label>
             </div>
-            <div className="ivory-clause">{L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a OpencriptG/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate OpencriptG/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.')}</div>
+            <div className="ivory-clause">{L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a Hashcod/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate Hashcod/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.')}</div>
             <div className="ivory-actions">
               <button className="dbdlg-btn" onClick={saveRecord}>{L('Guardar registro','Save record')}</button>
               <button className="dbdlg-btn" onClick={downloadHtml}>{L('Descargar documento','Download document')}</button>
@@ -2453,7 +2453,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
   const billScanHtml = (u) => {
     const safe = (v) => String(v ?? '—').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s] || s));
     const rows = billScanRows(u).map(([k,v]) => `<tr><th>${safe(k)}</th><td>${safe(v)}</td></tr>`).join('');
-    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(u?.billId || 'OCG')}</title><style>body{margin:0;background:#f3f3f1;color:#111;font-family:ui-monospace,Consolas,monospace}.c{margin:10px;border:2px solid #111;background:#fff}.h{display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #111;padding:12px;gap:12px}.b{letter-spacing:.24em;color:#777;font-size:10px}.v{font:700 52px Georgia}.id{font-weight:900;font-size:17px;word-break:break-all}.t{border:1px solid #111;padding:3px 6px;display:inline-block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-top:1px solid #ddd;padding:7px;text-align:left;vertical-align:top;word-break:break-all}th{width:122px;color:#777;font-size:10px;letter-spacing:.12em;background:#f7f7f4}td{font-size:12px}.f{border-top:1px solid #111;padding:9px;color:#555;font-size:11px}</style></head><body><div class="c"><div class="h"><div><div class="b">OPENCRIPTG</div><div class="v">${safe(u?.value)}</div><div class="t">OCG COIN</div></div><div><div class="id">${safe(u?.billId || u?.serial)}</div><p>Billete digital interno verificable dentro de OpencriptG/diktatcart.</p><div class="t">${safe(u?.status)}</div></div></div><table>${rows}</table><div class="f">Unidad interna privada. No es moneda de curso legal, inversión, depósito ni criptomoneda pública.</div></div></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(u?.billId || 'OCG')}</title><style>body{margin:0;background:#f3f3f1;color:#111;font-family:ui-monospace,Consolas,monospace}.c{margin:10px;border:2px solid #111;background:#fff}.h{display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #111;padding:12px;gap:12px}.b{letter-spacing:.24em;color:#777;font-size:10px}.v{font:700 52px Georgia}.id{font-weight:900;font-size:17px;word-break:break-all}.t{border:1px solid #111;padding:3px 6px;display:inline-block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-top:1px solid #ddd;padding:7px;text-align:left;vertical-align:top;word-break:break-all}th{width:122px;color:#777;font-size:10px;letter-spacing:.12em;background:#f7f7f4}td{font-size:12px}.f{border-top:1px solid #111;padding:9px;color:#555;font-size:11px}</style></head><body><div class="c"><div class="h"><div><div class="b">OPENCRIPTG</div><div class="v">${safe(u?.value)}</div><div class="t">OCG COIN</div></div><div><div class="id">${safe(u?.billId || u?.serial)}</div><p>Billete digital interno verificable dentro de Hashcod/diktatcart.</p><div class="t">${safe(u?.status)}</div></div></div><table>${rows}</table><div class="f">Unidad interna privada. No es moneda de curso legal, inversión, depósito ni criptomoneda pública.</div></div></body></html>`;
   };
 
   const billScanPayload = (u) => {
@@ -2508,7 +2508,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
     const matrix = buildMatrix();
     const header = `OCG-COIN.v12.${value}.${randB64(22).slice(0,34)}`;
     const type = 'INTERNAL-ECOSYSTEM-CODE-COIN';
-    const use = 'private internal OpencriptG/diktatcart ecosystem unit';
+    const use = 'private internal Hashcod/diktatcart ecosystem unit';
     const base = [value, ownerDid.trim(), ownerName.trim(), serial, billId, basePayload, salt, nonce, route, vector, matrix, chainPrev, issued, OCG_COIN_SEAL].join('|');
     const unitHash = (await makeLongHash(base)).toUpperCase();
     const chainHash = (await makeLongHash([chainPrev, unitHash, serial, issued, OCG_COIN_SEAL].join('|'))).toUpperCase();
@@ -2755,7 +2755,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
       secureEqual(stored.chainHash, recalculatedChainHash) &&
       secureEqual(stored.signature, recalculatedSignature) &&
       lines.CHECK === stored.check;
-    setVerifyResult({ ok, text: ok ? L('Moneda válida, activa, no alterada y emitida dentro de OpencriptG.', 'Valid active coin, unmodified and issued inside OpencriptG.') : L('Moneda alterada, usada, bloqueada, incompleta o fuera de la cadena interna.', 'Coin altered, used, blocked, incomplete, or outside the internal chain.') });
+    setVerifyResult({ ok, text: ok ? L('Moneda válida, activa, no alterada y emitida dentro de Hashcod.', 'Valid active coin, unmodified and issued inside Hashcod.') : L('Moneda alterada, usada, bloqueada, incompleta o fuera de la cadena interna.', 'Coin altered, used, blocked, incomplete, or outside the internal chain.') });
   };
 
   const transferSelected = async () => {
@@ -2787,7 +2787,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
 
   const useSelected = () => {
     if (!selected || selected.status !== 'ACTIVE') return;
-    const usedFor = note.trim() || 'OpencriptG internal ecosystem operation';
+    const usedFor = note.trim() || 'Hashcod internal ecosystem operation';
     saveHistory(history.map(u => u.id === selected.id ? {
       ...u,
       status: 'USED',
@@ -2796,7 +2796,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
       usedFor,
       transfers: [...(u.transfers || []), { at: new Date().toISOString(), type: 'USED', for: usedFor }]
     } : u));
-    notify && notify(L('Moneda usada dentro del ecosistema OpencriptG.', 'Coin used inside the OpencriptG ecosystem.'));
+    notify && notify(L('Moneda usada dentro del ecosistema Hashcod.', 'Coin used inside the Hashcod ecosystem.'));
   };
 
   const removeSelected = () => {
@@ -2823,7 +2823,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
     const payload = safe(unitPlain(selected));
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(selected.billId || selected.serial)}</title><style>
       body{margin:0;background:#efefec;color:#111;font-family:'IBM Plex Mono','Courier New',monospace}.page{width:900px;margin:24px auto;background:#f7f7f4;border:2px solid #111;padding:32px}.brand{letter-spacing:.32em;color:#777;text-transform:uppercase}.title{font-size:42px;letter-spacing:.12em;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 260px;gap:24px}.box{border:1px solid #d4d4d4;padding:16px;background:#fff}.k{color:#777;font-size:11px;letter-spacing:.22em;text-transform:uppercase}.v{font-size:16px;margin:6px 0 14px}.code{white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.45}.foot{margin-top:24px;border-top:1px solid #ccc;padding-top:12px;color:#666;font-size:11px}@media print{body{background:#fff}.page{margin:0;width:auto;border:1px solid #000}}
-    </style></head><body><div class="page"><div class="brand">opencriptG · OCG Code Coin Bill</div><div class="title">OCG ${selected.value}</div><div class="grid"><div class="box"><div class="k">Billete digital</div><div class="v">${selected.billId || selected.serial}</div><div class="k">Serial</div><div class="v">${selected.serial}</div><div class="k">Owner DID</div><div class="v">${selected.ownerDid || 'UNASSIGNED'}</div><div class="k">Status</div><div class="v">${selected.status}</div><div class="k">Fingerprint</div><div class="v">${selected.fingerprint || selected.check}</div><div class="k">Check</div><div class="v">${selected.check}</div></div><div class="box"><div id="qr"></div></div></div><div class="box" style="margin-top:18px"><div class="k">Code Coin</div><div class="code">${payload}</div></div><div class="foot">Moneda digital interna de uso privado dentro de OpencriptG/diktatcart. No es moneda de curso legal, no representa inversión pública, depósito ni promesa financiera.</div></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(unitPlain(selected))},width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setTimeout(()=>print(),500)<\/script></body></html>`);
+    </style></head><body><div class="page"><div class="brand">opencriptG · OCG Code Coin Bill</div><div class="title">OCG ${selected.value}</div><div class="grid"><div class="box"><div class="k">Billete digital</div><div class="v">${selected.billId || selected.serial}</div><div class="k">Serial</div><div class="v">${selected.serial}</div><div class="k">Owner DID</div><div class="v">${selected.ownerDid || 'UNASSIGNED'}</div><div class="k">Status</div><div class="v">${selected.status}</div><div class="k">Fingerprint</div><div class="v">${selected.fingerprint || selected.check}</div><div class="k">Check</div><div class="v">${selected.check}</div></div><div class="box"><div id="qr"></div></div></div><div class="box" style="margin-top:18px"><div class="k">Code Coin</div><div class="code">${payload}</div></div><div class="foot">Moneda digital interna de uso privado dentro de Hashcod/diktatcart. No es moneda de curso legal, no representa inversión pública, depósito ni promesa financiera.</div></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(unitPlain(selected))},width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setTimeout(()=>print(),500)<\/script></body></html>`);
     w.document.close();
   };
 
@@ -2839,7 +2839,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
         <div className="dlg-h">
           <div>
             <h2>OCG Code Coins</h2>
-            <p>{L('Sistema interno para crear, verificar, transferir, usar y certificar monedas 5 / 10 / 25 / 50 dentro de OpencriptG/diktatcart.', 'Internal system to create, verify, transfer, use, and certify 5 / 10 / 25 / 50 coins inside OpencriptG/diktatcart.')}</p>
+            <p>{L('Sistema interno para crear, verificar, transferir, usar y certificar monedas 5 / 10 / 25 / 50 dentro de Hashcod/diktatcart.', 'Internal system to create, verify, transfer, use, and certify 5 / 10 / 25 / 50 coins inside Hashcod/diktatcart.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -2859,7 +2859,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
             ))}
           </div>
           <div className="ocgu-wallet-proof">
-            <span>{L('Solo funciona dentro del ecosistema OpencriptG/diktatcart.', 'Works only inside the OpencriptG/diktatcart ecosystem.')}</span>
+            <span>{L('Solo funciona dentro del ecosistema Hashcod/diktatcart.', 'Works only inside the Hashcod/diktatcart ecosystem.')}</span>
             <span>{L('No es moneda de curso legal, inversión, depósito ni criptomoneda pública.', 'Not legal tender, investment, deposit, or public cryptocurrency.')}</span>
             <span>{L('Cada unidad se valida por DID, serial, QR, hash, nonce, salt, route, estado e historial.', 'Each unit is validated by DID, serial, QR, hash, nonce, salt, route, status, and history.')}</span>
           </div>
@@ -2901,7 +2901,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
               <div className="ocgu-unit-card">
                 <div><span>{L('Uso', 'Use')}</span><b>{selected.use}</b></div>
                 <div><span>{L('Propietario', 'Owner')}</span><b>{selected.ownerDid || 'UNASSIGNED'}</b></div>
-                <div><span>{L('Red interna', 'Internal network')}</span><b>OpencriptG / diktatcart</b></div>
+                <div><span>{L('Red interna', 'Internal network')}</span><b>Hashcod / diktatcart</b></div>
                 <div><span>Bill ID</span><b>{selected.billId || '—'}</b></div>
                 <div><span>Unit Hash</span><b>{selected.unitHash ? selected.unitHash.slice(0, 24) + '…' : '—'}</b></div>
                 <div><span>Chain Hash</span><b>{selected.chainHash ? selected.chainHash.slice(0, 24) + '…' : '—'}</b></div>
@@ -2915,7 +2915,7 @@ const OCGCodeUnitsDialog = ({ open, onClose, notify, language }) => {
                 <button onClick={()=>downloadCoinQrPng(selected)}>{L('Descargar QR PNG', 'Download QR PNG')}</button>
                 <button onClick={()=>setQrDetailsOpen(true)}>{L('Ver datos QR', 'View QR data')}</button>
                 <button onClick={()=>openBillScanPreview(selected)}>{L('Vista escaneo', 'Scan view')}</button>
-                <button onClick={useSelected} disabled={selected.status !== 'ACTIVE'}>{L('Usar en OpencriptG', 'Use in OpencriptG')}</button>
+                <button onClick={useSelected} disabled={selected.status !== 'ACTIVE'}>{L('Usar en Hashcod', 'Use in Hashcod')}</button>
                 <button onClick={blockSelected}>{selected.status==='ACTIVE'?L('Bloquear','Block'):L('Activar','Activate')}</button>
                 <button onClick={removeSelected}>{L('Eliminar', 'Delete')}</button>
               </div>
@@ -4038,7 +4038,7 @@ const PandoraSpreadsheetDialog = ({ open, onClose, notify, language, rows = [] }
     const templates = {
       business: {
         A1: L('Empresa', 'Company'), B1: 'diktatcart',
-        A2: L('Reporte', 'Report'), B2: 'OpencriptG Suite',
+        A2: L('Reporte', 'Report'), B2: 'Hashcod Suite',
         A4: L('Producto', 'Product'), B4: L('Ventas', 'Sales'), C4: L('Costo', 'Cost'), D4: L('Margen %', 'Margin %'), E4: L('Ingreso', 'Revenue'),
         A5: 'Drive Lab', B5: '26', C5: '310', E5: '780', D5: '=MARGIN(E5,C5)',
         A6: 'QR Vault', B6: '14', C6: '120', E6: '430', D6: '=MARGIN(E6,C6)',
@@ -4166,7 +4166,7 @@ const PandoraSpreadsheetDialog = ({ open, onClose, notify, language, rows = [] }
         <div className="dlg-h">
           <div>
             <h2>P - ANDORA</h2>
-            <p>{L('Libro de celdas ultra avanzado para OpencriptG. Incluye hojas visuales, fórmulas financieras, filtros, combinación de celdas, múltiples gráficos, impresión y plantillas empresariales.', 'Ultra-advanced workbook for OpencriptG. Includes visual sheets, financial formulas, filters, cell merging, multiple charts, printing, and business templates.')}</p>
+            <p>{L('Libro de celdas ultra avanzado para Hashcod. Incluye hojas visuales, fórmulas financieras, filtros, combinación de celdas, múltiples gráficos, impresión y plantillas empresariales.', 'Ultra-advanced workbook for Hashcod. Includes visual sheets, financial formulas, filters, cell merging, multiple charts, printing, and business templates.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -4399,7 +4399,7 @@ const PandoraSpreadsheetDialog = ({ open, onClose, notify, language, rows = [] }
 
             <div className="padlg-footnote plus">
               <span>{L('Versión ultra: hojas visuales, fórmulas financieras, plantillas empresariales, impresión y múltiples gráficos.', 'Ultra version: visual sheets, financial formulas, business templates, printing, and multiple charts.')}</span>
-              <b>{L('Integrado con la base de datos de OpencriptG', 'Integrated with the OpencriptG database')}</b>
+              <b>{L('Integrado con la base de datos de Hashcod', 'Integrated with the Hashcod database')}</b>
             </div>
           </div>
         </div>
@@ -4427,7 +4427,7 @@ members = [
 
 [workspace.package]
 version = "0.1.0"
-authors = ["OpencriptG integration team"]
+authors = ["Hashcod integration team"]
 edition = "2021"
 publish = false
 rust-version = "1.83.0"
@@ -4654,7 +4654,7 @@ const OSDGRestDialog = ({ open, onClose, notify, language, rows = [] }) => {
         <div className="dlg-h">
           <div>
             <h2>OSDG -rest</h2>
-            <p>{L('Cifrador y desbloqueador de archivos para OpencriptG. Usa una key visible tomada de la base de datos y una nonce oculta que el usuario final necesita para acceder al archivo.', 'File encryptor and unlocker for OpencriptG. It uses a visible key from the database and a hidden nonce required by the receiver to access the file.')}</p>
+            <p>{L('Cifrador y desbloqueador de archivos para Hashcod. Usa una key visible tomada de la base de datos y una nonce oculta que el usuario final necesita para acceder al archivo.', 'File encryptor and unlocker for Hashcod. It uses a visible key from the database and a hidden nonce required by the receiver to access the file.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -4726,7 +4726,7 @@ const OSDGRestDialog = ({ open, onClose, notify, language, rows = [] }) => {
 
 
 const DEFAULT_MARKDOWN_DOC = [
-  '# OpencriptG Markdown Desk',
+  '# Hashcod Markdown Desk',
   '',
   'Markdown editor with live preview.',
   '',
@@ -4740,7 +4740,7 @@ const DEFAULT_MARKDOWN_DOC = [
   '- Export to Markdown or HTML',
   '',
   '```js',
-  'const platform = "OpencriptG";',
+  'const platform = "Hashcod";',
   'console.log(platform);',
   '```',
   '',
@@ -4893,7 +4893,7 @@ const MarkdownDeskDialog = ({ open, onClose, notify, language }) => {
     notify && notify(L('Markdown descargado', 'Markdown downloaded'));
   };
   const exportHtml = () => {
-    const doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title || 'OpencriptG document') + '</title><style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.6;color:#111}pre{background:#f3f3f3;padding:14px;overflow:auto}code{background:#eee;padding:2px 5px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px}blockquote{border-left:3px solid #111;padding-left:14px;color:#555}</style></head><body>' + html + '</body></html>';
+    const doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title || 'Hashcod document') + '</title><style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.6;color:#111}pre{background:#f3f3f3;padding:14px;overflow:auto}code{background:#eee;padding:2px 5px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px}blockquote{border-left:3px solid #111;padding-left:14px;color:#555}</style></head><body>' + html + '</body></html>';
     triggerDownload((title || 'opencriptg-doc').replace(/\.md$/i, '') + '.html', doc, 'text/html;charset=utf-8');
     notify && notify(L('HTML descargado', 'HTML downloaded'));
   };
@@ -4910,7 +4910,7 @@ const MarkdownDeskDialog = ({ open, onClose, notify, language }) => {
         <div className="dlg-h">
           <div>
             <h2>MARKDOWN DESK</h2>
-            <p>{L('Editor Markdown dividido: escribe a la izquierda y visualiza a la derecha con estilo OpencriptG.', 'Split Markdown editor: write on the left and preview on the right with OpencriptG styling.')}</p>
+            <p>{L('Editor Markdown dividido: escribe a la izquierda y visualiza a la derecha con estilo Hashcod.', 'Split Markdown editor: write on the left and preview on the right with Hashcod styling.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -5102,7 +5102,7 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
     const indexClass = parts.index < 0 ? 'neg' : parts.index > 0 ? 'pos' : 'neu';
     const codesHtml = getCodeList(note).map((code, idx) => `<div class="code-line"><b>${String(idx + 1).padStart(2, '0')}</b>${escapeHtml(code)}</div>`).join('') || escapeHtml(L('Sin code agregado', 'No code attached'));
     return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(note.title)}</title><style>
-    *{box-sizing:border-box} body{margin:0;background:#ece8df;font-family:Arial,Helvetica,sans-serif;color:#0b0b0b;padding:38px} .card{max-width:860px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:12px 12px 0 #111;padding:34px} .k{font:12px monospace;letter-spacing:4px;color:#777;text-transform:uppercase}.kuz{border:1px solid #111;background:#f7f7f7;padding:14px;margin:14px 0 16px}.kuz span{display:block;font:11px monospace;letter-spacing:3px;color:#777;text-transform:uppercase;margin-bottom:8px}.kuz b{display:block;font:13px monospace;word-break:break-all;letter-spacing:1px}.title{font-size:42px;line-height:1;margin:10px 0 18px;font-weight:800}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.box{border:1px solid #111;padding:14px;background:#fafafa}.box span{display:block;font:11px monospace;letter-spacing:2px;color:#777;text-transform:uppercase;margin-bottom:8px}.idx{font-size:36px;font-weight:900;font-family:monospace}.idx.neg{color:#b00020}.idx.pos{color:#008a3d}.idx.neu{color:#111}.formula{border:1px solid #111;background:#f7f7f7;padding:14px;margin:16px 0;font-family:monospace;line-height:1.55}.code{font-family:monospace;word-break:break-all;font-size:12px}.code-line{border-bottom:1px solid #ddd;padding:8px 0;display:grid;grid-template-columns:38px 1fr;gap:10px}.text{border-top:1px solid #ccc;margin-top:20px;padding-top:20px;white-space:pre-wrap;line-height:1.6}.foot{margin-top:30px;font:11px monospace;color:#777;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #111;margin:0;max-width:none}.printbtn{display:none}}</style></head><body><button class="printbtn" onclick="window.print()" style="margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase">${L('Guardar como PDF', 'Save as PDF')}</button><section class="card"><div class="k">sequence - A · OpencriptG</div><div class="kuz"><span>Kuznyechik Key · 256-bit</span><b>${escapeHtml(note.kuzKey || generateKuznyechikKey())}</b></div><h1 class="title">${escapeHtml(note.title)}</h1><div class="meta"><div class="box"><span>${L('Índice', 'Index')}</span><b class="idx ${indexClass}">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes', 'Codes')}</span><b>${parts.codeCount}</b></div><div class="box"><span>${L('Similitudes', 'Similarities')}</span><b>${parts.similarity}</b></div><div class="box"><span>${L('Base', 'Base')}</span><b>${parts.base}</b></div></div><div class="formula">I = -ABS((codes / similitudes) × (base - 0.428))<br/>I = -ABS((${parts.codeCount} / ${parts.similarity}) × (${parts.base} - 0.428)) = <b class="idx ${indexClass}" style="font-size:22px">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes moneda', 'Currency codes')}</span><div class="code">${codesHtml}</div></div><div class="text">${escapeHtml(note.text || L('Nota vacía', 'Empty note'))}</div><div class="foot">Built by diktatcart · sequence - A</div></section></body></html>`;
+    *{box-sizing:border-box} body{margin:0;background:#ece8df;font-family:Arial,Helvetica,sans-serif;color:#0b0b0b;padding:38px} .card{max-width:860px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:12px 12px 0 #111;padding:34px} .k{font:12px monospace;letter-spacing:4px;color:#777;text-transform:uppercase}.kuz{border:1px solid #111;background:#f7f7f7;padding:14px;margin:14px 0 16px}.kuz span{display:block;font:11px monospace;letter-spacing:3px;color:#777;text-transform:uppercase;margin-bottom:8px}.kuz b{display:block;font:13px monospace;word-break:break-all;letter-spacing:1px}.title{font-size:42px;line-height:1;margin:10px 0 18px;font-weight:800}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.box{border:1px solid #111;padding:14px;background:#fafafa}.box span{display:block;font:11px monospace;letter-spacing:2px;color:#777;text-transform:uppercase;margin-bottom:8px}.idx{font-size:36px;font-weight:900;font-family:monospace}.idx.neg{color:#b00020}.idx.pos{color:#008a3d}.idx.neu{color:#111}.formula{border:1px solid #111;background:#f7f7f7;padding:14px;margin:16px 0;font-family:monospace;line-height:1.55}.code{font-family:monospace;word-break:break-all;font-size:12px}.code-line{border-bottom:1px solid #ddd;padding:8px 0;display:grid;grid-template-columns:38px 1fr;gap:10px}.text{border-top:1px solid #ccc;margin-top:20px;padding-top:20px;white-space:pre-wrap;line-height:1.6}.foot{margin-top:30px;font:11px monospace;color:#777;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #111;margin:0;max-width:none}.printbtn{display:none}}</style></head><body><button class="printbtn" onclick="window.print()" style="margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase">${L('Guardar como PDF', 'Save as PDF')}</button><section class="card"><div class="k">sequence - A · Hashcod</div><div class="kuz"><span>Kuznyechik Key · 256-bit</span><b>${escapeHtml(note.kuzKey || generateKuznyechikKey())}</b></div><h1 class="title">${escapeHtml(note.title)}</h1><div class="meta"><div class="box"><span>${L('Índice', 'Index')}</span><b class="idx ${indexClass}">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes', 'Codes')}</span><b>${parts.codeCount}</b></div><div class="box"><span>${L('Similitudes', 'Similarities')}</span><b>${parts.similarity}</b></div><div class="box"><span>${L('Base', 'Base')}</span><b>${parts.base}</b></div></div><div class="formula">I = -ABS((codes / similitudes) × (base - 0.428))<br/>I = -ABS((${parts.codeCount} / ${parts.similarity}) × (${parts.base} - 0.428)) = <b class="idx ${indexClass}" style="font-size:22px">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes moneda', 'Currency codes')}</span><div class="code">${codesHtml}</div></div><div class="text">${escapeHtml(note.text || L('Nota vacía', 'Empty note'))}</div><div class="foot">Built by diktatcart · sequence - A</div></section></body></html>`;
   };
 
   const downloadPdf = (note) => {
@@ -5245,7 +5245,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [licenseType, setLicenseType] = useState('Uso personal no exclusivo');
-  const [scope, setScope] = useState('Uso privado dentro del ecosistema OpencriptG');
+  const [scope, setScope] = useState('Uso privado dentro del ecosistema Hashcod');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [includeFullCode, setIncludeFullCode] = useState(false);
@@ -5294,7 +5294,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
     return {
       id,
       codeId: selectedRow.id || selectedRow.idx || 'N/A',
-      codeType: selectedRow.type || selectedRow.primitive || 'OpencriptG Code',
+      codeType: selectedRow.type || selectedRow.primitive || 'Hashcod Code',
       codeValue: includeFullCode ? codeValue : maskCode(codeValue),
       fullCodeStored: includeFullCode,
       codeHash,
@@ -5304,7 +5304,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
       scope,
       price: price.trim(),
       notes: notes.trim(),
-      issuer: 'diktatcart / OpencriptG',
+      issuer: 'diktatcart / Hashcod',
       issuerRnc: '402-0936929-3',
       status: 'Activo',
       issuedAt,
@@ -5332,8 +5332,8 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
   const certificateHtml = (cert) => {
     const logoUrl = window.location.origin + '/app/ocg-platform-icon.png?v=platform-icon-3';
     const legal = L(
-      'Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema OpencriptG operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de OpencriptG.',
-      'This private certificate states that the identified code was generated or registered inside the OpencriptG ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private OpencriptG verification.'
+      'Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema Hashcod operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de Hashcod.',
+      'This private certificate states that the identified code was generated or registered inside the Hashcod ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private Hashcod verification.'
     );
     const rowsHtml = [
       ['ID', cert.id],
@@ -5354,7 +5354,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
     const notesHtml = cert.notes ? '<div class="notes"><span>NOTAS</span><p>' + escapeHtmlLocal(cert.notes) + '</p></div>' : '';
     return '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtmlLocal(cert.id) + '</title><style>' +
       '*{box-sizing:border-box}body{margin:0;background:#ece8df;color:#0a0a0a;font-family:Arial,Helvetica,sans-serif;padding:30px}.printbtn{margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase}.cert{max-width:980px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:14px 14px 0 #111;padding:34px}.top{display:grid;grid-template-columns:100px 1fr;gap:22px;align-items:center;border-bottom:2px solid #111;padding-bottom:22px}.logo{width:92px;height:92px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}.k{font:12px monospace;letter-spacing:4px;text-transform:uppercase;color:#666}.title{font-size:48px;line-height:1;margin:8px 0 0;font-weight:900;letter-spacing:1px}.serial{border:1px solid #111;padding:12px 14px;margin:22px 0;background:#f7f7f7;font-family:monospace;word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{border:1px solid #d7d7d7;padding:12px;min-height:70px}.row span,.notes span,.legal span{display:block;font:10px monospace;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:8px}.row b{font:12px monospace;word-break:break-all}.notes,.legal{border:1px solid #111;padding:16px;margin-top:16px}.notes p,.legal p{margin:0;line-height:1.55}.seal{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:26px;border-top:1px solid #111;padding-top:18px}.sig{font:12px monospace;letter-spacing:2px;text-transform:uppercase}.rnc{font:14px monospace;font-weight:800}.stamp{border:2px solid #111;padding:14px 22px;font:12px monospace;letter-spacing:3px;text-transform:uppercase;transform:rotate(-2deg)}@media print{body{background:#fff;padding:0}.printbtn{display:none}.cert{box-shadow:none;margin:0;max-width:none;border:1px solid #111}}' +
-      '</style></head><body><button class="printbtn" onclick="window.print()">' + escapeHtmlLocal(L('Guardar como PDF', 'Save as PDF')) + '</button><section class="cert"><div class="top"><img class="logo" src="' + logoUrl + '"/><div><div class="k">OpencriptG · diktatcart · RNC 402-0936929-3</div><h1 class="title">' + escapeHtmlLocal(L('Certificado Privado de Code', 'Private Code Certificate')) + '</h1></div></div><div class="serial">' + escapeHtmlLocal(cert.id) + '</div><div class="grid">' + rowsHtml + '</div>' + notesHtml + '<div class="legal"><span>' + escapeHtmlLocal(L('Aviso legal', 'Legal notice')) + '</span><p>' + escapeHtmlLocal(legal) + '</p></div><div class="seal"><div><div class="sig">Emitido total por diktatcart / OpencriptG</div><div class="rnc">RNC: 402-0936929-3</div></div><div class="stamp">CERTIFICADO PRIVADO</div></div></section></body></html>';
+      '</style></head><body><button class="printbtn" onclick="window.print()">' + escapeHtmlLocal(L('Guardar como PDF', 'Save as PDF')) + '</button><section class="cert"><div class="top"><img class="logo" src="' + logoUrl + '"/><div><div class="k">Hashcod · diktatcart · RNC 402-0936929-3</div><h1 class="title">' + escapeHtmlLocal(L('Certificado Privado de Code', 'Private Code Certificate')) + '</h1></div></div><div class="serial">' + escapeHtmlLocal(cert.id) + '</div><div class="grid">' + rowsHtml + '</div>' + notesHtml + '<div class="legal"><span>' + escapeHtmlLocal(L('Aviso legal', 'Legal notice')) + '</span><p>' + escapeHtmlLocal(legal) + '</p></div><div class="seal"><div><div class="sig">Emitido total por diktatcart / Hashcod</div><div class="rnc">RNC: 402-0936929-3</div></div><div class="stamp">CERTIFICADO PRIVADO</div></div></section></body></html>';
   };
 
   const printCertificate = (cert) => {
@@ -5417,10 +5417,10 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
 
           <main className="certdlg-main">
             <section className="certdlg-preview">
-              <div className="certdlg-logo-wrap"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="OpencriptG" /></div>
+              <div className="certdlg-logo-wrap"><img src="app/ocg-platform-icon.png?v=platform-icon-3" alt="Hashcod" /></div>
               <div className="certdlg-k">OPENCRIPTG · DIKTATCART · RNC 402-0936929-3</div>
               <h3>{L('Certificado Privado de Code', 'Private Code Certificate')}</h3>
-              <p>{L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema OpencriptG.', 'Private document for authenticity, issuance, and use license inside the OpencriptG ecosystem.')}</p>
+              <p>{L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema Hashcod.', 'Private document for authenticity, issuance, and use license inside the Hashcod ecosystem.')}</p>
               {activeCert ? (
                 <div className="certdlg-certbox">
                   <div><span>ID</span><b>{activeCert.id}</b></div>
@@ -5430,7 +5430,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
                 </div>
               ) : <div className="dbdlg-empty">{L('Crea un certificado para ver la vista previa.', 'Create a certificate to see the preview.')}</div>}
               <div className="certdlg-legal-mini">
-                {L('Este certificado no es gubernamental, bancario ni notarial. Es una emisión privada de diktatcart/OpencriptG basada en sus registros internos.', 'This certificate is not governmental, banking, or notarial. It is a private issuance by diktatcart/OpencriptG based on internal records.')}
+                {L('Este certificado no es gubernamental, bancario ni notarial. Es una emisión privada de diktatcart/Hashcod basada en sus registros internos.', 'This certificate is not governmental, banking, or notarial. It is a private issuance by diktatcart/Hashcod based on internal records.')}
               </div>
             </section>
 
@@ -6422,7 +6422,7 @@ const DeskWorkbenchDialog = ({ open, onClose, notify, language, onOpenDatabase, 
   const defaultSlots = [
     { id: 'slot-1', title: 'Module 01', type: L('Reservado', 'Reserved'), note: L('Espacio listo para tu próxima herramienta.', 'Space ready for your next tool.') },
     { id: 'slot-2', title: 'Module 02', type: L('Reservado', 'Reserved'), note: L('Puedes convertirlo en visor, editor o analizador.', 'You can turn it into a viewer, editor, or analyzer.') },
-    { id: 'slot-3', title: 'Module 03', type: L('Reservado', 'Reserved'), note: L('Diseñado para crecer con OpencriptG.', 'Designed to grow with OpencriptG.') },
+    { id: 'slot-3', title: 'Module 03', type: L('Reservado', 'Reserved'), note: L('Diseñado para crecer con Hashcod.', 'Designed to grow with Hashcod.') },
     { id: 'slot-4', title: 'Module 04', type: L('Reservado', 'Reserved'), note: L('Ideal para nuevas utilidades de productividad.', 'Ideal for new productivity utilities.') },
   ];
   const [slots, setSlots] = useState(defaultSlots);
@@ -6489,7 +6489,7 @@ const DeskWorkbenchDialog = ({ open, onClose, notify, language, onOpenDatabase, 
     { key: 'osdg', title: 'OSDG -rest', desc: L('Cifra y desbloquea archivos con key visible y nonce oculta.', 'Encrypt and unlock files with a visible key and hidden nonce.'), action: onOpenOSDGRest },
     { key: 'markdown', title: 'Markdown Desk', desc: L('Editor Markdown con vista HTML en vivo.', 'Markdown editor with live HTML preview.'), action: onOpenMarkdown },
     { key: 'sequence', title: 'sequence - A', desc: L('Notas con valor basado en codes de la base de datos.', 'Notes valued with database codes.'), action: onOpenMarketNotes },
-    { key: 'certificates', title: L('Certificados', 'Certificates'), desc: L('Crea certificados privados de code con RNC y diseño OpencriptG.', 'Create private code certificates with RNC and OpencriptG design.'), action: onOpenCertificates },
+    { key: 'certificates', title: L('Certificados', 'Certificates'), desc: L('Crea certificados privados de code con RNC y diseño Hashcod.', 'Create private code certificates with RNC and Hashcod design.'), action: onOpenCertificates },
     { key: 'ivory', title: 'Ivory DID Ideas', desc: L('Recibe ideas de colaboradores con DID, QR y documento verificable.', 'Receive collaborator ideas with DID, QR and verifiable document.'), action: onOpenIvoryIdeas },
     { key: 'ocgunits', title: 'OCG Units', desc: L('Emite billetes internos verificables con QR y ledger.', 'Issue verifiable internal bills with QR and ledger.'), action: onOpenOcgUnits },
     { key: 'color', title: 'Color Forge', desc: L('Crea paletas, contraste y CSS para la interfaz.', 'Create palettes, contrast and CSS for the interface.'), action: onOpenColorForge },
@@ -6510,7 +6510,7 @@ const DeskWorkbenchDialog = ({ open, onClose, notify, language, onOpenDatabase, 
         <div className="dlg-h">
           <div>
             <h2>{deskTitle || 'Desk'}</h2>
-            <p>{L('Espacio central de trabajo para OpencriptG. Aquí podrás ir agregando herramientas nuevas más adelante, con accesos rápidos y zonas reservadas.', 'Central workspace for OpencriptG. Here you can keep adding new tools later, with shortcuts and reserved zones.')}</p>
+            <p>{L('Espacio central de trabajo para Hashcod. Aquí podrás ir agregando herramientas nuevas más adelante, con accesos rápidos y zonas reservadas.', 'Central workspace for Hashcod. Here you can keep adding new tools later, with shortcuts and reserved zones.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -6699,7 +6699,7 @@ const CommandManualDialog = ({ open, onClose, language, onCommand, codeCatalog =
     const w = window.open('', '_blank', 'width=1200,height=900');
     if (!w) return;
     w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>OpencriptG Command Form</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:34px;letter-spacing:6px;text-transform:uppercase;}h2{font-size:13px;letter-spacing:4px;text-transform:uppercase;border-top:2px solid #111;padding-top:18px;margin-top:28px;}table{width:100%;border-collapse:collapse;margin-top:10px;}td{border:1px solid #ddd;padding:10px;vertical-align:top;font-size:12px;}code{font-family:Consolas,monospace;font-weight:700;}button{padding:10px 18px;margin-bottom:20px;}@media print{button{display:none;}}</style></head><body><button onclick="window.print()">Guardar como PDF</button><h1>OpencriptG Command Form</h1><p>Formulario de comandos del modo IDE/CMD. Rango principal: code001-code619.</p>${rows}<h2>Catálogo numerado code001-code619</h2><table><tr><td><b>Comando</b></td><td><b>Nombre</b></td><td><b>ID técnico</b></td><td><b>Categoría</b></td></tr>${catalogRows}</table></body></html>`);
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Hashcod Command Form</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:34px;letter-spacing:6px;text-transform:uppercase;}h2{font-size:13px;letter-spacing:4px;text-transform:uppercase;border-top:2px solid #111;padding-top:18px;margin-top:28px;}table{width:100%;border-collapse:collapse;margin-top:10px;}td{border:1px solid #ddd;padding:10px;vertical-align:top;font-size:12px;}code{font-family:Consolas,monospace;font-weight:700;}button{padding:10px 18px;margin-bottom:20px;}@media print{button{display:none;}}</style></head><body><button onclick="window.print()">Guardar como PDF</button><h1>Hashcod Command Form</h1><p>Formulario de comandos del modo IDE/CMD. Rango principal: code001-code619.</p>${rows}<h2>Catálogo numerado code001-code619</h2><table><tr><td><b>Comando</b></td><td><b>Nombre</b></td><td><b>ID técnico</b></td><td><b>Categoría</b></td></tr>${catalogRows}</table></body></html>`);
     w.document.close();
   };
 
@@ -6710,7 +6710,7 @@ const CommandManualDialog = ({ open, onClose, language, onCommand, codeCatalog =
         <div className="dlg-h">
           <div>
             <h2>{L('Formulario de comandos', 'Command form')}</h2>
-            <p>{L('Guía completa para manejar OpencriptG por comandos dentro del modo IDE/CMD.', 'Complete guide to control OpencriptG through commands inside IDE/CMD mode.')}</p>
+            <p>{L('Guía completa para manejar Hashcod por comandos dentro del modo IDE/CMD.', 'Complete guide to control Hashcod through commands inside IDE/CMD mode.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -6819,7 +6819,7 @@ const CommandIDE = ({
           <div className="cmd-window">
             <div className="cmd-window-bar">
               <span className="dot"/><span className="dot"/><span className="dot"/>
-              <b>opencriptG://ide/session</b>
+              <b>hashcod://ide/session</b>
               <i>{selectedType?.label || selectedType?.id || 'none'}</i>
             </div>
             <div className="cmd-terminal" ref={terminalRef}>
@@ -6930,7 +6930,7 @@ const App = () => {
   const [language, setLanguage] = useState(() => localStorage.getItem(LANG_STORAGE_KEY) || 'en');
   const [cmdInput, setCmdInput] = useState('');
   const [cmdLog, setCmdLog] = useState(() => [
-    { kind: 'sys', prompt: 'boot', text: 'OpencriptG IDE CMD inicializado. Escribe help para ver comandos.' },
+    { kind: 'sys', prompt: 'boot', text: 'Hashcod IDE CMD inicializado. Escribe help para ver comandos.' },
     { kind: 'sys', prompt: 'boot', text: 'Todos los módulos siguen disponibles: db, qr, text, drive, pandora, desk, osdg, markdown, sequence, certificates.' },
   ]);
   const t = useCallback((key, vars = {}) => uiText(language, key, vars), [language]);
@@ -7858,7 +7858,7 @@ const App = () => {
         const nonce = secureRandom(12, 'NONCE');
         const core = secureRandom(Math.max(16, codeLen), String(opts.prefix || prefix || 'OCG'));
         const value = `${core}.${salt.split('-').pop()}.${nonce.split('-').pop()}`;
-        rows.push({ id: idRef.current, idx: idRef.current, value, type: normalized, primitiveLabel: normalized, ts: Date.now(), meta: { salt, nonce, engine: 'OpencriptG CMD Advanced Generator' } });
+        rows.push({ id: idRef.current, idx: idRef.current, value, type: normalized, primitiveLabel: normalized, ts: Date.now(), meta: { salt, nonce, engine: 'Hashcod CMD Advanced Generator' } });
         seen.add(value);
         if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
           await new Promise((resolve) => setTimeout(resolve, 0));
@@ -7908,7 +7908,7 @@ const App = () => {
       pushCmd(`OK · type=${selectedType?.id || 'none'} · output=${output.length} · database=${copyDb.length} · generated=${stats.generated} · session=${sessionTime}`, 'ok');
       return;
     }
-    if (cmd === 'version' || cmd === 'about') { pushCmd('OpencriptG IDE/CMD · v12 · SipHash-2-4 Gate · 1000 Command System · local-first cryptographic code workstation.', 'sys'); return; }
+    if (cmd === 'version' || cmd === 'about') { pushCmd('Hashcod IDE/CMD · v12 · SipHash-2-4 Gate · 1000 Command System · local-first cryptographic code workstation.', 'sys'); return; }
 
     if (cmd === 'lang') { changeLanguage(parts[1] || 'es'); pushCmd(`Idioma cambiado: ${parts[1] || 'es'}`, 'ok'); return; }
     if (cmd === 'theme') { setTweak('theme', parts[1] || 'mono'); pushCmd(`theme=${parts[1] || 'mono'}`, 'ok'); return; }
@@ -8026,7 +8026,7 @@ const App = () => {
     if (cmd === 'audit') { pushCmd(`Auditoría ${sub || 'general'}: output=${output.length}, db=${copyDb.length}, módulo seguro local-first.`, 'ok'); return; }
     if (cmd === 'backup') { saveSession(); pushCmd('Backup/sesión exportada.', 'ok'); return; }
     if (cmd === 'workflow') { pushCmd(`Workflow ${sub || 'create'} simulado: usa módulos DB → Cert → QR → OSDG desde la interfaz CMD.`, 'ok'); return; }
-    if (cmd === 'legal') { downloadText(`opencriptG-legal-notes-${tsStamp()}.txt`, 'OpencriptG legal notes: conservar licencias de terceros, avisos de copyright, y términos privados de certificados.'); pushCmd('Notas legales exportadas.', 'ok'); return; }
+    if (cmd === 'legal') { downloadText(`opencriptG-legal-notes-${tsStamp()}.txt`, 'Hashcod legal notes: conservar licencias de terceros, avisos de copyright, y términos privados de certificados.'); pushCmd('Notas legales exportadas.', 'ok'); return; }
     if (cmd === 'entropy' || cmd === 'hash' || cmd === 'checksum' || cmd === 'validate' || cmd === 'compare' || cmd === 'similarity') { pushCmd(`${cmd}: análisis local registrado. Para análisis avanzado abre report/audit o DB.`, 'ok'); return; }
     if (cmd === 'copy') { if (parts[1] === 'all') { copyAll(); pushCmd('Output copiado y guardado en base de datos.', 'ok'); } else if (parts[1] === 'last' && latest()) { navigator.clipboard?.writeText(latest().value || ''); pushCmd('Último code copiado.', 'ok'); } else pushCmd('Uso: copy all | copy last', 'err'); return; }
     if (cmd === 'export') { const fmt = String(parts[1] || 'md').toLowerCase(); if (fmt === 'commands1000') { downloadText(`opencriptG-1000-cmd-system-${tsStamp()}.txt`, OCG_COMMAND_HELP_1000); pushCmd('1000 comandos exportados.', 'ok'); return; } if (!['md','txt','json','csv'].includes(fmt)) { pushCmd('Formato válido: md, txt, json, csv, commands1000.', 'err'); return; } exportFormat(fmt); pushCmd(`Export solicitado: ${fmt}`, 'ok'); return; }
@@ -8073,8 +8073,8 @@ const App = () => {
         <header className="tb">
           <div className="tb-brand">
             <span className="tb-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(20)}} />
-            <span className="tb-name"><b>OCG</b><i>OpencriptG</i></span>
-            <span className="tb-tag">Open Cryptographic Generator · v12</span>
+            <span className="tb-name"><b>Hashcod</b><i>Cryptographic Platform</i></span>
+            <span className="tb-tag">Hashcod Cryptographic Generator · v12</span>
           </div>
           <nav ref={topNavRef} className="tb-nav" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
             <MenuButton label={t('menuFile')} items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
