@@ -1453,7 +1453,7 @@ const TOP_MENU_ICONS = {
   export: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M28 24v4H4v-4H2v4l.008-.005A1.998 1.998 0 0 0 4 30h24a2 2 0 0 0 2-2v-4zm-.4-9.4L24 18.2V4h-2v14.2l-3.6-3.6L17 16l6 6l6-6l-1.4-1.4zM9 4l-6 6l1.4 1.4L8 7.8V22h2V7.8l3.6 3.6L15 10L9 4z"/></svg>`,
 };
 
-const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '' }) => {
+const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
   const open = activeMenu === label;
   const hasDropdown = Array.isArray(items) && items.length > 0;
   const handleClick = () => {
@@ -1472,13 +1472,15 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
   return (
     <div className="tb-menu">
       <button
-        className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''}`}
+        className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''} ${iconOnly ? 'tb-n-icon-only' : ''}`}
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => activeMenu && hasDropdown && setActiveMenu(label)}
       >
         {icon ? <span className="tb-n-icon" dangerouslySetInnerHTML={{ __html: icon }} /> : null}
-        <span>{label}</span>
+        {!iconOnly ? <span>{label}</span> : null}
         {primaryAction && hasDropdown ? <span className="tb-n-caret">▾</span> : null}
       </button>
       {open && hasDropdown && (
@@ -8084,9 +8086,9 @@ const App = () => {
             <span className="tb-tag">Hashcod Cryptographic Generator · v12</span>
           </div>
           <nav ref={topNavRef} className="tb-nav" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
-            <MenuButton label={t('menuFile')} icon={TOP_MENU_ICONS.file} items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-            <MenuButton label={t('menuGenerate')} icon={TOP_MENU_ICONS.generate} items={generateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-            <MenuButton label={t('menuExport')} icon={TOP_MENU_ICONS.export} items={exportItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuFile')} icon={TOP_MENU_ICONS.file} iconOnly items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuGenerate')} icon={TOP_MENU_ICONS.generate} iconOnly items={generateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
+            <MenuButton label={t('menuExport')} icon={TOP_MENU_ICONS.export} iconOnly items={exportItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuView')} items={viewItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuHelp')} items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuLanguages')} items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />

@@ -132,6 +132,22 @@ kbd {
   height: 14px;
   display: block;
 }
+.tb-n-icon-only {
+  width: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tb-n-icon-only .tb-n-icon {
+  width: 17px;
+  height: 17px;
+  flex-basis: 17px;
+}
+.tb-n-icon-only .tb-n-icon svg {
+  width: 17px;
+  height: 17px;
+}
 .tb-n-tool { display:flex; align-items:center; gap:6px; }
 .tb-n-caret { font-size: 9px; opacity: .55; transform: translateY(-1px); }
 .tb-n-tool:hover .tb-n-caret, .tb-n.on .tb-n-caret { opacity: .9; }
