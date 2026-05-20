@@ -208,6 +208,8 @@ kbd {
 }
 .auth-session button { border:1px solid #444; background:#111; color:#fff; padding:4px 7px; font-size:9px; letter-spacing:1px; text-transform:uppercase; }
 .auth-session button:hover { background:#fff; color:#111; }
+.auth-session .auth-admin-icon { width:24px; height:24px; padding:0; display:grid; place-items:center; }
+.auth-session .auth-admin-icon span, .auth-session .auth-admin-icon svg { display:block; width:15px; height:15px; }
 .authgate {
   min-height: 100vh;
   display: grid;
@@ -249,6 +251,15 @@ kbd {
 }
 .authusers-form button { min-height:42px; border:1px solid #111; background:#111; color:#fff; letter-spacing:1.5px; text-transform:uppercase; }
 .authusers-form em { font-style:normal; font-size:12px; color:#333; }
+.admin-key-note { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.authusers-list { display:grid; gap:1px; padding:0 18px 18px; background:var(--line); }
+.authusers-row { display:grid; grid-template-columns:minmax(0,1fr) 130px 150px auto; gap:10px; align-items:center; background:#fff; padding:10px; }
+.authusers-row div { display:grid; gap:4px; min-width:0; }
+.authusers-row b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
+.authusers-row span { color:var(--ink-4); font-size:10px; }
+.authusers-row select, .authusers-row button { min-height:32px; border:1px solid var(--line-2); background:#fff; padding:0 8px; font-family:var(--mono); font-size:10px; }
+.authusers-row button:hover { background:#111; color:#fff; border-color:#111; }
+@media (max-width: 780px) { .authusers-row { grid-template-columns:1fr; } }
 .tb-cli {
   width: 26px;
   height: 24px;

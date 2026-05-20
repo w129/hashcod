@@ -17,6 +17,7 @@ const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
 const rateBuckets = new Map();
 const sessions = new Map();
+const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || '1ec68bc0422b5353ae0f975cd2a8fe82deda1559f565d98d44f6e732e63c1cca';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -207,7 +208,7 @@ function strongPassword(password) {
 
 function publicUser(user) {
   if (!user) return null;
-  return { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt };
+  return { id: user.id, email: user.email, name: user.name, role: user.role, plan: user.plan || 'free', status: user.status || 'ACTIVE', createdAt: user.createdAt };
 }
 
 function parseCookies(req) {
@@ -241,6 +242,21 @@ function getSession(req) {
   return user ? { sid, session, user } : null;
 }
 
+function hasAdminPanel(req) {
+  const auth = getSession(req);
+  return !!auth?.session?.adminPanel && auth.user.role === 'admin';
+}
+
+function requireAdminPanel(req, res) {
+  const auth = requireAuth(req, res, 'admin');
+  if (!auth) return null;
+  if (!auth.session.adminPanel) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'admin_panel_locked' }));
+    return null;
+  }
+  return auth;
+}
+
 function roleRank(role) {
   return { viewer: 1, editor: 2, admin: 3 }[role] || 0;
 }
@@ -270,7 +286,7 @@ async function handleAuth(req, res) {
   const db = readAuthDb();
   if (route === '/api/auth/me' && req.method === 'GET') {
     const auth = getSession(req);
-    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || null }));
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
     return;
   }
   if (route === '/api/auth/register' && req.method === 'POST') {
@@ -287,7 +303,7 @@ async function handleAuth(req, res) {
         return;
       }
       const recoveryCode = makeRecoveryCode();
-      const user = { id: `usr_${Date.now().toString(36)}`, email, name, role: 'admin', passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
+      const user = { id: `usr_${Date.now().toString(36)}`, email, name, role: 'admin', plan: 'enterprise', passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
       writeAuthDb({ users: [user] });
       const session = makeSession(req, user);
       audit('auth.register_admin', { ip: clientIp(req), userId: user.id });
@@ -321,6 +337,26 @@ async function handleAuth(req, res) {
     send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
     return;
   }
+  if (route === '/api/admin/unlock' && req.method === 'POST') {
+    const auth = requireAuth(req, res, 'admin');
+    if (!auth) return;
+    try {
+      const body = await readJsonBody(req);
+      const keyHash = crypto.createHash('sha256').update(String(body.panelKey || '')).digest('hex');
+      const expectedPanelHash = String(ADMIN_PANEL_KEY_HASH || '').trim();
+      if (expectedPanelHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedPanelHash))) {
+        audit('admin.unlock_failed', { ip: clientIp(req), actor: auth.user.id });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_panel_key' }));
+        return;
+      }
+      auth.session.adminPanel = true;
+      audit('admin.unlock', { ip: clientIp(req), actor: auth.user.id });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
   if (route === '/api/auth/recover' && req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
@@ -344,22 +380,51 @@ async function handleAuth(req, res) {
     return;
   }
   if (route === '/api/auth/users' && req.method === 'POST') {
-    const auth = requireAuth(req, res, 'admin');
+    const auth = requireAdminPanel(req, res);
     if (!auth) return;
     try {
       const body = await readJsonBody(req);
       const email = safeText(body.email, 180).toLowerCase();
       const role = ['viewer', 'editor', 'admin'].includes(body.role) ? body.role : 'viewer';
+      const plan = ['free', 'starter', 'professional', 'enterprise'].includes(body.plan) ? body.plan : 'free';
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !strongPassword(body.password) || db.users.some(u => u.email === email)) {
         send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_user' }));
         return;
       }
       const recoveryCode = makeRecoveryCode();
-      const user = { id: `usr_${Date.now().toString(36)}`, email, name: safeText(body.name, 80) || email, role, passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
+      const user = { id: `usr_${Date.now().toString(36)}`, email, name: safeText(body.name, 80) || email, role, plan, passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
       db.users.push(user);
       writeAuthDb(db);
       audit('auth.user_create', { ip: clientIp(req), actor: auth.user.id, userId: user.id, role });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/auth/users' && req.method === 'GET') {
+    const auth = requireAdminPanel(req, res);
+    if (!auth) return;
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, users: db.users.map(publicUser) }));
+    return;
+  }
+  if (route === '/api/auth/users' && req.method === 'PUT') {
+    const auth = requireAdminPanel(req, res);
+    if (!auth) return;
+    try {
+      const body = await readJsonBody(req);
+      const user = db.users.find(u => u.id === safeText(body.id, 120));
+      if (!user) {
+        send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'user_not_found' }));
+        return;
+      }
+      if (['viewer', 'editor', 'admin'].includes(body.role)) user.role = body.role;
+      if (['free', 'starter', 'professional', 'enterprise'].includes(body.plan)) user.plan = body.plan;
+      if (['ACTIVE', 'DISABLED'].includes(body.status)) user.status = body.status;
+      user.updatedAt = new Date().toISOString();
+      writeAuthDb(db);
+      audit('auth.user_update', { ip: clientIp(req), actor: auth.user.id, userId: user.id, role: user.role, plan: user.plan, status: user.status });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user) }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
     }
@@ -589,7 +654,7 @@ function safePath(urlPath) {
 const server = http.createServer((req, res) => {
   if (!rateLimit(req, res)) return;
 
-  if ((req.url || '').split('?')[0].startsWith('/api/auth/')) {
+  if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/')) {
     handleAuth(req, res);
     return;
   }

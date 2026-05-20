@@ -2021,9 +2021,31 @@ const HelpDialog = ({ open, onClose, t }) => {
 };
 
 const AuthUsersDialog = ({ open, onClose }) => {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
+  const [unlocked, setUnlocked] = useState(false);
+  const [panelKey, setPanelKey] = useState('');
+  const [users, setUsers] = useState([]);
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
   const [status, setStatus] = useState('');
   if (!open) return null;
+  const loadUsers = async () => {
+    const res = await authFetch('/api/auth/users');
+    const data = await res.json();
+    if (res.ok) setUsers(data.users || []);
+  };
+  const unlock = async (e) => {
+    e.preventDefault();
+    setStatus('');
+    try {
+      const res = await authFetch('/api/admin/unlock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ panelKey }) });
+      if (!res.ok) throw new Error('locked');
+      setUnlocked(true);
+      setPanelKey('');
+      setStatus('Panel admin desbloqueado.');
+      await loadUsers();
+    } catch {
+      setStatus('Clave admin incorrecta.');
+    }
+  };
   const submit = async (e) => {
     e.preventDefault();
     setStatus('');
@@ -2031,10 +2053,20 @@ const AuthUsersDialog = ({ open, onClose }) => {
       const res = await authFetch('/api/auth/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'failed');
-      setForm({ name: '', email: '', password: '', role: 'viewer' });
-      setStatus(`Usuario creado: ${data.user.email} (${data.user.role})`);
+      setForm({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
+      setStatus(`Usuario creado: ${data.user.email} (${data.user.role} / ${data.user.plan}) | Recovery: ${data.recoveryCode}`);
+      await loadUsers();
     } catch {
       setStatus('No se pudo crear. Usa password fuerte y email no repetido.');
+    }
+  };
+  const updateUser = async (user, patch) => {
+    const res = await authFetch('/api/auth/users', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ...patch }) });
+    if (res.ok) {
+      setStatus('Usuario actualizado.');
+      await loadUsers();
+    } else {
+      setStatus('No se pudo actualizar usuario.');
     }
   };
   return (
@@ -2047,18 +2079,49 @@ const AuthUsersDialog = ({ open, onClose }) => {
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
-        <form className="authusers-form" onSubmit={submit}>
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />
-          <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
-          <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-            <option value="viewer">viewer</option>
-            <option value="editor">editor</option>
-            <option value="admin">admin</option>
-          </select>
-          <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Strong password" />
-          <button>Create user</button>
-          {status && <em>{status}</em>}
-        </form>
+        {!unlocked ? (
+          <form className="authusers-form" onSubmit={unlock}>
+            <span className="admin-key-note">Admin panel key required</span>
+            <input type="password" value={panelKey} onChange={e => setPanelKey(e.target.value)} placeholder="Admin panel key" />
+            <button>Unlock admin panel</button>
+            {status && <em>{status}</em>}
+          </form>
+        ) : (
+          <>
+            <form className="authusers-form" onSubmit={submit}>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />
+              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
+              <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+                <option value="viewer">viewer</option>
+                <option value="editor">editor</option>
+                <option value="admin">admin</option>
+              </select>
+              <select value={form.plan} onChange={e => setForm({ ...form, plan: e.target.value })}>
+                <option value="free">free</option>
+                <option value="starter">starter</option>
+                <option value="professional">professional</option>
+                <option value="enterprise">enterprise</option>
+              </select>
+              <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Strong password" />
+              <button>Create user</button>
+              {status && <em>{status}</em>}
+            </form>
+            <div className="authusers-list">
+              {users.map(user => (
+                <article key={user.id} className="authusers-row">
+                  <div><b>{user.email}</b><span>{user.name} | {user.status}</span></div>
+                  <select value={user.role} onChange={e => updateUser(user, { role: e.target.value })}>
+                    <option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option>
+                  </select>
+                  <select value={user.plan || 'free'} onChange={e => updateUser(user, { plan: e.target.value })}>
+                    <option value="free">free</option><option value="starter">starter</option><option value="professional">professional</option><option value="enterprise">enterprise</option>
+                  </select>
+                  <button onClick={() => updateUser(user, { status: user.status === 'DISABLED' ? 'ACTIVE' : 'DISABLED' })}>{user.status === 'DISABLED' ? 'Enable' : 'Disable'}</button>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
@@ -2071,11 +2134,17 @@ const AuthGate = ({ children }) => {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [usersOpen, setUsersOpen] = useState(false);
+  const applyServerPlan = (user) => {
+    if (user?.plan && PLAN_DEFINITIONS[user.plan]) {
+      writePlanLicense({ plan: user.plan, activatedAt: new Date().toISOString(), fingerprint: `SERVER-${user.role || 'user'}` });
+    }
+  };
   const refresh = async () => {
     try {
       const res = await fetch('/api/auth/me');
       const data = await res.json();
       window.HASHCOD_CSRF = data.csrf || '';
+      applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
       if (data.setupRequired) setMode('register');
     } catch {
@@ -2090,7 +2159,7 @@ const AuthGate = ({ children }) => {
       <>
         <div className="auth-session">
           <span>{auth.user.email} · {auth.user.role}</span>
-          {auth.user.role === 'admin' && <button onClick={() => setUsersOpen(true)}>Users</button>}
+          {auth.user.role === 'admin' && <button className="auth-admin-icon" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></button>}
           <button onClick={async () => { await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); }}>Logout</button>
         </div>
         <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
@@ -2114,6 +2183,7 @@ const AuthGate = ({ children }) => {
       }
       window.HASHCOD_CSRF = data.csrf || '';
       if (data.recoveryCode) setNotice(`Recovery code: ${data.recoveryCode}`);
+      applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: false, user: data.user });
     } catch (err) {
       setError(mode === 'register' ? 'Registro invalido. Usa email real y password fuerte de 12+ con mayuscula, numero y simbolo.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
@@ -9291,6 +9361,7 @@ const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
+const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
