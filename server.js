@@ -9,6 +9,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ROOT = __dirname;
 const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data');
 const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
+const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -97,6 +98,22 @@ function writeAssistRequests(rows) {
   fs.writeFileSync(HELP_REQUESTS_FILE, JSON.stringify(rows.slice(0, 500), null, 2));
 }
 
+function readCliConsole() {
+  try {
+    ensureDataDir();
+    const raw = fs.existsSync(CLI_CONSOLE_FILE) ? fs.readFileSync(CLI_CONSOLE_FILE, 'utf8') : '[]';
+    const rows = JSON.parse(raw);
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCliConsole(rows) {
+  ensureDataDir();
+  fs.writeFileSync(CLI_CONSOLE_FILE, JSON.stringify(rows.slice(0, 1000), null, 2));
+}
+
 async function handleAssistRequests(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   if (req.method === 'GET') {
@@ -137,6 +154,97 @@ async function handleAssistRequests(req, res) {
     const rows = before.filter(row => row.id !== id);
     writeAssistRequests(rows);
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: before.length - rows.length }));
+    return;
+  }
+  send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+}
+
+async function handleCliConsole(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (req.method === 'GET') {
+    const ownerKey = safeText(url.searchParams.get('ownerKey'), 120);
+    const rows = readCliConsole().filter(row => row.status !== 'PURGED').map(row => {
+      const { ownerKey: storedOwnerKey, ...publicRow } = row;
+      return { ...publicRow, isOwner: !!ownerKey && storedOwnerKey === ownerKey };
+    });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, entries: rows }, null, 2));
+    return;
+  }
+  if (req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const text = safeText(body.text, 6000);
+      const ownerKey = safeText(body.ownerKey, 120);
+      if (!text || !ownerKey) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'text_and_owner_required' }));
+        return;
+      }
+      const row = {
+        id: `cli_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        title: safeText(body.title, 120) || 'CLI note',
+        text,
+        ownerKey,
+        author: safeText(body.author, 80) || 'anonymous',
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const rows = [row, ...readCliConsole()].slice(0, 1000);
+      writeCliConsole(rows);
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, entry: row }, null, 2));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (req.method === 'PUT') {
+    try {
+      const body = await readJsonBody(req);
+      const id = safeText(body.id, 120);
+      const rows = readCliConsole();
+      const now = new Date().toISOString();
+      let updated = null;
+      const next = rows.map(row => {
+        if (row.id !== id) return row;
+        updated = {
+          ...row,
+          title: safeText(body.title, 120) || row.title,
+          text: safeText(body.text, 6000),
+          editor: safeText(body.editor, 80) || 'anonymous',
+          status: row.status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE',
+          updatedAt: now,
+        };
+        return updated;
+      });
+      writeCliConsole(next);
+      send(res, updated ? 200 : 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: !!updated, entry: updated }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (req.method === 'DELETE') {
+    const id = safeText(url.searchParams.get('id'), 120);
+    const ownerKey = safeText(url.searchParams.get('ownerKey'), 120);
+    const permanent = url.searchParams.get('permanent') === '1';
+    const rows = readCliConsole();
+    const target = rows.find(row => row.id === id);
+    if (!target) {
+      send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'not_found' }));
+      return;
+    }
+    if (permanent) {
+      if (!ownerKey || target.ownerKey !== ownerKey) {
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'creator_only' }));
+        return;
+      }
+      writeCliConsole(rows.filter(row => row.id !== id));
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, purged: 1 }));
+      return;
+    }
+    const next = rows.map(row => row.id === id ? { ...row, status: 'HIDDEN', updatedAt: new Date().toISOString() } : row);
+    writeCliConsole(next);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, hidden: 1 }));
     return;
   }
   send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
@@ -184,6 +292,11 @@ function safePath(urlPath) {
 const server = http.createServer((req, res) => {
   if ((req.url || '').split('?')[0] === '/api/assist-requests') {
     handleAssistRequests(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0] === '/api/cli-console') {
+    handleCliConsole(req, res);
     return;
   }
 

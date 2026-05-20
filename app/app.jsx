@@ -916,6 +916,18 @@ const triggerBlobDownload = (filename, blob) => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
+const CLI_OWNER_KEY = 'hashcod_cli_console_owner_v1';
+const getCliOwnerKey = () => {
+  let key = localStorage.getItem(CLI_OWNER_KEY);
+  if (!key) {
+    const bytes = new Uint8Array(18);
+    crypto.getRandomValues(bytes);
+    key = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem(CLI_OWNER_KEY, key);
+  }
+  return key;
+};
+
 const digestHex = async (value, algo = 'SHA-256') => {
   const data = new TextEncoder().encode(String(value || ''));
   const buf = await crypto.subtle.digest(algo, data);
@@ -1994,6 +2006,136 @@ const HelpDialog = ({ open, onClose, t }) => {
           <span><kbd>Ctrl/⌘ K</kbd> Clear</span>
           <span><kbd>Ctrl/⌘ B</kbd> Batch 100</span>
           <span><kbd>Ctrl/⌘ ⇧ S</kbd> Export Markdown</span>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [entries, setEntries] = useState([]);
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const ownerKey = useMemo(() => getCliOwnerKey(), []);
+  const loadEntries = async () => {
+    try {
+      const res = await fetch(`/api/cli-console?ownerKey=${encodeURIComponent(ownerKey)}`);
+      const data = await res.json();
+      setEntries(Array.isArray(data.entries) ? data.entries : []);
+    } catch {
+      notify?.(L('No se pudo cargar la consola compartida', 'Could not load shared console'));
+    }
+  };
+  useEffect(() => {
+    if (open) loadEntries();
+  }, [open]);
+  if (!open) return null;
+  const resetForm = () => {
+    setTitle('');
+    setText('');
+    setEditingId(null);
+  };
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!text.trim()) {
+      notify?.(L('Escribe algun code o comando', 'Write some code or command'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const payload = { id: editingId, title: title || 'CLI code', text, author, editor: author, ownerKey };
+      const res = await fetch('/api/cli-console', {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('save failed');
+      resetForm();
+      await loadEntries();
+      notify?.(editingId ? L('Entrada editada', 'Entry edited') : L('Entrada guardada en la plataforma', 'Entry saved to platform'));
+    } catch {
+      notify?.(L('No se pudo guardar la entrada', 'Could not save entry'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const edit = (entry) => {
+    setEditingId(entry.id);
+    setTitle(entry.title || '');
+    setText(entry.text || '');
+    setAuthor(author || entry.editor || entry.author || '');
+  };
+  const hide = async (entry) => {
+    setBusy(true);
+    try {
+      await fetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
+      await loadEntries();
+      notify?.(L('Entrada ocultada, no borrada por completo', 'Entry hidden, not permanently deleted'));
+    } catch {
+      notify?.(L('No se pudo ocultar', 'Could not hide'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const purge = async (entry) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}&permanent=1&ownerKey=${encodeURIComponent(ownerKey)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('creator only');
+      await loadEntries();
+      notify?.(L('Entrada eliminada por completo', 'Entry permanently deleted'));
+    } catch {
+      notify?.(L('Solo el creador puede eliminar por completo', 'Only the creator can permanently delete'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg cliconsdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Consola CLI compartida', 'Shared CLI Console')}</h2>
+            <p>{L('Escribe code como consola CLI. Cualquiera puede verlo y editarlo; solo el creador puede eliminarlo por completo.', 'Write code like a CLI console. Anyone can view and edit it; only the creator can permanently delete it.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <form className="clicons-form" onSubmit={submit}>
+          <div className="clicons-fields">
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={L('Titulo corto', 'Short title')} />
+            <input value={author} onChange={e => setAuthor(e.target.value)} placeholder={L('Autor opcional', 'Optional author')} />
+          </div>
+          <textarea value={text} onChange={e => setText(e.target.value)} spellCheck="false" placeholder="hashcod$ ocg code gen aes256 --qty 10&#10;const token = await vault.issue(...)" />
+          <div className="clicons-actions">
+            <button disabled={busy}>{editingId ? L('Guardar edicion', 'Save edit') : L('Publicar code', 'Publish code')}</button>
+            <button type="button" onClick={resetForm}>{L('Limpiar', 'Clear')}</button>
+            <button type="button" onClick={loadEntries}>{L('Actualizar', 'Refresh')}</button>
+          </div>
+        </form>
+        <div className="clicons-list">
+          {!entries.length ? <p>{L('Aun no hay code CLI guardado.', 'No saved CLI code yet.')}</p> : entries.map(entry => {
+            const isOwner = !!entry.isOwner;
+            return (
+              <article key={entry.id} className="clicons-entry">
+                <header>
+                  <div>
+                    <b>{entry.title || 'CLI code'}</b>
+                    <span>{entry.author || 'anonymous'} | {entry.updatedAt || entry.createdAt}</span>
+                  </div>
+                  <div className="clicons-entry-actions">
+                    <button onClick={() => edit(entry)} disabled={busy}>{L('Editar', 'Edit')}</button>
+                    <button onClick={() => hide(entry)} disabled={busy}>{L('Ocultar', 'Hide')}</button>
+                    {isOwner && <button onClick={() => purge(entry)} disabled={busy}>{L('Eliminar total', 'Purge')}</button>}
+                  </div>
+                </header>
+                <pre>{entry.text}</pre>
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>
@@ -7553,6 +7695,7 @@ const App = () => {
   const topNavRef = useRef(null);
   const [activeMenu, setActiveMenu] = useState(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sharedCliOpen, setSharedCliOpen] = useState(false);
   const [dbOpen, setDbOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [textOpen, setTextOpen] = useState(false);
@@ -8791,6 +8934,7 @@ const App = () => {
     <>
       <Tweaks tweaks={tweaks} setTweak={setTweak} />
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} t={t} />
+      <SharedCliConsoleDialog open={sharedCliOpen} onClose={() => setSharedCliOpen(false)} notify={notify} language={language} />
       <PlanLicenseDialog open={planOpen} onClose={() => setPlanOpen(false)} license={planLicense} onActivate={activatePlan} onReset={resetPlan} language={language} initialPlan={planFocus} />
       <DatabaseDialog open={dbOpen} onClose={() => setDbOpen(false)} rows={copyDb} query={dbQuery} setQuery={setDbQuery} onExport={exportDatabase} onClear={clearDatabase} onDelete={deleteDatabaseRow} onCopyAgain={copyDatabaseRow} t={t} language={language} />
       <QrVaultDialog open={qrOpen} onClose={() => setQrOpen(false)} rows={copyDb} t={t} language={language} />
@@ -8856,6 +9000,9 @@ const App = () => {
             <MenuButton label="TOKENIZATION STUDIO" icon={TOP_MENU_ICONS.tokenizationStudio} iconOnly items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
           </nav>
           <div className="tb-right">
+            <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
+              <span dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
+            </button>
             <button className="tb-plan" onClick={openPlans} title="Plans & Licensing">
               <span>{activePlan.name}</span>
               <b>{activePlan.maxBatch.toLocaleString()}</b>
@@ -9010,6 +9157,7 @@ const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
+const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
