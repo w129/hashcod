@@ -2242,7 +2242,7 @@ const AuthGate = ({ children }) => {
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: false, user: data.user });
     } catch (err) {
-      setError(mode === 'request' ? 'Solicitud invalida. Usa email real y clave fuerte de 12+ con mayuscula, numero y simbolo.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
+      setError(mode === 'request' ? 'Solicitud invalida. Usa un email real y escribe la clave que quieras usar.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
     }
   };
   return (

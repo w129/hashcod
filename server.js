@@ -302,7 +302,7 @@ async function handleAuth(req, res) {
     try {
       const body = await readJsonBody(req);
       const email = safeText(body.email, 180).toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !strongPassword(body.password)) {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !String(body.password || '').trim()) {
         send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_request' }));
         return;
       }
