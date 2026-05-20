@@ -3,6 +3,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const PORT = Number(process.env.PORT || 2340);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -11,9 +12,11 @@ const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data')
 const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
+const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
 const rateBuckets = new Map();
+const sessions = new Map();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -135,6 +138,236 @@ function safePublicText(value, max = 500) {
   return safeText(redactSecrets(value), max);
 }
 
+function b64url(buf) {
+  return Buffer.from(buf).toString('base64url');
+}
+
+function authSecretKey() {
+  const secret = process.env.HASHCOD_SECRET || 'hashcod-dev-secret-change-me-before-production';
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+function encryptJson(data) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', authSecretKey(), iv);
+  const plain = Buffer.from(JSON.stringify(data), 'utf8');
+  const enc = Buffer.concat([cipher.update(plain), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return JSON.stringify({ v: 1, alg: 'AES-256-GCM', iv: b64url(iv), tag: b64url(tag), data: b64url(enc) }, null, 2);
+}
+
+function decryptJson(raw, fallback) {
+  try {
+    const box = JSON.parse(raw);
+    if (!box || box.alg !== 'AES-256-GCM') return fallback;
+    const decipher = crypto.createDecipheriv('aes-256-gcm', authSecretKey(), Buffer.from(box.iv, 'base64url'));
+    decipher.setAuthTag(Buffer.from(box.tag, 'base64url'));
+    const out = Buffer.concat([decipher.update(Buffer.from(box.data, 'base64url')), decipher.final()]);
+    return JSON.parse(out.toString('utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function readAuthDb() {
+  ensureDataDir();
+  if (!fs.existsSync(AUTH_DB_FILE)) return { users: [] };
+  return decryptJson(fs.readFileSync(AUTH_DB_FILE, 'utf8'), { users: [] });
+}
+
+function writeAuthDb(db) {
+  ensureDataDir();
+  fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [] }));
+}
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(18);
+  const hash = crypto.pbkdf2Sync(String(password), salt, 210000, 32, 'sha256');
+  return `pbkdf2-sha256$210000$${b64url(salt)}$${b64url(hash)}`;
+}
+
+function makeRecoveryCode() {
+  return `HC-REC-${b64url(crypto.randomBytes(18)).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)}`;
+}
+
+function verifyPassword(password, stored) {
+  const parts = String(stored || '').split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2-sha256') return false;
+  const iter = Number(parts[1]);
+  const salt = Buffer.from(parts[2], 'base64url');
+  const expected = Buffer.from(parts[3], 'base64url');
+  const actual = crypto.pbkdf2Sync(String(password), salt, iter, expected.length, 'sha256');
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function strongPassword(password) {
+  const p = String(password || '');
+  return p.length >= 12 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+}
+
+function publicUser(user) {
+  if (!user) return null;
+  return { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt };
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(String(req.headers.cookie || '').split(';').map(v => v.trim()).filter(Boolean).map(v => {
+    const idx = v.indexOf('=');
+    return idx === -1 ? [v, ''] : [decodeURIComponent(v.slice(0, idx)), decodeURIComponent(v.slice(idx + 1))];
+  }));
+}
+
+function cookieOptions(req, maxAge = 60 * 60 * 12) {
+  const secure = process.env.NODE_ENV === 'production' || String(req.headers['x-forwarded-proto'] || '').includes('https');
+  return `Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
+}
+
+function makeSession(req, user) {
+  const sid = b64url(crypto.randomBytes(32));
+  const csrf = b64url(crypto.randomBytes(24));
+  sessions.set(sid, { userId: user.id, csrf, expiresAt: Date.now() + 1000 * 60 * 60 * 12 });
+  return { sid, csrf };
+}
+
+function getSession(req) {
+  const sid = parseCookies(req).hashcod_session;
+  const session = sid && sessions.get(sid);
+  if (!session || session.expiresAt < Date.now()) {
+    if (sid) sessions.delete(sid);
+    return null;
+  }
+  const db = readAuthDb();
+  const user = db.users.find(u => u.id === session.userId && u.status !== 'DISABLED');
+  return user ? { sid, session, user } : null;
+}
+
+function roleRank(role) {
+  return { viewer: 1, editor: 2, admin: 3 }[role] || 0;
+}
+
+function requireAuth(req, res, minRole = 'viewer') {
+  const auth = getSession(req);
+  if (!auth) {
+    send(res, 401, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'auth_required' }));
+    return null;
+  }
+  if (roleRank(auth.user.role) < roleRank(minRole)) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'insufficient_role' }));
+    return null;
+  }
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    const csrf = String(req.headers['x-csrf-token'] || '');
+    if (!csrf || csrf !== auth.session.csrf) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'csrf_required' }));
+      return null;
+    }
+  }
+  return auth;
+}
+
+async function handleAuth(req, res) {
+  const route = (req.url || '').split('?')[0];
+  const db = readAuthDb();
+  if (route === '/api/auth/me' && req.method === 'GET') {
+    const auth = getSession(req);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || null }));
+    return;
+  }
+  if (route === '/api/auth/register' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      if (db.users.length > 0) {
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'setup_completed' }));
+        return;
+      }
+      const email = safeText(body.email, 180).toLowerCase();
+      const name = safeText(body.name, 80) || 'Admin';
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !strongPassword(body.password)) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'weak_registration' }));
+        return;
+      }
+      const recoveryCode = makeRecoveryCode();
+      const user = { id: `usr_${Date.now().toString(36)}`, email, name, role: 'admin', passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
+      writeAuthDb({ users: [user] });
+      const session = makeSession(req, user);
+      audit('auth.register_admin', { ip: clientIp(req), userId: user.id });
+      send(res, 201, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf, recoveryCode }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/auth/login' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const email = safeText(body.email, 180).toLowerCase();
+      const user = db.users.find(u => u.email === email && u.status !== 'DISABLED');
+      if (!user || !verifyPassword(body.password, user.passwordHash)) {
+        audit('auth.login_failed', { ip: clientIp(req), email });
+        send(res, 401, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_credentials' }));
+        return;
+      }
+      const session = makeSession(req, user);
+      audit('auth.login', { ip: clientIp(req), userId: user.id });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/auth/logout' && req.method === 'POST') {
+    const auth = getSession(req);
+    if (auth) sessions.delete(auth.sid);
+    send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
+    return;
+  }
+  if (route === '/api/auth/recover' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const email = safeText(body.email, 180).toLowerCase();
+      const user = db.users.find(u => u.email === email && u.status !== 'DISABLED');
+      if (!user || !user.recoveryHash || !verifyPassword(body.recoveryCode, user.recoveryHash) || !strongPassword(body.password)) {
+        audit('auth.recover_failed', { ip: clientIp(req), email });
+        send(res, 401, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_recovery' }));
+        return;
+      }
+      const newRecoveryCode = makeRecoveryCode();
+      user.passwordHash = hashPassword(body.password);
+      user.recoveryHash = hashPassword(newRecoveryCode);
+      user.updatedAt = new Date().toISOString();
+      writeAuthDb(db);
+      audit('auth.recover', { ip: clientIp(req), userId: user.id });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, recoveryCode: newRecoveryCode }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/auth/users' && req.method === 'POST') {
+    const auth = requireAuth(req, res, 'admin');
+    if (!auth) return;
+    try {
+      const body = await readJsonBody(req);
+      const email = safeText(body.email, 180).toLowerCase();
+      const role = ['viewer', 'editor', 'admin'].includes(body.role) ? body.role : 'viewer';
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !strongPassword(body.password) || db.users.some(u => u.email === email)) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_user' }));
+        return;
+      }
+      const recoveryCode = makeRecoveryCode();
+      const user = { id: `usr_${Date.now().toString(36)}`, email, name: safeText(body.name, 80) || email, role, passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
+      db.users.push(user);
+      writeAuthDb(db);
+      audit('auth.user_create', { ip: clientIp(req), actor: auth.user.id, userId: user.id, role });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'auth_route_not_found' }));
+}
+
 function readAssistRequests() {
   try {
     ensureDataDir();
@@ -168,6 +401,8 @@ function writeCliConsole(rows) {
 }
 
 async function handleAssistRequests(req, res) {
+  const auth = requireAuth(req, res, req.method === 'GET' ? 'viewer' : req.method === 'POST' ? 'editor' : 'admin');
+  if (!auth) return;
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   if (req.method === 'GET') {
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, requests: readAssistRequests() }, null, 2));
@@ -195,7 +430,7 @@ async function handleAssistRequests(req, res) {
       }
       const rows = [row, ...readAssistRequests()].slice(0, 500);
       writeAssistRequests(rows);
-      audit('assist.create', { ip: clientIp(req), id: row.id });
+      audit('assist.create', { ip: clientIp(req), actor: auth.user.id, id: row.id });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: row }, null, 2));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -207,7 +442,7 @@ async function handleAssistRequests(req, res) {
     const before = readAssistRequests();
     const rows = before.filter(row => row.id !== id);
     writeAssistRequests(rows);
-    audit('assist.delete', { ip: clientIp(req), id, deleted: before.length - rows.length });
+    audit('assist.delete', { ip: clientIp(req), actor: auth.user.id, id, deleted: before.length - rows.length });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: before.length - rows.length }));
     return;
   }
@@ -215,6 +450,8 @@ async function handleAssistRequests(req, res) {
 }
 
 async function handleCliConsole(req, res) {
+  const auth = requireAuth(req, res, req.method === 'GET' ? 'viewer' : 'editor');
+  if (!auth) return;
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   if (req.method === 'GET') {
     const ownerKey = safeText(url.searchParams.get('ownerKey'), 120);
@@ -239,6 +476,7 @@ async function handleCliConsole(req, res) {
         title: safePublicText(body.title, 120) || 'CLI note',
         text,
         ownerKey,
+        ownerUserId: auth.user.id,
         author: safeText(body.author, 80) || 'anonymous',
         status: 'ACTIVE',
         createdAt: new Date().toISOString(),
@@ -246,7 +484,7 @@ async function handleCliConsole(req, res) {
       };
       const rows = [row, ...readCliConsole()].slice(0, 1000);
       writeCliConsole(rows);
-      audit('cli.create', { ip: clientIp(req), id: row.id });
+      audit('cli.create', { ip: clientIp(req), actor: auth.user.id, id: row.id });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, entry: row }, null, 2));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -273,7 +511,7 @@ async function handleCliConsole(req, res) {
         return updated;
       });
       writeCliConsole(next);
-      if (updated) audit('cli.update', { ip: clientIp(req), id });
+      if (updated) audit('cli.update', { ip: clientIp(req), actor: auth.user.id, id });
       send(res, updated ? 200 : 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: !!updated, entry: updated }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -291,18 +529,18 @@ async function handleCliConsole(req, res) {
       return;
     }
     if (permanent) {
-      if (!ownerKey || target.ownerKey !== ownerKey) {
+      if (auth.user.role !== 'admin' && target.ownerUserId !== auth.user.id && (!ownerKey || target.ownerKey !== ownerKey)) {
         send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'creator_only' }));
         return;
       }
       writeCliConsole(rows.filter(row => row.id !== id));
-      audit('cli.purge', { ip: clientIp(req), id });
+      audit('cli.purge', { ip: clientIp(req), actor: auth.user.id, id });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, purged: 1 }));
       return;
     }
     const next = rows.map(row => row.id === id ? { ...row, status: 'HIDDEN', updatedAt: new Date().toISOString() } : row);
     writeCliConsole(next);
-    audit('cli.hide', { ip: clientIp(req), id });
+    audit('cli.hide', { ip: clientIp(req), actor: auth.user.id, id });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, hidden: 1 }));
     return;
   }
@@ -350,6 +588,11 @@ function safePath(urlPath) {
 
 const server = http.createServer((req, res) => {
   if (!rateLimit(req, res)) return;
+
+  if ((req.url || '').split('?')[0].startsWith('/api/auth/')) {
+    handleAuth(req, res);
+    return;
+  }
 
   if ((req.url || '').split('?')[0] === '/api/assist-requests') {
     handleAssistRequests(req, res);

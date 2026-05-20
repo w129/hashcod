@@ -928,6 +928,14 @@ const getCliOwnerKey = () => {
   return key;
 };
 
+const authFetch = (url, options = {}) => {
+  const headers = { ...(options.headers || {}) };
+  if (window.HASHCOD_CSRF && !['GET', 'HEAD'].includes(String(options.method || 'GET').toUpperCase())) {
+    headers['X-CSRF-Token'] = window.HASHCOD_CSRF;
+  }
+  return fetch(url, { ...options, headers });
+};
+
 const digestHex = async (value, algo = 'SHA-256') => {
   const data = new TextEncoder().encode(String(value || ''));
   const buf = await crypto.subtle.digest(algo, data);
@@ -2012,6 +2020,125 @@ const HelpDialog = ({ open, onClose, t }) => {
   );
 };
 
+const AuthUsersDialog = ({ open, onClose }) => {
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer' });
+  const [status, setStatus] = useState('');
+  if (!open) return null;
+  const submit = async (e) => {
+    e.preventDefault();
+    setStatus('');
+    try {
+      const res = await authFetch('/api/auth/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'failed');
+      setForm({ name: '', email: '', password: '', role: 'viewer' });
+      setStatus(`Usuario creado: ${data.user.email} (${data.user.role})`);
+    } catch {
+      setStatus('No se pudo crear. Usa password fuerte y email no repetido.');
+    }
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg authusersdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>Usuarios y roles</h2>
+            <p>Crea cuentas reales con rol viewer, editor o admin.</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <form className="authusers-form" onSubmit={submit}>
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />
+          <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
+          <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
+            <option value="viewer">viewer</option>
+            <option value="editor">editor</option>
+            <option value="admin">admin</option>
+          </select>
+          <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Strong password" />
+          <button>Create user</button>
+          {status && <em>{status}</em>}
+        </form>
+      </section>
+    </div>
+  );
+};
+
+const AuthGate = ({ children }) => {
+  const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', email: '', password: '', recoveryCode: '' });
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [usersOpen, setUsersOpen] = useState(false);
+  const refresh = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      window.HASHCOD_CSRF = data.csrf || '';
+      setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
+      if (data.setupRequired) setMode('register');
+    } catch {
+      setAuth({ loading: false, setupRequired: false, user: null });
+      setError('No se pudo conectar con autenticacion.');
+    }
+  };
+  useEffect(() => { refresh(); }, []);
+  if (auth.loading) return <div className="authgate"><div className="authbox"><h1>Hashcod</h1><p>Loading secure session...</p></div></div>;
+  if (auth.user) {
+    return (
+      <>
+        <div className="auth-session">
+          <span>{auth.user.email} · {auth.user.role}</span>
+          {auth.user.role === 'admin' && <button onClick={() => setUsersOpen(true)}>Users</button>}
+          <button onClick={async () => { await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); }}>Logout</button>
+        </div>
+        <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
+        {children}
+      </>
+    );
+  }
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+    const route = mode === 'register' ? '/api/auth/register' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/login';
+    try {
+      const res = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'auth_failed');
+      if (mode === 'recover') {
+        setMode('login');
+        setNotice(`Password actualizado. Nuevo recovery code: ${data.recoveryCode}`);
+        return;
+      }
+      window.HASHCOD_CSRF = data.csrf || '';
+      if (data.recoveryCode) setNotice(`Recovery code: ${data.recoveryCode}`);
+      setAuth({ loading: false, setupRequired: false, user: data.user });
+    } catch (err) {
+      setError(mode === 'register' ? 'Registro invalido. Usa email real y password fuerte de 12+ con mayuscula, numero y simbolo.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
+    }
+  };
+  return (
+    <div className="authgate">
+      <form className="authbox" onSubmit={submit}>
+        <div className="authmark" dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
+        <span>HASHCOD SECURE ACCESS</span>
+        <h1>{mode === 'register' ? 'Create Admin' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
+        <p>{mode === 'register' ? 'Primer usuario: se crea como admin y activa la plataforma.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contraseña.' : 'Sesion segura con cookie HTTP-only, CSRF y roles.'}</p>
+        {mode === 'register' && <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />}
+        <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
+        {mode === 'recover' && <input value={form.recoveryCode} onChange={e => setForm({ ...form, recoveryCode: e.target.value })} placeholder="Recovery code" />}
+        <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password" />
+        {error && <em>{error}</em>}
+        {notice && <em className="ok">{notice}</em>}
+        <button>{mode === 'register' ? 'Create secure admin' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
+        {!auth.setupRequired && <button type="button" className="ghost" onClick={() => setMode(mode === 'recover' ? 'login' : 'recover')}>{mode === 'recover' ? 'Back to login' : 'Recover password'}</button>}
+      </form>
+    </div>
+  );
+};
+
 const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const [entries, setEntries] = useState([]);
@@ -2023,7 +2150,7 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
   const ownerKey = useMemo(() => getCliOwnerKey(), []);
   const loadEntries = async () => {
     try {
-      const res = await fetch(`/api/cli-console?ownerKey=${encodeURIComponent(ownerKey)}`);
+      const res = await authFetch(`/api/cli-console?ownerKey=${encodeURIComponent(ownerKey)}`);
       const data = await res.json();
       setEntries(Array.isArray(data.entries) ? data.entries : []);
     } catch {
@@ -2048,7 +2175,7 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
     setBusy(true);
     try {
       const payload = { id: editingId, title: title || 'CLI code', text, author, editor: author, ownerKey };
-      const res = await fetch('/api/cli-console', {
+      const res = await authFetch('/api/cli-console', {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -2072,7 +2199,7 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
   const hide = async (entry) => {
     setBusy(true);
     try {
-      await fetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
+      await authFetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
       await loadEntries();
       notify?.(L('Entrada ocultada, no borrada por completo', 'Entry hidden, not permanently deleted'));
     } catch {
@@ -2084,7 +2211,7 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
   const purge = async (entry) => {
     setBusy(true);
     try {
-      const res = await fetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}&permanent=1&ownerKey=${encodeURIComponent(ownerKey)}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/cli-console?id=${encodeURIComponent(entry.id)}&permanent=1&ownerKey=${encodeURIComponent(ownerKey)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('creator only');
       await loadEntries();
       notify?.(L('Entrada eliminada por completo', 'Entry permanently deleted'));
@@ -2154,7 +2281,7 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
   const [busy, setBusy] = useState(false);
   const loadRequests = async () => {
     try {
-      const res = await fetch('/api/assist-requests');
+      const res = await authFetch('/api/assist-requests');
       const data = await res.json();
       setRequests(Array.isArray(data.requests) ? data.requests : []);
     } catch {
@@ -2175,7 +2302,7 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
     try {
       const { type } = findTypeMeta(row?.type);
       const codeHash = (await digestHex(String(row?.value || ''))).toUpperCase();
-      const res = await fetch('/api/assist-requests', {
+      const res = await authFetch('/api/assist-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2204,7 +2331,7 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
   const remove = async (id) => {
     setBusy(true);
     try {
-      await fetch(`/api/assist-requests?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await authFetch(`/api/assist-requests?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       await loadRequests();
       notify?.(L('Solicitud eliminada', 'Request deleted'));
     } catch {
@@ -9171,4 +9298,5 @@ const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hi
 const DID_BALLOON_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c2.4 0 4.4 1.8 4.6 4.2.1 1.8-.8 3.4-2.2 4.3L8.8 14H7.2l-1.6-4A4.6 4.6 0 0 1 8 1.5Zm0 1.4c-1.8 0-3.2 1.4-3.2 3.1 0 1.7 1.4 3.1 3.2 3.1s3.2-1.4 3.2-3.1C11.2 4.3 9.8 2.9 8 2.9Zm0 .8c.9.9 1.4 1.7 1.4 2.4 0 .8-.6 1.4-1.4 1.4S6.6 6.9 6.6 6.1c0-.7.5-1.5 1.4-2.4Z"/></svg>`;
 const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 2.2 4.2v7.6L8 15l5.8-3.2V4.2L8 1Zm0 1.8 3.7 2L8 6.9 4.3 4.8 8 2.8ZM3.7 6.1l3.5 2v4.8l-3.5-2V6.1Zm8.6 0v4.8l-3.5 2V8.1l3.5-2Z"/></svg>`;
 
-window.App = App;
+const Root = () => <AuthGate><App /></AuthGate>;
+window.App = Root;
