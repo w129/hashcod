@@ -902,6 +902,10 @@ const AdaptiveToolCard = ({ toolKey, title, language, compact = false }) => {
 
 const triggerDownload = (filename, text, mime = 'text/markdown;charset=utf-8') => {
   const blob = new Blob([text], { type: mime });
+  triggerBlobDownload(filename, blob);
+};
+
+const triggerBlobDownload = (filename, blob) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1283,6 +1287,123 @@ const charProfile = (value = '') => {
   ].join('');
 };
 
+const makeIsoDirectoryRecord = (extent, size, flags, name, date = new Date()) => {
+  const nameBytes = typeof name === 'number' ? new Uint8Array([name]) : new TextEncoder().encode(String(name));
+  const len = 33 + nameBytes.length + (nameBytes.length % 2 === 0 ? 1 : 0);
+  const rec = new Uint8Array(len);
+  const write32Both = (offset, value) => {
+    rec[offset] = value & 255; rec[offset + 1] = (value >>> 8) & 255; rec[offset + 2] = (value >>> 16) & 255; rec[offset + 3] = (value >>> 24) & 255;
+    rec[offset + 4] = (value >>> 24) & 255; rec[offset + 5] = (value >>> 16) & 255; rec[offset + 6] = (value >>> 8) & 255; rec[offset + 7] = value & 255;
+  };
+  const write16Both = (offset, value) => {
+    rec[offset] = value & 255; rec[offset + 1] = (value >>> 8) & 255;
+    rec[offset + 2] = (value >>> 8) & 255; rec[offset + 3] = value & 255;
+  };
+  rec[0] = len;
+  write32Both(2, extent);
+  write32Both(10, size);
+  rec[18] = Math.max(0, Math.min(255, date.getFullYear() - 1900));
+  rec[19] = date.getMonth() + 1;
+  rec[20] = date.getDate();
+  rec[21] = date.getHours();
+  rec[22] = date.getMinutes();
+  rec[23] = date.getSeconds();
+  rec[24] = 0;
+  rec[25] = flags;
+  rec[26] = 0;
+  rec[27] = 0;
+  write16Both(28, 1);
+  rec[32] = nameBytes.length;
+  rec.set(nameBytes, 33);
+  return rec;
+};
+
+const rowToIsoImage = (row, language = 'en') => {
+  const SECTOR = 2048;
+  const now = new Date();
+  const readme = rowToTxt(row, language) + '\n\nISO_EXPORT=Hashcod generated-code image\n';
+  const fileBytes = new TextEncoder().encode(readme);
+  const rootSector = 20;
+  const fileSector = 21;
+  const totalSectors = fileSector + Math.ceil(fileBytes.length / SECTOR);
+  const iso = new Uint8Array(totalSectors * SECTOR);
+  const writeAscii = (offset, value, length, pad = ' ') => {
+    const text = String(value || '').slice(0, length);
+    for (let i = 0; i < length; i++) iso[offset + i] = i < text.length ? text.charCodeAt(i) : pad.charCodeAt(0);
+  };
+  const write16Both = (offset, value) => {
+    iso[offset] = value & 255; iso[offset + 1] = (value >>> 8) & 255;
+    iso[offset + 2] = (value >>> 8) & 255; iso[offset + 3] = value & 255;
+  };
+  const write32Both = (offset, value) => {
+    iso[offset] = value & 255; iso[offset + 1] = (value >>> 8) & 255; iso[offset + 2] = (value >>> 16) & 255; iso[offset + 3] = (value >>> 24) & 255;
+    iso[offset + 4] = (value >>> 24) & 255; iso[offset + 5] = (value >>> 16) & 255; iso[offset + 6] = (value >>> 8) & 255; iso[offset + 7] = value & 255;
+  };
+  const write32LE = (offset, value) => {
+    iso[offset] = value & 255; iso[offset + 1] = (value >>> 8) & 255; iso[offset + 2] = (value >>> 16) & 255; iso[offset + 3] = (value >>> 24) & 255;
+  };
+  const write32BE = (offset, value) => {
+    iso[offset] = (value >>> 24) & 255; iso[offset + 1] = (value >>> 16) & 255; iso[offset + 2] = (value >>> 8) & 255; iso[offset + 3] = value & 255;
+  };
+  const write16LE = (offset, value) => {
+    iso[offset] = value & 255; iso[offset + 1] = (value >>> 8) & 255;
+  };
+  const write16BE = (offset, value) => {
+    iso[offset] = (value >>> 8) & 255; iso[offset + 1] = value & 255;
+  };
+  const pvd = 16 * SECTOR;
+  iso[pvd] = 1;
+  writeAscii(pvd + 1, 'CD001', 5);
+  iso[pvd + 6] = 1;
+  writeAscii(pvd + 8, 'HASHCOD', 32);
+  writeAscii(pvd + 40, `HASHCOD_${String(row.idx || 0).padStart(3, '0')}`, 32);
+  write32Both(pvd + 80, totalSectors);
+  write16Both(pvd + 120, 1);
+  write16Both(pvd + 124, 1);
+  write16Both(pvd + 128, SECTOR);
+  write32Both(pvd + 132, 10);
+  write32LE(pvd + 140, 18);
+  write32BE(pvd + 148, 19);
+  const rootRecord = makeIsoDirectoryRecord(rootSector, SECTOR, 2, 0, now);
+  iso.set(rootRecord, pvd + 156);
+  writeAscii(pvd + 318, 'HASHCOD GENERATED CODE ISO', 128);
+  writeAscii(pvd + 446, 'HASHCOD', 128);
+  writeAscii(pvd + 574, 'HASHCOD BROWSER ISO BUILDER', 128);
+  writeAscii(pvd + 702, 'README.TXT', 128);
+  const dt = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}${String(now.getUTCHours()).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(2, '0')}${String(now.getUTCSeconds()).padStart(2, '0')}00`;
+  writeAscii(pvd + 813, dt, 16, '0');
+  writeAscii(pvd + 830, dt, 16, '0');
+  iso[pvd + 881] = 1;
+  const term = 17 * SECTOR;
+  iso[term] = 255;
+  writeAscii(term + 1, 'CD001', 5);
+  iso[term + 6] = 1;
+  const pathLE = 18 * SECTOR;
+  iso[pathLE] = 1;
+  iso[pathLE + 1] = 0;
+  write32LE(pathLE + 2, rootSector);
+  write16LE(pathLE + 6, 1);
+  iso[pathLE + 8] = 0;
+  iso[pathLE + 9] = 0;
+  const pathBE = 19 * SECTOR;
+  iso[pathBE] = 1;
+  iso[pathBE + 1] = 0;
+  write32BE(pathBE + 2, rootSector);
+  write16BE(pathBE + 6, 1);
+  iso[pathBE + 8] = 0;
+  iso[pathBE + 9] = 0;
+  const rootOffset = rootSector * SECTOR;
+  let cursor = rootOffset;
+  const records = [
+    makeIsoDirectoryRecord(rootSector, SECTOR, 2, 0, now),
+    makeIsoDirectoryRecord(rootSector, SECTOR, 2, 1, now),
+    makeIsoDirectoryRecord(fileSector, fileBytes.length, 0, 'README.TXT;1', now),
+  ];
+  records.forEach((rec) => { iso.set(rec, cursor); cursor += rec.length; });
+  iso.set(fileBytes, fileSector * SECTOR);
+  return iso;
+};
+
 const sharedEdgeLength = (a = '', b = '', fromEnd = false, cap = 8) => {
   const left = String(a || '');
   const right = String(b || '');
@@ -1340,7 +1461,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const story = useMemo(() => storyForRow(row, language), [row, language]);
@@ -1389,6 +1510,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onTxtDownload?.(row);
   };
+  const downloadIso = (e) => {
+    e.stopPropagation();
+    onIsoDownload?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1429,6 +1554,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-txt" onClick={downloadTxt} title={language === 'es' ? 'Descargar TXT del code' : language === 'ko' ? '코드 TXT 다운로드' : language === 'zh' ? '下载代码 TXT' : 'Download code TXT'}>
           <span dangerouslySetInnerHTML={{__html: TXT_ICON}} />
+        </button>
+        <button className="oc-act oc-act-iso" onClick={downloadIso} title={language === 'es' ? 'Descargar ISO del code' : 'Download code ISO'}>
+          <span dangerouslySetInnerHTML={{__html: ISO_HOP_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -7204,6 +7332,19 @@ const App = () => {
     notify(language === 'es' ? 'TXT descargado' : language === 'ko' ? 'TXT 다운로드됨' : language === 'zh' ? 'TXT 已下载' : 'TXT downloaded');
   };
 
+  const downloadRowIso = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar ISO requiere Starter o superior.' : 'ISO download requires Starter or higher.')) return;
+    try {
+      const iso = rowToIsoImage(row, language);
+      const name = `Hashcod-ISO-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.iso`;
+      triggerBlobDownload(name, new Blob([iso], { type: 'application/x-iso9660-image' }));
+      notify(language === 'es' ? 'ISO descargado' : 'ISO downloaded');
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo descargar el ISO' : 'Could not download ISO');
+    }
+  };
+
   const qrCanvasFromNode = async (node) => {
     if (!node) return null;
     if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
@@ -8234,7 +8375,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8309,6 +8450,7 @@ const PELICAN_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidde
 const LOGBOOK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3 2.2c0-.7.5-1.2 1.2-1.2h7.7c.6 0 1.1.5 1.1 1.1v11.7c0 .7-.5 1.2-1.2 1.2H4.1C3.5 15 3 14.5 3 13.8V2.2Zm1.4.2v10.4c.2-.1.4-.2.7-.2h6.5V2.4H4.4Zm.7 11.2c-.4 0-.7.2-.7.5s.3.5.7.5h6.5v-1H5.1Z"/><path fill="currentColor" d="M5.6 4.2h4.7v1H5.6Zm0 2h4.7v1H5.6Zm0 2h3.4v1H5.6Z" opacity=".75"/></svg>`;
 const JSON_BRACKETS_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.1 2.2c-1.4 0-2.2.8-2.2 2.2v1.3c0 .8-.3 1.2-1 1.4v1.8c.7.2 1 .6 1 1.4v1.3c0 1.4.8 2.2 2.2 2.2h1.1v-1.8h-.8c-.5 0-.7-.2-.7-.7V10c0-1-.4-1.7-1.1-2 .7-.3 1.1-1 1.1-2V4.7c0-.5.2-.7.7-.7h.8V2.2H5.1Zm5.8 0H9.8V4h.8c.5 0 .7.2.7.7V6c0 1 .4 1.7 1.1 2-.7.3-1.1 1-1.1 2v1.3c0 .5-.2.7-.7.7h-.8v1.8h1.1c1.4 0 2.2-.8 2.2-2.2v-1.3c0-.8.3-1.2 1-1.4V7.1c-.7-.2-1-.6-1-1.4V4.4c0-1.4-.8-2.2-2.2-2.2Z"/></svg>`;
 const TXT_ICON = `<svg width="16" height="12" viewBox="0 0 32 16" aria-hidden="true"><path fill="currentColor" d="M2 3h28v2H18v8h-2V5H2V3Zm1 3h10v2H9v5H7V8H3V6Zm17 0h2.7l1.8 2.4L26.3 6H29l-3.1 4 3.2 4h-2.8l-1.9-2.5L22.5 14H20l3.1-4L20 6Z"/></svg>`;
+const ISO_HOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.82 16.12c1.69.6 3.91.79 5.18.85.55.03 1-.42.97-.97-.06-1.27-.26-3.5-.85-5.18"/><path d="M11.5 6.5c1.64 0 5-.38 6.71-1.07.52-.2.55-.82.12-1.17A10 10 0 0 0 4.26 18.33c.35.43.96.4 1.17-.12.69-1.71 1.07-5.07 1.07-6.71 1.34.45 3.1.9 4.88.62a.88.88 0 0 0 .73-.74c.3-2.14-.15-3.5-.61-4.88"/><path d="M15.62 16.95c.2.85.62 2.76.5 4.28a.77.77 0 0 1-.9.7 16.64 16.64 0 0 1-4.08-1.36"/><path d="M16.13 21.05c1.65.63 3.68.84 4.87.91a.9.9 0 0 0 .96-.96 17.68 17.68 0 0 0-.9-4.87"/><path d="M16.94 15.62c.86.2 2.77.62 4.29.5a.77.77 0 0 0 .7-.9 16.64 16.64 0 0 0-1.36-4.08"/><path d="M17.99 5.52a20.82 20.82 0 0 1 3.15 4.5.8.8 0 0 1-.68 1.13c-2.33.2-5.3-.32-8.27-1.57"/><path d="M4.93 4.93 3 3a.7.7 0 0 1 0-1"/><path d="M9.58 12.18c1.24 2.98 1.77 5.95 1.57 8.28a.8.8 0 0 1-1.13.68 20.82 20.82 0 0 1-4.5-3.15"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;

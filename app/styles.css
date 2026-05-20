@@ -577,6 +577,8 @@ kbd {
 .oc-act-pelican:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-logbook { color: #646464; }
 .oc-act-logbook:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-iso { color: #646464; }
+.oc-act-iso:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 .oc-story {
   max-height: 0;
