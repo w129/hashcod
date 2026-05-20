@@ -2202,8 +2202,8 @@ const AuthUsersDialog = ({ open, onClose }) => {
         </div>
         {!unlocked ? (
           <form className="authusers-form" onSubmit={unlock}>
-            <span className="admin-key-note">Admin panel key required</span>
-            <input type="password" value={panelKey} onChange={e => setPanelKey(e.target.value)} placeholder="Admin panel key" />
+            <span className="admin-key-note">CAST-128 admin key required</span>
+            <input type="password" value={panelKey} onChange={e => setPanelKey(e.target.value)} placeholder="CAST-128 Key + |" />
             <button>Unlock admin panel</button>
             {status && <em>{status}</em>}
           </form>
@@ -2305,12 +2305,14 @@ const AuthUsersDialog = ({ open, onClose }) => {
 
 const AuthGate = ({ children }) => {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
-  const [mode, setMode] = useState('request');
+  const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ email: '', password: '', recoveryCode: '', serial: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [requestInfo, setRequestInfo] = useState(null);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [droneTaps, setDroneTaps] = useState(0);
+  const [loginVisible, setLoginVisible] = useState(() => sessionStorage.getItem('hashcod_cast_login_visible') === '1');
   const applyServerPlan = (user) => {
     if (user?.plan && PLAN_DEFINITIONS[user.plan]) {
       writePlanLicense({ plan: user.plan, activatedAt: new Date().toISOString(), fingerprint: `SERVER-${user.role || 'user'}` });
@@ -2323,7 +2325,7 @@ const AuthGate = ({ children }) => {
       window.HASHCOD_CSRF = data.csrf || '';
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
-      if (!data.user) setMode('request');
+      if (!data.user) setMode('login');
     } catch {
       setAuth({ loading: false, setupRequired: false, user: null });
       setError('No se pudo conectar con autenticacion.');
@@ -2344,13 +2346,23 @@ const AuthGate = ({ children }) => {
       </>
     );
   }
+  const tapDrone = () => {
+    const next = droneTaps + 1;
+    setDroneTaps(next);
+    if (next >= 4) {
+      sessionStorage.setItem('hashcod_cast_login_visible', '1');
+      setLoginVisible(true);
+      setNotice('CAST-128 login ready.');
+    }
+  };
   const submit = async (e) => {
     e.preventDefault();
     setError('');
     setNotice('');
-    const route = mode === 'request' ? '/api/access/request' : mode === 'check' ? '/api/access/check' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/login';
+    const route = mode === 'request' ? '/api/access/request' : mode === 'check' ? '/api/access/check' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/cast-login';
+    const body = mode === 'login' ? { castKey: form.password } : form;
     try {
-      const res = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'auth_failed');
       if (mode === 'request') {
@@ -2383,6 +2395,27 @@ const AuthGate = ({ children }) => {
       setError(mode === 'request' ? 'Solicitud invalida. Usa un email real y escribe la clave que quieras usar.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
     }
   };
+  if (!loginVisible) {
+    return (
+      <div className="authgate">
+        <button className="auth-admin-fab" type="button" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel">
+          <span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} />
+        </button>
+        <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
+        <section className={`dronegate taps-${Math.min(droneTaps, 4)}`}>
+          <button type="button" className="dronegate-icon" onClick={tapDrone} aria-label="Open CAST login">
+            <span dangerouslySetInnerHTML={{__html: DRONE_GATE_ICON}} />
+          </button>
+          <span>HASHCOD DYNAMIC ENTRY</span>
+          <h1>Hashcod</h1>
+          <p>Toca el icono dinamico 4 veces para abrir el CAST-128 login.</p>
+          <div className="dronegate-meter" aria-hidden="true">
+            {[0, 1, 2, 3].map(i => <i key={i} className={i < droneTaps ? 'on' : ''} />)}
+          </div>
+        </section>
+      </div>
+    );
+  }
   return (
     <div className="authgate">
       <button className="auth-admin-fab" type="button" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel">
@@ -2390,21 +2423,19 @@ const AuthGate = ({ children }) => {
       </button>
       <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
       <form className="authbox" onSubmit={submit}>
-        <div className="authmark"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /></div>
+        <div className="authmark"><span dangerouslySetInnerHTML={{__html: DRONE_GATE_ICON}} /></div>
         <span>HASHCOD SECURE ACCESS</span>
-        <h1>{mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
+        <h1>{mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'CAST-128 Login'}</h1>
         <p>{mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y plan.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contraseña.' : 'Sesion segura con cookie HTTP-only, CSRF y roles.'}</p>
+        {mode === 'login' && <p className="auth-cast-note">Acceso directo con CAST-128 Key. Cualquier usuario con el code puede entrar a la plataforma.</p>}
         {requestInfo && <div className="auth-generated"><b>{requestInfo.blowfishId}</b><span>{requestInfo.serial}</span><em>{requestInfo.status}</em></div>}
-        <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
+        {mode !== 'login' && <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />}
         {mode === 'check' && <input value={form.serial} onChange={e => setForm({ ...form, serial: e.target.value })} placeholder="Access request serial" />}
         {mode === 'recover' && <input value={form.recoveryCode} onChange={e => setForm({ ...form, recoveryCode: e.target.value })} placeholder="Recovery code" />}
-        <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password" />
+        <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={mode === 'login' ? 'CAST-128 Key' : 'Password'} />
         {error && <em>{error}</em>}
         {notice && <em className="ok">{notice}</em>}
         <button>{mode === 'request' ? 'Join waitlist' : mode === 'check' ? 'Verify access' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
-        <button type="button" className="ghost" onClick={() => setMode(mode === 'login' ? 'request' : 'login')}>{mode === 'login' ? 'Request access' : 'I already have access'}</button>
-        <button type="button" className="ghost" onClick={() => setMode(mode === 'check' ? 'request' : 'check')}>{mode === 'check' ? 'New request' : 'Check waitlist status'}</button>
-        {!auth.setupRequired && <button type="button" className="ghost" onClick={() => setMode(mode === 'recover' ? 'login' : 'recover')}>{mode === 'recover' ? 'Back to login' : 'Recover password'}</button>}
       </form>
     </div>
   );
@@ -9646,6 +9677,7 @@ const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13
 const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
 const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
+const DRONE_GATE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10 7 7"/><path d="m10 14-3 3"/><path d="m14 10 3-3"/><path d="m14 14 3 3"/><path d="M14.205 4.139a4 4 0 1 1 5.439 5.863"/><path d="M19.637 14a4 4 0 1 1-5.432 5.868"/><path d="M4.367 10a4 4 0 1 1 5.438-5.862"/><path d="M9.795 19.862a4 4 0 1 1-5.429-5.873"/><rect x="10" y="8" width="4" height="8" rx="1"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;

@@ -21,7 +21,8 @@ const rateBuckets = new Map();
 const userBuckets = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
-const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || '1ec68bc0422b5353ae0f975cd2a8fe82deda1559f565d98d44f6e732e63c1cca';
+const CAST128_ACCESS_KEY_HASH = process.env.HASHCOD_CAST128_ACCESS_KEY_HASH || '3faaeec1d952b48018b33f6d6ce3d81e76522438a7735823bf465a5914ebc5e3';
+const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -652,6 +653,41 @@ async function handleAuth(req, res) {
       }
       const session = makeSession(req, user);
       audit('auth.login', { ip: clientIp(req), userId: user.id });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/auth/cast-login' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const keyHash = crypto.createHash('sha256').update(String(body.castKey || '')).digest('hex');
+      const expectedHash = String(CAST128_ACCESS_KEY_HASH || '').trim();
+      if (expectedHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedHash))) {
+        audit('auth.cast_login_failed', { ip: clientIp(req) });
+        send(res, 401, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_cast_key' }));
+        return;
+      }
+      const dbNow = readAuthDb();
+      let user = dbNow.users.find(u => u.id === 'usr_cast_public');
+      if (!user) {
+        user = {
+          id: 'usr_cast_public',
+          email: 'cast-public@hashcod.local',
+          name: 'CAST-128 Public Access',
+          role: 'viewer',
+          plan: 'free',
+          passwordHash: hashPassword(b64url(crypto.randomBytes(18))),
+          recoveryHash: hashPassword(makeRecoveryCode()),
+          createdAt: new Date().toISOString(),
+          status: 'ACTIVE',
+        };
+        dbNow.users.push(user);
+        writeAuthDb(dbNow);
+      }
+      const session = makeSession(req, user);
+      audit('auth.cast_login', { ip: clientIp(req), userId: user.id });
       send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));

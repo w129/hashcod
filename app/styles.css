@@ -269,11 +269,45 @@ kbd {
 .authbox span { color:#777; font: 10px var(--mono); letter-spacing:4px; text-transform:uppercase; }
 .authbox h1 { margin:0; font-family:var(--serif); font-size:54px; line-height:1; font-weight:500; }
 .authbox p { margin:0 0 8px; color:#666; font-size:13px; line-height:1.55; }
+.authbox p.auth-cast-note { margin-top:-8px; color:#111; font-family:var(--mono); font-size:11px; }
 .authbox input { min-height:48px; border:1px solid #111; padding:0 14px; font-family:var(--mono); font-size:14px; }
 .authbox em { color:#8a1111; font-style:normal; font-size:12px; line-height:1.45; }
 .authbox em.ok { color:#11652d; word-break:break-all; }
 .authbox button { min-height:48px; border:1px solid #111; background:#111; color:#fff; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
 .authbox button.ghost { background:#fff; color:#111; }
+.dronegate {
+  width: min(640px, calc(100vw - 42px));
+  border: 1px solid #cfcfca;
+  background: #fff;
+  box-shadow: 18px 18px 0 rgba(0,0,0,.07);
+  padding: 42px 34px;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.dronegate-icon {
+  width: 86px;
+  height: 86px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.dronegate-icon:hover { transform: translateY(-2px); box-shadow: 10px 10px 0 rgba(0,0,0,.08); }
+.dronegate.taps-1 .dronegate-icon { transform: rotate(5deg); }
+.dronegate.taps-2 .dronegate-icon { transform: rotate(-5deg) scale(1.04); }
+.dronegate.taps-3 .dronegate-icon { transform: rotate(0deg) scale(1.08); background:#fff; color:#111; }
+.dronegate-icon span, .dronegate-icon svg { width:42px; height:42px; display:block; }
+.dronegate > span { color:#777; font: 10px var(--mono); letter-spacing:4px; text-transform:uppercase; }
+.dronegate h1 { margin:0; font-family:var(--serif); font-size:54px; line-height:1; font-weight:500; }
+.dronegate p { margin:0; color:#666; font-size:13px; line-height:1.55; max-width:430px; }
+.dronegate-meter { display:flex; gap:8px; margin-top:4px; }
+.dronegate-meter i { width:34px; height:4px; border:1px solid #111; background:#fff; }
+.dronegate-meter i.on { background:#111; }
 .authusersdlg { width:min(680px, calc(100vw - 42px)); }
 .authusers-form { display:grid; gap:10px; padding:18px; background:#fff; }
 .authusers-form input, .authusers-form select {
