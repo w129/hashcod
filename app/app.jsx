@@ -1802,7 +1802,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, onPhonePush, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1882,6 +1882,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onSmsSend?.(row);
   };
+  const pushPhone = (e) => {
+    e.stopPropagation();
+    onPhonePush?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1946,6 +1950,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-sms" onClick={openSms} title={language === 'es' ? 'Enviar code por SMS' : 'Send code by SMS'}>
           <span dangerouslySetInnerHTML={{__html: SMS_TABLE_SPLIT_ICON}} />
+        </button>
+        <button className="oc-act oc-act-phoneos" onClick={pushPhone} title={language === 'es' ? 'Enviar al Phone OS conectado' : 'Send to connected Phone OS'}>
+          <span dangerouslySetInnerHTML={{__html: PHONE_OS_BOOK_UP_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -8309,11 +8316,44 @@ const App = () => {
   }, [visibleCatalog, visibleTypeIds, selectedId]);
 
   const syncCopyDb = useCallback(() => setCopyDb(COPY_DB.list()), []);
+  const pushPhoneNotification = useCallback(async (row, reason = 'manual') => {
+    if (!row?.value) return;
+    try {
+      const { type } = findTypeMeta(row.type);
+      const title = reason === 'saved' ? 'Hashcod code saved' : 'Hashcod code ready';
+      const body = `${String(row.idx || '').padStart(3, '0')} | ${type ? type.label : row.type}\n${window.OCG_GEN.display(row.value, 240)}`;
+      const res = await authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, type: reason, codeType: row.type, codeIndex: row.idx, value: row.value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'phoneos_failed');
+      setToast(language === 'es' ? 'Notificacion enviada al Phone OS' : 'Notification sent to Phone OS');
+    } catch {
+      setToast(language === 'es' ? 'No se pudo notificar al Phone OS' : 'Could not notify Phone OS');
+    }
+  }, [language]);
   const rememberCopied = useCallback((rows, mode = 'single') => {
     const items = Array.isArray(rows) ? rows : [rows];
     if (!items.length) return;
     COPY_DB.addMany(items, mode);
     syncCopyDb();
+    const first = items[0];
+    if (first) {
+      authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Hashcod code saved',
+          body: `${String(first.idx || '').padStart(3, '0')} | ${first.type}\n${window.OCG_GEN.display(first.value, 220)}${items.length > 1 ? `\n+${items.length - 1} more` : ''}`,
+          type: `saved:${mode}`,
+          codeType: first.type,
+          codeIndex: first.idx,
+          value: first.value,
+        }),
+      }).catch(() => {});
+    }
   }, [syncCopyDb]);
 
   // Find selected type
@@ -9622,7 +9662,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -9705,6 +9745,7 @@ const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
 const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
+const PHONE_OS_BOOK_UP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 13V7"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="m9 10 3-3 3 3"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
 const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
 const DRONE_GATE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10 7 7"/><path d="m10 14-3 3"/><path d="m14 10 3-3"/><path d="m14 14 3 3"/><path d="M14.205 4.139a4 4 0 1 1 5.439 5.863"/><path d="M19.637 14a4 4 0 1 1-5.432 5.868"/><path d="M4.367 10a4 4 0 1 1 5.438-5.862"/><path d="M9.795 19.862a4 4 0 1 1-5.429-5.873"/><rect x="10" y="8" width="4" height="8" rx="1"/></svg>`;

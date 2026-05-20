@@ -813,6 +813,8 @@ kbd {
 .oc-act-codedesk:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-sms { color: #646464; }
 .oc-act-sms:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-phoneos { color: #646464; }
+.oc-act-phoneos:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 /* ── Right panel: Tech Info ── */
 .rp {

@@ -893,9 +893,11 @@ function readSmsGatewayDb() {
     return {
       devices: Array.isArray(db.devices) ? db.devices : [],
       messages: Array.isArray(db.messages) ? db.messages : [],
+      phoneDevices: Array.isArray(db.phoneDevices) ? db.phoneDevices : [],
+      notifications: Array.isArray(db.notifications) ? db.notifications : [],
     };
   } catch {
-    return { devices: [], messages: [] };
+    return { devices: [], messages: [], phoneDevices: [], notifications: [] };
   }
 }
 
@@ -904,6 +906,8 @@ function writeSmsGatewayDb(db) {
   fs.writeFileSync(SMS_GATEWAY_FILE, JSON.stringify({
     devices: (db.devices || []).slice(0, 50),
     messages: (db.messages || []).slice(0, 1000),
+    phoneDevices: (db.phoneDevices || []).slice(0, 50),
+    notifications: (db.notifications || []).slice(0, 1500),
   }, null, 2));
   ensureAutomaticBackup('sms-gateway-write');
 }
@@ -934,6 +938,36 @@ function enqueueGatewaySms({ to, text, actor, format, codeType, codeIndex }) {
     updatedAt: new Date().toISOString(),
   };
   db.messages.unshift(row);
+  writeSmsGatewayDb(db);
+  return row;
+}
+
+function verifyPhoneDevice(db, deviceId, deviceSecret) {
+  const device = db.phoneDevices.find(row => row.id === safeText(deviceId, 120) && row.status !== 'DISABLED');
+  if (!device) return null;
+  const secretHash = crypto.createHash('sha256').update(String(deviceSecret || '')).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(secretHash), Buffer.from(device.secretHash))) return null;
+  device.lastSeenAt = new Date().toISOString();
+  device.status = 'ONLINE';
+  return device;
+}
+
+function enqueuePhoneNotification({ title, body, actor, type, codeType, codeIndex, value }) {
+  const db = readSmsGatewayDb();
+  const row = {
+    id: `note_${Date.now().toString(36)}_${b64url(crypto.randomBytes(6))}`,
+    title: safeText(title, 140) || 'Hashcod notification',
+    body: safeText(body, 900),
+    actor: safeText(actor, 120),
+    type: safeText(type, 40) || 'platform',
+    codeType: safeText(codeType, 120),
+    codeIndex: safeText(codeIndex, 20),
+    value: safeText(value, 900),
+    status: 'PENDING',
+    createdAt: new Date().toISOString(),
+    deliveredAt: null,
+  };
+  db.notifications.unshift(row);
   writeSmsGatewayDb(db);
   return row;
 }
@@ -1110,6 +1144,105 @@ async function handleSmsGateway(req, res) {
       return;
     }
     send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'gateway_route_not_found' }));
+  } catch {
+    send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+  }
+}
+
+async function handlePhoneOs(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const action = url.pathname.split('/').pop();
+  if (req.method === 'GET' && action === 'status') {
+    const auth = requireAuth(req, res, 'viewer');
+    if (!auth) return;
+    const db = readSmsGatewayDb();
+    const phoneDevices = db.phoneDevices.map(({ secretHash, ...device }) => device);
+    const notifications = db.notifications.slice(0, 120).map(row => ({ ...row, value: undefined }));
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, phoneDevices, notifications }, null, 2));
+    return;
+  }
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const db = readSmsGatewayDb();
+    if (action === 'register') {
+      const keyHash = crypto.createHash('sha256').update(String(body.pairingKey || '')).digest('hex');
+      const expectedPairHash = String(SMS_GATEWAY_PAIRING_KEY_HASH || '').trim();
+      if (expectedPairHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedPairHash))) {
+        audit('phoneos.pair_failed', { ip: clientIp(req) });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_pairing_key' }));
+        return;
+      }
+      const secret = b64url(crypto.randomBytes(32));
+      const device = {
+        id: `phone_${Date.now().toString(36)}_${b64url(crypto.randomBytes(5))}`,
+        name: safeText(body.name, 80) || 'Hashcod Phone OS',
+        secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
+        status: 'ONLINE',
+        createdAt: new Date().toISOString(),
+        lastSeenAt: new Date().toISOString(),
+        delivered: 0,
+      };
+      db.phoneDevices.unshift(device);
+      writeSmsGatewayDb(db);
+      audit('phoneos.register', { ip: clientIp(req), deviceId: device.id });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deviceId: device.id, deviceSecret: secret, name: device.name }));
+      return;
+    }
+    if (action === 'send') {
+      const auth = requireAuth(req, res, 'viewer');
+      if (!auth) return;
+      const note = enqueuePhoneNotification({
+        title: body.title || 'Hashcod code saved',
+        body: body.body || body.value || '',
+        actor: auth.user.id,
+        type: body.type || 'code',
+        codeType: body.codeType,
+        codeIndex: body.codeIndex,
+        value: body.value,
+      });
+      audit('phoneos.queue', { ip: clientIp(req), actor: auth.user.id, id: note.id, type: note.type });
+      send(res, 202, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, queued: true, id: note.id, status: note.status }));
+      return;
+    }
+    const device = verifyPhoneDevice(db, body.deviceId, body.deviceSecret);
+    if (!device) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_phone_device' }));
+      return;
+    }
+    if (action === 'poll') {
+      const notes = db.notifications.filter(row => row.status === 'PENDING').slice(0, 10);
+      notes.forEach(row => {
+        row.status = 'DELIVERING';
+        row.deviceId = device.id;
+        row.updatedAt = new Date().toISOString();
+      });
+      writeSmsGatewayDb(db);
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, notifications: notes.map(row => ({ id: row.id, title: row.title, body: row.body, type: row.type, codeType: row.codeType, codeIndex: row.codeIndex, value: row.value, createdAt: row.createdAt })) }));
+      return;
+    }
+    if (action === 'ack') {
+      const ids = Array.isArray(body.ids) ? body.ids.map(id => safeText(id, 120)) : [safeText(body.id, 120)];
+      let count = 0;
+      db.notifications.forEach(row => {
+        if (ids.includes(row.id)) {
+          row.status = 'DELIVERED';
+          row.deviceId = device.id;
+          row.deliveredAt = new Date().toISOString();
+          row.updatedAt = row.deliveredAt;
+          count += 1;
+        }
+      });
+      device.delivered = Number(device.delivered || 0) + count;
+      writeSmsGatewayDb(db);
+      audit('phoneos.ack', { ip: clientIp(req), deviceId: device.id, count });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, delivered: count }));
+      return;
+    }
+    send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'phoneos_route_not_found' }));
   } catch {
     send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
   }
@@ -1326,6 +1459,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0].startsWith('/api/sms-gateway/')) {
     handleSmsGateway(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0].startsWith('/api/phone-os/')) {
+    handlePhoneOs(req, res);
     return;
   }
 
