@@ -13,6 +13,7 @@ const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
+const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
@@ -144,6 +145,7 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(HELP_REQUESTS_FILE, 'assist', stamp),
       backupFileIfExists(CLI_CONSOLE_FILE, 'cli', stamp),
       backupFileIfExists(AUDIT_FILE, 'audit', stamp),
+      backupFileIfExists(ACCESS_HISTORY_FILE, 'access-history', stamp),
     ].filter(Boolean).map(file => path.basename(file));
     fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
     audit('backup.automatic', { reason, files: files.length });
@@ -280,6 +282,51 @@ function writeAuthDb(db) {
   ensureDataDir();
   fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] }));
   ensureAutomaticBackup('auth-db-write');
+}
+
+function publicAccessRequest(row) {
+  const { desiredPasswordHash, ...publicRow } = row || {};
+  return publicRow;
+}
+
+function readAccessHistory() {
+  ensureDataDir();
+  if (!fs.existsSync(ACCESS_HISTORY_FILE)) return [];
+  const rows = decryptJson(fs.readFileSync(ACCESS_HISTORY_FILE, 'utf8'), []);
+  return Array.isArray(rows) ? rows : [];
+}
+
+function writeAccessHistory(rows) {
+  ensureDataDir();
+  fs.writeFileSync(ACCESS_HISTORY_FILE, encryptJson((Array.isArray(rows) ? rows : []).slice(0, 5000)));
+  ensureAutomaticBackup('access-history-write');
+}
+
+function upsertAccessHistory(row, event = 'sync') {
+  try {
+    const publicRow = { ...publicAccessRequest(row), historyEvent: event, historySavedAt: new Date().toISOString() };
+    const rows = readAccessHistory();
+    const idx = rows.findIndex(item => item.id === publicRow.id || (item.email === publicRow.email && item.serial === publicRow.serial));
+    if (idx >= 0) rows[idx] = { ...rows[idx], ...publicRow };
+    else rows.unshift(publicRow);
+    writeAccessHistory(rows);
+  } catch {
+    audit('access.history_write_failed', { requestId: row?.id, event });
+  }
+}
+
+function mergedAccessRequests(db) {
+  const merged = new Map();
+  for (const row of readAccessHistory()) {
+    const key = row.id || `${row.email}:${row.serial}`;
+    if (key) merged.set(key, row);
+  }
+  for (const row of db.accessRequests || []) {
+    const publicRow = publicAccessRequest(row);
+    const key = publicRow.id || `${publicRow.email}:${publicRow.serial}`;
+    if (key) merged.set(key, { ...(merged.get(key) || {}), ...publicRow });
+  }
+  return Array.from(merged.values()).sort((a, b) => String(b.createdAt || b.reviewedAt || '').localeCompare(String(a.createdAt || a.reviewedAt || '')));
 }
 
 function hashPassword(password) {
@@ -451,6 +498,7 @@ async function handleAuth(req, res) {
       }
       const existing = db.accessRequests.find(r => r.email === email && r.status === 'PENDING');
       if (existing) {
+        upsertAccessHistory(existing, 'pending-check');
         send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { email, blowfishId: existing.blowfishId, serial: existing.serial, status: existing.status } }));
         return;
       }
@@ -465,6 +513,7 @@ async function handleAuth(req, res) {
       };
       db.accessRequests.unshift(reqRow);
       writeAuthDb(db);
+      upsertAccessHistory(reqRow, 'created');
       audit('access.request', { ip: clientIp(req), requestId: reqRow.id, email });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { email, blowfishId: reqRow.blowfishId, serial: reqRow.serial, status: reqRow.status } }));
     } catch {
@@ -502,7 +551,7 @@ async function handleAuth(req, res) {
   if (route === '/api/access/requests' && req.method === 'GET') {
     const auth = requireAdminPanel(req, res);
     if (!auth) return;
-    const requests = db.accessRequests.map(({ desiredPasswordHash, ...row }) => row);
+    const requests = mergedAccessRequests(db);
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, requests }));
     return;
   }
@@ -527,6 +576,7 @@ async function handleAuth(req, res) {
         reqRow.reviewedBy = auth.actorId;
         reqRow.decisionHistory = [...(Array.isArray(reqRow.decisionHistory) ? reqRow.decisionHistory : []), { action: 'reject', at: reqRow.reviewedAt, by: auth.actorId }];
         writeAuthDb(db);
+        upsertAccessHistory(reqRow, 'rejected');
         audit('access.reject', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id });
         send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { ...reqRow, desiredPasswordHash: undefined } }));
         return;
@@ -558,6 +608,7 @@ async function handleAuth(req, res) {
       reqRow.approvedUserId = user.id;
       reqRow.decisionHistory = [...(Array.isArray(reqRow.decisionHistory) ? reqRow.decisionHistory : []), { action: 'approve', at: reqRow.reviewedAt, by: auth.actorId, role, plan, userId: user.id }];
       writeAuthDb(db);
+      upsertAccessHistory(reqRow, 'approved');
       audit('access.approve', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id, userId: user.id, role, plan });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
     } catch {
