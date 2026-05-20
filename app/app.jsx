@@ -3063,7 +3063,11 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
   const [record, setRecord] = useState(null);
   const [packet, setPacket] = useState(null);
   const [cmdInput, setCmdInput] = useState('');
+  const [selectedCodeId, setSelectedCodeId] = useState('');
+  const [manualCode, setManualCode] = useState('');
   const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 300), [rows, outputRows]);
+  const selectedDbCode = useMemo(() => source.find(row => String(row.id || row.idx || row.value) === selectedCodeId) || source[0] || null, [source, selectedCodeId]);
+  const codeSourceValue = String(manualCode || selectedDbCode?.value || '');
   useEffect(() => {
     if (open && !record) {
       setTimeout(() => resolveUrl(url, false), 0);
@@ -3108,6 +3112,7 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
       matchedCode: best?.row ? {
         idx: best.row.idx,
         type: best.row.type,
+        value: String(best.row.value || ''),
         valuePreview: window.OCG_GEN.display(best.row.value, 120),
         length: String(best.row.value || '').length,
       } : null,
@@ -3134,13 +3139,64 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
       nonce,
       digest: controlDigest,
       matchedCode: inputRecord.matchedCode,
+      codeValue: inputRecord.matchedCode?.value || '',
       createdAt: new Date().toISOString(),
     };
     setPacket(next);
     if (echo) push(`packet built ${next.routeId} nonce=${nonce}`, 'ok');
     return next;
   };
-  const packetText = (p = packet) => p ? `HASHCOD HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nTIME: ${p.createdAt}` : '';
+  const packetText = (p = packet) => p ? `HASHCOD HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nCODE: ${p.codeValue || p.matchedCode?.valuePreview || ''}\nTIME: ${p.createdAt}` : '';
+  const openDatabaseCode = async () => {
+    const value = codeSourceValue.trim();
+    if (!value) { push('No database/manual code selected.', 'err'); return null; }
+    const digest = await digestHex(value, 'SHA-256');
+    const typeId = manualCode ? 'manual-code' : (selectedDbCode?.type || 'database-code');
+    const hnsUrl = `hns://www.hashcod.sec/${String(typeId).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${digest.slice(0, 10)}`;
+    setUrl(hnsUrl);
+    const nextRecord = {
+      raw: hnsUrl,
+      host: 'www.hashcod.sec',
+      path: `${String(typeId).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${digest.slice(0, 10)}`,
+      name: `${String(typeId).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${digest.slice(0, 10)}`,
+      primitiveHint: String(typeId),
+      tail: digest.slice(0, 10),
+      digest,
+      routeId: `HNS-CTRL-${digest.slice(0, 12).toUpperCase()}`,
+      gatewayChannel: 'hashcod-android-gateway',
+      phoneOsTopic: 'hashcod-phone-os-control',
+      matchedCode: {
+        idx: selectedDbCode?.idx || 'manual',
+        type: typeId,
+        value,
+        valuePreview: window.OCG_GEN.display(value, 160),
+        length: value.length,
+      },
+      confidence: 100,
+    };
+    setRecord(nextRecord);
+    push(`database code mounted ${hnsUrl} -> ${nextRecord.routeId}`, 'ok');
+    await buildPacket(nextRecord, false);
+    return nextRecord;
+  };
+  const notifyDatabaseCode = async () => {
+    const nextRecord = await openDatabaseCode();
+    if (!nextRecord) return;
+    const p = await buildPacket(nextRecord, false);
+    try {
+      const res = await authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Hashcod database code', body: packetText(p), type: 'hns-control', codeType: nextRecord.matchedCode.type, codeIndex: nextRecord.routeId, value: nextRecord.raw }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'phoneos_failed');
+      push(`database code sent to Phone OS ${nextRecord.routeId}`, 'ok');
+      notify?.(L('Code de base enviado al Phone OS', 'Database code sent to Phone OS'));
+    } catch (err) {
+      push(`database phone-os error: ${err.message}`, 'err');
+    }
+  };
   const sendGateway = async () => {
     const p = packet || await buildPacket(record, false);
     if (!p) { push('No packet. Run resolve first.', 'err'); return; }
@@ -3193,6 +3249,8 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
     if (cmd === 'open') { setUrl(arg || url); await resolveUrl(arg || url); return; }
     if (cmd === 'resolve') { await resolveUrl(url); return; }
     if (cmd === 'packet') { await buildPacket(record || await resolveUrl(url, false)); return; }
+    if (cmd === 'db-code' || cmd === 'database-code') { await openDatabaseCode(); return; }
+    if (cmd === 'send-db-phone' || cmd === 'notify-db') { await notifyDatabaseCode(); return; }
     if (cmd === 'send-gateway' || cmd === 'send') { await sendGateway(); return; }
     if (cmd === 'notify-phone' || cmd === 'phone') { await notifyPhone(); return; }
     if (cmd === 'copy') { copyPacket(); push('packet copied', 'ok'); return; }
@@ -3221,6 +3279,26 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
               <div><span>ROUTE</span><b>{record?.routeId || '---'}</b></div>
               <div><span>GATEWAY</span><b>{record?.gatewayChannel || '---'}</b></div>
               <div><span>CONFIDENCE</span><b>{record ? `${record.confidence}%` : '---'}</b></div>
+            </div>
+            <div className="hnsb-dbcode">
+              <label>
+                <span>{L('Code de base de datos', 'Database code')}</span>
+                <select value={selectedCodeId} onChange={e => setSelectedCodeId(e.target.value)}>
+                  {source.map((row, i) => (
+                    <option key={`${row.id || row.idx || i}`} value={String(row.id || row.idx || row.value)}>
+                      {String(row.idx || i + 1).padStart(3, '0')} | {row.type || 'code'} | {String(row.value || '').slice(0, 36)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>{L('O pegar code manual', 'Or paste manual code')}</span>
+                <textarea value={manualCode} onChange={e => setManualCode(e.target.value)} placeholder={L('Pega aqui un code para convertirlo en HNS y enviarlo al phone...', 'Paste a code here to convert it into HNS and send it to phone...')} />
+              </label>
+              <div className="hnsb-db-actions">
+                <button onClick={openDatabaseCode} disabled={!codeSourceValue.trim()}>{L('Usar code', 'Use code')}</button>
+                <button onClick={notifyDatabaseCode} disabled={!codeSourceValue.trim()}>PHONE OS</button>
+              </div>
             </div>
             <pre className="hnsb-packet">{packetText() || L('Abre una URL HNS para construir el paquete de control.', 'Open an HNS URL to build the control packet.')}</pre>
             <label className="hnsb-phone"><span>{L('Telefono gateway', 'Gateway phone')}</span><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 829 000 0000" inputMode="tel" /></label>
