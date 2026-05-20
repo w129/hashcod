@@ -777,6 +777,8 @@ kbd {
 .oc-act-assist:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-codedesk { color: #646464; }
 .oc-act-codedesk:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-sms { color: #646464; }
+.oc-act-sms:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 /* ── Right panel: Tech Info ── */
 .rp {
@@ -1113,6 +1115,24 @@ kbd {
 @media (max-width: 760px) {
   .assist-form, .assist-row { grid-template-columns:1fr; }
   .assist-form label.wide { grid-column:auto; }
+}
+.smsdlg { width:min(820px, calc(100vw - 42px)); }
+.sms-form { display:grid; grid-template-columns:minmax(0, 1fr) 190px; gap:12px; padding:18px; border-bottom:1px solid var(--line); background:#fff; }
+.sms-form label { display:grid; gap:7px; min-width:0; }
+.sms-form span, .sms-current span, .sms-preview span { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.sms-form input, .sms-form select { min-height:42px; border:1px solid var(--line-2); background:#fff; padding:9px 10px; font-family:var(--mono); font-size:12px; min-width:0; }
+.sms-current { grid-column:1 / -1; display:grid; gap:5px; padding:12px; border:1px solid var(--line); background:#f7f7f4; }
+.sms-current b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
+.sms-preview { grid-column:1 / -1; display:grid; gap:7px; min-width:0; }
+.sms-preview pre { margin:0; max-height:260px; overflow:auto; border:1px solid var(--line); background:#f7f7f4; padding:12px; font-family:var(--mono); font-size:11px; line-height:1.42; white-space:pre-wrap; overflow-wrap:anywhere; }
+.sms-actions { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:10px; }
+.sms-actions button { border:1px solid var(--line-2); background:#fff; min-height:40px; padding:0 14px; font-size:10px; letter-spacing:1.6px; text-transform:uppercase; }
+.sms-actions button:first-child { background:#111; color:#fff; border-color:#111; }
+.sms-actions button:hover { background:#111; color:#fff; border-color:#111; }
+@media (max-width: 760px) {
+  .smsdlg { width:calc(100vw - 22px); }
+  .sms-form { grid-template-columns:1fr; padding:14px; }
+  .sms-actions { display:grid; grid-template-columns:1fr; }
 }
 .cliconsdlg { width:min(1080px, calc(100vw - 42px)); }
 .clicons-form { padding:18px; border-bottom:1px solid var(--line); background:#f7f7f4; display:grid; gap:10px; }

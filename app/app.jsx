@@ -1338,6 +1338,77 @@ const rowToOcgPack = (row, language = 'en') => {
   ].join('\n');
 };
 
+const smsFormatOptions = (language = 'en') => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  return [
+    { id: 'raw', label: L('Code directo', 'Raw code') },
+    { id: 'txt', label: 'TXT' },
+    { id: 'json', label: 'JSON' },
+    { id: 'yaml', label: 'YAML' },
+    { id: 'iso', label: 'ISO' },
+    { id: 'log', label: 'LOG' },
+    { id: 'md', label: 'Markdown' },
+    { id: 'pack', label: 'OCG Pack' },
+    { id: 'card', label: L('Tarjeta virtual', 'Virtual card') },
+    { id: 'zip', label: L('Nota ZIP', 'ZIP note') },
+  ];
+};
+
+const rowToSmsPayload = (row, format = 'raw', language = 'en') => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const { cat, type } = findTypeMeta(row?.type);
+  const meta = rowToJsonObject(row || {}, language);
+  const code = String(row?.value || '');
+  const serial = `HC-SMS-${String(row?.idx || 0).padStart(6, '0')}-${fnv1aHex(`${row?.type || 'code'}:${code}`).toUpperCase()}`;
+  if (format === 'raw') return code;
+  if (format === 'txt') return rowToTxt(row, language);
+  if (format === 'json') return JSON.stringify(meta, null, 2);
+  if (format === 'yaml') return rowToYaml(row, language);
+  if (format === 'log') return rowToLog(row, language);
+  if (format === 'md') return rowToMarkdown(row);
+  if (format === 'pack') return rowToOcgPack(row, language);
+  if (format === 'iso') {
+    return [
+      'HASHCOD SMS ISO MANIFEST',
+      `SERIAL=${serial}`,
+      `PRIMITIVE=${type ? type.label : row?.type}`,
+      `TYPE_ID=${row?.type}`,
+      `CATEGORY=${cat ? cat.label : 'n/a'}`,
+      `STANDARD=${type ? (type.std || type.badge || 'n/a') : 'n/a'}`,
+      `LENGTH=${code.length}`,
+      `GENERATED=${new Date(row?.ts || Date.now()).toISOString()}`,
+      '',
+      '[CODE]',
+      code,
+      '',
+      '[END]',
+    ].join('\n');
+  }
+  if (format === 'card') {
+    return [
+      'HASHCOD VIRTUAL CODE CARD',
+      `SERIAL=${serial}`,
+      `VALIDATOR=${fnv1aHex(`${serial}:${code}`).toUpperCase()}`,
+      `PRIMITIVE=${type ? type.label : row?.type}`,
+      `USE=${ticketProfileForRow(row, language).useFor}`,
+      '',
+      code,
+    ].join('\n');
+  }
+  if (format === 'zip') {
+    return [
+      'HASHCOD ZIP DELIVERY NOTE',
+      `SERIAL=${serial}`,
+      L('SMS no adjunta ZIP directamente; este mensaje contiene el payload y metadatos para reconstruir o reenviar el paquete desde Hashcod.', 'SMS cannot attach ZIP directly; this message carries the payload and metadata to rebuild or resend the package from Hashcod.'),
+      `PRIMITIVE=${type ? type.label : row?.type}`,
+      `FORMAT_FILES=code.txt, usage-and-applications.txt, metadata.json, metadata.yaml`,
+      '',
+      code,
+    ].join('\n');
+  }
+  return code;
+};
+
 const pdfEscape = (value = '') => String(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[^\x20-\x7E]/g, '?');
 
 const wrapPdfLine = (text = '', max = 86) => {
@@ -1731,7 +1802,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1807,6 +1878,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onCodeDesktop?.(row);
   };
+  const openSms = (e) => {
+    e.stopPropagation();
+    onSmsSend?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1868,6 +1943,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-codedesk" onClick={openDesktop} title={language === 'es' ? 'Abrir desktop de herramientas del code' : 'Open code tool desktop'}>
           <span dangerouslySetInnerHTML={{__html: CODE_DESKTOP_SIM_ICON}} />
+        </button>
+        <button className="oc-act oc-act-sms" onClick={openSms} title={language === 'es' ? 'Enviar code por SMS' : 'Send code by SMS'}>
+          <span dangerouslySetInnerHTML={{__html: SMS_TABLE_SPLIT_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -2573,6 +2651,85 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
               <button onClick={() => remove(item.id)} disabled={busy}>{L('Eliminar', 'Delete')}</button>
             </article>
           ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const SmsSendDialog = ({ open, onClose, row, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const formats = useMemo(() => smsFormatOptions(language), [language]);
+  const [phone, setPhone] = useState('');
+  const [format, setFormat] = useState('raw');
+  const payload = useMemo(() => row ? rowToSmsPayload(row, format, language) : '', [row, format, language]);
+  useEffect(() => {
+    if (open) setFormat('raw');
+  }, [open, row?.id]);
+  if (!open) return null;
+  const normalizedPhone = phone.replace(/[^\d+]/g, '');
+  const validPhone = /^\+?\d{7,18}$/.test(normalizedPhone);
+  const copyPayload = async () => {
+    try {
+      await navigator.clipboard?.writeText(payload);
+      notify?.(L('Payload SMS copiado', 'SMS payload copied'));
+    } catch {
+      notify?.(L('No se pudo copiar el payload', 'Could not copy payload'));
+    }
+  };
+  const downloadPayload = () => {
+    const name = `Hashcod-SMS-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${format}-${tsStamp()}.txt`;
+    triggerDownload(name, payload, 'text/plain;charset=utf-8');
+    notify?.(L('Payload SMS descargado', 'SMS payload downloaded'));
+  };
+  const sendSms = async (e) => {
+    e.preventDefault();
+    if (!validPhone) {
+      notify?.(L('Escribe un telefono valido con codigo de pais si aplica', 'Enter a valid phone number, including country code when needed'));
+      return;
+    }
+    await copyPayload();
+    const uri = `sms:${normalizedPhone}?body=${encodeURIComponent(payload)}`;
+    window.location.href = uri;
+    notify?.(L('Abriendo la app de SMS del dispositivo', 'Opening the device SMS app'));
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg smsdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Enviar code por SMS', 'Send code by SMS')}</h2>
+            <p>{L('Elige el formato, coloca el telefono y Hashcod abre la app SMS del dispositivo con el payload listo.', 'Choose the format, enter the phone number, and Hashcod opens the device SMS app with the payload ready.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <form className="sms-form" onSubmit={sendSms}>
+          <label>
+            <span>{L('Telefono destino', 'Destination phone')}</span>
+            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 829 000 0000" inputMode="tel" />
+          </label>
+          <label>
+            <span>{L('Formato del code', 'Code format')}</span>
+            <select value={format} onChange={e => setFormat(e.target.value)}>
+              {formats.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+            </select>
+          </label>
+          <div className="sms-current">
+            <span>{L('Code seleccionado', 'Selected code')}</span>
+            <b>{row ? `${String(row.idx).padStart(3, '0')} | ${row.type}` : 'NO CODE'}</b>
+          </div>
+          <div className="sms-preview">
+            <span>{L('Vista previa del SMS', 'SMS preview')}</span>
+            <pre>{payload}</pre>
+          </div>
+          <div className="sms-actions">
+            <button type="submit">{L('Abrir SMS', 'Open SMS')}</button>
+            <button type="button" onClick={copyPayload}>{L('Copiar payload', 'Copy payload')}</button>
+            <button type="button" onClick={downloadPayload}>{L('Descargar payload', 'Download payload')}</button>
+          </div>
+        </form>
+        <div className="security-note">
+          {L('En escritorio algunos navegadores no envian SMS directamente; por eso tambien se copia y descarga el payload como respaldo.', 'On desktop, some browsers cannot send SMS directly; the payload is also copied and downloadable as a fallback.')}
         </div>
       </section>
     </div>
@@ -8046,6 +8203,7 @@ const App = () => {
   const [ocgUnitsOpen, setOcgUnitsOpen] = useState(false);
   const [assistRow, setAssistRow] = useState(null);
   const [codeDesktopRow, setCodeDesktopRow] = useState(null);
+  const [smsRow, setSmsRow] = useState(null);
   const [dbQuery, setDbQuery] = useState('');
   const [copyDb, setCopyDb] = useState(() => COPY_DB.list());
   const [toast, setToast] = useState('');
@@ -8787,6 +8945,7 @@ const App = () => {
   const openBaseMat = () => setBaseMatOpen(true);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
+  const openSmsSender = (row) => setSmsRow(row);
   const openMountainTool = (key) => {
     if (!MOUNTAIN_TOOL_CONFIG[key]) return;
     setMountainToolOpen(key);
@@ -9279,6 +9438,7 @@ const App = () => {
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
       <CodeDesktopDialog open={!!codeDesktopRow} onClose={() => setCodeDesktopRow(null)} row={codeDesktopRow} notify={notify} language={language} />
+      <SmsSendDialog open={!!smsRow} onClose={() => setSmsRow(null)} row={smsRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
       {toast && <div className="ocg-toast">{toast}</div>}
       <FreeUpgradeNudge
@@ -9401,7 +9561,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -9483,6 +9643,7 @@ const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
+const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
 const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
 
