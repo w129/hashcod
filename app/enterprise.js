@@ -55,10 +55,17 @@
     const duplicates = ids.filter((id, idx) => ids.indexOf(id) !== idx);
     const neo = catalog.find(cat => cat.id === 'neo_crypto_200');
     const neoIds = neo ? neo.types.map(type => type.id) : [];
+    const apex = catalog.find(cat => cat.id === 'apex_crypto_300');
+    const apexIds = apex ? apex.types.map(type => type.id) : [];
     const missingNeo = [];
     for (let i = 1; i <= 200; i++) {
       const id = `neo_code_${String(i).padStart(3, '0')}`;
       if (!neoIds.includes(id)) missingNeo.push(id);
+    }
+    const missingApex = [];
+    for (let i = 1; i <= 300; i++) {
+      const id = `apex_code_${String(i).padStart(3, '0')}`;
+      if (!apexIds.includes(id)) missingApex.push(id);
     }
     return {
       categories: catalog.length,
@@ -66,6 +73,8 @@
       duplicateIds: [...new Set(duplicates)],
       neoCount: neoIds.length,
       missingNeo,
+      apexCount: apexIds.length,
+      missingApex,
     };
   }
 
@@ -108,10 +117,13 @@
       const catalog = catalogReport();
       push('catalog-unique-ids', catalog.duplicateIds.length === 0, `${catalog.primitives} primitives`);
       push('neo-200-complete', catalog.neoCount === 200 && catalog.missingNeo.length === 0, `${catalog.neoCount}/200`);
+      push('apex-300-complete', catalog.apexCount === 300 && catalog.missingApex.length === 0, `${catalog.apexCount}/300`);
 
       if (window.OCG_GEN && window.OCG_GEN.generate) {
         const neo = await window.OCG_GEN.generate('neo_code_200', 32, {});
         push('neo-generator-health', /^OCG-NEO\./.test(neo) && /^CHECK=/m.test(neo), neo.split('\n')[0]);
+        const apex = await window.OCG_GEN.generate('apex_code_300', 32, {});
+        push('apex-generator-health', /^OCG-APEX\./.test(apex) && /^CHECK=/m.test(apex), apex.split('\n')[0]);
       } else {
         push('generator-present', false, 'window.OCG_GEN.generate missing');
       }

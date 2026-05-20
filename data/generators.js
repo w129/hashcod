@@ -439,12 +439,83 @@
   }
 
   // ── master switch ──
+  async function apexCryptoCodeTemplate(typeId) {
+    const n = Math.max(1, Math.min(300, Number(String(typeId).replace('apex_code_', '')) || 1));
+    const families = [
+      ['ZKST', 'ZK-STATE-TRANSITION-RECEIPT', 'zero-knowledge state transition receipt', 88, 'ZK'],
+      ['FHE', 'FHE-CONTEXT-CAPSULE', 'fully homomorphic encryption context capsule', 82, 'FHE'],
+      ['MPC', 'MPC-CEREMONY-TRANSCRIPT-SEAL', 'multi-party computation ceremony transcript seal', 84, 'MPC'],
+      ['PQH', 'HYBRID-PQ-HANDSHAKE-TICKET', 'hybrid post-quantum handshake ticket', 88, 'PQH'],
+      ['TSS', 'THRESHOLD-CUSTODY-SHARE', 'threshold custody share for distributed vaults', 82, 'TSS'],
+      ['DIDR', 'DID-ROTATION-PROOF-ANCHOR', 'decentralized identity rotation proof anchor', 76, 'DID'],
+      ['VCB', 'VC-BLIND-BINDER', 'blind credential binding material', 80, 'VC'],
+      ['HSMX', 'HSM-EXPORT-CONTROL-TICKET', 'hardware export-control authorization ticket', 82, 'HSM'],
+      ['KMSX', 'KMS-DUAL-CONTROL-ROTATION-CODE', 'dual-control key rotation code', 80, 'KMS'],
+      ['OTK', 'ONE-TIME-KEY-WRAP-ENVELOPE', 'single-use key wrapping envelope', 76, 'OTK'],
+      ['DPOPX', 'DPOP-BOUND-ACCESS-PACKET', 'sender-constrained delegated access packet', 76, 'DPoP'],
+      ['SIVX', 'SYNTHETIC-IV-VAULT-SEAL', 'misuse-resistant vault seal', 86, 'SIV'],
+      ['VRFX', 'VRF-COMMITTEE-DRAW-SEED', 'verifiable randomness committee draw seed', 80, 'VRF'],
+      ['MERX', 'MERKLE-INCLUSION-WITNESS-CODE', 'inclusion witness for tamper-evident records', 76, 'MRK'],
+      ['AUDX', 'IMMUTABLE-AUDIT-EVIDENCE-TOKEN', 'immutable audit evidence token', 80, 'AUDIT'],
+      ['QRL', 'QUANTUM-READY-LICENSE-CLAIM', 'quantum-ready license claim packet', 82, 'LIC'],
+      ['TEE2', 'TEE-REMOTE-ATTESTATION-BINDER', 'remote attestation binder for trusted execution', 80, 'TEE'],
+      ['OPA2', 'OPAQUE-RECOVERY-ENVELOPE', 'password-auth recovery envelope', 80, 'OPAQUE'],
+      ['PSI', 'PRIVATE-SET-INTERSECTION-SEED', 'private set intersection session seed', 76, 'PSI'],
+      ['NTRU', 'NTRU-MIGRATION-CAPSULE', 'lattice migration capsule for legacy systems', 88, 'LAT'],
+      ['BLSX', 'BLS-AGGREGATE-SIGNATURE-TICKET', 'aggregate signature coordination ticket', 82, 'BLS'],
+      ['ROTX', 'SECRET-ROTATION-EVIDENCE-CHAIN', 'secret rotation evidence chain checkpoint', 80, 'ROT'],
+      ['MASK', 'DATA-MASKING-POLICY-TOKEN', 'data masking policy token', 76, 'DLP'],
+      ['VAUL', 'VAULT-RECONSTITUTION-PROOF', 'vault reconstitution proof packet', 86, 'VAULT'],
+      ['ANCH', 'CROSS-DOMAIN-TRUST-ANCHOR', 'cross-domain trust anchor code', 80, 'ANCHOR'],
+    ];
+    const tiers = [
+      ['PRIME', 'root-grade issuance'], ['QUORUM', 'multi-approver control'], ['ZERO', 'zero-trust workflow'],
+      ['NOVA', 'new environment bootstrap'], ['AEGIS', 'high-assurance protection'], ['OBSIDIAN', 'offline custody'],
+      ['VECTOR', 'service mesh route'], ['CIPHER', 'sealed data flow'], ['ATLAS', 'enterprise registry'],
+      ['NEXUS', 'cross-system federation'], ['HELIX', 'rotation and recovery'], ['ORACLE', 'audit evidence'],
+    ];
+    const fam = families[(n - 1) % families.length];
+    const tier = tiers[Math.floor((n - 1) / families.length) % tiers.length];
+    const payload = bytes(fam[3] + Math.floor((n - 1) / 25));
+    const salt = bytes(32);
+    const nonce = bytes(24);
+    const route = toB32(bytes(14)).slice(0, 24);
+    const policy = `POL-${fam[0]}-${tier[0]}-${toB32(bytes(6)).slice(0, 10)}`;
+    const issued = new Date().toISOString();
+    const serial = `A${String(n).padStart(3, '0')}-${tier[0]}-${toB32(bytes(10)).slice(0, 16)}`;
+    const payloadB64 = toB64u(payload);
+    const saltB64 = toB64u(salt);
+    const nonceB64 = toB64u(nonce);
+    const hmac256 = toHex(await hmacSha256(salt, `${serial}:${fam[0]}:${tier[0]}:${payloadB64}:${route}:${policy}:${issued}`));
+    const digest512 = toHex(await sha('SHA-512', enc.encode(`${hmac256}:${nonceB64}:${fam[1]}:${tier[1]}`)));
+    const digest256 = toHex(await sha('SHA-256', enc.encode(`${serial}:${digest512}:${policy}`)));
+    const check = crc32(enc.encode(`${serial}:${digest512}:${digest256}:${fam[1]}:${tier[0]}`)).toUpperCase();
+    return [
+      `OCG-APEX.${fam[0]}.v12.${serial}`,
+      `TYPE=${fam[1]}`,
+      `TIER=${tier[0]} - ${tier[1]}`,
+      `CLASS=${fam[4]}`,
+      `POLICY=${policy}`,
+      `PAYLOAD=${payloadB64}`,
+      `SALT=${saltB64}`,
+      `NONCE=${nonceB64}`,
+      `ROUTE=${route}`,
+      `HMAC_SHA256=${hmac256}`,
+      `SHA512=${digest512}`,
+      `SHA256_BINDING=${digest256}`,
+      `ISSUED=${issued}`,
+      `USE=${fam[2]}`,
+      `CHECK=${check}`,
+    ].join('\n');
+  }
+
   async function generate(typeId, len, opts) {
     const o = opts || {};
     const L = len || 32;
     if (String(typeId).startsWith('adv_code_')) return advancedCodeTemplate(typeId);
     if (String(typeId).startsWith('xadv_code_')) return extraAdvancedCodeTemplate(typeId);
     if (String(typeId).startsWith('neo_code_')) return await neoCryptoCodeTemplate(typeId);
+    if (String(typeId).startsWith('apex_code_')) return await apexCryptoCodeTemplate(typeId);
     if (String(typeId).startsWith('card_tpl_')) return cardStudioTemplate(typeId);
     switch (typeId) {
       // Symmetric

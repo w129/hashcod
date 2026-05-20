@@ -79,8 +79,14 @@ function assert(ok, id, detail = '') {
   const neo = catalog.find(cat => cat.id === 'neo_crypto_200');
   assert(neo && neo.types && neo.types.length === 200, 'neo-200-complete', `${neo ? neo.types.length : 0}/200`);
 
+  const apex = catalog.find(cat => cat.id === 'apex_crypto_300');
+  assert(apex && apex.types && apex.types.length === 300, 'apex-300-complete', `${apex ? apex.types.length : 0}/300`);
+
   const out = await ctx.window.OCG_GEN.generate('neo_code_200', 32, {});
   assert(/^OCG-NEO\./.test(out) && /^CHECK=/m.test(out), 'neo-generator-health', out.split('\n')[0]);
+
+  const apexOut = await ctx.window.OCG_GEN.generate('apex_code_300', 32, {});
+  assert(/^OCG-APEX\./.test(apexOut) && /^CHECK=/m.test(apexOut), 'apex-generator-health', apexOut.split('\n')[0]);
 
   const jwt = await ctx.window.OCG_GEN.generate('jwt_hs256_real', 32, {});
   assert(jwt.split('.').length === 3, 'jwt-real-shape');

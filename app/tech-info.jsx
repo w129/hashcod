@@ -562,6 +562,7 @@ function codeFamilyGuide(type, category, language) {
       ],
   });
 
+  if (id.startsWith('apex_code_')) return customEnvelope('APEX', es ? 'code APEX enterprise de alta entropia' : 'high-entropy enterprise APEX code', es ? 'flujos criticos' : 'critical workflows');
   if (id.startsWith('neo_code_')) return customEnvelope('NEO', es ? 'code NEO de nueva generacion' : 'next-generation NEO code', es ? 'datos sensibles' : 'sensitive data');
   if (id.startsWith('xadv_code_')) return customEnvelope('OCG-X', es ? 'code avanzado extendido' : 'extended advanced code', es ? 'secretos reales' : 'real secrets');
   if (id.startsWith('adv_code_')) return customEnvelope('OCG-A', es ? 'code avanzado interno' : 'internal advanced code', es ? 'activos criticos' : 'critical assets');

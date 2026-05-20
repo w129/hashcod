@@ -1385,3 +1385,71 @@ window.OCG_CATALOG = [
     }),
   });
 })();
+
+(function addApexCryptoCodes300() {
+  const families = [
+    ['ZKST', 'ZK State Transition Receipt', 'zero-knowledge state transition receipt', 'ZK-STARK/STARK-friendly receipt profile', 'hash', 'ZK', '896 bits'],
+    ['FHE', 'FHE Context Capsule', 'fully homomorphic encryption context capsule', 'FHE bootstrapping context profile', 'cube', 'FHE', '832 bits'],
+    ['MPC', 'MPC Ceremony Transcript Seal', 'multi-party computation ceremony transcript seal', 'MPC transcript binding profile', 'grid', 'MPC', '864 bits'],
+    ['PQH', 'Hybrid PQ Handshake Ticket', 'hybrid post-quantum handshake ticket', 'ML-KEM + X25519 hybrid profile', 'key', 'PQH', '896 bits'],
+    ['TSS', 'Threshold Custody Share', 'threshold custody share for distributed vaults', 'TSS custody split profile', 'lock', 'TSS', '832 bits'],
+    ['DIDR', 'DID Rotation Proof Anchor', 'decentralized identity rotation proof anchor', 'W3C DID rotation proof profile', 'id', 'DID', '768 bits'],
+    ['VCB', 'Verifiable Credential Blind Binder', 'blind credential binding material', 'BBS+/SD-JWT disclosure profile', 'card', 'VC', '800 bits'],
+    ['HSMX', 'HSM Export Control Ticket', 'hardware export-control authorization ticket', 'FIPS 140-3 HSM export-control profile', 'cube', 'HSM', '832 bits'],
+    ['KMSX', 'KMS Dual-Control Rotation Code', 'dual-control key rotation code', 'KMS quorum rotation profile', 'database', 'KMS', '800 bits'],
+    ['OTK', 'One-Time Key Wrap Envelope', 'single-use key wrapping envelope', 'NIST SP 800-38F key wrap profile', 'token', 'OTK', '768 bits'],
+    ['DPOPX', 'DPoP Bound Access Packet', 'sender-constrained delegated access packet', 'RFC 9449 DPoP-bound token profile', 'token', 'DPoP', '768 bits'],
+    ['SIVX', 'Synthetic-IV Vault Seal', 'misuse-resistant vault seal', 'AES-SIV / AES-GCM-SIV profile', 'shield', 'SIV', '864 bits'],
+    ['VRFX', 'VRF Committee Draw Seed', 'verifiable randomness committee draw seed', 'ECVRF committee selection profile', 'hash', 'VRF', '800 bits'],
+    ['MERX', 'Merkle Inclusion Witness Code', 'inclusion witness for tamper-evident records', 'Merkle inclusion witness profile', 'hash', 'MRK', '768 bits'],
+    ['AUDX', 'Immutable Audit Evidence Token', 'immutable audit evidence token', 'append-only evidence ledger profile', 'database', 'AUD', '800 bits'],
+    ['QRL', 'Quantum-Ready License Claim', 'quantum-ready license claim packet', 'hybrid license claim profile', 'card', 'LIC', '832 bits'],
+    ['TEE2', 'TEE Remote Attestation Binder', 'remote attestation binder for trusted execution', 'TEE quote binding profile', 'cube', 'TEE', '800 bits'],
+    ['OPA2', 'OPAQUE Recovery Envelope', 'password-auth recovery envelope', 'OPAQUE recovery profile', 'shield', 'OPA', '800 bits'],
+    ['PSI', 'Private Set Intersection Seed', 'private set intersection session seed', 'PSI session profile', 'grid', 'PSI', '768 bits'],
+    ['NTRU', 'NTRU Migration Capsule', 'lattice migration capsule for legacy systems', 'NTRU-style lattice migration profile', 'key', 'LAT', '896 bits'],
+    ['BLSX', 'BLS Aggregate Signature Ticket', 'aggregate signature coordination ticket', 'BLS aggregate signature profile', 'fingerprint', 'BLS', '832 bits'],
+    ['ROTX', 'Secret Rotation Evidence Chain', 'secret rotation evidence chain checkpoint', 'rotation evidence-chain profile', 'database', 'ROT', '800 bits'],
+    ['MASK', 'Data Masking Policy Token', 'data masking policy token', 'privacy-preserving masking policy profile', 'shield', 'DLP', '768 bits'],
+    ['VAUL', 'Vault Reconstitution Proof', 'vault reconstitution proof packet', 'threshold vault reconstitution profile', 'lock', 'VAULT', '864 bits'],
+    ['ANCH', 'Cross-Domain Trust Anchor', 'cross-domain trust anchor code', 'federated trust anchor profile', 'id', 'ANCH', '800 bits'],
+  ];
+  const tiers = [
+    ['Prime', 'root-grade issuance'],
+    ['Quorum', 'multi-approver control'],
+    ['Zero', 'zero-trust workflow'],
+    ['Nova', 'new environment bootstrap'],
+    ['Aegis', 'high-assurance protection'],
+    ['Obsidian', 'offline custody'],
+    ['Vector', 'service mesh route'],
+    ['Cipher', 'sealed data flow'],
+    ['Atlas', 'enterprise registry'],
+    ['Nexus', 'cross-system federation'],
+    ['Helix', 'rotation and recovery'],
+    ['Oracle', 'audit evidence'],
+  ];
+  window.OCG_CATALOG.push({
+    id: 'apex_crypto_300',
+    label: 'APEX Crypto Codes 300',
+    icon: 'cube',
+    desc: 'Three hundred rare, high-grade Hashcod cryptographic code packets beyond the previous 1418-code catalog.',
+    types: Array.from({ length: 300 }, (_, i) => {
+      const n = i + 1;
+      const fam = families[i % families.length];
+      const tier = tiers[Math.floor(i / families.length) % tiers.length];
+      return {
+        id: `apex_code_${String(n).padStart(3, '0')}`,
+        icon: fam[4],
+        label: `${tier[0]} ${fam[1]} ${String(n).padStart(3, '0')}`,
+        badge: `A${String(n).padStart(3, '0')}`,
+        hasLen: false,
+        hasCharset: false,
+        engine: `${fam[0]} - SHA-512 + HMAC-SHA256 + binding digest + salt/nonce`,
+        entropy: fam[6],
+        space: '2^768+',
+        std: fam[3],
+        about: `Hashcod APEX code ${String(n).padStart(3, '0')}: ${fam[2]} for ${tier[1]}, with OCG-APEX prefix, payload, salt, nonce, route, policy id, HMAC binding, SHA-512/SHA-256 digest material, timestamp and checksum. New APEX ID family not present in the previous 1418-code set.`,
+      };
+    }),
+  });
+})();
