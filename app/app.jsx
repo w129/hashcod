@@ -1467,6 +1467,7 @@ const TOP_MENU_ICONS = {
   certificates: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M6 16h6v2H6zm0-4h10v2H6zm0-4h10v2H6z"/><path fill="currentColor" d="M14 26H4V6h24v10h2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h10Z"/><path fill="currentColor" d="M22 25.59L19.41 23L18 24.41l4 4l8-8L28.59 19L22 25.59z"/></svg>`,
   ivoryDid: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6"/><path d="M4 2h10"/><rect x="4" y="18" width="16" height="4" rx="1"/><rect x="4" y="6" width="16" height="4" rx="1"/></svg>`,
   ocgUnits: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></svg>`,
+  formatForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M5 20h6"/><path d="M13 4 8 20"/><path d="m15 15 5 5"/><path d="m20 15-5 5"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -8139,7 +8140,7 @@ const App = () => {
             <MenuButton label={language === 'es' ? 'CERTIFICADOS' : 'CERTIFICATES'} icon={TOP_MENU_ICONS.certificates} iconOnly items={certificateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCertificates} />
             <MenuButton label="IVORY DID" icon={TOP_MENU_ICONS.ivoryDid} iconOnly items={ivoryIdeaItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openIvoryIdeas} />
             <MenuButton label="OCG UNITS" icon={TOP_MENU_ICONS.ocgUnits} iconOnly items={ocgUnitsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOcgUnits} />
-            <MenuButton label="FORMAT FORGE" items={formatForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFormatForge} />
+            <MenuButton label="FORMAT FORGE" icon={TOP_MENU_ICONS.formatForge} iconOnly items={formatForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFormatForge} />
             <MenuButton label="BASEMAT" items={baseMatItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBaseMat} />
             <MenuButton label="TOKEN VAULT PRO" items={mountainToolItems('tokenVault')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenVault')} />
             <MenuButton label="LICENSE ISSUER" items={mountainToolItems('licenseIssuer')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('licenseIssuer')} />
