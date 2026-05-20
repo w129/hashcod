@@ -2042,6 +2042,7 @@ const TOP_MENU_ICONS = {
   hns: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>`,
   hos: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>`,
   hcp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg>`,
+  hnsBrowser: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3046,6 +3047,197 @@ const HashCommandPromptingDialog = ({ open, onClose, rows, outputRows, notify, l
         <div className="hashsyt-body">
           <pre className="hashsyt-output hcp">{script || L('Crea comandos HCP para ver la consola generada aqui.', 'Create HCP commands to see the generated console here.')}</pre>
           <div className="hashsyt-actions"><button onClick={exportScript} disabled={!script}>HCP TXT</button><button onClick={copyScript} disabled={!script}>{L('Copiar', 'Copy')}</button></div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [url, setUrl] = useState('hns://www.hashcod.sec/xchacha-poly-10059a3685');
+  const [phone, setPhone] = useState(() => localStorage.getItem('hashcod_hns_gateway_phone') || '');
+  const [terminal, setTerminal] = useState(() => [
+    { kind: 'sys', text: 'Hashcod HNS Browser CLI ready. Commands: open <hns://...>, resolve, packet, send-gateway, notify-phone, clear' },
+  ]);
+  const [record, setRecord] = useState(null);
+  const [packet, setPacket] = useState(null);
+  const [cmdInput, setCmdInput] = useState('');
+  const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 300), [rows, outputRows]);
+  useEffect(() => {
+    if (open && !record) {
+      setTimeout(() => resolveUrl(url, false), 0);
+    }
+  }, [open]);
+  if (!open) return null;
+  const push = (text, kind = 'out') => setTerminal(prev => [...prev.slice(-80), { kind, text }]);
+  const parseHns = (value) => {
+    const raw = String(value || '').trim();
+    const match = raw.match(/^hns:\/\/([^/]+)\/(.+)$/i);
+    if (!match) return null;
+    const host = match[1].toLowerCase();
+    const path = decodeURIComponent(match[2]).replace(/^\/+/, '');
+    const parts = path.split('/').filter(Boolean);
+    const name = parts.pop() || '';
+    const primitiveHint = name.replace(/-[0-9a-f]{8,}$/i, '');
+    const tail = (name.match(/([0-9a-f]{8,})$/i) || [])[1] || '';
+    return { raw, host, path, name, primitiveHint, tail };
+  };
+  const resolveUrl = async (value = url, echo = true) => {
+    const parsed = parseHns(value);
+    if (!parsed) {
+      push(`Invalid HNS URL: ${value}`, 'err');
+      return null;
+    }
+    const candidates = source.map(row => {
+      const label = String(row.type || 'code').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      let score = 0;
+      if (parsed.name.includes(label)) score += 5;
+      if (label.includes(parsed.primitiveHint) || parsed.primitiveHint.includes(label)) score += 3;
+      if (String(row.value || '').toLowerCase().includes(parsed.tail.toLowerCase())) score += 2;
+      return { row, label, score };
+    }).sort((a, b) => b.score - a.score);
+    const best = candidates[0]?.score > 0 ? candidates[0] : null;
+    const digest = await digestHex(`${parsed.host}|${parsed.name}|${best?.row?.value || parsed.raw}`, 'SHA-256');
+    const next = {
+      ...parsed,
+      digest,
+      routeId: `HNS-CTRL-${digest.slice(0, 12).toUpperCase()}`,
+      gatewayChannel: 'hashcod-android-gateway',
+      phoneOsTopic: 'hashcod-phone-os-control',
+      matchedCode: best?.row ? {
+        idx: best.row.idx,
+        type: best.row.type,
+        valuePreview: window.OCG_GEN.display(best.row.value, 120),
+        length: String(best.row.value || '').length,
+      } : null,
+      confidence: best ? Math.min(99, best.score * 16) : 41,
+    };
+    setRecord(next);
+    if (echo) push(`resolved ${parsed.raw} -> ${next.routeId} (${next.confidence}% confidence)`, 'ok');
+    await buildPacket(next, false);
+    return next;
+  };
+  const buildPacket = async (inputRecord = record, echo = true) => {
+    if (!inputRecord) return null;
+    const nonce = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
+    const controlDigest = await digestHex(`${inputRecord.raw}|${inputRecord.routeId}|${nonce}`, 'SHA-256');
+    const next = {
+      protocol: 'HNS-CONTROL/1.0',
+      url: inputRecord.raw,
+      namespace: inputRecord.host,
+      name: inputRecord.name,
+      routeId: inputRecord.routeId,
+      gateway: inputRecord.gatewayChannel,
+      target: 'phone-gateway',
+      action: 'CONTROL_DISPATCH',
+      nonce,
+      digest: controlDigest,
+      matchedCode: inputRecord.matchedCode,
+      createdAt: new Date().toISOString(),
+    };
+    setPacket(next);
+    if (echo) push(`packet built ${next.routeId} nonce=${nonce}`, 'ok');
+    return next;
+  };
+  const packetText = (p = packet) => p ? `HASHCOD HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nTIME: ${p.createdAt}` : '';
+  const sendGateway = async () => {
+    const p = packet || await buildPacket(record, false);
+    if (!p) { push('No packet. Run resolve first.', 'err'); return; }
+    const to = String(phone || '').trim();
+    if (!to) { push('Missing phone number for gateway send.', 'err'); return; }
+    localStorage.setItem('hashcod_hns_gateway_phone', to);
+    try {
+      const res = await authFetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: to, payload: packetText(p), format: 'hns-control', codeType: p.name, codeIndex: p.routeId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'gateway_failed');
+      push(data.queued ? `gateway queued ${data.id} -> ${data.to}` : `sms sent ${data.sid || ''} -> ${data.to}`, 'ok');
+      notify?.(data.queued ? L('Control HNS en cola del gateway Android', 'HNS control queued for Android gateway') : L('Control HNS enviado por SMS', 'HNS control sent by SMS'));
+    } catch (err) {
+      push(`gateway error: ${err.message}`, 'err');
+      notify?.(L('No se pudo enviar al gateway', 'Could not send to gateway'));
+    }
+  };
+  const notifyPhone = async () => {
+    const p = packet || await buildPacket(record, false);
+    if (!p) { push('No packet. Run resolve first.', 'err'); return; }
+    try {
+      const res = await authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Hashcod HNS control', body: packetText(p), type: 'hns-control', codeType: p.name, codeIndex: p.routeId, value: p.url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'phoneos_failed');
+      push(`phone-os notified ${p.routeId}`, 'ok');
+      notify?.(L('Control HNS enviado al Phone OS', 'HNS control sent to Phone OS'));
+    } catch (err) {
+      push(`phone-os error: ${err.message}`, 'err');
+    }
+  };
+  const copyPacket = () => {
+    navigator.clipboard?.writeText(packetText());
+    notify?.(L('Paquete HNS copiado', 'HNS packet copied'));
+  };
+  const runCli = async (raw) => {
+    const command = String(raw || '').trim();
+    if (!command) return;
+    push(`hns$ ${command}`, 'in');
+    const [cmd, ...rest] = command.split(/\s+/);
+    const arg = rest.join(' ');
+    if (cmd === 'clear') { setTerminal([]); return; }
+    if (cmd === 'open') { setUrl(arg || url); await resolveUrl(arg || url); return; }
+    if (cmd === 'resolve') { await resolveUrl(url); return; }
+    if (cmd === 'packet') { await buildPacket(record || await resolveUrl(url, false)); return; }
+    if (cmd === 'send-gateway' || cmd === 'send') { await sendGateway(); return; }
+    if (cmd === 'notify-phone' || cmd === 'phone') { await notifyPhone(); return; }
+    if (cmd === 'copy') { copyPacket(); push('packet copied', 'ok'); return; }
+    push('Unknown command. Use open, resolve, packet, send-gateway, notify-phone, copy, clear.', 'err');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hnsbrowserdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>HNS Browser</h2>
+            <p>{L('Abre hns://, resuelve el nombre y ejecuta controles hacia el gateway del telefono desde GUI y CLI.', 'Open hns://, resolve the name and execute phone gateway controls from GUI and CLI.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hnsb-bar">
+          <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hnsBrowser}} />
+          <input value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') resolveUrl(url); }} />
+          <button onClick={() => resolveUrl(url)}>OPEN</button>
+        </div>
+        <div className="hnsb-main">
+          <section className="hnsb-gui">
+            <div className="hnsb-card"><span>URL</span><b>{record?.raw || url}</b></div>
+            <div className="hnsb-grid">
+              <div><span>NAMESPACE</span><b>{record?.host || '---'}</b></div>
+              <div><span>ROUTE</span><b>{record?.routeId || '---'}</b></div>
+              <div><span>GATEWAY</span><b>{record?.gatewayChannel || '---'}</b></div>
+              <div><span>CONFIDENCE</span><b>{record ? `${record.confidence}%` : '---'}</b></div>
+            </div>
+            <pre className="hnsb-packet">{packetText() || L('Abre una URL HNS para construir el paquete de control.', 'Open an HNS URL to build the control packet.')}</pre>
+            <label className="hnsb-phone"><span>{L('Telefono gateway', 'Gateway phone')}</span><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 829 000 0000" inputMode="tel" /></label>
+            <div className="hnsb-actions">
+              <button onClick={() => buildPacket(record)} disabled={!record}>PACKET</button>
+              <button onClick={sendGateway} disabled={!record}>{L('Enviar gateway', 'Send gateway')}</button>
+              <button onClick={notifyPhone} disabled={!record}>PHONE OS</button>
+              <button onClick={copyPacket} disabled={!packet}>{L('Copiar', 'Copy')}</button>
+            </div>
+          </section>
+          <section className="hnsb-cli">
+            <pre>{terminal.map((line, i) => `${line.kind === 'in' ? '' : '[' + line.kind + '] '}${line.text}`).join('\n')}</pre>
+            <form onSubmit={e => { e.preventDefault(); runCli(cmdInput); setCmdInput(''); }}>
+              <span>hns$</span>
+              <input value={cmdInput} onChange={e => setCmdInput(e.target.value)} placeholder="resolve | packet | send-gateway | notify-phone" />
+            </form>
+          </section>
         </div>
       </section>
     </div>
@@ -8513,6 +8705,7 @@ const App = () => {
   const [hnsOpen, setHnsOpen] = useState(false);
   const [hosOpen, setHosOpen] = useState(false);
   const [hcpOpen, setHcpOpen] = useState(false);
+  const [hnsBrowserOpen, setHnsBrowserOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
   const [planLicense, setPlanLicense] = useState(() => readPlanLicense());
@@ -9275,6 +9468,7 @@ const App = () => {
   const openHns = () => setHnsOpen(true);
   const openHos = () => setHosOpen(true);
   const openHcp = () => setHcpOpen(true);
+  const openHnsBrowser = () => setHnsBrowserOpen(true);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openSmsSender = (row) => setSmsRow(row);
@@ -9419,7 +9613,12 @@ const App = () => {
   ];
   const hnsItems = [
     { label: language === 'es' ? 'Abrir Hash Name System' : 'Open Hash Name System', onClick: openHns },
+    { label: language === 'es' ? 'Abrir HNS Browser / Gateway' : 'Open HNS Browser / Gateway', onClick: openHnsBrowser },
     { label: language === 'es' ? 'Crear nombres WWW para secrets' : 'Create WWW names for secrets', onClick: openHns },
+  ];
+  const hnsBrowserItems = [
+    { label: language === 'es' ? 'Abrir URL hns:// en consola' : 'Open hns:// URL in console', onClick: openHnsBrowser },
+    { label: language === 'es' ? 'Enviar control al gateway telefono' : 'Send control to phone gateway', onClick: openHnsBrowser },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -9607,6 +9806,7 @@ const App = () => {
         formatforge: openFormatForge, format: openFormatForge, formats: openFormatForge, forge: openFormatForge, formato: openFormatForge, formatos: openFormatForge,
         basemat: openBaseMat, math: openBaseMat, matematicas: openBaseMat,
         hns: openHns, namesystem: openHns, 'hash-name-system': openHns,
+        hnsbrowser: openHnsBrowser, browserhns: openHnsBrowser, 'hns-browser': openHnsBrowser,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -9739,6 +9939,7 @@ const App = () => {
       basemat: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
       math: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
       hns: { open: openHns, label: 'HNS', verbs: ['name','zone','export','namespace','secret','www','help'] },
+      hnsbrowser: { open: openHnsBrowser, label: 'HNS Browser', verbs: ['open','resolve','packet','gateway','phone','cli','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -9764,7 +9965,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -9787,6 +9988,7 @@ const App = () => {
       <HashNameSystemDialog open={hnsOpen} onClose={() => setHnsOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HashOperativeSystemDialog open={hosOpen} onClose={() => setHosOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HashCommandPromptingDialog open={hcpOpen} onClose={() => setHcpOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <HnsBrowserDialog open={hnsBrowserOpen} onClose={() => setHnsBrowserOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -9830,6 +10032,7 @@ const App = () => {
             <MenuButton label="API KEY MANAGER" icon={TOP_MENU_ICONS.apiKeyManager} iconOnly items={mountainToolItems('apiKeyManager')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('apiKeyManager')} />
             <MenuButton label="TOKENIZATION STUDIO" icon={TOP_MENU_ICONS.tokenizationStudio} iconOnly items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
             <MenuButton label="HNS" icon={TOP_MENU_ICONS.hns} iconOnly items={hnsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHns} />
+            <MenuButton label="HNS BROWSER" icon={TOP_MENU_ICONS.hnsBrowser} iconOnly items={hnsBrowserItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHnsBrowser} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
