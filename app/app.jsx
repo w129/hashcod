@@ -1189,6 +1189,122 @@ const rowToYaml = (row, language = 'en') => {
   ].join('\n');
 };
 
+const zipCrc32 = (bytes) => {
+  let crc = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) {
+    crc ^= bytes[i];
+    for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const dosDateTime = (date = new Date()) => ({
+  time: ((date.getHours() & 31) << 11) | ((date.getMinutes() & 63) << 5) | Math.floor((date.getSeconds() & 63) / 2),
+  date: (((date.getFullYear() - 1980) & 127) << 9) | (((date.getMonth() + 1) & 15) << 5) | (date.getDate() & 31),
+});
+
+const makeZipBlob = (files = []) => {
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  const push16 = (arr, value) => { arr.push(value & 255, (value >>> 8) & 255); };
+  const push32 = (arr, value) => { arr.push(value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255); };
+  files.forEach((file) => {
+    const nameBytes = enc.encode(file.name);
+    const dataBytes = typeof file.content === 'string' ? enc.encode(file.content) : new Uint8Array(file.content || []);
+    const crc = zipCrc32(dataBytes);
+    const dt = dosDateTime(file.date || new Date());
+    const local = [];
+    push32(local, 0x04034b50);
+    push16(local, 20);
+    push16(local, 0);
+    push16(local, 0);
+    push16(local, dt.time);
+    push16(local, dt.date);
+    push32(local, crc);
+    push32(local, dataBytes.length);
+    push32(local, dataBytes.length);
+    push16(local, nameBytes.length);
+    push16(local, 0);
+    chunks.push(new Uint8Array(local), nameBytes, dataBytes);
+    const centralRecord = [];
+    push32(centralRecord, 0x02014b50);
+    push16(centralRecord, 20);
+    push16(centralRecord, 20);
+    push16(centralRecord, 0);
+    push16(centralRecord, 0);
+    push16(centralRecord, dt.time);
+    push16(centralRecord, dt.date);
+    push32(centralRecord, crc);
+    push32(centralRecord, dataBytes.length);
+    push32(centralRecord, dataBytes.length);
+    push16(centralRecord, nameBytes.length);
+    push16(centralRecord, 0);
+    push16(centralRecord, 0);
+    push16(centralRecord, 0);
+    push16(centralRecord, 0);
+    push32(centralRecord, 0);
+    push32(centralRecord, offset);
+    central.push(new Uint8Array(centralRecord), nameBytes);
+    offset += local.length + nameBytes.length + dataBytes.length;
+  });
+  const centralOffset = offset;
+  const centralSize = central.reduce((sum, chunk) => sum + chunk.length, 0);
+  const end = [];
+  push32(end, 0x06054b50);
+  push16(end, 0);
+  push16(end, 0);
+  push16(end, files.length);
+  push16(end, files.length);
+  push32(end, centralSize);
+  push32(end, centralOffset);
+  push16(end, 0);
+  return new Blob([...chunks, ...central, new Uint8Array(end)], { type: 'application/zip' });
+};
+
+const rowUsageGuide = (row, language = 'en') => {
+  const { cat, type } = findTypeMeta(row.type);
+  const profile = ticketProfileForRow(row, language);
+  const L = (es, en) => (language === 'es' ? es : en);
+  return [
+    L('HASHCOD CODE - GUIA DE USO', 'HASHCOD CODE - USAGE GUIDE'),
+    '==========================',
+    '',
+    `${L('Tipo', 'Type')}: ${type ? type.label : row.type}`,
+    `${L('Categoria', 'Category')}: ${cat ? cat.label : 'N/A'}`,
+    `${L('Estandar / perfil', 'Standard / profile')}: ${type ? (type.std || type.badge || 'N/A') : 'N/A'}`,
+    `${L('Longitud', 'Length')}: ${String(row.value || '').length} ch`,
+    '',
+    L('COMO SE USA', 'HOW TO USE IT'),
+    L('- Guardalo como material sensible y controla quien puede verlo.', '- Store it as sensitive material and control who can read it.'),
+    L('- Usalo solo para el proposito del tipo de code generado.', '- Use it only for the purpose of the generated code type.'),
+    L('- Registra version, emisor, fecha, rotacion y revocacion cuando vaya a produccion.', '- Record version, issuer, date, rotation, and revocation when moving to production.'),
+    L('- Si se usa como secreto real, mantenlo fuera del frontend publico y de logs visibles.', '- If used as a real secret, keep it out of public frontend code and visible logs.'),
+    '',
+    L('APLICACIONES', 'APPLICATIONS'),
+    `- ${profile.useFor}`,
+    L('- QR Vault, certificados, auditoria local, tickets, vaults y paquetes de transporte.', '- QR Vault, certificates, local audit, tickets, vaults, and transport packets.'),
+    L('- Integracion con backend, KMS/HSM o bases de datos seguras segun el tipo.', '- Backend, KMS/HSM, or secure database integration depending on the type.'),
+    '',
+    L('NO HACER', 'DO NOT'),
+    `- ${profile.avoid}`,
+    L('- No lo publiques en screenshots, repositorios o chats publicos.', '- Do not publish it in screenshots, repositories, or public chats.'),
+    L('- No asumas que el formato visual reemplaza cifrado, HMAC o politicas de acceso.', '- Do not assume the visible format replaces encryption, HMAC, or access policy.'),
+    '',
+    L('CODE', 'CODE'),
+    String(row.value || ''),
+    '',
+  ].join('\n');
+};
+
+const rowToZipBlob = (row, language = 'en') => makeZipBlob([
+  { name: 'code.txt', content: rowToTxt(row, language) },
+  { name: 'usage-and-applications.txt', content: rowUsageGuide(row, language) },
+  { name: 'metadata.json', content: JSON.stringify(rowToJsonObject(row, language), null, 2) },
+  { name: 'metadata.yaml', content: rowToYaml(row, language) },
+]);
+
 const allRowsToMarkdown = (rows) => {
   if (!rows.length) return '';
   // Group by type for nicer output
@@ -1501,7 +1617,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const story = useMemo(() => storyForRow(row, language), [row, language]);
@@ -1558,6 +1674,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onYamlDownload?.(row);
   };
+  const downloadZip = (e) => {
+    e.stopPropagation();
+    onZipDownload?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1604,6 +1724,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-yaml" onClick={downloadYaml} title={language === 'es' ? 'Descargar YAML del code' : 'Download code YAML'}>
           <span dangerouslySetInnerHTML={{__html: YAML_FEATHER_ICON}} />
+        </button>
+        <button className="oc-act oc-act-zip" onClick={downloadZip} title={language === 'es' ? 'Descargar ZIP con uso y aplicaciones' : 'Download ZIP with usage and applications'}>
+          <span dangerouslySetInnerHTML={{__html: ZIP_FILE_BOX_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -7400,6 +7523,19 @@ const App = () => {
     notify(language === 'es' ? 'YAML descargado' : 'YAML downloaded');
   };
 
+  const downloadRowZip = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar ZIP requiere Starter o superior.' : 'ZIP download requires Starter or higher.')) return;
+    try {
+      const zip = rowToZipBlob(row, language);
+      const name = `Hashcod-ZIP-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
+      triggerBlobDownload(name, zip);
+      notify(language === 'es' ? 'ZIP descargado' : 'ZIP downloaded');
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo descargar el ZIP' : 'Could not download ZIP');
+    }
+  };
+
   const qrCanvasFromNode = async (node) => {
     if (!node) return null;
     if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
@@ -8430,7 +8566,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8507,6 +8643,7 @@ const JSON_BRACKETS_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria
 const TXT_ICON = `<svg width="16" height="12" viewBox="0 0 32 16" aria-hidden="true"><path fill="currentColor" d="M2 3h28v2H18v8h-2V5H2V3Zm1 3h10v2H9v5H7V8H3V6Zm17 0h2.7l1.8 2.4L26.3 6H29l-3.1 4 3.2 4h-2.8l-1.9-2.5L22.5 14H20l3.1-4L20 6Z"/></svg>`;
 const ISO_HOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.82 16.12c1.69.6 3.91.79 5.18.85.55.03 1-.42.97-.97-.06-1.27-.26-3.5-.85-5.18"/><path d="M11.5 6.5c1.64 0 5-.38 6.71-1.07.52-.2.55-.82.12-1.17A10 10 0 0 0 4.26 18.33c.35.43.96.4 1.17-.12.69-1.71 1.07-5.07 1.07-6.71 1.34.45 3.1.9 4.88.62a.88.88 0 0 0 .73-.74c.3-2.14-.15-3.5-.61-4.88"/><path d="M15.62 16.95c.2.85.62 2.76.5 4.28a.77.77 0 0 1-.9.7 16.64 16.64 0 0 1-4.08-1.36"/><path d="M16.13 21.05c1.65.63 3.68.84 4.87.91a.9.9 0 0 0 .96-.96 17.68 17.68 0 0 0-.9-4.87"/><path d="M16.94 15.62c.86.2 2.77.62 4.29.5a.77.77 0 0 0 .7-.9 16.64 16.64 0 0 0-1.36-4.08"/><path d="M17.99 5.52a20.82 20.82 0 0 1 3.15 4.5.8.8 0 0 1-.68 1.13c-2.33.2-5.3-.32-8.27-1.57"/><path d="M4.93 4.93 3 3a.7.7 0 0 1 0-1"/><path d="M9.58 12.18c1.24 2.98 1.77 5.95 1.57 8.28a.8.8 0 0 1-1.13.68 20.82 20.82 0 0 1-4.5-3.15"/></svg>`;
 const YAML_FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`;
+const ZIP_FILE_BOX_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v3.8"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M11.7 14.2 7 17l-4.7-2.8"/><path d="M3 13.1a2 2 0 0 0-.999 1.76v3.24a2 2 0 0 0 .969 1.78L6 21.7a2 2 0 0 0 2.03.01L11 19.9a2 2 0 0 0 1-1.76V14.9a2 2 0 0 0-.97-1.78L8 11.3a2 2 0 0 0-2.03-.01z"/><path d="M7 17v5"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
