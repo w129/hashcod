@@ -232,6 +232,23 @@ kbd {
 }
 .authmark { width: 44px; height: 44px; display:grid; place-items:center; border:1px solid #111; background:#111; color:#fff; }
 .authmark svg { width:24px; height:24px; }
+.authmark img { width:28px; height:28px; object-fit:contain; filter: drop-shadow(0 0 10px rgba(255,255,255,.18)); }
+.auth-generated {
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:1px;
+  background:#111;
+  border:1px solid #111;
+  font-family:var(--mono);
+}
+.auth-generated b, .auth-generated span, .auth-generated em {
+  background:#f7f7f4;
+  padding:10px;
+  font-size:11px;
+  font-style:normal;
+  color:#111;
+  overflow-wrap:anywhere;
+}
 .authbox span { color:#777; font: 10px var(--mono); letter-spacing:4px; text-transform:uppercase; }
 .authbox h1 { margin:0; font-family:var(--serif); font-size:54px; line-height:1; font-weight:500; }
 .authbox p { margin:0 0 8px; color:#666; font-size:13px; line-height:1.55; }
@@ -253,7 +270,17 @@ kbd {
 .authusers-form em { font-style:normal; font-size:12px; color:#333; }
 .admin-key-note { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
 .authusers-list { display:grid; gap:1px; padding:0 18px 18px; background:var(--line); }
+.authusers-title {
+  margin:0;
+  padding:12px 10px 8px;
+  background:#fff;
+  color:#555;
+  font:10px var(--mono);
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
 .authusers-row { display:grid; grid-template-columns:minmax(0,1fr) 130px 150px auto; gap:10px; align-items:center; background:#fff; padding:10px; }
+.authusers-row.wait { grid-template-columns:minmax(0,1fr) 130px 150px auto auto; background:#f7f7f4; }
 .authusers-row div { display:grid; gap:4px; min-width:0; }
 .authusers-row b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
 .authusers-row span { color:var(--ink-4); font-size:10px; }

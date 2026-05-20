@@ -172,13 +172,14 @@ function decryptJson(raw, fallback) {
 
 function readAuthDb() {
   ensureDataDir();
-  if (!fs.existsSync(AUTH_DB_FILE)) return { users: [] };
-  return decryptJson(fs.readFileSync(AUTH_DB_FILE, 'utf8'), { users: [] });
+  if (!fs.existsSync(AUTH_DB_FILE)) return { users: [], accessRequests: [] };
+  const db = decryptJson(fs.readFileSync(AUTH_DB_FILE, 'utf8'), { users: [], accessRequests: [] });
+  return { users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] };
 }
 
 function writeAuthDb(db) {
   ensureDataDir();
-  fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [] }));
+  fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] }));
 }
 
 function hashPassword(password) {
@@ -189,6 +190,14 @@ function hashPassword(password) {
 
 function makeRecoveryCode() {
   return `HC-REC-${b64url(crypto.randomBytes(18)).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20)}`;
+}
+
+function makeBlowfishId() {
+  return `BF-${b64url(crypto.randomBytes(12)).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16)}`;
+}
+
+function makeAccessSerial() {
+  return `HCQ-${Date.now().toString(36).toUpperCase()}-${b64url(crypto.randomBytes(6)).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)}`;
 }
 
 function verifyPassword(password, stored) {
@@ -287,6 +296,123 @@ async function handleAuth(req, res) {
   if (route === '/api/auth/me' && req.method === 'GET') {
     const auth = getSession(req);
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
+    return;
+  }
+  if (route === '/api/access/request' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const email = safeText(body.email, 180).toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !strongPassword(body.password)) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_request' }));
+        return;
+      }
+      if (db.users.some(u => u.email === email && u.status !== 'DISABLED')) {
+        send(res, 409, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'already_has_access' }));
+        return;
+      }
+      const existing = db.accessRequests.find(r => r.email === email && r.status === 'PENDING');
+      if (existing) {
+        send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { email, blowfishId: existing.blowfishId, serial: existing.serial, status: existing.status } }));
+        return;
+      }
+      const reqRow = {
+        id: `req_${Date.now().toString(36)}_${b64url(crypto.randomBytes(8))}`,
+        email,
+        blowfishId: makeBlowfishId(),
+        serial: makeAccessSerial(),
+        desiredPasswordHash: hashPassword(body.password),
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
+      };
+      db.accessRequests.unshift(reqRow);
+      writeAuthDb(db);
+      audit('access.request', { ip: clientIp(req), requestId: reqRow.id, email });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { email, blowfishId: reqRow.blowfishId, serial: reqRow.serial, status: reqRow.status } }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/access/check' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const email = safeText(body.email, 180).toLowerCase();
+      const serial = safeText(body.serial, 80).toUpperCase();
+      const reqRow = db.accessRequests.find(r => r.email === email && r.serial === serial);
+      if (!reqRow || !verifyPassword(body.password, reqRow.desiredPasswordHash)) {
+        send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'request_not_found' }));
+        return;
+      }
+      if (reqRow.status !== 'APPROVED') {
+        send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, status: reqRow.status, blowfishId: reqRow.blowfishId, serial: reqRow.serial }));
+        return;
+      }
+      const user = db.users.find(u => u.email === email && u.status !== 'DISABLED');
+      if (!user) {
+        send(res, 409, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'approved_user_missing' }));
+        return;
+      }
+      const session = makeSession(req, user);
+      audit('access.check_login', { ip: clientIp(req), userId: user.id, requestId: reqRow.id });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, status: reqRow.status, user: publicUser(user), csrf: session.csrf }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (route === '/api/access/requests' && req.method === 'GET') {
+    const auth = requireAdminPanel(req, res);
+    if (!auth) return;
+    const requests = db.accessRequests.map(({ desiredPasswordHash, ...row }) => row);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, requests }));
+    return;
+  }
+  if (route === '/api/access/requests' && req.method === 'PUT') {
+    const auth = requireAdminPanel(req, res);
+    if (!auth) return;
+    try {
+      const body = await readJsonBody(req);
+      const reqRow = db.accessRequests.find(r => r.id === safeText(body.id, 120));
+      if (!reqRow) {
+        send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'request_not_found' }));
+        return;
+      }
+      const action = body.action === 'reject' ? 'reject' : 'approve';
+      if (action === 'reject') {
+        reqRow.status = 'REJECTED';
+        reqRow.reviewedAt = new Date().toISOString();
+        reqRow.reviewedBy = auth.user.id;
+        writeAuthDb(db);
+        audit('access.reject', { ip: clientIp(req), actor: auth.user.id, requestId: reqRow.id });
+        send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { ...reqRow, desiredPasswordHash: undefined } }));
+        return;
+      }
+      const role = ['viewer', 'editor', 'admin'].includes(body.role) ? body.role : 'viewer';
+      const plan = ['free', 'starter', 'professional', 'enterprise'].includes(body.plan) ? body.plan : 'free';
+      const recoveryCode = makeRecoveryCode();
+      let user = db.users.find(u => u.email === reqRow.email);
+      if (user) {
+        user.role = role;
+        user.plan = plan;
+        user.status = 'ACTIVE';
+        user.passwordHash = reqRow.desiredPasswordHash;
+        user.recoveryHash = hashPassword(recoveryCode);
+        user.updatedAt = new Date().toISOString();
+      } else {
+        user = { id: `usr_${Date.now().toString(36)}`, email: reqRow.email, name: `${reqRow.blowfishId}-${reqRow.serial}`, role, plan, passwordHash: reqRow.desiredPasswordHash, recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
+        db.users.push(user);
+      }
+      reqRow.status = 'APPROVED';
+      reqRow.role = role;
+      reqRow.plan = plan;
+      reqRow.reviewedAt = new Date().toISOString();
+      reqRow.reviewedBy = auth.user.id;
+      writeAuthDb(db);
+      audit('access.approve', { ip: clientIp(req), actor: auth.user.id, requestId: reqRow.id, userId: user.id, role, plan });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
     return;
   }
   if (route === '/api/auth/register' && req.method === 'POST') {
@@ -654,7 +780,7 @@ function safePath(urlPath) {
 const server = http.createServer((req, res) => {
   if (!rateLimit(req, res)) return;
 
-  if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/')) {
+  if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/') || (req.url || '').split('?')[0].startsWith('/api/access/')) {
     handleAuth(req, res);
     return;
   }

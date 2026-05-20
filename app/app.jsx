@@ -2024,6 +2024,8 @@ const AuthUsersDialog = ({ open, onClose }) => {
   const [unlocked, setUnlocked] = useState(false);
   const [panelKey, setPanelKey] = useState('');
   const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [requestChoices, setRequestChoices] = useState({});
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
   const [status, setStatus] = useState('');
   if (!open) return null;
@@ -2031,6 +2033,15 @@ const AuthUsersDialog = ({ open, onClose }) => {
     const res = await authFetch('/api/auth/users');
     const data = await res.json();
     if (res.ok) setUsers(data.users || []);
+  };
+  const loadRequests = async () => {
+    const res = await authFetch('/api/access/requests');
+    const data = await res.json();
+    if (res.ok) setRequests(data.requests || []);
+  };
+  const loadAll = async () => {
+    await loadUsers();
+    await loadRequests();
   };
   const unlock = async (e) => {
     e.preventDefault();
@@ -2041,7 +2052,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
       setUnlocked(true);
       setPanelKey('');
       setStatus('Panel admin desbloqueado.');
-      await loadUsers();
+      await loadAll();
     } catch {
       setStatus('Clave admin incorrecta.');
     }
@@ -2055,7 +2066,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
       if (!res.ok) throw new Error(data.error || 'failed');
       setForm({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
       setStatus(`Usuario creado: ${data.user.email} (${data.user.role} / ${data.user.plan}) | Recovery: ${data.recoveryCode}`);
-      await loadUsers();
+      await loadAll();
     } catch {
       setStatus('No se pudo crear. Usa password fuerte y email no repetido.');
     }
@@ -2064,10 +2075,22 @@ const AuthUsersDialog = ({ open, onClose }) => {
     const res = await authFetch('/api/auth/users', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: user.id, ...patch }) });
     if (res.ok) {
       setStatus('Usuario actualizado.');
-      await loadUsers();
+      await loadAll();
     } else {
       setStatus('No se pudo actualizar usuario.');
     }
+  };
+  const setRequestChoice = (id, patch) => {
+    setRequestChoices(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }));
+  };
+  const reviewRequest = async (request, action) => {
+    const choice = requestChoices[request.id] || {};
+    const role = choice.role || request.role || 'viewer';
+    const plan = choice.plan || request.plan || 'free';
+    const res = await authFetch('/api/access/requests', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: request.id, action, role, plan }) });
+    const data = await res.json();
+    setStatus(res.ok ? (action === 'approve' ? `Solicitud aprobada. Recovery: ${data.recoveryCode}` : 'Solicitud rechazada.') : 'No se pudo revisar la solicitud.');
+    await loadAll();
   };
   return (
     <div className="dlg-back" onClick={onClose}>
@@ -2075,7 +2098,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
         <div className="dlg-h">
           <div>
             <h2>Usuarios y roles</h2>
-            <p>Crea cuentas reales con rol viewer, editor o admin.</p>
+            <p>Aprueba solicitudes, asigna planes y controla permisos de acceso.</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -2107,6 +2130,21 @@ const AuthUsersDialog = ({ open, onClose }) => {
               {status && <em>{status}</em>}
             </form>
             <div className="authusers-list">
+              {requests.length > 0 && <h3 className="authusers-title">Lista de espera</h3>}
+              {requests.map(req => (
+                <article key={req.id} className="authusers-row wait">
+                  <div><b>{req.email}</b><span>{req.blowfishId} | {req.serial} | {req.status}</span></div>
+                  <select value={(requestChoices[req.id]?.role || req.role || 'viewer')} onChange={e => setRequestChoice(req.id, { role: e.target.value })}>
+                    <option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option>
+                  </select>
+                  <select value={(requestChoices[req.id]?.plan || req.plan || 'free')} onChange={e => setRequestChoice(req.id, { plan: e.target.value })}>
+                    <option value="free">free</option><option value="starter">starter</option><option value="professional">professional</option><option value="enterprise">enterprise</option>
+                  </select>
+                  <button onClick={() => reviewRequest(req, 'approve')}>Approve</button>
+                  <button onClick={() => reviewRequest(req, 'reject')}>Reject</button>
+                </article>
+              ))}
+              <h3 className="authusers-title">Usuarios activos</h3>
               {users.map(user => (
                 <article key={user.id} className="authusers-row">
                   <div><b>{user.email}</b><span>{user.name} | {user.status}</span></div>
@@ -2129,10 +2167,11 @@ const AuthUsersDialog = ({ open, onClose }) => {
 
 const AuthGate = ({ children }) => {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
-  const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ name: '', email: '', password: '', recoveryCode: '' });
+  const [mode, setMode] = useState('request');
+  const [form, setForm] = useState({ email: '', password: '', recoveryCode: '', serial: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [requestInfo, setRequestInfo] = useState(null);
   const [usersOpen, setUsersOpen] = useState(false);
   const applyServerPlan = (user) => {
     if (user?.plan && PLAN_DEFINITIONS[user.plan]) {
@@ -2146,7 +2185,7 @@ const AuthGate = ({ children }) => {
       window.HASHCOD_CSRF = data.csrf || '';
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
-      if (data.setupRequired) setMode('register');
+      if (!data.user) setMode('request');
     } catch {
       setAuth({ loading: false, setupRequired: false, user: null });
       setError('No se pudo conectar con autenticacion.');
@@ -2171,11 +2210,28 @@ const AuthGate = ({ children }) => {
     e.preventDefault();
     setError('');
     setNotice('');
-    const route = mode === 'register' ? '/api/auth/register' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/login';
+    const route = mode === 'request' ? '/api/access/request' : mode === 'check' ? '/api/access/check' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/login';
     try {
       const res = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'auth_failed');
+      if (mode === 'request') {
+        setRequestInfo(data.request);
+        setForm({ ...form, serial: data.request.serial });
+        setNotice(`Solicitud guardada. Blowfish: ${data.request.blowfishId} | Serial: ${data.request.serial}`);
+        setMode('check');
+        return;
+      }
+      if (mode === 'check') {
+        if (data.user) {
+          window.HASHCOD_CSRF = data.csrf || '';
+          applyServerPlan(data.user);
+          setAuth({ loading: false, setupRequired: false, user: data.user });
+        } else {
+          setNotice(`Estado de solicitud: ${data.status}. Serial: ${data.serial}`);
+        }
+        return;
+      }
       if (mode === 'recover') {
         setMode('login');
         setNotice(`Password actualizado. Nuevo recovery code: ${data.recoveryCode}`);
@@ -2186,23 +2242,26 @@ const AuthGate = ({ children }) => {
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: false, user: data.user });
     } catch (err) {
-      setError(mode === 'register' ? 'Registro invalido. Usa email real y password fuerte de 12+ con mayuscula, numero y simbolo.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
+      setError(mode === 'request' ? 'Solicitud invalida. Usa email real y clave fuerte de 12+ con mayuscula, numero y simbolo.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
     }
   };
   return (
     <div className="authgate">
       <form className="authbox" onSubmit={submit}>
-        <div className="authmark" dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
+        <div className="authmark"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /></div>
         <span>HASHCOD SECURE ACCESS</span>
-        <h1>{mode === 'register' ? 'Create Admin' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
-        <p>{mode === 'register' ? 'Primer usuario: se crea como admin y activa la plataforma.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contraseña.' : 'Sesion segura con cookie HTTP-only, CSRF y roles.'}</p>
-        {mode === 'register' && <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />}
+        <h1>{mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
+        <p>{mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y plan.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contraseña.' : 'Sesion segura con cookie HTTP-only, CSRF y roles.'}</p>
+        {requestInfo && <div className="auth-generated"><b>{requestInfo.blowfishId}</b><span>{requestInfo.serial}</span><em>{requestInfo.status}</em></div>}
         <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
+        {mode === 'check' && <input value={form.serial} onChange={e => setForm({ ...form, serial: e.target.value })} placeholder="Access request serial" />}
         {mode === 'recover' && <input value={form.recoveryCode} onChange={e => setForm({ ...form, recoveryCode: e.target.value })} placeholder="Recovery code" />}
         <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password" />
         {error && <em>{error}</em>}
         {notice && <em className="ok">{notice}</em>}
-        <button>{mode === 'register' ? 'Create secure admin' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
+        <button>{mode === 'request' ? 'Join waitlist' : mode === 'check' ? 'Verify access' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
+        <button type="button" className="ghost" onClick={() => setMode(mode === 'login' ? 'request' : 'login')}>{mode === 'login' ? 'Request access' : 'I already have access'}</button>
+        <button type="button" className="ghost" onClick={() => setMode(mode === 'check' ? 'request' : 'check')}>{mode === 'check' ? 'New request' : 'Check waitlist status'}</button>
         {!auth.setupRequired && <button type="button" className="ghost" onClick={() => setMode(mode === 'recover' ? 'login' : 'recover')}>{mode === 'recover' ? 'Back to login' : 'Recover password'}</button>}
       </form>
     </div>
