@@ -2048,7 +2048,9 @@ const AuthUsersDialog = ({ open, onClose }) => {
     setStatus('');
     try {
       const res = await authFetch('/api/admin/unlock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ panelKey }) });
+      const data = await res.json();
       if (!res.ok) throw new Error('locked');
+      window.HASHCOD_CSRF = data.csrf || window.HASHCOD_CSRF || '';
       setUnlocked(true);
       setPanelKey('');
       setStatus('Panel admin desbloqueado.');
@@ -2247,6 +2249,10 @@ const AuthGate = ({ children }) => {
   };
   return (
     <div className="authgate">
+      <button className="auth-admin-fab" type="button" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel">
+        <span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} />
+      </button>
+      <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
       <form className="authbox" onSubmit={submit}>
         <div className="authmark"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /></div>
         <span>HASHCOD SECURE ACCESS</span>

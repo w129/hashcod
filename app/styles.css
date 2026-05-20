@@ -210,6 +210,23 @@ kbd {
 .auth-session button:hover { background:#fff; color:#111; }
 .auth-session .auth-admin-icon { width:24px; height:24px; padding:0; display:grid; place-items:center; }
 .auth-session .auth-admin-icon span, .auth-session .auth-admin-icon svg { display:block; width:15px; height:15px; }
+.auth-admin-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 190;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  box-shadow: 8px 8px 0 rgba(0,0,0,.08);
+  cursor: pointer;
+}
+.auth-admin-fab:hover { background:#fff; color:#111; }
+.auth-admin-fab span, .auth-admin-fab svg { display:block; width:19px; height:19px; }
 .authgate {
   min-height: 100vh;
   display: grid;

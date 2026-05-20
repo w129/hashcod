@@ -17,6 +17,7 @@ const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
 const rateBuckets = new Map();
 const sessions = new Map();
+const adminPanelSessions = new Map();
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || '1ec68bc0422b5353ae0f975cd2a8fe82deda1559f565d98d44f6e732e63c1cca';
 
 const MIME = {
@@ -239,6 +240,13 @@ function makeSession(req, user) {
   return { sid, csrf };
 }
 
+function makeAdminPanelSession() {
+  const sid = b64url(crypto.randomBytes(32));
+  const csrf = b64url(crypto.randomBytes(24));
+  adminPanelSessions.set(sid, { csrf, expiresAt: Date.now() + 1000 * 60 * 60 * 4 });
+  return { sid, csrf };
+}
+
 function getSession(req) {
   const sid = parseCookies(req).hashcod_session;
   const session = sid && sessions.get(sid);
@@ -253,17 +261,35 @@ function getSession(req) {
 
 function hasAdminPanel(req) {
   const auth = getSession(req);
-  return !!auth?.session?.adminPanel && auth.user.role === 'admin';
+  return (!!auth?.session?.adminPanel && auth.user.role === 'admin') || !!getAdminPanelSession(req);
+}
+
+function getAdminPanelSession(req) {
+  const sid = parseCookies(req).hashcod_admin_panel;
+  const session = sid && adminPanelSessions.get(sid);
+  if (!session || session.expiresAt < Date.now()) {
+    if (sid) adminPanelSessions.delete(sid);
+    return null;
+  }
+  return { sid, session };
 }
 
 function requireAdminPanel(req, res) {
-  const auth = requireAuth(req, res, 'admin');
-  if (!auth) return null;
-  if (!auth.session.adminPanel) {
-    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'admin_panel_locked' }));
-    return null;
+  const auth = getSession(req);
+  if (auth && auth.user.role === 'admin' && auth.session.adminPanel) return { ...auth, actorId: auth.user.id };
+  const panel = getAdminPanelSession(req);
+  if (panel) {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      const csrf = String(req.headers['x-csrf-token'] || '');
+      if (!csrf || csrf !== panel.session.csrf) {
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'csrf_required' }));
+        return null;
+      }
+    }
+    return { user: { id: 'admin_panel', role: 'admin', email: 'admin-panel@hashcod.local' }, session: panel.session, actorId: 'admin_panel', panelOnly: true };
   }
-  return auth;
+  send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'admin_panel_locked' }));
+  return null;
 }
 
 function roleRank(role) {
@@ -295,7 +321,8 @@ async function handleAuth(req, res) {
   const db = readAuthDb();
   if (route === '/api/auth/me' && req.method === 'GET') {
     const auth = getSession(req);
-    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
+    const panel = getAdminPanelSession(req);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
     return;
   }
   if (route === '/api/access/request' && req.method === 'POST') {
@@ -381,9 +408,9 @@ async function handleAuth(req, res) {
       if (action === 'reject') {
         reqRow.status = 'REJECTED';
         reqRow.reviewedAt = new Date().toISOString();
-        reqRow.reviewedBy = auth.user.id;
+        reqRow.reviewedBy = auth.actorId;
         writeAuthDb(db);
-        audit('access.reject', { ip: clientIp(req), actor: auth.user.id, requestId: reqRow.id });
+        audit('access.reject', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id });
         send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { ...reqRow, desiredPasswordHash: undefined } }));
         return;
       }
@@ -406,9 +433,9 @@ async function handleAuth(req, res) {
       reqRow.role = role;
       reqRow.plan = plan;
       reqRow.reviewedAt = new Date().toISOString();
-      reqRow.reviewedBy = auth.user.id;
+      reqRow.reviewedBy = auth.actorId;
       writeAuthDb(db);
-      audit('access.approve', { ip: clientIp(req), actor: auth.user.id, requestId: reqRow.id, userId: user.id, role, plan });
+      audit('access.approve', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id, userId: user.id, role, plan });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -460,24 +487,26 @@ async function handleAuth(req, res) {
   if (route === '/api/auth/logout' && req.method === 'POST') {
     const auth = getSession(req);
     if (auth) sessions.delete(auth.sid);
-    send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
+    const panel = getAdminPanelSession(req);
+    if (panel) adminPanelSessions.delete(panel.sid);
+    send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': [`hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`, `hashcod_admin_panel=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`] }, JSON.stringify({ ok: true }));
     return;
   }
   if (route === '/api/admin/unlock' && req.method === 'POST') {
-    const auth = requireAuth(req, res, 'admin');
-    if (!auth) return;
+    const auth = getSession(req);
     try {
       const body = await readJsonBody(req);
       const keyHash = crypto.createHash('sha256').update(String(body.panelKey || '')).digest('hex');
       const expectedPanelHash = String(ADMIN_PANEL_KEY_HASH || '').trim();
       if (expectedPanelHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedPanelHash))) {
-        audit('admin.unlock_failed', { ip: clientIp(req), actor: auth.user.id });
+        audit('admin.unlock_failed', { ip: clientIp(req), actor: auth?.user?.id || 'public' });
         send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_panel_key' }));
         return;
       }
-      auth.session.adminPanel = true;
-      audit('admin.unlock', { ip: clientIp(req), actor: auth.user.id });
-      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true }));
+      if (auth?.user?.role === 'admin') auth.session.adminPanel = true;
+      const panel = makeAdminPanelSession();
+      audit('admin.unlock', { ip: clientIp(req), actor: auth?.user?.id || 'admin_panel' });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_admin_panel=${encodeURIComponent(panel.sid)}; ${cookieOptions(req, 60 * 60 * 4)}` }, JSON.stringify({ ok: true, csrf: panel.csrf }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
     }
@@ -521,7 +550,7 @@ async function handleAuth(req, res) {
       const user = { id: `usr_${Date.now().toString(36)}`, email, name: safeText(body.name, 80) || email, role, plan, passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
       db.users.push(user);
       writeAuthDb(db);
-      audit('auth.user_create', { ip: clientIp(req), actor: auth.user.id, userId: user.id, role });
+      audit('auth.user_create', { ip: clientIp(req), actor: auth.actorId, userId: user.id, role });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -549,7 +578,7 @@ async function handleAuth(req, res) {
       if (['ACTIVE', 'DISABLED'].includes(body.status)) user.status = body.status;
       user.updatedAt = new Date().toISOString();
       writeAuthDb(db);
-      audit('auth.user_update', { ip: clientIp(req), actor: auth.user.id, userId: user.id, role: user.role, plan: user.plan, status: user.status });
+      audit('auth.user_update', { ip: clientIp(req), actor: auth.actorId, userId: user.id, role: user.role, plan: user.plan, status: user.status });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user) }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
