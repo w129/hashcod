@@ -815,6 +815,8 @@ kbd {
 .oc-act-sms:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-phoneos { color: #646464; }
 .oc-act-phoneos:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-pixelnote { color: #646464; }
+.oc-act-pixelnote:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 /* ── Right panel: Tech Info ── */
 .rp {
@@ -1171,6 +1173,22 @@ kbd {
   .smsdlg { width:calc(100vw - 22px); }
   .sms-form { grid-template-columns:1fr; padding:14px; }
   .sms-actions { display:grid; grid-template-columns:1fr; }
+}
+.pixelnotedlg { width:min(820px, calc(100vw - 42px)); }
+.pixelnote-form { padding:18px; display:grid; gap:14px; background:#fff; }
+.pixelnote-current { border:2px solid #111; background:repeating-linear-gradient(0deg,#fff,#fff 17px,#f0f0ea 18px); padding:12px; display:grid; gap:7px; box-shadow:6px 6px 0 #111; }
+.pixelnote-current span, .pixelnote-form label span { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.pixelnote-current b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
+.pixelnote-current pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-family:var(--mono); font-size:11px; line-height:1.45; }
+.pixelnote-form label { display:grid; gap:8px; }
+.pixelnote-form textarea { min-height:150px; border:2px solid #111; background:#fff; padding:12px; font-family:var(--mono); font-size:12px; resize:vertical; box-shadow:6px 6px 0 #111; }
+.pixelnote-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.pixelnote-actions button { border:1px solid #111; background:#111; color:#fff; min-height:40px; padding:0 14px; font-size:10px; letter-spacing:1.6px; text-transform:uppercase; }
+.pixelnote-actions button[type="button"] { background:#fff; color:#111; }
+@media (max-width:760px) {
+  .pixelnotedlg { width:calc(100vw - 22px); }
+  .pixelnote-form { padding:14px; }
+  .pixelnote-actions { display:grid; grid-template-columns:1fr; }
 }
 .cliconsdlg { width:min(1080px, calc(100vw - 42px)); }
 .clicons-form { padding:18px; border-bottom:1px solid var(--line); background:#f7f7f4; display:grid; gap:10px; }
