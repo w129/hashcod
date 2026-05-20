@@ -1149,6 +1149,46 @@ const rowToJsonObject = (row, language = 'en') => {
   };
 };
 
+const yamlScalar = (value) => {
+  const text = String(value ?? '');
+  return `"${text.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+};
+
+const yamlBlock = (value, indent = '    ') => String(value ?? '').split(/\r?\n/).map(line => `${indent}${line}`).join('\n');
+
+const rowToYaml = (row, language = 'en') => {
+  const data = rowToJsonObject(row, language);
+  return [
+    'platform: Hashcod',
+    `version: ${yamlScalar(data.version)}`,
+    `export_format: ${yamlScalar('yaml')}`,
+    `exported_at: ${yamlScalar(data.exported_at)}`,
+    'code:',
+    `  index: ${yamlScalar(data.code.index)}`,
+    `  row_id: ${data.code.row_id == null ? 'null' : yamlScalar(data.code.row_id)}`,
+    `  type_id: ${yamlScalar(data.code.type_id)}`,
+    `  primitive: ${yamlScalar(data.code.primitive)}`,
+    `  category: ${data.code.category == null ? 'null' : yamlScalar(data.code.category)}`,
+    `  category_id: ${data.code.category_id == null ? 'null' : yamlScalar(data.code.category_id)}`,
+    `  standard: ${data.code.standard == null ? 'null' : yamlScalar(data.code.standard)}`,
+    `  generated_at: ${yamlScalar(data.code.generated_at)}`,
+    `  length: ${data.code.length}`,
+    '  value: |',
+    yamlBlock(data.code.value),
+    'security_profile:',
+    `  posture: ${yamlScalar(data.security_profile.posture)}`,
+    `  use_for: ${yamlScalar(data.security_profile.use_for)}`,
+    `  avoid: ${yamlScalar(data.security_profile.avoid)}`,
+    'storytelling:',
+    `  line_1: ${yamlScalar(data.storytelling.line_1)}`,
+    `  line_2: ${yamlScalar(data.storytelling.line_2)}`,
+    'audit:',
+    `  source: ${yamlScalar(data.audit.source)}`,
+    `  note: ${yamlScalar(data.audit.note)}`,
+    '',
+  ].join('\n');
+};
+
 const allRowsToMarkdown = (rows) => {
   if (!rows.length) return '';
   // Group by type for nicer output
@@ -1461,7 +1501,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const story = useMemo(() => storyForRow(row, language), [row, language]);
@@ -1514,6 +1554,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onIsoDownload?.(row);
   };
+  const downloadYaml = (e) => {
+    e.stopPropagation();
+    onYamlDownload?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1557,6 +1601,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-iso" onClick={downloadIso} title={language === 'es' ? 'Descargar ISO del code' : 'Download code ISO'}>
           <span dangerouslySetInnerHTML={{__html: ISO_HOP_ICON}} />
+        </button>
+        <button className="oc-act oc-act-yaml" onClick={downloadYaml} title={language === 'es' ? 'Descargar YAML del code' : 'Download code YAML'}>
+          <span dangerouslySetInnerHTML={{__html: YAML_FEATHER_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -7345,6 +7392,14 @@ const App = () => {
     }
   };
 
+  const downloadRowYaml = (row) => {
+    if (!planAllows('export', language === 'es' ? 'Descargar YAML requiere Starter o superior.' : 'YAML download requires Starter or higher.')) return;
+    const yaml = rowToYaml(row, language);
+    const name = `Hashcod-yaml-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.yaml`;
+    triggerDownload(name, yaml, 'application/x-yaml;charset=utf-8');
+    notify(language === 'es' ? 'YAML descargado' : 'YAML downloaded');
+  };
+
   const qrCanvasFromNode = async (node) => {
     if (!node) return null;
     if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
@@ -8375,7 +8430,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8451,6 +8506,7 @@ const LOGBOOK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidde
 const JSON_BRACKETS_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.1 2.2c-1.4 0-2.2.8-2.2 2.2v1.3c0 .8-.3 1.2-1 1.4v1.8c.7.2 1 .6 1 1.4v1.3c0 1.4.8 2.2 2.2 2.2h1.1v-1.8h-.8c-.5 0-.7-.2-.7-.7V10c0-1-.4-1.7-1.1-2 .7-.3 1.1-1 1.1-2V4.7c0-.5.2-.7.7-.7h.8V2.2H5.1Zm5.8 0H9.8V4h.8c.5 0 .7.2.7.7V6c0 1 .4 1.7 1.1 2-.7.3-1.1 1-1.1 2v1.3c0 .5-.2.7-.7.7h-.8v1.8h1.1c1.4 0 2.2-.8 2.2-2.2v-1.3c0-.8.3-1.2 1-1.4V7.1c-.7-.2-1-.6-1-1.4V4.4c0-1.4-.8-2.2-2.2-2.2Z"/></svg>`;
 const TXT_ICON = `<svg width="16" height="12" viewBox="0 0 32 16" aria-hidden="true"><path fill="currentColor" d="M2 3h28v2H18v8h-2V5H2V3Zm1 3h10v2H9v5H7V8H3V6Zm17 0h2.7l1.8 2.4L26.3 6H29l-3.1 4 3.2 4h-2.8l-1.9-2.5L22.5 14H20l3.1-4L20 6Z"/></svg>`;
 const ISO_HOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.82 16.12c1.69.6 3.91.79 5.18.85.55.03 1-.42.97-.97-.06-1.27-.26-3.5-.85-5.18"/><path d="M11.5 6.5c1.64 0 5-.38 6.71-1.07.52-.2.55-.82.12-1.17A10 10 0 0 0 4.26 18.33c.35.43.96.4 1.17-.12.69-1.71 1.07-5.07 1.07-6.71 1.34.45 3.1.9 4.88.62a.88.88 0 0 0 .73-.74c.3-2.14-.15-3.5-.61-4.88"/><path d="M15.62 16.95c.2.85.62 2.76.5 4.28a.77.77 0 0 1-.9.7 16.64 16.64 0 0 1-4.08-1.36"/><path d="M16.13 21.05c1.65.63 3.68.84 4.87.91a.9.9 0 0 0 .96-.96 17.68 17.68 0 0 0-.9-4.87"/><path d="M16.94 15.62c.86.2 2.77.62 4.29.5a.77.77 0 0 0 .7-.9 16.64 16.64 0 0 0-1.36-4.08"/><path d="M17.99 5.52a20.82 20.82 0 0 1 3.15 4.5.8.8 0 0 1-.68 1.13c-2.33.2-5.3-.32-8.27-1.57"/><path d="M4.93 4.93 3 3a.7.7 0 0 1 0-1"/><path d="M9.58 12.18c1.24 2.98 1.77 5.95 1.57 8.28a.8.8 0 0 1-1.13.68 20.82 20.82 0 0 1-4.5-3.15"/></svg>`;
+const YAML_FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
