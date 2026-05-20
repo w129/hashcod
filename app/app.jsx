@@ -1318,6 +1318,87 @@ const rowToOcgPack = (row, language = 'en') => {
   ].join('\n');
 };
 
+const pdfEscape = (value = '') => String(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[^\x20-\x7E]/g, '?');
+
+const wrapPdfLine = (text = '', max = 86) => {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = '';
+  words.forEach((word) => {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > max && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+};
+
+const makeSimplePdfBytes = (title, lines = []) => {
+  const pageW = 612;
+  const pageH = 792;
+  const content = [];
+  content.push('BT');
+  content.push('/F1 20 Tf');
+  content.push('72 735 Td');
+  content.push(`(${pdfEscape(title)}) Tj`);
+  content.push('/F1 10 Tf');
+  content.push('0 -28 Td');
+  const wrapped = lines.flatMap(line => line === '' ? [''] : wrapPdfLine(line));
+  wrapped.slice(0, 48).forEach((line) => {
+    content.push(`(${pdfEscape(line)}) Tj`);
+    content.push('0 -15 Td');
+  });
+  content.push('ET');
+  const stream = content.join('\n');
+  const objects = [
+    '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
+    `2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj`,
+    `3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj`,
+    '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
+    `5 0 obj << /Length ${stream.length} >> stream\n${stream}\nendstream endobj`,
+  ];
+  let pdf = '%PDF-1.4\n';
+  const offsets = [0];
+  objects.forEach((obj) => {
+    offsets.push(pdf.length);
+    pdf += `${obj}\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach(offset => { pdf += `${String(offset).padStart(10, '0')} 00000 n \n`; });
+  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new TextEncoder().encode(pdf);
+};
+
+const codeCardManualPdfBytes = (manifest, language = 'en') => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  return makeSimplePdfBytes('Hashcod Virtual Code Card Manual', [
+    L('Que es esta tarjeta', 'What this card is'),
+    L('La tarjeta virtual representa un code generado dentro de Hashcod. Incluye un QR y una serie numerica unica para validacion visual y operativa.', 'The virtual card represents a code generated inside Hashcod. It includes a QR and a unique numeric series for visual and operational validation.'),
+    '',
+    L('Como funciona', 'How it works'),
+    L('1. El QR contiene un payload corto con serial, numero de validacion y huella SHA-256 del code.', '1. The QR contains a short payload with serial, validation number, and SHA-256 fingerprint of the code.'),
+    L('2. El numero de validacion se deriva de la huella del code, el tipo y el indice de generacion.', '2. The validation number is derived from the code fingerprint, type, and generation index.'),
+    L('3. El archivo manifest.json conserva los metadatos completos del paquete descargado.', '3. The manifest.json file preserves the full metadata for the downloaded package.'),
+    '',
+    L('Para que sirve', 'What it is for'),
+    L('Sirve para entregar un code como credencial virtual, ticket interno, comprobante de emision, tarjeta de vault o referencia de auditoria.', 'It is useful for delivering a code as a virtual credential, internal ticket, issuance proof, vault card, or audit reference.'),
+    '',
+    `SERIAL: ${manifest.serial}`,
+    `VALIDATION_NUMBER: ${manifest.validation_number}`,
+    `CODE_SHA256: ${manifest.code_sha256}`,
+    `PRIMITIVE: ${manifest.primitive}`,
+    `CREATED_AT: ${manifest.created_at}`,
+    '',
+    L('Aviso', 'Notice'),
+    L('Esta tarjeta no reemplaza cifrado, firma digital, control de acceso ni custodia segura. Trata el code como material sensible.', 'This card does not replace encryption, digital signature, access control, or secure custody. Treat the code as sensitive material.'),
+  ]);
+};
+
 const allRowsToMarkdown = (rows) => {
   if (!rows.length) return '';
   // Group by type for nicer output
@@ -1630,7 +1711,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1694,6 +1775,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onPackDownload?.(row);
   };
+  const downloadCard = (e) => {
+    e.stopPropagation();
+    onCardDownload?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1746,6 +1831,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-pack" onClick={downloadPack} title={language === 'es' ? 'Descargar paquete Hashcod OCG (.ocg.pack)' : 'Download Hashcod OCG package (.ocg.pack)'}>
           <span dangerouslySetInnerHTML={{__html: OCG_PACK_STONE_ICON}} />
+        </button>
+        <button className="oc-act oc-act-card" onClick={downloadCard} title={language === 'es' ? 'Descargar tarjeta virtual de code + manual PDF' : 'Download virtual code card + PDF manual'}>
+          <span dangerouslySetInnerHTML={{__html: CODE_CARD_TAPE_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -7605,6 +7693,112 @@ const App = () => {
     return `OCGNEO1:${serial}:${family}:C${check}:H${hash}`;
   };
 
+  const cardManifestForRow = async (row) => {
+    const { cat, type } = findTypeMeta(row.type);
+    const codeHash = (await digestHex(String(row.value || ''))).toUpperCase();
+    const seedHash = (await digestHex(`${row.type}|${row.idx}|${row.value}|HASHCOD-CODE-CARD`)).toUpperCase();
+    const digits = seedHash.replace(/[A-F]/g, ch => String(ch.charCodeAt(0) - 55)).replace(/\D/g, '').slice(0, 18).padEnd(18, '0');
+    const serial = `HCARD-${seedHash.slice(0, 4)}-${seedHash.slice(4, 8)}-${seedHash.slice(8, 12)}`;
+    const validation = `${digits.slice(0, 6)}-${digits.slice(6, 12)}-${digits.slice(12, 18)}`;
+    const manifest = {
+      platform: 'Hashcod',
+      format: 'virtual-code-card',
+      version: 'v12',
+      serial,
+      validation_number: validation,
+      code_sha256: codeHash,
+      code_hash_short: codeHash.slice(0, 24),
+      type_id: row.type,
+      primitive: type ? type.label : row.type,
+      category: cat ? cat.label : null,
+      generated_index: String(row.idx).padStart(3, '0'),
+      created_at: new Date().toISOString(),
+    };
+    return manifest;
+  };
+
+  const renderCodeCardPngBlob = async (row, manifest, qrCanvas) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1120;
+    canvas.height = 680;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f3f3f1';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(34, 34, canvas.width - 68, canvas.height - 68);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(46, 46, canvas.width - 92, canvas.height - 92);
+    ctx.fillStyle = '#f7f7f5';
+    ctx.fillRect(70, 120, 660, 410);
+    ctx.strokeStyle = '#d4d4d0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(70, 120, 660, 410);
+    ctx.fillStyle = '#111';
+    ctx.font = '700 22px "Inter", Arial, sans-serif';
+    ctx.fillText('Hashcod Virtual Code Card', 70, 82);
+    ctx.font = '600 12px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillStyle = '#777';
+    ctx.fillText('PRIVATE CODE CREDENTIAL | QR VALIDATION', 70, 104);
+    ctx.fillStyle = '#111';
+    ctx.font = '700 44px Georgia, serif';
+    ctx.fillText(manifest.primitive || row.type, 100, 190);
+    ctx.font = '600 13px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillStyle = '#777';
+    ctx.fillText('SERIAL', 100, 255);
+    ctx.fillStyle = '#111';
+    ctx.font = '700 27px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(manifest.serial, 100, 292);
+    ctx.fillStyle = '#777';
+    ctx.font = '600 13px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText('VALIDATION NUMBER', 100, 354);
+    ctx.fillStyle = '#111';
+    ctx.font = '700 34px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(manifest.validation_number, 100, 395);
+    ctx.fillStyle = '#777';
+    ctx.font = '600 12px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText('SHA-256 FINGERPRINT', 100, 458);
+    ctx.fillStyle = '#111';
+    ctx.font = '600 18px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(manifest.code_hash_short, 100, 490);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(770, 120, 280, 280);
+    ctx.strokeStyle = '#111';
+    ctx.strokeRect(770, 120, 280, 280);
+    ctx.drawImage(qrCanvas, 790, 140, 240, 240);
+    ctx.fillStyle = '#111';
+    ctx.font = '700 12px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText('SCAN TO VALIDATE', 820, 430);
+    ctx.fillStyle = '#777';
+    ctx.font = '600 11px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillText(`INDEX ${manifest.generated_index} | ${manifest.type_id}`, 70, 590);
+    ctx.fillText('Generated inside Hashcod | Treat as sensitive material', 70, 614);
+    return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  };
+
+  const downloadRowCodeCard = async (row) => {
+    if (!planAllows('qr', language === 'es' ? 'Tarjeta virtual requiere Starter o superior.' : 'Virtual card requires Starter or higher.')) return;
+    try {
+      const manifest = await cardManifestForRow(row);
+      const qrPayload = `HCARD1:${manifest.serial}:${manifest.validation_number.replace(/-/g, '')}:${manifest.code_hash_short}`;
+      const qrCanvas = await buildQrCanvasForValue(qrPayload, 300, 'Q');
+      const cardBlob = await renderCodeCardPngBlob(row, manifest, qrCanvas);
+      const cardBytes = new Uint8Array(await cardBlob.arrayBuffer());
+      const manualBytes = codeCardManualPdfBytes(manifest, language);
+      const zip = makeZipBlob([
+        { name: 'virtual-code-card.png', content: cardBytes },
+        { name: 'manual.pdf', content: manualBytes },
+        { name: 'manifest.json', content: JSON.stringify({ ...manifest, qr_payload: qrPayload }, null, 2) },
+        { name: 'validation.txt', content: `SERIAL=${manifest.serial}\nVALIDATION_NUMBER=${manifest.validation_number}\nCODE_SHA256=${manifest.code_sha256}\nQR_PAYLOAD=${qrPayload}\n` },
+      ]);
+      const name = `Hashcod-CodeCard-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
+      triggerBlobDownload(name, zip);
+      notify(language === 'es' ? 'Tarjeta virtual descargada' : 'Virtual code card downloaded');
+    } catch (err) {
+      console.error(err);
+      notify(language === 'es' ? 'No se pudo descargar la tarjeta virtual' : 'Could not download virtual card');
+    }
+  };
+
   const downloadRowQrPng = async (row) => {
     if (!planAllows('qr', language === 'es' ? 'Descargar QR requiere Starter o superior.' : 'QR download requires Starter or higher.')) return;
     try {
@@ -8534,7 +8728,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8613,6 +8807,7 @@ const ISO_HOP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height=
 const YAML_FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg>`;
 const ZIP_FILE_BOX_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v3.8"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M11.7 14.2 7 17l-4.7-2.8"/><path d="M3 13.1a2 2 0 0 0-.999 1.76v3.24a2 2 0 0 0 .969 1.78L6 21.7a2 2 0 0 0 2.03.01L11 19.9a2 2 0 0 0 1-1.76V14.9a2 2 0 0 0-.97-1.78L8 11.3a2 2 0 0 0-2.03-.01z"/><path d="M7 17v5"/></svg>`;
 const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.264 2.205A4 4 0 0 0 6.42 4.211l-4 8a4 4 0 0 0 1.359 5.117l6 4a4 4 0 0 0 4.438 0l6-4a4 4 0 0 0 1.576-4.592l-2-6a4 4 0 0 0-2.53-2.53z"/><path d="M11.99 22 14 12l7.822 3.184"/><path d="M14 12 8.47 2.302"/></svg>`;
+const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
