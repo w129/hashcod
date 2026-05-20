@@ -8860,13 +8860,6 @@ const App = () => {
               <span>{activePlan.name}</span>
               <b>{activePlan.maxBatch.toLocaleString()}</b>
             </button>
-            <div className="tb-stat">
-              <span className="tb-dot" />
-              <span>{t('webCrypto')}</span>
-            </div>
-            <div className="tb-stat">
-              <span>{t('localOffline')}</span>
-            </div>
             <div className="tb-clk">{clock}</div>
           </div>
         </header>
