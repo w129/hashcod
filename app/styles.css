@@ -589,6 +589,8 @@ kbd {
 .oc-act-card:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-assist { color: #646464; }
 .oc-act-assist:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-codedesk { color: #646464; }
+.oc-act-codedesk:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 /* ── Right panel: Tech Info ── */
 .rp {
@@ -915,6 +917,27 @@ kbd {
 @media (max-width: 760px) {
   .assist-form, .assist-row { grid-template-columns:1fr; }
   .assist-form label.wide { grid-column:auto; }
+}
+.codedeskdlg { width:min(1040px, calc(100vw - 42px)); }
+.codedesk-hero { display:grid; grid-template-columns:1fr 360px; gap:1px; background:var(--line); border-bottom:1px solid var(--line); }
+.codedesk-hero > div { background:#fff; padding:18px; }
+.codedesk-hero span, .codedesk-meta span { display:block; color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; margin-bottom:7px; }
+.codedesk-hero h3 { margin:0; font-family:var(--serif); font-size:27px; line-height:1.08; font-weight:500; }
+.codedesk-hero p { margin:10px 0 0; font-family:var(--mono); font-size:11px; color:var(--ink-3); overflow-wrap:anywhere; }
+.codedesk-meta { display:grid; grid-template-columns:1fr; gap:1px; padding:0 !important; background:var(--line) !important; }
+.codedesk-meta div { background:#f7f7f4; padding:14px 16px; }
+.codedesk-meta b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
+.codedesk-actions { display:flex; flex-wrap:wrap; gap:10px; padding:14px 18px; border-bottom:1px solid var(--line); background:#f7f7f4; }
+.codedesk-actions button, .codedesk-slot { border:1px solid var(--line-2); background:#fff; min-height:38px; padding:0 14px; font-size:10px; letter-spacing:1.6px; text-transform:uppercase; }
+.codedesk-actions button:hover, .codedesk-slot:hover { background:#111; color:#fff; border-color:#111; }
+.codedesk-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:1px; background:var(--line); }
+.codedesk-slot { min-height:132px; display:grid; align-content:start; justify-items:start; gap:8px; padding:16px; text-align:left; text-transform:none; letter-spacing:0; }
+.codedesk-slot span { font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:2px; }
+.codedesk-slot b { font-size:13px; letter-spacing:1.6px; text-transform:uppercase; }
+.codedesk-slot em { font-style:normal; color:var(--ink-3); font-size:11px; line-height:1.4; }
+.codedesk-slot:hover span, .codedesk-slot:hover em { color:rgba(255,255,255,.72); }
+@media (max-width: 860px) {
+  .codedesk-hero, .codedesk-grid { grid-template-columns:1fr; }
 }
 .cfg-plan-limit { margin-top: 5px; color: var(--ink-4); font-size: 9px; letter-spacing: .8px; text-transform: uppercase; }
 .plandlg { width: min(980px, calc(100vw - 48px)); }

@@ -1711,7 +1711,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1783,6 +1783,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onAssistRequest?.(row);
   };
+  const openDesktop = (e) => {
+    e.stopPropagation();
+    onCodeDesktop?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1841,6 +1845,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-assist" onClick={openAssist} title={language === 'es' ? 'Solicitar ayuda para recibir este archivo' : 'Request help receiving this file'}>
           <span dangerouslySetInnerHTML={{__html: ASSIST_VAN_ICON}} />
+        </button>
+        <button className="oc-act oc-act-codedesk" onClick={openDesktop} title={language === 'es' ? 'Abrir desktop de herramientas del code' : 'Open code tool desktop'}>
+          <span dangerouslySetInnerHTML={{__html: CODE_DESKTOP_SIM_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -2097,6 +2104,82 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
               </div>
               <button onClick={() => remove(item.id)} disabled={busy}>{L('Eliminar', 'Delete')}</button>
             </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CodeDesktopDialog = ({ open, onClose, row, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const slots = [
+    L('Validador', 'Validator'),
+    L('Firmador', 'Signer'),
+    L('Convertidor', 'Converter'),
+    L('Vault', 'Vault'),
+    L('Reporte', 'Report'),
+    L('Automacion', 'Automation'),
+  ];
+  if (!open) return null;
+  const { cat, type } = findTypeMeta(row?.type);
+  const manifest = {
+    platform: 'Hashcod',
+    desktop: 'code-tool-desktop',
+    version: 'v12',
+    selectedCode: {
+      index: row ? String(row.idx).padStart(3, '0') : null,
+      typeId: row?.type || null,
+      primitive: type ? type.label : row?.type || null,
+      category: cat ? cat.label : null,
+      valuePreview: row?.value ? window.OCG_GEN.display(row.value, 120) : null,
+      length: row?.value ? String(row.value).length : 0,
+    },
+    slots,
+    createdAt: new Date().toISOString(),
+  };
+  const copyCode = () => {
+    navigator.clipboard?.writeText(String(row?.value || ''));
+    notify?.(L('Code copiado desde Desktop', 'Code copied from Desktop'));
+  };
+  const exportManifest = () => {
+    triggerDownload(`Hashcod-CodeDesktop-${sanitizeFilename(row?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    notify?.(L('Manifest del Desktop descargado', 'Desktop manifest downloaded'));
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg codedeskdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Desktop de herramientas', 'Tool Desktop')}</h2>
+            <p>{L('Centro del code seleccionado. Aqui se agregaran las proximas herramientas especiales para trabajar este code.', 'Workspace for the selected code. Future special tools for this code will be added here.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="codedesk-hero">
+          <div>
+            <span>{L('Code activo', 'Active code')}</span>
+            <h3>{type ? type.label : row?.type || 'NO CODE'}</h3>
+            <p>{row?.value ? window.OCG_GEN.display(row.value, 180) : L('No hay code seleccionado.', 'No selected code.')}</p>
+          </div>
+          <div className="codedesk-meta">
+            <div><span>ID</span><b>{row ? String(row.idx).padStart(3, '0') : '---'}</b></div>
+            <div><span>{L('Tipo', 'Type')}</span><b>{row?.type || '---'}</b></div>
+            <div><span>{L('Longitud', 'Length')}</span><b>{row?.value ? String(row.value).length : 0} ch</b></div>
+          </div>
+        </div>
+        <div className="codedesk-actions">
+          <button onClick={copyCode} disabled={!row}>{L('Copiar code', 'Copy code')}</button>
+          <button onClick={exportManifest} disabled={!row}>{L('Exportar manifest', 'Export manifest')}</button>
+          <button onClick={() => notify?.(L('Desktop listo para nuevas herramientas', 'Desktop ready for new tools'))}>{L('Estado', 'Status')}</button>
+        </div>
+        <div className="codedesk-grid">
+          {slots.map((slot, i) => (
+            <button key={slot} className="codedesk-slot" onClick={() => notify?.(L(`Ranura ${i + 1} lista para agregar herramienta`, `Slot ${i + 1} ready for a tool`))}>
+              <span>{String(i + 1).padStart(2, '0')}</span>
+              <b>{slot}</b>
+              <em>{L('Disponible para proxima herramienta', 'Ready for next tool')}</em>
+            </button>
           ))}
         </div>
       </section>
@@ -7493,6 +7576,7 @@ const App = () => {
   const [ivoryIdeasOpen, setIvoryIdeasOpen] = useState(false);
   const [ocgUnitsOpen, setOcgUnitsOpen] = useState(false);
   const [assistRow, setAssistRow] = useState(null);
+  const [codeDesktopRow, setCodeDesktopRow] = useState(null);
   const [dbQuery, setDbQuery] = useState('');
   const [copyDb, setCopyDb] = useState(() => COPY_DB.list());
   const [toast, setToast] = useState('');
@@ -8233,6 +8317,7 @@ const App = () => {
   const openOcgUnits = () => setOcgUnitsOpen(true);
   const openBaseMat = () => setBaseMatOpen(true);
   const openAssistRequest = (row) => setAssistRow(row);
+  const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openMountainTool = (key) => {
     if (!MOUNTAIN_TOOL_CONFIG[key]) return;
     setMountainToolOpen(key);
@@ -8723,6 +8808,7 @@ const App = () => {
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
+      <CodeDesktopDialog open={!!codeDesktopRow} onClose={() => setCodeDesktopRow(null)} row={codeDesktopRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
       {toast && <div className="ocg-toast">{toast}</div>}
       <FreeUpgradeNudge
@@ -8849,7 +8935,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8930,6 +9016,7 @@ const ZIP_FILE_BOX_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" he
 const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.264 2.205A4 4 0 0 0 6.42 4.211l-4 8a4 4 0 0 0 1.359 5.117l6 4a4 4 0 0 0 4.438 0l6-4a4 4 0 0 0 1.576-4.592l-2-6a4 4 0 0 0-2.53-2.53z"/><path d="M11.99 22 14 12l7.822 3.184"/><path d="M14 12 8.47 2.302"/></svg>`;
 const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
+const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
