@@ -13,9 +13,11 @@ const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
 const rateBuckets = new Map();
+const userBuckets = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || '1ec68bc0422b5353ae0f975cd2a8fe82deda1559f565d98d44f6e732e63c1cca';
@@ -53,7 +55,8 @@ const SECURITY_HEADERS = {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'"
+    "frame-ancestors 'none'",
+    ...(process.env.NODE_ENV === 'production' ? ["upgrade-insecure-requests"] : [])
   ].join('; ')
 };
 
@@ -85,6 +88,25 @@ function rateLimit(req, res) {
   return true;
 }
 
+function authenticatedRateLimit(auth, req, res) {
+  if (!auth?.user?.id || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return true;
+  const key = `${auth.user.id}:${req.method}`;
+  const now = Date.now();
+  const bucket = userBuckets.get(key) || { start: now, count: 0 };
+  if (now - bucket.start > RATE_WINDOW_MS) {
+    bucket.start = now;
+    bucket.count = 0;
+  }
+  bucket.count += 1;
+  userBuckets.set(key, bucket);
+  if (bucket.count > 90) {
+    audit('rate.user_limited', { ip: clientIp(req), actor: auth.user.id, method: req.method });
+    send(res, 429, { 'Content-Type': MIME['.json'], 'Retry-After': '60' }, JSON.stringify({ ok: false, error: 'user_rate_limited' }));
+    return false;
+  }
+  return true;
+}
+
 function audit(event, data = {}) {
   try {
     ensureDataDir();
@@ -97,6 +119,53 @@ function audit(event, data = {}) {
 
 function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function dailyStamp() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function backupFileIfExists(filePath, prefix, stamp) {
+  if (!fs.existsSync(filePath)) return null;
+  const target = path.join(BACKUP_DIR, `${stamp}-${prefix}-${path.basename(filePath)}`);
+  if (!fs.existsSync(target)) fs.copyFileSync(filePath, target);
+  return target;
+}
+
+function ensureAutomaticBackup(reason = 'write') {
+  try {
+    ensureDataDir();
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    const stamp = dailyStamp();
+    const manifest = path.join(BACKUP_DIR, `${stamp}-manifest.json`);
+    if (fs.existsSync(manifest)) return;
+    const files = [
+      backupFileIfExists(AUTH_DB_FILE, 'auth', stamp),
+      backupFileIfExists(HELP_REQUESTS_FILE, 'assist', stamp),
+      backupFileIfExists(CLI_CONSOLE_FILE, 'cli', stamp),
+      backupFileIfExists(AUDIT_FILE, 'audit', stamp),
+    ].filter(Boolean).map(file => path.basename(file));
+    fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
+    audit('backup.automatic', { reason, files: files.length });
+  } catch {
+    // Backups are best-effort and must not block critical writes.
+  }
+}
+
+function readAuditRows(limit = 120) {
+  try {
+    if (!fs.existsSync(AUDIT_FILE)) return [];
+    return fs.readFileSync(AUDIT_FILE, 'utf8')
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .slice(-Math.min(Math.max(Number(limit) || 120, 1), 500))
+      .map(line => {
+        try { return JSON.parse(line); } catch { return { raw: line }; }
+      })
+      .reverse();
+  } catch {
+    return [];
+  }
 }
 
 function readJsonBody(req) {
@@ -124,6 +193,27 @@ function safeText(value, max = 500) {
   return String(value || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
 }
 
+function validEmail(email) {
+  const value = safeText(email, 180).toLowerCase();
+  return /^[^\s@]{1,80}@[^\s@.][^\s@]{1,120}\.[^\s@]{2,24}$/.test(value) && !/[<>"'`]/.test(value);
+}
+
+function validWhatsapp(value) {
+  const phone = safeText(value, 60);
+  return /^\+?[0-9][0-9\s().-]{6,24}$/.test(phone);
+}
+
+function moderationReason(value = '') {
+  const text = String(value || '');
+  const lower = text.toLowerCase();
+  if (/(https?:\/\/|www\.)/i.test(text) && !/hashcod|localhost|127\.0\.0\.1/i.test(text)) return 'external_link_blocked';
+  if (/(<script|javascript:|onerror\s*=|onload\s*=|data:text\/html)/i.test(text)) return 'script_payload_blocked';
+  if (/(drop\s+table|union\s+select|insert\s+into|delete\s+from|curl\s+.+\|\s*sh|powershell\s+-enc)/i.test(lower)) return 'dangerous_payload_blocked';
+  if (/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(text)) return 'private_key_blocked';
+  if (/\b(?:sk|ghp|github_pat|xox[baprs])_[A-Za-z0-9_=-]{16,}\b/.test(text)) return 'secret_token_blocked';
+  return null;
+}
+
 function redactSecrets(value = '') {
   let text = String(value || '');
   text = text.replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]');
@@ -138,6 +228,14 @@ function redactSecrets(value = '') {
 
 function safePublicText(value, max = 500) {
   return safeText(redactSecrets(value), max);
+}
+
+function validatePublicPayload(fields) {
+  for (const [name, value] of Object.entries(fields || {})) {
+    const reason = moderationReason(value);
+    if (reason) return { ok: false, field: name, reason };
+  }
+  return { ok: true };
 }
 
 function b64url(buf) {
@@ -181,6 +279,7 @@ function readAuthDb() {
 function writeAuthDb(db) {
   ensureDataDir();
   fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] }));
+  ensureAutomaticBackup('auth-db-write');
 }
 
 function hashPassword(password) {
@@ -312,6 +411,7 @@ function requireAuth(req, res, minRole = 'viewer') {
       send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'csrf_required' }));
       return null;
     }
+    if (!authenticatedRateLimit(auth, req, res)) return null;
   }
   return auth;
 }
@@ -325,11 +425,23 @@ async function handleAuth(req, res) {
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
     return;
   }
+  if (route === '/api/admin/audit' && req.method === 'GET') {
+    const auth = requireAdminPanel(req, res);
+    if (!auth) return;
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const rows = readAuditRows(url.searchParams.get('limit') || 160);
+    if (url.searchParams.get('download') === '1') {
+      send(res, 200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Content-Disposition': `attachment; filename="hashcod-audit-${dailyStamp()}.jsonl"` }, rows.slice().reverse().map(row => JSON.stringify(row)).join('\n'));
+      return;
+    }
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, audit: rows }));
+    return;
+  }
   if (route === '/api/access/request' && req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
       const email = safeText(body.email, 180).toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !String(body.password || '').trim()) {
+      if (!validEmail(email) || !String(body.password || '').trim()) {
         send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_request' }));
         return;
       }
@@ -602,6 +714,7 @@ function readAssistRequests() {
 function writeAssistRequests(rows) {
   ensureDataDir();
   fs.writeFileSync(HELP_REQUESTS_FILE, JSON.stringify(rows.slice(0, 500), null, 2));
+  ensureAutomaticBackup('assist-write');
 }
 
 function readCliConsole() {
@@ -618,6 +731,7 @@ function readCliConsole() {
 function writeCliConsole(rows) {
   ensureDataDir();
   fs.writeFileSync(CLI_CONSOLE_FILE, JSON.stringify(rows.slice(0, 1000), null, 2));
+  ensureAutomaticBackup('cli-write');
 }
 
 async function handleAssistRequests(req, res) {
@@ -631,8 +745,14 @@ async function handleAssistRequests(req, res) {
   if (req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
+      const moderation = validatePublicPayload({ note: body.note, codePreview: body.codePreview, email: body.email, whatsapp: body.whatsapp });
+      if (!moderation.ok) {
+        audit('moderation.block', { ip: clientIp(req), actor: auth.user.id, route: 'assist', field: moderation.field, reason: moderation.reason });
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: moderation.reason, field: moderation.field }));
+        return;
+      }
       const row = {
-        id: `assist_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        id: `assist_${Date.now().toString(36)}_${b64url(crypto.randomBytes(6))}`,
         email: safeText(body.email, 180),
         whatsapp: safeText(body.whatsapp, 60),
         note: safePublicText(body.note, 600),
@@ -644,7 +764,7 @@ async function handleAssistRequests(req, res) {
         createdAt: new Date().toISOString(),
         status: 'OPEN'
       };
-      if (!row.email || !row.whatsapp) {
+      if (!validEmail(row.email) || !validWhatsapp(row.whatsapp)) {
         send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'email_and_whatsapp_required' }));
         return;
       }
@@ -658,11 +778,13 @@ async function handleAssistRequests(req, res) {
     return;
   }
   if (req.method === 'DELETE') {
+    const authPanel = requireAdminPanel(req, res);
+    if (!authPanel) return;
     const id = safeText(url.searchParams.get('id'), 120);
     const before = readAssistRequests();
     const rows = before.filter(row => row.id !== id);
     writeAssistRequests(rows);
-    audit('assist.delete', { ip: clientIp(req), actor: auth.user.id, id, deleted: before.length - rows.length });
+    audit('assist.delete', { ip: clientIp(req), actor: authPanel.actorId, id, deleted: before.length - rows.length });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: before.length - rows.length }));
     return;
   }
@@ -673,11 +795,15 @@ async function handleCliConsole(req, res) {
   const auth = requireAuth(req, res, req.method === 'GET' ? 'viewer' : 'editor');
   if (!auth) return;
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const canEditCli = (row, ownerKey) => auth.user.role === 'admin' || row.ownerUserId === auth.user.id || (!!ownerKey && row.ownerKey === ownerKey) || row.permissions?.edit === 'all';
+  const canHideCli = (row, ownerKey) => auth.user.role === 'admin' || row.ownerUserId === auth.user.id || (!!ownerKey && row.ownerKey === ownerKey) || row.permissions?.hide === 'all';
+  const canViewCli = (row, ownerKey) => row.status === 'ACTIVE' || auth.user.role === 'admin' || row.ownerUserId === auth.user.id || (!!ownerKey && row.ownerKey === ownerKey);
   if (req.method === 'GET') {
     const ownerKey = safeText(url.searchParams.get('ownerKey'), 120);
-    const rows = readCliConsole().filter(row => row.status !== 'PURGED').map(row => {
+    const rows = readCliConsole().filter(row => row.status !== 'PURGED' && canViewCli(row, ownerKey)).map(row => {
       const { ownerKey: storedOwnerKey, ...publicRow } = row;
-      return { ...publicRow, isOwner: !!ownerKey && storedOwnerKey === ownerKey };
+      const isOwner = row.ownerUserId === auth.user.id || (!!ownerKey && storedOwnerKey === ownerKey);
+      return { ...publicRow, isOwner, canEdit: canEditCli(row, ownerKey), canHide: canHideCli(row, ownerKey), canPurge: isOwner || auth.user.role === 'admin' };
     });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, entries: rows }, null, 2));
     return;
@@ -685,6 +811,12 @@ async function handleCliConsole(req, res) {
   if (req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
+      const moderation = validatePublicPayload({ title: body.title, text: body.text, author: body.author });
+      if (!moderation.ok) {
+        audit('moderation.block', { ip: clientIp(req), actor: auth.user.id, route: 'cli', field: moderation.field, reason: moderation.reason });
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: moderation.reason, field: moderation.field }));
+        return;
+      }
       const text = safePublicText(body.text, 6000);
       const ownerKey = safeText(body.ownerKey, 120);
       if (!text || !ownerKey) {
@@ -692,12 +824,17 @@ async function handleCliConsole(req, res) {
         return;
       }
       const row = {
-        id: `cli_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        id: `cli_${Date.now().toString(36)}_${b64url(crypto.randomBytes(6))}`,
         title: safePublicText(body.title, 120) || 'CLI note',
         text,
         ownerKey,
         ownerUserId: auth.user.id,
         author: safeText(body.author, 80) || 'anonymous',
+        permissions: {
+          view: 'all',
+          edit: body.editPermission === 'owner' ? 'owner' : 'all',
+          hide: body.hidePermission === 'all' ? 'all' : 'owner',
+        },
         status: 'ACTIVE',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -715,21 +852,39 @@ async function handleCliConsole(req, res) {
     try {
       const body = await readJsonBody(req);
       const id = safeText(body.id, 120);
+      const ownerKey = safeText(body.ownerKey, 120);
       const rows = readCliConsole();
       const now = new Date().toISOString();
       let updated = null;
+      let denied = false;
       const next = rows.map(row => {
         if (row.id !== id) return row;
+        if (!canEditCli(row, ownerKey)) {
+          denied = true;
+          return row;
+        }
+        const moderation = validatePublicPayload({ title: body.title, text: body.text, editor: body.editor });
+        if (!moderation.ok) {
+          denied = moderation.reason;
+          return row;
+        }
         updated = {
           ...row,
           title: safePublicText(body.title, 120) || row.title,
           text: safePublicText(body.text, 6000),
           editor: safeText(body.editor, 80) || 'anonymous',
+          permissions: row.permissions || { view: 'all', edit: 'all', hide: 'owner' },
           status: row.status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE',
           updatedAt: now,
         };
         return updated;
       });
+      if (denied) {
+        const error = denied === true ? 'record_edit_forbidden' : denied;
+        audit('cli.update_blocked', { ip: clientIp(req), actor: auth.user.id, id, error });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error }));
+        return;
+      }
       writeCliConsole(next);
       if (updated) audit('cli.update', { ip: clientIp(req), actor: auth.user.id, id });
       send(res, updated ? 200 : 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: !!updated, entry: updated }));
@@ -759,6 +914,10 @@ async function handleCliConsole(req, res) {
       return;
     }
     const next = rows.map(row => row.id === id ? { ...row, status: 'HIDDEN', updatedAt: new Date().toISOString() } : row);
+    if (!canHideCli(target, ownerKey)) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'record_hide_forbidden' }));
+      return;
+    }
     writeCliConsole(next);
     audit('cli.hide', { ip: clientIp(req), actor: auth.user.id, id });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, hidden: 1 }));
@@ -783,7 +942,14 @@ function enterpriseManifest() {
       'path traversal guard',
       'browser crypto self-tests',
       'catalog duplicate-id gate',
-      'NEO 200 completeness gate'
+      'NEO 200 completeness gate',
+      'per-record CLI permissions',
+      'visible admin audit log',
+      'server-side input moderation',
+      'daily disk backups',
+      'authenticated user rate limits',
+      'production HTTPS redirect',
+      'production CSP upgrade-insecure-requests'
     ],
     files: {
       catalogBytes: fs.existsSync(catalogPath) ? fs.statSync(catalogPath).size : 0,
@@ -806,7 +972,17 @@ function safePath(urlPath) {
   return full;
 }
 
+function enforceHttps(req, res) {
+  if (process.env.NODE_ENV !== 'production') return false;
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  if (!proto || proto === 'https') return false;
+  const host = req.headers.host || '';
+  send(res, 308, { Location: `https://${host}${req.url || '/'}` }, '');
+  return true;
+}
+
 const server = http.createServer((req, res) => {
+  if (enforceHttps(req, res)) return;
   if (!rateLimit(req, res)) return;
 
   if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/') || (req.url || '').split('?')[0].startsWith('/api/access/')) {

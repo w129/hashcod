@@ -2025,6 +2025,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
   const [panelKey, setPanelKey] = useState('');
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [auditRows, setAuditRows] = useState([]);
   const [requestChoices, setRequestChoices] = useState({});
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
   const [status, setStatus] = useState('');
@@ -2039,9 +2040,24 @@ const AuthUsersDialog = ({ open, onClose }) => {
     const data = await res.json();
     if (res.ok) setRequests(data.requests || []);
   };
+  const loadAudit = async () => {
+    const res = await authFetch('/api/admin/audit?limit=120');
+    const data = await res.json();
+    if (res.ok) setAuditRows(data.audit || []);
+  };
   const loadAll = async () => {
     await loadUsers();
     await loadRequests();
+    await loadAudit();
+  };
+  const exportAudit = async () => {
+    const res = await authFetch('/api/admin/audit?download=1');
+    if (!res.ok) {
+      setStatus('No se pudo exportar auditoria.');
+      return;
+    }
+    const text = await res.text();
+    triggerDownload(`hashcod-audit-${new Date().toISOString().slice(0, 10)}.jsonl`, text, 'application/x-ndjson;charset=utf-8');
   };
   const unlock = async (e) => {
     e.preventDefault();
@@ -2132,6 +2148,15 @@ const AuthUsersDialog = ({ open, onClose }) => {
               {status && <em>{status}</em>}
             </form>
             <div className="authusers-list">
+              <h3 className="authusers-title">Controles enterprise activos</h3>
+              <article className="authusers-security">
+                <span>Permisos por registro CLI</span>
+                <span>Auditoria visible/exportable</span>
+                <span>Moderacion anti-secretos y payloads</span>
+                <span>Backups diarios en disco</span>
+                <span>Rate limit por usuario</span>
+                <span>HTTPS obligatorio en produccion</span>
+              </article>
               {requests.length > 0 && <h3 className="authusers-title">Lista de espera</h3>}
               {requests.map(req => (
                 <article key={req.id} className="authusers-row wait">
@@ -2157,6 +2182,18 @@ const AuthUsersDialog = ({ open, onClose }) => {
                     <option value="free">free</option><option value="starter">starter</option><option value="professional">professional</option><option value="enterprise">enterprise</option>
                   </select>
                   <button onClick={() => updateUser(user, { status: user.status === 'DISABLED' ? 'ACTIVE' : 'DISABLED' })}>{user.status === 'DISABLED' ? 'Enable' : 'Disable'}</button>
+                </article>
+              ))}
+              <h3 className="authusers-title">Auditoria reciente</h3>
+              <article className="authusers-audit-actions">
+                <button onClick={loadAudit}>Refresh audit</button>
+                <button onClick={exportAudit}>Export JSONL</button>
+              </article>
+              {auditRows.map((row, idx) => (
+                <article key={`${row.at || 'audit'}-${idx}`} className="authusers-audit-row">
+                  <b>{row.event || 'audit'}</b>
+                  <span>{row.at || ''} | {row.actor || row.userId || row.requestId || 'system'} | {row.ip || ''}</span>
+                  <code>{JSON.stringify(row)}</code>
                 </article>
               ))}
             </div>
@@ -2309,7 +2346,7 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
     }
     setBusy(true);
     try {
-      const payload = { id: editingId, title: title || 'CLI code', text, author, editor: author, ownerKey };
+      const payload = { id: editingId, title: title || 'CLI code', text, author, editor: author, ownerKey, editPermission: 'all', hidePermission: 'owner' };
       const res = await authFetch('/api/cli-console', {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2392,9 +2429,9 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
                     <span>{entry.author || 'anonymous'} | {entry.updatedAt || entry.createdAt}</span>
                   </div>
                   <div className="clicons-entry-actions">
-                    <button onClick={() => edit(entry)} disabled={busy}>{L('Editar', 'Edit')}</button>
-                    <button onClick={() => hide(entry)} disabled={busy}>{L('Ocultar', 'Hide')}</button>
-                    {isOwner && <button onClick={() => purge(entry)} disabled={busy}>{L('Eliminar total', 'Purge')}</button>}
+                    {entry.canEdit && <button onClick={() => edit(entry)} disabled={busy}>{L('Editar', 'Edit')}</button>}
+                    {entry.canHide && <button onClick={() => hide(entry)} disabled={busy}>{L('Ocultar', 'Hide')}</button>}
+                    {entry.canPurge && <button onClick={() => purge(entry)} disabled={busy}>{L('Eliminar total', 'Purge')}</button>}
                   </div>
                 </header>
                 <pre>{entry.text}</pre>

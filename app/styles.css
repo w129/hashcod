@@ -303,6 +303,46 @@ kbd {
 .authusers-row span { color:var(--ink-4); font-size:10px; }
 .authusers-row select, .authusers-row button { min-height:32px; border:1px solid var(--line-2); background:#fff; padding:0 8px; font-family:var(--mono); font-size:10px; }
 .authusers-row button:hover { background:#111; color:#fff; border-color:#111; }
+.authusers-security {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:1px;
+  background:var(--line);
+}
+.authusers-security span {
+  background:#f7f7f4;
+  padding:10px;
+  font:10px var(--mono);
+  color:#222;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.authusers-audit-actions {
+  display:flex;
+  gap:8px;
+  background:#fff;
+  padding:10px;
+}
+.authusers-audit-actions button {
+  min-height:32px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  padding:0 10px;
+  font:10px var(--mono);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.authusers-audit-row {
+  display:grid;
+  gap:5px;
+  background:#fff;
+  padding:10px;
+  border-top:1px solid var(--line);
+}
+.authusers-audit-row b { font:11px var(--mono); text-transform:uppercase; letter-spacing:1px; }
+.authusers-audit-row span { color:var(--ink-4); font-size:10px; }
+.authusers-audit-row code { display:block; max-height:54px; overflow:auto; font:10px var(--mono); color:#333; background:#f7f7f4; border:1px solid var(--line); padding:6px; }
 @media (max-width: 780px) { .authusers-row { grid-template-columns:1fr; } }
 .tb-cli {
   width: 26px;
