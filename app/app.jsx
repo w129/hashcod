@@ -2104,6 +2104,9 @@ const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
+        <div className="security-note">
+          {L('No publiques claves privadas, tokens, passwords ni API keys reales. La plataforma intenta ocultarlos automaticamente, pero debes tratarlos como secretos.', 'Do not publish private keys, tokens, passwords, or real API keys. The platform tries to redact them automatically, but you must treat them as secrets.')}
+        </div>
         <form className="clicons-form" onSubmit={submit}>
           <div className="clicons-fields">
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder={L('Titulo corto', 'Short title')} />
@@ -2219,6 +2222,9 @@ const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
             <p>{L('Guarda una solicitud visible desde otros ordenadores. Sirve para que otra persona pueda pasarte el archivo si tu no puedes descargarlo.', 'Save a request visible from other computers. It lets another person send you the file if you cannot download it yourself.')}</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="security-note">
+          {L('Comparte solo datos de contacto necesarios. No incluyas passwords, wallets, claves privadas ni tokens de produccion.', 'Share only the necessary contact details. Do not include passwords, wallets, private keys, or production tokens.')}
         </div>
         <form className="assist-form" onSubmit={submit}>
           <label><span>{L('Correo electronico', 'Email')}</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" /></label>

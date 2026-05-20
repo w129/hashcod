@@ -10,6 +10,10 @@ const ROOT = __dirname;
 const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data');
 const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
+const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
+const rateBuckets = new Map();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -53,6 +57,39 @@ function send(res, status, headers, body) {
   res.end(body);
 }
 
+function clientIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || req.socket.remoteAddress || 'unknown';
+}
+
+function rateLimit(req, res) {
+  const key = `${clientIp(req)}:${req.method}`;
+  const limit = RATE_LIMITS[req.method] || 120;
+  const now = Date.now();
+  const bucket = rateBuckets.get(key) || { start: now, count: 0 };
+  if (now - bucket.start > RATE_WINDOW_MS) {
+    bucket.start = now;
+    bucket.count = 0;
+  }
+  bucket.count += 1;
+  rateBuckets.set(key, bucket);
+  if (bucket.count > limit) {
+    send(res, 429, { 'Content-Type': MIME['.json'], 'Retry-After': '60' }, JSON.stringify({ ok: false, error: 'rate_limited' }));
+    return false;
+  }
+  return true;
+}
+
+function audit(event, data = {}) {
+  try {
+    ensureDataDir();
+    const row = JSON.stringify({ at: new Date().toISOString(), event, ...data });
+    fs.appendFileSync(AUDIT_FILE, `${row}\n`);
+  } catch {
+    // Audit failures must not break the app.
+  }
+}
+
 function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -80,6 +117,22 @@ function readJsonBody(req) {
 
 function safeText(value, max = 500) {
   return String(value || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
+}
+
+function redactSecrets(value = '') {
+  let text = String(value || '');
+  text = text.replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]');
+  text = text.replace(/\b(?:api[_-]?key|secret|token|password|passwd|bearer|authorization)\s*[:=]\s*["']?[A-Za-z0-9._~+/=-]{12,}["']?/gi, (m) => {
+    const label = (m.split(/[:=]/)[0] || 'secret').trim();
+    return `${label}=[REDACTED]`;
+  });
+  text = text.replace(/\b(?:sk|pk|ghp|github_pat|xox[baprs])_[A-Za-z0-9_=-]{16,}\b/g, '[REDACTED_TOKEN]');
+  text = text.replace(/\b[A-Za-z0-9+/]{40,}={0,2}\b/g, '[REDACTED_LONG_SECRET]');
+  return text;
+}
+
+function safePublicText(value, max = 500) {
+  return safeText(redactSecrets(value), max);
 }
 
 function readAssistRequests() {
@@ -127,11 +180,11 @@ async function handleAssistRequests(req, res) {
         id: `assist_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
         email: safeText(body.email, 180),
         whatsapp: safeText(body.whatsapp, 60),
-        note: safeText(body.note, 600),
+        note: safePublicText(body.note, 600),
         codeType: safeText(body.codeType, 120),
         primitive: safeText(body.primitive, 180),
         codeIndex: safeText(body.codeIndex, 20),
-        codePreview: safeText(body.codePreview, 220),
+        codePreview: safePublicText(body.codePreview, 220),
         codeHash: safeText(body.codeHash, 80),
         createdAt: new Date().toISOString(),
         status: 'OPEN'
@@ -142,6 +195,7 @@ async function handleAssistRequests(req, res) {
       }
       const rows = [row, ...readAssistRequests()].slice(0, 500);
       writeAssistRequests(rows);
+      audit('assist.create', { ip: clientIp(req), id: row.id });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: row }, null, 2));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -153,6 +207,7 @@ async function handleAssistRequests(req, res) {
     const before = readAssistRequests();
     const rows = before.filter(row => row.id !== id);
     writeAssistRequests(rows);
+    audit('assist.delete', { ip: clientIp(req), id, deleted: before.length - rows.length });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: before.length - rows.length }));
     return;
   }
@@ -173,7 +228,7 @@ async function handleCliConsole(req, res) {
   if (req.method === 'POST') {
     try {
       const body = await readJsonBody(req);
-      const text = safeText(body.text, 6000);
+      const text = safePublicText(body.text, 6000);
       const ownerKey = safeText(body.ownerKey, 120);
       if (!text || !ownerKey) {
         send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'text_and_owner_required' }));
@@ -181,7 +236,7 @@ async function handleCliConsole(req, res) {
       }
       const row = {
         id: `cli_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-        title: safeText(body.title, 120) || 'CLI note',
+        title: safePublicText(body.title, 120) || 'CLI note',
         text,
         ownerKey,
         author: safeText(body.author, 80) || 'anonymous',
@@ -191,6 +246,7 @@ async function handleCliConsole(req, res) {
       };
       const rows = [row, ...readCliConsole()].slice(0, 1000);
       writeCliConsole(rows);
+      audit('cli.create', { ip: clientIp(req), id: row.id });
       send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, entry: row }, null, 2));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -208,8 +264,8 @@ async function handleCliConsole(req, res) {
         if (row.id !== id) return row;
         updated = {
           ...row,
-          title: safeText(body.title, 120) || row.title,
-          text: safeText(body.text, 6000),
+          title: safePublicText(body.title, 120) || row.title,
+          text: safePublicText(body.text, 6000),
           editor: safeText(body.editor, 80) || 'anonymous',
           status: row.status === 'HIDDEN' ? 'HIDDEN' : 'ACTIVE',
           updatedAt: now,
@@ -217,6 +273,7 @@ async function handleCliConsole(req, res) {
         return updated;
       });
       writeCliConsole(next);
+      if (updated) audit('cli.update', { ip: clientIp(req), id });
       send(res, updated ? 200 : 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: !!updated, entry: updated }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -239,11 +296,13 @@ async function handleCliConsole(req, res) {
         return;
       }
       writeCliConsole(rows.filter(row => row.id !== id));
+      audit('cli.purge', { ip: clientIp(req), id });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, purged: 1 }));
       return;
     }
     const next = rows.map(row => row.id === id ? { ...row, status: 'HIDDEN', updatedAt: new Date().toISOString() } : row);
     writeCliConsole(next);
+    audit('cli.hide', { ip: clientIp(req), id });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, hidden: 1 }));
     return;
   }
@@ -290,6 +349,8 @@ function safePath(urlPath) {
 }
 
 const server = http.createServer((req, res) => {
+  if (!rateLimit(req, res)) return;
+
   if ((req.url || '').split('?')[0] === '/api/assist-requests') {
     handleAssistRequests(req, res);
     return;
