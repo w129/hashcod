@@ -583,6 +583,8 @@ kbd {
 .oc-act-yaml:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-zip { color: #646464; }
 .oc-act-zip:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-pack { color: #646464; }
+.oc-act-pack:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 
 /* ── Right panel: Tech Info ── */
 .rp {
