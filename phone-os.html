@@ -24,10 +24,20 @@
     .status { border:1px solid var(--line); border-left:4px solid #177c43; background:#f7f7f4; padding:12px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
     .list { display:grid; gap:10px; }
     article { border:1px solid var(--line); background:#f7f7f4; padding:12px; display:grid; gap:7px; }
+    article.openable { cursor:pointer; border-left:4px solid #111; }
+    article.openable::after { content:"ABRIR EN PHONE BROWSER"; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#111; border-top:1px solid var(--line); padding-top:8px; }
     article b, article code { overflow-wrap:anywhere; }
     article code { white-space:pre-wrap; font-size:11px; color:#333; }
+    .phone-browser { border:1px solid #111; background:#fff; display:grid; gap:12px; padding:14px; }
+    .browser-bar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+    .browser-bar input { font-size:12px; }
+    .browser-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .browser-grid div { border:1px solid var(--line); padding:10px; background:#f7f7f4; display:grid; gap:6px; min-width:0; }
+    .browser-grid b { overflow-wrap:anywhere; font-size:12px; }
+    .browser-code { margin:0; border:1px solid var(--line); background:#f7f7f4; padding:12px; white-space:pre-wrap; overflow-wrap:anywhere; font:11px/1.55 var(--mono); max-height:360px; overflow:auto; }
     .hidden { display:none; }
     @media (max-width:640px) { h1{font-size:36px}.grid{grid-template-columns:1fr} section{box-shadow:10px 10px 0 rgba(0,0,0,.07)} }
+    @media (max-width:640px) { .browser-bar,.browser-grid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -51,6 +61,21 @@
           <button id="pollBtn">Buscar ahora</button>
           <button class="ghost" id="forgetBtn">Desconectar</button>
           <button class="ghost" id="testBtn">Notificación local</button>
+        </div>
+        <div class="phone-browser hidden" id="phoneBrowser">
+          <span>HASHCOD PHONE BROWSER</span>
+          <div class="browser-bar">
+            <input id="browserUrl" readonly />
+            <button class="ghost" id="closeBrowserBtn">Volver</button>
+          </div>
+          <div class="browser-grid">
+            <div><span>Route</span><b id="browserRoute">---</b></div>
+            <div><span>Action</span><b id="browserAction">---</b></div>
+            <div><span>Digest</span><b id="browserDigest">---</b></div>
+            <div><span>Match</span><b id="browserMatch">---</b></div>
+          </div>
+          <pre class="browser-code" id="browserCode"></pre>
+          <button id="copyBrowserBtn">Copiar code</button>
         </div>
         <div class="list" id="list"></div>
       </div>
@@ -76,6 +101,39 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || 'request_failed');
       return data;
+    };
+    let activeBrowserNote = null;
+    const extractHnsUrl = (note = {}) => {
+      const text = `${note.value || ''}\n${note.body || ''}`;
+      return (text.match(/hns:\/\/[^\s]+/i) || [])[0] || '';
+    };
+    const extractField = (text, name) => {
+      const re = new RegExp(`${name}:\\s*([^\\n]+?)(?=\\s+[A-Z]+:|$)`, 'i');
+      return (String(text || '').match(re) || [])[1]?.trim() || '---';
+    };
+    const openPhoneBrowser = (note = {}) => {
+      const body = note.body || note.value || '';
+      const hnsUrl = extractHnsUrl(note);
+      activeBrowserNote = note;
+      $('phoneBrowser').classList.remove('hidden');
+      $('browserUrl').value = hnsUrl || note.value || 'hashcod://notification';
+      $('browserRoute').textContent = extractField(body, 'ROUTE') || note.codeIndex || '---';
+      $('browserAction').textContent = extractField(body, 'ACTION') || note.type || '---';
+      $('browserDigest').textContent = extractField(body, 'DIGEST');
+      $('browserMatch').textContent = extractField(body, 'MATCH') || note.codeType || '---';
+      $('browserCode').textContent = body || JSON.stringify(note, null, 2);
+      status(hnsUrl ? `Abierto en Phone Browser: ${hnsUrl}` : 'Notificacion abierta en Phone Browser.');
+      $('phoneBrowser').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    const openFromUrlParam = () => {
+      const params = new URLSearchParams(location.search);
+      const encoded = params.get('open');
+      if (!encoded) return;
+      try {
+        const note = JSON.parse(decodeURIComponent(encoded));
+        openPhoneBrowser(note);
+        history.replaceState(null, '', '/phone-os.html');
+      } catch {}
     };
     const showRun = () => {
       $('pairPanel').classList.add('hidden');
@@ -109,6 +167,10 @@
       notes.forEach(note => {
         showNotification(note);
         const el = document.createElement('article');
+        if (extractHnsUrl(note) || note.type === 'hns-control') {
+          el.className = 'openable';
+          el.onclick = () => openPhoneBrowser(note);
+        }
         el.innerHTML = `<span>${note.type || 'HASHCOD'}</span><b>${note.title || 'Hashcod notification'}</b><p>${note.body || ''}</p><code>${note.value || ''}</code>`;
         box.prepend(el);
       });
@@ -146,12 +208,21 @@
     };
     $('pollBtn').onclick = poll;
     $('forgetBtn').onclick = () => { localStorage.removeItem('hashcod_phone_os_device'); location.reload(); };
+    $('closeBrowserBtn').onclick = () => $('phoneBrowser').classList.add('hidden');
+    $('copyBrowserBtn').onclick = async () => {
+      await navigator.clipboard?.writeText($('browserCode').textContent || '');
+      status('Code copiado desde Phone Browser.');
+    };
     $('testBtn').onclick = async () => {
       const ok = await showNotification({ id:'local-test', title:'Hashcod Phone OS', body:'Notificacion local activa.' });
       if (ok) status('Notificacion local enviada.');
     };
+    navigator.serviceWorker?.addEventListener('message', (event) => {
+      if (event.data?.type === 'hashcod-open-note') openPhoneBrowser(event.data.note || {});
+    });
     if (state.deviceId && state.deviceSecret) showRun();
     ensureServiceWorker();
+    openFromUrlParam();
     setInterval(poll, 7000);
     if (state.deviceId && state.deviceSecret) poll();
   </script>
