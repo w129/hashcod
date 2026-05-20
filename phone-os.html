@@ -61,6 +61,16 @@
     const state = JSON.parse(localStorage.getItem('hashcod_phone_os_device') || '{}');
     const save = (data) => localStorage.setItem('hashcod_phone_os_device', JSON.stringify(data));
     const status = (text) => { $('status').textContent = text; };
+    let swReady = null;
+    const ensureServiceWorker = async () => {
+      if (!('serviceWorker' in navigator)) return null;
+      if (!swReady) {
+        swReady = navigator.serviceWorker.register('/phone-os-sw.js', { scope: '/' })
+          .then(() => navigator.serviceWorker.ready)
+          .catch(() => null);
+      }
+      return swReady;
+    };
     const api = async (path, body) => {
       const res = await fetch(path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
       const data = await res.json().catch(() => ({}));
@@ -72,9 +82,26 @@
       $('runPanel').classList.remove('hidden');
       status(`Conectado como ${state.name || state.deviceId}. Mantén esta pestaña abierta para recibir notificaciones.`);
     };
-    const showNotification = (note) => {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(note.title || 'Hashcod', { body: note.body || note.value || '', tag: note.id });
+    const showNotification = async (note) => {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return false;
+      const options = {
+        body: note.body || note.value || '',
+        tag: note.id || `hashcod-${Date.now()}`,
+        data: note,
+        icon: '/app/hashcod-platform-icon.svg?v=hashcod-icon-1',
+        badge: '/app/hashcod-platform-icon.svg?v=hashcod-icon-1',
+      };
+      try {
+        const reg = await ensureServiceWorker();
+        if (reg?.showNotification) {
+          await reg.showNotification(note.title || 'Hashcod', options);
+          return true;
+        }
+        new Notification(note.title || 'Hashcod', options);
+        return true;
+      } catch (err) {
+        status(`Notificacion nativa no disponible en este navegador. Se muestra en la lista: ${err.message}`);
+        return false;
       }
     };
     const render = (notes) => {
@@ -98,8 +125,9 @@
     };
     $('notifyBtn').onclick = async () => {
       if (!('Notification' in window)) return status('Este navegador no soporta Notification API.');
+      await ensureServiceWorker();
       const permission = await Notification.requestPermission();
-      status(permission === 'granted' ? 'Notificaciones activadas.' : 'Permiso de notificación denegado.');
+      status(permission === 'granted' ? 'Notificaciones activadas con Service Worker.' : 'Permiso de notificacion denegado.');
     };
     const poll = async () => {
       if (!state.deviceId || !state.deviceSecret) return;
@@ -118,8 +146,12 @@
     };
     $('pollBtn').onclick = poll;
     $('forgetBtn').onclick = () => { localStorage.removeItem('hashcod_phone_os_device'); location.reload(); };
-    $('testBtn').onclick = () => showNotification({ id:'local-test', title:'Hashcod Phone OS', body:'Notificación local activa.' });
+    $('testBtn').onclick = async () => {
+      const ok = await showNotification({ id:'local-test', title:'Hashcod Phone OS', body:'Notificacion local activa.' });
+      if (ok) status('Notificacion local enviada.');
+    };
     if (state.deviceId && state.deviceSecret) showRun();
+    ensureServiceWorker();
     setInterval(poll, 7000);
     if (state.deviceId && state.deviceSecret) poll();
   </script>
