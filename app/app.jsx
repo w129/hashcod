@@ -1470,6 +1470,7 @@ const TOP_MENU_ICONS = {
   formatForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M5 20h6"/><path d="M13 4 8 20"/><path d="m15 15 5 5"/><path d="m20 15-5 5"/></svg>`,
   baseMat: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 22v-8"/><path d="M2.336 8.89 10 14l11.715-7.029"/><path d="M22 14a2 2 0 0 1-.971 1.715l-10 6a2 2 0 0 1-2.138-.05l-6-4A2 2 0 0 1 2 16v-6a2 2 0 0 1 .971-1.715l10-6a2 2 0 0 1 2.138.05l6 4A2 2 0 0 1 22 8z"/></svg>`,
   tokenVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg>`,
+  licenseIssuer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -8145,7 +8146,7 @@ const App = () => {
             <MenuButton label="FORMAT FORGE" icon={TOP_MENU_ICONS.formatForge} iconOnly items={formatForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFormatForge} />
             <MenuButton label="BASEMAT" icon={TOP_MENU_ICONS.baseMat} iconOnly items={baseMatItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBaseMat} />
             <MenuButton label="TOKEN VAULT PRO" icon={TOP_MENU_ICONS.tokenVault} iconOnly items={mountainToolItems('tokenVault')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenVault')} />
-            <MenuButton label="LICENSE ISSUER" items={mountainToolItems('licenseIssuer')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('licenseIssuer')} />
+            <MenuButton label="LICENSE ISSUER" icon={TOP_MENU_ICONS.licenseIssuer} iconOnly items={mountainToolItems('licenseIssuer')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('licenseIssuer')} />
             <MenuButton label="CHAIN LEDGER" items={mountainToolItems('chainLedger')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('chainLedger')} />
             <MenuButton label="API KEY MANAGER" items={mountainToolItems('apiKeyManager')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('apiKeyManager')} />
             <MenuButton label="TOKENIZATION STUDIO" items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
