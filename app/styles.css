@@ -2742,3 +2742,339 @@ kbd {
 @media (max-width: 620px) {
   .basemat-tabs, .basemat-form { grid-template-columns:1fr; }
 }
+
+/* Mobile shell: phones get a stacked, scrollable workstation instead of the 3-column desktop grid. */
+@media (max-width: 760px) {
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  body { font-size: 11px; }
+
+  .app {
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .tb {
+    min-height: 96px;
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .tb-brand {
+    width: 100%;
+    height: 40px;
+    min-width: 0;
+    padding: 0 10px;
+    border-right: 0;
+    border-bottom: 1px solid #242424;
+  }
+
+  .tb-name { min-width: 0; }
+  .tb-name b { font-size: 15px; }
+  .tb-name i {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 8px;
+  }
+
+  .tb-nav {
+    order: 2;
+    flex: 1 1 calc(100% - 86px);
+    height: 46px;
+    padding: 5px 6px;
+    border-top: 1px solid #151515;
+  }
+
+  .tb-n-icon-only {
+    width: 38px;
+    min-width: 38px;
+    min-height: 34px;
+  }
+
+  .tb-right {
+    order: 3;
+    height: 46px;
+    min-width: 86px;
+    gap: 6px;
+    margin-left: 0;
+    padding: 5px 8px 5px 0;
+    border-left: 0;
+    border-top: 1px solid #151515;
+  }
+
+  .tb-plan span,
+  .tb-plan b,
+  .tb-clk { display: none; }
+
+  .tb-plan,
+  .tb-cli {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .tb-dd {
+    left: 8px !important;
+    right: 8px;
+    top: 86px;
+    min-width: 0;
+    max-width: calc(100vw - 16px);
+    max-height: 58dvh;
+    overflow: auto;
+  }
+
+  .bcr {
+    min-height: 42px;
+    padding: 7px 10px;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-content: center;
+  }
+
+  .bcr-spacer { display: none; }
+  .bcr-st { font-size: 9px; }
+  .bcr-c {
+    max-width: calc(100vw - 96px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  .sb {
+    min-height: 220px;
+    max-height: 36dvh;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sb-search-row {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 10px;
+  }
+
+  .sb-search { height: 34px; font-size: 12px; }
+  .sb-cat-h { min-height: 42px; padding: 10px 12px; }
+  .sb-item {
+    min-height: 38px;
+    padding: 7px 12px 7px 18px;
+    gap: 8px;
+  }
+
+  .ed {
+    min-height: 56dvh;
+    overflow: visible;
+  }
+
+  .cfg {
+    padding: 12px 10px;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .cfg-g {
+    flex: 1 1 132px;
+    min-width: 0;
+  }
+
+  .cfg-inp,
+  .stp,
+  .cs,
+  .btn {
+    min-height: 36px;
+  }
+
+  .cfg-inp { width: 100%; }
+  .stp input { width: 68px; }
+  .cs { width: 100%; overflow-x: auto; }
+  .cs-b { flex: 1 0 auto; min-width: 40px; }
+
+  .cfg-acts {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cfg-acts .btn {
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .btn-pri { grid-column: 1 / -1; }
+  .btn kbd,
+  .out-tb-hint { display: none; }
+
+  .out-tb {
+    min-height: 38px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .out {
+    min-height: 42dvh;
+    max-height: none;
+    overflow: visible;
+    padding: 4px 0 10px;
+  }
+
+  .out-empty {
+    min-height: 280px;
+    height: auto;
+    padding: 34px 16px;
+  }
+
+  .out-empty-mark .ocg-brand-icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .oc {
+    padding: 8px 10px;
+    min-height: 0;
+  }
+
+  .oc-main {
+    grid-template-columns: 34px minmax(0, 1fr) 70px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .oc-idx { grid-column: 1; }
+  .oc-val {
+    grid-column: 2 / 4;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.4;
+    padding-right: 0;
+  }
+
+  .oc-meta {
+    grid-column: 1 / 2;
+    padding: 0;
+    font-size: 8px;
+  }
+
+  .oc-sim {
+    grid-column: 2 / 3;
+    width: 70px;
+  }
+
+  .oc-act {
+    width: 34px;
+    height: 34px;
+    border-color: var(--line);
+    background: #fff;
+  }
+
+  .rp {
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    overflow: visible;
+  }
+
+  .ti { padding: 16px 14px 28px; }
+  .ti-title { font-size: 20px; }
+  .ti-quickgrid { grid-template-columns: 1fr; }
+  .ti-concrete-row { grid-template-columns: 1fr; gap: 4px; }
+
+  .sf {
+    min-height: 34px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 7px 10px;
+    line-height: 1.35;
+  }
+
+  .sf-spacer,
+  .sf-sep:nth-of-type(2) { display: none; }
+
+  .auth-session {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    justify-content: space-between;
+    max-width: none;
+    padding: 7px 8px;
+  }
+
+  .auth-session > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .auth-admin-fab {
+    right: 12px;
+    bottom: 12px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .authbox {
+    width: calc(100vw - 24px);
+    padding: 22px;
+    box-shadow: 10px 10px 0 rgba(0,0,0,.07);
+  }
+
+  .authbox h1 { font-size: clamp(34px, 12vw, 48px); }
+  .auth-generated { grid-template-columns: 1fr; }
+
+  .dlg {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    overflow: auto;
+  }
+
+  .dlg-h {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+  }
+
+  .authusers-security,
+  .authusers-row,
+  .authusers-row.wait,
+  .authusers-history,
+  .authusers-audit-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .authusers-audit-actions { display: grid; }
+}
+
+@media (max-width: 430px) {
+  .tb-name i { display: none; }
+  .tb-nav { flex-basis: calc(100% - 78px); }
+  .tb-right { min-width: 78px; }
+  .cfg-acts { grid-template-columns: 1fr; }
+  .oc-main { grid-template-columns: 30px minmax(0, 1fr) 64px; }
+  .oc-act { width: 32px; height: 32px; }
+  .sf-r { max-width: 100%; overflow-wrap: anywhere; }
+}
