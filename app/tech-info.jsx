@@ -18,6 +18,13 @@ const PANEL_LANG = {
     entropy: 'Entropy',
     searchSpace: 'Search space',
     standard: 'Standard',
+    realPurpose: 'Real purpose',
+    concreteProfile: 'Concrete profile',
+    validation: 'Validation',
+    lifecycle: 'Lifecycle',
+    storageRule: 'Storage rule',
+    criticalRisk: 'Critical risk',
+    enterpriseUse: 'Enterprise use',
     id: 'id',
     category: 'category',
     modern: 'Modern / recommended',
@@ -51,6 +58,13 @@ const PANEL_LANG = {
     standard: 'Estándar',
     id: 'id',
     category: 'categoría',
+    realPurpose: 'Proposito real',
+    concreteProfile: 'Perfil concreto',
+    validation: 'Validacion',
+    lifecycle: 'Ciclo de vida',
+    storageRule: 'Regla de almacenamiento',
+    criticalRisk: 'Riesgo critico',
+    enterpriseUse: 'Uso enterprise',
     modern: 'Moderno / recomendado',
     caution: 'Usar con cuidado',
     legacy: 'Heredado / conviene migrar',
@@ -685,6 +699,94 @@ function categoryOneLine(category, language) {
   }[category.id] || '';
 }
 
+function compactText(value, fallback = 'n/a') {
+  return String(value || fallback).replace(/\s+/g, ' ').trim();
+}
+
+function buildConcreteProfile(type, category, language) {
+  const es = getGuideLocale(language) === 'es';
+  const id = String(type.id || '').toLowerCase();
+  const hay = `${id} ${type.label || ''} ${type.engine || ''} ${type.std || ''} ${type.badge || ''}`.toLowerCase();
+  const bits = compactText(type.entropy, 'unknown');
+  const engine = compactText(type.engine);
+  const std = compactText(type.std);
+  const output = compactText(type.engine);
+
+  let purpose = es ? 'Material criptografico especializado para la familia seleccionada.' : 'Specialized cryptographic material for the selected family.';
+  let validation = es ? `Comprobar formato esperado, longitud, entropia declarada (${bits}) y que el valor no venga truncado.` : `Check expected format, length, declared entropy (${bits}), and that the value is not truncated.`;
+  let lifecycle = es ? 'Versionar, rotar por politica y retirar valores comprometidos.' : 'Version it, rotate by policy, and retire compromised values.';
+  let storage = es ? 'Guardar como secreto; no exponer en frontend, capturas, logs ni URL.' : 'Store as a secret; do not expose it in frontend code, screenshots, logs, or URLs.';
+  let risk = es ? 'El mayor fallo suele ser mal uso operativo, no falta de bits.' : 'The main failure is usually operational misuse, not lack of bits.';
+  let enterprise = es ? 'Registrar owner, ambiente, fecha de emision, version, expiracion y sistema consumidor.' : 'Record owner, environment, issuance date, version, expiry, and consuming system.';
+
+  if (hay.includes('aes')) {
+    purpose = es ? `Clave AES de ${bits} para cifrado simetrico; necesita modo AEAD o modo de almacenamiento definido.` : `${bits} AES key for symmetric encryption; it needs a defined AEAD or storage mode.`;
+    validation = es ? 'Decodifica Base64 y verifica tamano exacto de clave: 16/24/32 bytes segun AES-128/192/256.' : 'Decode Base64 and verify exact key size: 16/24/32 bytes for AES-128/192/256.';
+    lifecycle = es ? 'Rotar con key id; mantener claves antiguas solo para descifrar historico hasta completar migracion.' : 'Rotate with a key id; keep old keys only to decrypt historical data until migration finishes.';
+    storage = es ? 'KMS/HSM o secret manager; nunca localStorage ni codigo cliente.' : 'KMS/HSM or secret manager; never localStorage or client code.';
+    risk = es ? 'Nonce/IV repetido en GCM/CTR o clave pegada en logs rompe la seguridad practica.' : 'Repeated nonce/IV in GCM/CTR or logging the key breaks practical security.';
+    enterprise = es ? 'Usar AES-GCM/KW/XTS segun caso; documentar AAD, nonce, key id y version de formato.' : 'Use AES-GCM/KW/XTS by case; document AAD, nonce, key id, and format version.';
+  } else if (hay.includes('hmac') || category.id === 'macs') {
+    purpose = es ? 'Secreto de firma para autenticar mensajes, webhooks o paquetes sin cifrar el contenido.' : 'Signing secret to authenticate messages, webhooks, or packets without encrypting content.';
+    validation = es ? 'Verifica longitud minima, algoritmo exacto y canonicalizacion del payload antes de firmar.' : 'Verify minimum length, exact algorithm, and payload canonicalization before signing.';
+    lifecycle = es ? 'Rotar con ventana doble: aceptar firma vieja y nueva durante la migracion.' : 'Rotate with a dual window: accept old and new signatures during migration.';
+    risk = es ? 'Sin timestamp/nonce, una firma valida puede reutilizarse en replay.' : 'Without timestamp/nonce, a valid signature can be replayed.';
+    enterprise = es ? 'Guardar key id, algoritmo, version de canonicalizacion y politica anti-replay.' : 'Store key id, algorithm, canonicalization version, and anti-replay policy.';
+  } else if (category.id === 'tokens' || hay.includes('token') || hay.includes('jwt') || hay.includes('api key')) {
+    purpose = es ? 'Credencial de acceso o delegacion; representa permiso, no cifrado de datos.' : 'Access or delegation credential; it represents permission, not data encryption.';
+    validation = es ? 'Validar scope, audiencia, expiracion, emisor y fingerprint; no depender solo del formato.' : 'Validate scope, audience, expiry, issuer, and fingerprint; do not rely on format alone.';
+    lifecycle = es ? 'Preferir expiracion corta, revocacion server-side y rotacion automatizada.' : 'Prefer short expiry, server-side revocation, and automated rotation.';
+    storage = es ? 'Guardar hash/fingerprint para auditoria; entregar el valor crudo una sola vez.' : 'Store hash/fingerprint for audit; reveal the raw value only once.';
+    risk = es ? 'Un bearer token filtrado equivale a acceso hasta que expire o se revoque.' : 'A leaked bearer token equals access until expiry or revocation.';
+    enterprise = es ? 'Aplicar scopes minimos, rate limits, owner, ultimo uso y alerta por uso anomalo.' : 'Apply least scopes, rate limits, owner, last-used tracking, and anomaly alerts.';
+  } else if (category.id === 'hashes' || hay.includes('hash') || hay.includes('sha') || hay.includes('blake')) {
+    purpose = es ? 'Huella determinista para integridad, deduplicacion o direccionamiento de contenido.' : 'Deterministic fingerprint for integrity, deduplication, or content addressing.';
+    validation = es ? 'Comparar longitud hexadecimal/base64 esperada y recalcular desde el artefacto original.' : 'Check expected hex/base64 length and recompute from the original artifact.';
+    lifecycle = es ? 'No rota como secreto; se recalcula cuando cambia el payload o algoritmo.' : 'It does not rotate like a secret; recompute when payload or algorithm changes.';
+    storage = es ? 'Puede almacenarse visible si no revela datos sensibles; firmarlo si prueba origen.' : 'It can be visible if it reveals no sensitive data; sign it when proving origin.';
+    risk = es ? 'Hash solo no autentica: si el atacante cambia archivo y hash, no hay proteccion.' : 'A hash alone does not authenticate: if attacker changes file and hash, there is no protection.';
+    enterprise = es ? 'Asociar artefacto, algoritmo, version, firma opcional y fuente de confianza.' : 'Bind artifact, algorithm, version, optional signature, and trust source.';
+  } else if (category.id === 'kdf' || hay.includes('argon') || hay.includes('pbkdf') || hay.includes('scrypt') || hay.includes('bcrypt')) {
+    purpose = es ? 'Endurece contrasenas o deriva claves desde material humano/debil.' : 'Hardens passwords or derives keys from human/weak input.';
+    validation = es ? 'Guardar y verificar sal, parametros de costo, version y salida esperada.' : 'Store and verify salt, cost parameters, version, and expected output.';
+    lifecycle = es ? 'Subir costos con el tiempo y rehash al siguiente login o desbloqueo.' : 'Increase costs over time and rehash on next login or unlock.';
+    risk = es ? 'Parametros bajos convierten una buena KDF en una defensa debil.' : 'Low parameters turn a good KDF into weak defense.';
+    enterprise = es ? 'Definir memoria, iteraciones, paralelismo, SLA de login y plan de upgrade.' : 'Define memory, iterations, parallelism, login SLA, and upgrade plan.';
+  } else if (category.id === 'asymmetric' || hay.includes('rsa') || hay.includes('ed25519') || hay.includes('x25519')) {
+    purpose = es ? 'Par de claves para identidad, firma o acuerdo; publica y privada tienen roles separados.' : 'Key pair for identity, signature, or agreement; public and private parts have separate roles.';
+    validation = es ? 'Verificar curva/tamano, uso permitido, fingerprint publico y proteccion de privada.' : 'Verify curve/size, allowed usage, public fingerprint, and private-key protection.';
+    lifecycle = es ? 'Emitir, rotar, revocar y archivar con cadena de confianza documentada.' : 'Issue, rotate, revoke, and archive with documented chain of trust.';
+    storage = es ? 'Privada en HSM/enclave/archivo cifrado; publica puede distribuirse.' : 'Private key in HSM/enclave/encrypted file; public key can be distributed.';
+    risk = es ? 'Reutilizar una privada para demasiados propositos aumenta impacto de compromiso.' : 'Reusing one private key for too many purposes increases compromise impact.';
+    enterprise = es ? 'Separar claves de firma, TLS, SSH y cifrado; registrar certificado y revocacion.' : 'Separate signing, TLS, SSH, and encryption keys; record certificate and revocation.';
+  } else if (category.id === 'identifiers') {
+    purpose = es ? 'Identificador unico u ordenable; no debe tratarse como secreto de acceso.' : 'Unique or sortable identifier; it must not be treated as an access secret.';
+    validation = es ? 'Validar alfabeto, longitud, unicidad y si filtra tiempo, region o volumen.' : 'Validate alphabet, length, uniqueness, and whether it leaks time, region, or volume.';
+    lifecycle = es ? 'Normalmente no rota; se invalida o reemplaza si cambia el recurso.' : 'Usually does not rotate; invalidate or replace if the resource changes.';
+    risk = es ? 'ID visible sin autorizacion real puede exponer recursos por enumeracion.' : 'Visible ID without real authorization can expose resources through enumeration.';
+    enterprise = es ? 'Definir indice, cardinalidad, trazabilidad, privacidad y politica de retencion.' : 'Define index, cardinality, traceability, privacy, and retention policy.';
+  } else if (category.id === 'pq' || hay.includes('kyber') || hay.includes('dilithium') || hay.includes('ml-')) {
+    purpose = es ? 'Primitiva poscuantica para pilotos, migracion o despliegues hibridos.' : 'Post-quantum primitive for pilots, migration, or hybrid deployments.';
+    validation = es ? 'Verificar version de libreria, parametros exactos, tamanos de clave/firma y compatibilidad.' : 'Verify library version, exact parameters, key/signature sizes, and compatibility.';
+    lifecycle = es ? 'Mantener agility: poder cambiar parametros o algoritmo sin romper datos historicos.' : 'Keep agility: allow parameter or algorithm changes without breaking historical data.';
+    risk = es ? 'Tooling e interoperabilidad aun pueden cambiar; no asumir soporte universal.' : 'Tooling and interoperability can still change; do not assume universal support.';
+    enterprise = es ? 'Usar modo hibrido cuando haga falta compatibilidad clasica y auditar dependencia.' : 'Use hybrid mode when classical compatibility is needed and audit dependencies.';
+  }
+
+  return {
+    headline: purpose,
+    rows: [
+      [es ? 'Salida exacta' : 'Exact output', output],
+      [TL(language, 'validation'), validation],
+      [TL(language, 'lifecycle'), lifecycle],
+      [TL(language, 'storageRule'), storage],
+      [TL(language, 'criticalRisk'), risk],
+      [TL(language, 'enterpriseUse'), enterprise],
+    ],
+    tags: [`${compactText(type.badge)} / ${std}`, bits, engine, category.id],
+  };
+}
+
 function TechInfo({ type, category, density, language = 'en', t = (k => k) }) {
   if (!type) {
     return (
@@ -697,6 +799,7 @@ function TechInfo({ type, category, density, language = 'en', t = (k => k) }) {
   }
 
   const guide = buildGuide(type, category, language);
+  const concrete = buildConcreteProfile(type, category, language);
   const categoryLabel = window.getCategoryLabel ? window.getCategoryLabel(category, language) : category.label;
   const about = window.translateApprox ? window.translateApprox(language, type.about) : type.about;
 
@@ -738,6 +841,23 @@ function TechInfo({ type, category, density, language = 'en', t = (k => k) }) {
         <div className="ti-spec-row"><span className="ti-k">{TL(language, 'entropy')}</span><span className="ti-v">{type.entropy}</span></div>
         <div className="ti-spec-row"><span className="ti-k">{TL(language, 'searchSpace')}</span><span className="ti-v">{type.space}</span></div>
         <div className="ti-spec-row"><span className="ti-k">{TL(language, 'standard')}</span><span className="ti-v">{type.std}</span></div>
+      </div>
+
+      <div className="ti-concrete">
+        <div className="ti-concrete-head">
+          <span>{TL(language, 'concreteProfile')}</span>
+          <b>{TL(language, 'realPurpose')}</b>
+        </div>
+        <p>{concrete.headline}</p>
+        <div className="ti-tagline">{concrete.tags.map((tag, i) => <span key={`ctag-${i}`}>{tag}</span>)}</div>
+        <div className="ti-concrete-rows">
+          {concrete.rows.map(([key, value], i) => (
+            <div className="ti-concrete-row" key={`concrete-${i}`}>
+              <span>{key}</span>
+              <b>{value}</b>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="ti-section">

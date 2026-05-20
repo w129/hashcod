@@ -701,6 +701,73 @@ kbd {
 .ti-k { color: var(--ink-4); letter-spacing: .5px; }
 .ti-v { color: var(--ink); font-variant-numeric: tabular-nums; }
 
+.ti-concrete {
+  border: 1px solid var(--ink);
+  background: var(--bg);
+  margin: 0 0 18px;
+}
+.ti-concrete-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.ti-concrete-head span {
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.ti-concrete-head b {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.ti-concrete p {
+  padding: 10px 12px 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.ti-tagline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 12px 10px;
+}
+.ti-tagline span {
+  border: 1px solid var(--line-2);
+  padding: 3px 6px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--ink-3);
+  background: var(--bg-soft);
+}
+.ti-concrete-rows { border-top: 1px solid var(--line); }
+.ti-concrete-row {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.ti-concrete-row:last-child { border-bottom: 0; }
+.ti-concrete-row span {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.ti-concrete-row b {
+  font-size: 10px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--ink);
+}
+
 .ti-section { margin-bottom: 18px; }
 .ti-h3 {
   font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
