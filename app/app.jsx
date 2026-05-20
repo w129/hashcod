@@ -9435,4 +9435,7 @@ const DID_BALLOON_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-h
 const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 2.2 4.2v7.6L8 15l5.8-3.2V4.2L8 1Zm0 1.8 3.7 2L8 6.9 4.3 4.8 8 2.8ZM3.7 6.1l3.5 2v4.8l-3.5-2V6.1Zm8.6 0v4.8l-3.5 2V8.1l3.5-2Z"/></svg>`;
 
 window.HashcodApp = App;
-window.App = () => <AuthGate><App /></AuthGate>;
+window.App = () => {
+  const Platform = window.HashcodApp;
+  return <AuthGate><Platform /></AuthGate>;
+};
