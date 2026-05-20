@@ -1473,6 +1473,7 @@ const TOP_MENU_ICONS = {
   licenseIssuer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg>`,
   chainLedger: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V9a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/><path d="M16 20v-3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3"/><path d="M20 22V2"/><path d="M4 12h16"/><path d="M4 20h16"/><path d="M4 2v20"/><path d="M4 4h16"/></svg>`,
   apiKeyManager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"/></svg>`,
+  tokenizationStudio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="9" x2="15" y1="15" y2="9"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -8151,7 +8152,7 @@ const App = () => {
             <MenuButton label="LICENSE ISSUER" icon={TOP_MENU_ICONS.licenseIssuer} iconOnly items={mountainToolItems('licenseIssuer')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('licenseIssuer')} />
             <MenuButton label="CHAIN LEDGER" icon={TOP_MENU_ICONS.chainLedger} iconOnly items={mountainToolItems('chainLedger')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('chainLedger')} />
             <MenuButton label="API KEY MANAGER" icon={TOP_MENU_ICONS.apiKeyManager} iconOnly items={mountainToolItems('apiKeyManager')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('apiKeyManager')} />
-            <MenuButton label="TOKENIZATION STUDIO" items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
+            <MenuButton label="TOKENIZATION STUDIO" icon={TOP_MENU_ICONS.tokenizationStudio} iconOnly items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
           </nav>
           <div className="tb-right">
             <button className="tb-plan" onClick={openPlans} title="Plans & Licensing">
