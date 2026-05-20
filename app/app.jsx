@@ -2039,6 +2039,9 @@ const TOP_MENU_ICONS = {
   chainLedger: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12V9a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/><path d="M16 20v-3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3"/><path d="M20 22V2"/><path d="M4 12h16"/><path d="M4 20h16"/><path d="M4 2v20"/><path d="M4 4h16"/></svg>`,
   apiKeyManager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"/></svg>`,
   tokenizationStudio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="9" x2="15" y1="15" y2="9"/></svg>`,
+  hns: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>`,
+  hos: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>`,
+  hcp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -2890,6 +2893,171 @@ const PixelNoteDialog = ({ open, onClose, row, notify, language }) => {
             <button type="button" onClick={onClose}>{L('Cancelar', 'Cancel')}</button>
           </div>
         </form>
+      </section>
+    </div>
+  );
+};
+
+const HashNameSystemDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [namespace, setNamespace] = useState('www.hashcod.sec');
+  const [mode, setMode] = useState('www-secret');
+  const [limit, setLimit] = useState(24);
+  const [items, setItems] = useState([]);
+  const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 200), [rows, outputRows]);
+  useEffect(() => { if (open) setItems([]); }, [open]);
+  if (!open) return null;
+  const build = async () => {
+    const pack = [];
+    for (const row of source.slice(0, Math.max(1, Math.min(200, Number(limit) || 24)))) {
+      const hash = await digestHex(`${namespace}|${mode}|${row.type}|${row.value}`, 'SHA-256');
+      const label = `${String(row.type || 'code').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${hash.slice(0, 10)}`;
+      pack.push({
+        hns: `hns://${namespace}/${label}`,
+        alias: `HNS-${hash.slice(0, 6).toUpperCase()}-${String(row.idx || 0).padStart(3, '0')}`,
+        primitive: row.type,
+        digest: hash,
+        length: String(row.value || '').length,
+      });
+    }
+    setItems(pack);
+    notify?.(L('HNS genero nombres hash representativos.', 'HNS generated representative hash names.'));
+  };
+  const exportJson = () => {
+    const payload = { platform: 'Hashcod', tool: 'HNS', namespace, mode, createdAt: new Date().toISOString(), items };
+    triggerDownload(`Hashcod-HNS-${sanitizeFilename(namespace)}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportZone = () => {
+    const zone = items.map((item, i) => `${String(i + 1).padStart(3, '0')} ${item.alias} ${item.hns} SHA256=${item.digest}`).join('\n');
+    triggerDownload(`Hashcod-HNS-zone-${sanitizeFilename(namespace)}-${tsStamp()}.hns.txt`, zone, 'text/plain;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hashsytdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>HNS</h2>
+            <p>{L('Hash Name System: crea nombres representativos tipo WWW para secretos y codes denominadores.', 'Hash Name System: creates WWW-style representative names for secrets and denominator codes.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hashsyt-form">
+          <label><span>{L('Namespace base', 'Base namespace')}</span><input value={namespace} onChange={e => setNamespace(e.target.value)} /></label>
+          <label><span>{L('Patron', 'Pattern')}</span><select value={mode} onChange={e => setMode(e.target.value)}><option value="www-secret">WWW Secret</option><option value="denominator">Denominator Code</option><option value="vault-alias">Vault Alias</option></select></label>
+          <label><span>{L('Limite', 'Limit')}</span><input type="number" min="1" max="200" value={limit} onChange={e => setLimit(e.target.value)} /></label>
+          <button onClick={build} disabled={!source.length}>{L('Generar HNS', 'Generate HNS')}</button>
+        </div>
+        <div className="hashsyt-body">
+          <div className="hashsyt-card"><span>{L('Entrada', 'Input')}</span><b>{source.length}</b><p>{L('Codes disponibles desde output y base local.', 'Codes available from output and local database.')}</p></div>
+          <div className="hashsyt-card"><span>{L('Salida', 'Output')}</span><b>{items.length}</b><p>{L('Aliases HNS con digest SHA-256 y namespace.', 'HNS aliases with SHA-256 digest and namespace.')}</p></div>
+          <pre className="hashsyt-output">{items.map(item => `${item.alias} -> ${item.hns}`).join('\n') || L('Genera nombres HNS para verlos aqui.', 'Generate HNS names to see them here.')}</pre>
+          <div className="hashsyt-actions"><button onClick={exportJson} disabled={!items.length}>JSON</button><button onClick={exportZone} disabled={!items.length}>HNS ZONE</button></div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HashOperativeSystemDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [receiver, setReceiver] = useState('second-receiver');
+  const [action, setAction] = useState('notify-phone-os');
+  const [manifest, setManifest] = useState(null);
+  const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 120), [rows, outputRows]);
+  useEffect(() => { if (open) setManifest(null); }, [open]);
+  if (!open) return null;
+  const build = async () => {
+    const routes = [];
+    for (const [i, row] of source.entries()) {
+      const routeHash = await digestHex(`${receiver}|${action}|${i}|${row.value}`, 'SHA-256');
+      routes.push({
+        sequence: i + 1,
+        receiver,
+        action,
+        primitive: row.type,
+        routeId: `HOS-${routeHash.slice(0, 12).toUpperCase()}`,
+        controlDigest: routeHash,
+        payloadPreview: window.OCG_GEN.display(row.value, 96),
+      });
+    }
+    const next = { platform: 'Hashcod', tool: 'HOS', description: 'Hash Operative System receiver-control manifest', createdAt: new Date().toISOString(), receiver, action, routes };
+    setManifest(next);
+    notify?.(L('HOS creo el manifiesto operativo.', 'HOS created the operative manifest.'));
+  };
+  const exportManifest = () => manifest && triggerDownload(`Hashcod-HOS-${sanitizeFilename(receiver)}-${tsStamp()}.hos.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+  const copyManifest = () => {
+    navigator.clipboard?.writeText(JSON.stringify(manifest || {}, null, 2));
+    notify?.(L('Manifiesto HOS copiado.', 'HOS manifest copied.'));
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hashsytdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>HOS</h2>
+            <p>{L('Hash Operative System: organiza receptores secundarios y rutas de control para codes generados.', 'Hash Operative System: organizes secondary receivers and control routes for generated codes.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hashsyt-form">
+          <label><span>{L('Receptor', 'Receiver')}</span><input value={receiver} onChange={e => setReceiver(e.target.value)} /></label>
+          <label><span>{L('Accion operativa', 'Operative action')}</span><select value={action} onChange={e => setAction(e.target.value)}><option value="notify-phone-os">Notify Phone OS</option><option value="sms-gateway">SMS Gateway</option><option value="vault-store">Vault Store</option><option value="verify-pattern">Verify Pattern</option></select></label>
+          <button onClick={build} disabled={!source.length}>{L('Construir HOS', 'Build HOS')}</button>
+        </div>
+        <div className="hashsyt-body">
+          <div className="hashsyt-grid">
+            {(manifest?.routes || []).slice(0, 12).map(route => <div className="hashsyt-row" key={route.routeId}><b>{route.routeId}</b><span>{route.primitive} -> {route.action}</span></div>)}
+          </div>
+          <pre className="hashsyt-output">{manifest ? JSON.stringify(manifest, null, 2) : L('Construye un manifiesto HOS para ver rutas, receptores y digests de control.', 'Build an HOS manifest to see routes, receivers and control digests.')}</pre>
+          <div className="hashsyt-actions"><button onClick={exportManifest} disabled={!manifest}>HOS JSON</button><button onClick={copyManifest} disabled={!manifest}>{L('Copiar', 'Copy')}</button></div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HashCommandPromptingDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [pattern, setPattern] = useState('SC: sequence command');
+  const [mode, setMode] = useState('hidden-control');
+  const [script, setScript] = useState('');
+  const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 80), [rows, outputRows]);
+  useEffect(() => { if (open) setScript(''); }, [open]);
+  if (!open) return null;
+  const build = async () => {
+    const lines = ['# Hashcod HCP - Hash Command Prompting', `# pattern=${pattern}`, `# mode=${mode}`, `# created=${new Date().toISOString()}`, ''];
+    for (const [i, row] of source.entries()) {
+      const sig = await digestHex(`${pattern}|${mode}|${row.type}|${row.value}`, 'SHA-256');
+      lines.push(`hcp sc --seq ${String(i + 1).padStart(3, '0')} --primitive ${row.type} --pattern "${pattern}" --digest ${sig.slice(0, 24)} --mode ${mode}`);
+    }
+    const next = lines.join('\n');
+    setScript(next);
+    notify?.(L('HCP genero comandos por patrones.', 'HCP generated pattern commands.'));
+  };
+  const exportScript = () => triggerDownload(`Hashcod-HCP-${sanitizeFilename(mode)}-${tsStamp()}.hcp.txt`, script, 'text/plain;charset=utf-8');
+  const copyScript = () => {
+    navigator.clipboard?.writeText(script);
+    notify?.(L('HCP copiado.', 'HCP copied.'));
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hashsytdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>HCP</h2>
+            <p>{L('Hash Command Prompting: convierte patrones y secuencias en comandos de control verificables.', 'Hash Command Prompting: converts patterns and sequences into verifiable control commands.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hashsyt-form">
+          <label className="wide"><span>{L('Patron SC', 'SC pattern')}</span><input value={pattern} onChange={e => setPattern(e.target.value)} /></label>
+          <label><span>{L('Modo', 'Mode')}</span><select value={mode} onChange={e => setMode(e.target.value)}><option value="hidden-control">Hidden Control</option><option value="receiver-command">Receiver Command</option><option value="pattern-realization">Pattern Realization</option></select></label>
+          <button onClick={build} disabled={!source.length}>{L('Crear comandos', 'Create commands')}</button>
+        </div>
+        <div className="hashsyt-body">
+          <pre className="hashsyt-output hcp">{script || L('Crea comandos HCP para ver la consola generada aqui.', 'Create HCP commands to see the generated console here.')}</pre>
+          <div className="hashsyt-actions"><button onClick={exportScript} disabled={!script}>HCP TXT</button><button onClick={copyScript} disabled={!script}>{L('Copiar', 'Copy')}</button></div>
+        </div>
       </section>
     </div>
   );
@@ -8353,6 +8521,9 @@ const App = () => {
   const [formatForgeOpen, setFormatForgeOpen] = useState(false);
   const [mountainToolOpen, setMountainToolOpen] = useState(null);
   const [baseMatOpen, setBaseMatOpen] = useState(false);
+  const [hnsOpen, setHnsOpen] = useState(false);
+  const [hosOpen, setHosOpen] = useState(false);
+  const [hcpOpen, setHcpOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
   const [planLicense, setPlanLicense] = useState(() => readPlanLicense());
@@ -9101,6 +9272,7 @@ const App = () => {
 
   const withQty = (n) => { const next = Math.max(1, Math.min(activePlan.maxBatch, Number(n) || 1)); setQty(next); generate(next); };
   const visibleOutput = useMemo(() => output.slice(0, MAX_RENDERED_OUTPUT), [output]);
+  const hashSystemRows = useMemo(() => [...output.slice(0, 240), ...copyDb.slice(0, 240)], [output, copyDb]);
   const similarityMap = useMemo(() => buildSimilarityMap(visibleOutput, activePlan), [visibleOutput, activePlan]);
   const scrollTop = () => { if (outRef.current) outRef.current.scrollTop = 0; notify(t('showingNewest')); };
   const focusSearch = () => { searchRef.current && searchRef.current.focus(); };
@@ -9136,6 +9308,9 @@ const App = () => {
   const openIvoryIdeas = () => setIvoryIdeasOpen(true);
   const openOcgUnits = () => setOcgUnitsOpen(true);
   const openBaseMat = () => setBaseMatOpen(true);
+  const openHns = () => setHnsOpen(true);
+  const openHos = () => setHosOpen(true);
+  const openHcp = () => setHcpOpen(true);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openSmsSender = (row) => setSmsRow(row);
@@ -9277,6 +9452,18 @@ const App = () => {
     { label: language === 'es' ? 'Entropia, colisiones y avalanche' : 'Entropy, collisions and avalanche', onClick: openBaseMat },
     { label: language === 'es' ? 'Shamir, Merkle, lattice y campos primos' : 'Shamir, Merkle, lattice and prime fields', onClick: openBaseMat },
     { label: language === 'es' ? '10 herramientas matematicas' : '10 mathematical tools', onClick: openBaseMat },
+  ];
+  const hnsItems = [
+    { label: language === 'es' ? 'Abrir Hash Name System' : 'Open Hash Name System', onClick: openHns },
+    { label: language === 'es' ? 'Crear nombres WWW para secrets' : 'Create WWW names for secrets', onClick: openHns },
+  ];
+  const hosItems = [
+    { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
+    { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
+  ];
+  const hcpItems = [
+    { label: language === 'es' ? 'Abrir Hash Command Prompting' : 'Open Hash Command Prompting', onClick: openHcp },
+    { label: language === 'es' ? 'Crear comandos SC por patrones' : 'Create SC pattern commands', onClick: openHcp },
   ];
 
   const pushCmd = useCallback((text, kind = 'out', prompt = 'ocg') => {
@@ -9455,6 +9642,9 @@ const App = () => {
         color: openColorForge, colors: openColorForge, colorforge: openColorForge, palette: openColorForge, colores: openColorForge,
         formatforge: openFormatForge, format: openFormatForge, formats: openFormatForge, forge: openFormatForge, formato: openFormatForge, formatos: openFormatForge,
         basemat: openBaseMat, math: openBaseMat, matematicas: openBaseMat,
+        hns: openHns, namesystem: openHns, 'hash-name-system': openHns,
+        hos: openHos, operative: openHos, 'hash-operative-system': openHos,
+        hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
         help: () => setHelpOpen(true), ayuda: () => setHelpOpen(true), report: openCommandManual, audit: openCommandManual, workflow: openCommandManual, legal: openCommandManual, system: openCommandManual, backup: openCommandManual,
       };
@@ -9584,6 +9774,9 @@ const App = () => {
       format: { open: openFormatForge, label: 'Format Forge', verbs: ['create','generate','validate','regex','export','validator','spec','samples','math','help'] },
       basemat: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
       math: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
+      hns: { open: openHns, label: 'HNS', verbs: ['name','zone','export','namespace','secret','www','help'] },
+      hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
+      hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
     if (moduleActions[cmd]) {
       const mod = moduleActions[cmd]; mod.open();
@@ -9607,7 +9800,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -9628,6 +9821,9 @@ const App = () => {
       <FormatForgeDialog open={formatForgeOpen} onClose={() => setFormatForgeOpen(false)} notify={notify} language={language} />
       <MountainToolDialog open={!!mountainToolOpen} toolKey={mountainToolOpen || 'tokenVault'} onClose={() => setMountainToolOpen(null)} notify={notify} language={language} rows={copyDb} />
       <BaseMatDialog open={baseMatOpen} onClose={() => setBaseMatOpen(false)} notify={notify} language={language} rows={copyDb} activePlan={activePlan} />
+      <HashNameSystemDialog open={hnsOpen} onClose={() => setHnsOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <HashOperativeSystemDialog open={hosOpen} onClose={() => setHosOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <HashCommandPromptingDialog open={hcpOpen} onClose={() => setHcpOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -9679,6 +9875,9 @@ const App = () => {
             <MenuButton label="CHAIN LEDGER" icon={TOP_MENU_ICONS.chainLedger} iconOnly items={mountainToolItems('chainLedger')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('chainLedger')} />
             <MenuButton label="API KEY MANAGER" icon={TOP_MENU_ICONS.apiKeyManager} iconOnly items={mountainToolItems('apiKeyManager')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('apiKeyManager')} />
             <MenuButton label="TOKENIZATION STUDIO" icon={TOP_MENU_ICONS.tokenizationStudio} iconOnly items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
+            <MenuButton label="HNS" icon={TOP_MENU_ICONS.hns} iconOnly items={hnsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHns} />
+            <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
+            <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
           <div className="tb-right">
             <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
