@@ -44,7 +44,7 @@ const I18N = {
     helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
     helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
     generated: 'generated', unique: 'unique', session: 'session', output: 'Output', value: 'value', values: 'values',
-    hoverHint: 'hover any value for storytelling · click to copy',
+    hoverHint: 'click any value to copy',
     nothingGenerated: 'Nothing generated yet',
     emptyGenerateHint: 'Select a primitive on the left, configure parameters, then press ⌘ ↵ or hit Generate.',
     webCrypto: 'Web Crypto API', localOffline: 'Local · Offline',
@@ -72,7 +72,7 @@ const I18N = {
     helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
     helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
     generated: 'generados', unique: 'únicos', session: 'sesión', output: 'Salida', value: 'valor', values: 'valores',
-    hoverHint: 'pasa el cursor para ver storytelling · clic para copiar',
+    hoverHint: 'clic en cualquier valor para copiar',
     nothingGenerated: 'Aún no se ha generado nada',
     emptyGenerateHint: 'Selecciona una primitiva a la izquierda, configura los parámetros y luego presiona ⌘ ↵ o Generar.',
     webCrypto: 'API Web Crypto', localOffline: 'Local · Sin conexión',
@@ -1034,7 +1034,6 @@ const rowToMarkdown = (row) => {
 const rowToLog = (row, language = 'en') => {
   const { cat, type } = findTypeMeta(row.type);
   const profile = ticketProfileForRow(row, language);
-  const story = storyForRow(row, language);
   const date = new Date(row.ts || Date.now()).toISOString();
   const logId = `OCG-LOG-${String(row.idx).padStart(6, '0')}-${String(row.type || 'code').toUpperCase()}`;
   const lines = [
@@ -1061,10 +1060,6 @@ const rowToLog = (row, language = 'en') => {
     `USE_FOR=${profile.useFor}`,
     `AVOID=${profile.avoid}`,
     '',
-    '[STORY]',
-    story[0],
-    story[1],
-    '',
     '[AUDIT]',
     'SOURCE=Generated output row',
     'EXPORT_FORMAT=.log',
@@ -1079,7 +1074,6 @@ const rowToLog = (row, language = 'en') => {
 const rowToTxt = (row, language = 'en') => {
   const { cat, type } = findTypeMeta(row.type);
   const profile = ticketProfileForRow(row, language);
-  const story = storyForRow(row, language);
   const date = new Date(row.ts || Date.now()).toISOString();
   const lines = [
     'OPENCRIPTG GENERATED CODE TXT',
@@ -1100,9 +1094,6 @@ const rowToTxt = (row, language = 'en') => {
     `USE_FOR: ${profile.useFor}`,
     `AVOID: ${profile.avoid}`,
     '',
-    'STORYTELLING:',
-    story[0] || '',
-    story[1] || '',
     '',
     'OPENCRIPTG · DIKTATCART · TXT EXPORT',
   ];
@@ -1113,7 +1104,6 @@ const rowToTxt = (row, language = 'en') => {
 const rowToJsonObject = (row, language = 'en') => {
   const { cat, type } = findTypeMeta(row.type);
   const profile = ticketProfileForRow(row, language);
-  const story = storyForRow(row, language);
   const date = new Date(row.ts || Date.now()).toISOString();
   return {
     platform: 'opencriptG',
@@ -1137,10 +1127,6 @@ const rowToJsonObject = (row, language = 'en') => {
       posture: profile.security,
       use_for: profile.useFor,
       avoid: profile.avoid,
-    },
-    storytelling: {
-      line_1: story[0] || '',
-      line_2: story[1] || '',
     },
     audit: {
       source: 'Generated output row',
@@ -1179,9 +1165,6 @@ const rowToYaml = (row, language = 'en') => {
     `  posture: ${yamlScalar(data.security_profile.posture)}`,
     `  use_for: ${yamlScalar(data.security_profile.use_for)}`,
     `  avoid: ${yamlScalar(data.security_profile.avoid)}`,
-    'storytelling:',
-    `  line_1: ${yamlScalar(data.storytelling.line_1)}`,
-    `  line_2: ${yamlScalar(data.storytelling.line_2)}`,
     'audit:',
     `  source: ${yamlScalar(data.audit.source)}`,
     `  note: ${yamlScalar(data.audit.note)}`,
@@ -1620,7 +1603,6 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
 const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
-  const story = useMemo(() => storyForRow(row, language), [row, language]);
   const jumpSimilarity = (e) => {
     e.stopPropagation();
     if (!similarity?.targetId) return;
@@ -1734,11 +1716,6 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         <button className="oc-act" onClick={() => onDelete(row.id)} title="Delete">
           <span dangerouslySetInnerHTML={{__html: X_ICON}} />
         </button>
-      </div>
-      <div className="oc-story" aria-hidden="true">
-        <div className="oc-story-k">{t('storyModeHover')}</div>
-        <p>{story[0]}</p>
-        <p>{story[1]}</p>
       </div>
     </div>
   );
@@ -7621,7 +7598,6 @@ const App = () => {
 
   const downloadRowScreenshotPng = async (row) => {
     try {
-      const story = storyForRow(row, language);
       const padX = 28;
       const padY = 20;
       const width = 1180;
@@ -7648,34 +7624,10 @@ const App = () => {
         return lines.length ? lines : [''];
       };
 
-      const wrapByWords = (value, maxWidth, font) => {
-        ctx.font = font;
-        const words = String(value || '').split(/\s+/);
-        const lines = [];
-        let line = '';
-        for (const word of words) {
-          const test = line ? `${line} ${word}` : word;
-          if (line && ctx.measureText(test).width > maxWidth) {
-            lines.push(line);
-            line = word;
-          } else {
-            line = test;
-          }
-        }
-        if (line) lines.push(line);
-        return lines.length ? lines : [''];
-      };
-
       const codeLines = wrapByChars(row.value, codeAreaWidth, '500 24px "IBM Plex Mono", "Courier New", monospace');
-      const storyLabel = (language === 'es') ? 'MODO HISTORIA · PASA EL CURSOR' : (language === 'ko') ? '스토리 모드 · 호버' : (language === 'zh') ? '故事模式 · 悬停提示' : 'STORY MODE · HOVER';
-      const storyLine1 = wrapByWords(story[0], width - 120, '500 16px "IBM Plex Mono", "Courier New", monospace');
-      const storyLine2 = wrapByWords(story[1], width - 120, '500 16px "IBM Plex Mono", "Courier New", monospace');
-
       const headerH = 52;
       const codeBlockH = Math.max(34, codeLines.length * 30);
-      const storyTop = padY + headerH + codeBlockH + 12;
-      const storyH = 24 + storyLine1.length * 22 + storyLine2.length * 22 + 18;
-      const height = storyTop + storyH + 14;
+      const height = padY + Math.max(headerH, codeBlockH) + padY;
 
       canvas.width = width;
       canvas.height = height;
@@ -7713,28 +7665,6 @@ const App = () => {
       await drawInlineIcon(ctx, DL_ICON, width - 94, iconY, iconSize, '#8a8a86');
       await drawInlineIcon(ctx, X_ICON, width - 54, iconY, iconSize, '#8a8a86');
 
-      ctx.strokeStyle = '#ececea';
-      ctx.beginPath();
-      ctx.moveTo(0, storyTop - 8);
-      ctx.lineTo(width, storyTop - 8);
-      ctx.stroke();
-
-      ctx.fillStyle = '#b7aea2';
-      ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
-      ctx.fillText(storyLabel, 78, storyTop);
-
-      let sy = storyTop + 24;
-      ctx.fillStyle = '#5b5146';
-      ctx.font = '500 16px "IBM Plex Mono", "Courier New", monospace';
-      for (const line of storyLine1) {
-        ctx.fillText(line, 78, sy);
-        sy += 22;
-      }
-      for (const line of storyLine2) {
-        ctx.fillText(line, 78, sy + 2);
-        sy += 22;
-      }
-
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
       a.download = `opencriptG-shot-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
@@ -7750,7 +7680,6 @@ const App = () => {
     try {
       const { cat, type } = findTypeMeta(row.type);
       const profile = ticketProfileForRow(row, language);
-      const story = storyForRow(row, language);
       const qrCanvas = await buildQrCanvasForValue(row.value, 240, 'Q');
       const qrUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : '';
       const titleText = language === 'es' ? 'Ticket del code generado' : language === 'ko' ? '생성 코드 티켓' : language === 'zh' ? '生成代码票据' : 'Generated code ticket';
@@ -7772,7 +7701,6 @@ const App = () => {
         .qr img{width:44mm;height:44mm;border:1px solid #171717;padding:4px;background:#fff;}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;}
         .note{font-size:11px;line-height:1.55;color:#4e4e4b;}
-        .story{border-top:1px solid #d6d6d0;margin-top:10px;padding-top:8px;}
         .foot{border-top:1px dashed #b8b8b1;margin-top:10px;padding-top:8px;font-size:10px;color:#666;line-height:1.5;}
         .pel{width:20px;height:20px;}
         @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
@@ -7792,11 +7720,6 @@ const App = () => {
         <div class="k">${safe(language === 'es' ? 'No lo uses para' : 'Avoid')}</div><div class="note">${safe(profile.avoid)}</div>
         <div class="k">${safe(language === 'es' ? 'Code generado' : 'Generated code')}</div><div class="code">${codeWrapped}</div>
         <div class="qr"><img src="${qrUrl}" alt="QR" /></div>
-        <div class="story">
-          <div class="k">${safe(language === 'es' ? 'Modo historia' : 'Story mode')}</div>
-          <div class="note">${safe(story[0])}</div>
-          <div class="note">${safe(story[1])}</div>
-        </div>
         <div class="foot">opencriptG · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
       </div><script>window.onload=()=>setTimeout(()=>window.print(),220);<\/script></body></html>`;
       w.document.open();
@@ -8544,7 +8467,7 @@ const App = () => {
               <span className="out-tb-l">{t('output')}</span>
               <span className="out-tb-n">{output.length} {output.length === 1 ? t('value') : t('values')}</span>
               <span className="out-tb-spacer" />
-              <span className="out-tb-hint">{t('hoverHint')}</span>
+              <span className="out-tb-hint">{language === 'es' ? 'clic en cualquier valor para copiar' : 'click any value to copy'}</span>
             </div>
 
             <div className="out" ref={outRef}>

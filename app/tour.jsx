@@ -88,7 +88,7 @@ const TOUR_STEPS = [
   </>},
   { id:'output', selector:'.out', place:'top', title:'SALIDA DE CODES GENERADOS', body:<>
     <p>Cada code aparece con numero, valor, longitud, similaridad y botones de accion.</p>
-    <p>Al pasar el cursor aparece storytelling tecnico: una explicacion creativa del uso posible del code.</p>
+    <p>La salida se mantiene limpia: cada code muestra el valor, sus acciones de descarga y sus metadatos tecnicos sin bloques narrativos extra.</p>
   </>},
   { id:'similarity', selector:'.out', place:'top', title:'FLECHAS DE SIMILARIDAD', body:<>
     <p>Las flechas muestran cuando un code se parece a otro del lote. Puedes hacer clic para saltar al code relacionado.</p>
