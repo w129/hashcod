@@ -52,7 +52,7 @@
   <script type="text/babel" src="app/tech-info.jsx?v=right-info-v2"></script>
   <script type="text/babel" src="app/vault.jsx?v=v12-siphash-2"></script>
   <script type="text/babel" src="app/tour.jsx?v=plans-tour-1"></script>
-  <script type="text/babel" src="app/app.jsx?v=tokenization-studio-icon-1"></script>
+  <script type="text/babel" src="app/app.jsx?v=authgate-stable-1"></script>
 
   <script type="text/babel">
     const Root = () => {
@@ -98,8 +98,9 @@
         return <SipHashGate onUnlock={() => { sessionStorage.setItem('ocg_v12_siphash_gate', '1'); setSipHashReady(true); }} />;
       }
       if (!unlocked) return <VaultLock onUnlock={handleUnlock} />;
+      const PlatformApp = window.App;
       return <>
-        <App />
+        <PlatformApp />
         {window.AppTour ? <AppTour active={tourOpen} onClose={() => setTourOpen(false)} /> : null}
       </>;
     };

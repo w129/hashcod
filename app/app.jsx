@@ -9434,5 +9434,5 @@ const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hi
 const DID_BALLOON_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c2.4 0 4.4 1.8 4.6 4.2.1 1.8-.8 3.4-2.2 4.3L8.8 14H7.2l-1.6-4A4.6 4.6 0 0 1 8 1.5Zm0 1.4c-1.8 0-3.2 1.4-3.2 3.1 0 1.7 1.4 3.1 3.2 3.1s3.2-1.4 3.2-3.1C11.2 4.3 9.8 2.9 8 2.9Zm0 .8c.9.9 1.4 1.7 1.4 2.4 0 .8-.6 1.4-1.4 1.4S6.6 6.9 6.6 6.1c0-.7.5-1.5 1.4-2.4Z"/></svg>`;
 const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 2.2 4.2v7.6L8 15l5.8-3.2V4.2L8 1Zm0 1.8 3.7 2L8 6.9 4.3 4.8 8 2.8ZM3.7 6.1l3.5 2v4.8l-3.5-2V6.1Zm8.6 0v4.8l-3.5 2V8.1l3.5-2Z"/></svg>`;
 
-const Root = () => <AuthGate><App /></AuthGate>;
-window.App = Root;
+window.HashcodApp = App;
+window.App = () => <AuthGate><App /></AuthGate>;
