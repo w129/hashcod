@@ -79,6 +79,10 @@
     return `<img class="ocg-brand-icon" src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
   }
 
+  function renderCodeLayersIcon(s=16) {
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>`;
+  }
+
   function renderBadge(meta={}, s=18, category=false) {
     const idSeed = `${meta.id || meta.label || meta.icon || 'item'}:${meta.badge || ''}:${meta.icon || ''}:${category ? 'cat' : 'item'}`;
     const seed = hashString(idSeed);
@@ -128,7 +132,7 @@
     curve: (s=16) => renderPlainIcon('curve', s),
     modern: (s=16) => renderPlainIcon('modern', s),
     card: (s=16) => renderPlainIcon('card', s),
-    code: (meta, s=18) => renderBadge(meta, s, false),
+    code: (meta, s=18) => renderCodeLayersIcon(s),
     categoryBadge: (meta, s=16) => renderBadge(meta, s, true),
   };
 
