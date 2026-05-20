@@ -1711,7 +1711,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1779,6 +1779,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onCardDownload?.(row);
   };
+  const openAssist = (e) => {
+    e.stopPropagation();
+    onAssistRequest?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -1834,6 +1838,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-card" onClick={downloadCard} title={language === 'es' ? 'Descargar tarjeta virtual de code + manual PDF' : 'Download virtual code card + PDF manual'}>
           <span dangerouslySetInnerHTML={{__html: CODE_CARD_TAPE_ICON}} />
+        </button>
+        <button className="oc-act oc-act-assist" onClick={openAssist} title={language === 'es' ? 'Solicitar ayuda para recibir este archivo' : 'Request help receiving this file'}>
+          <span dangerouslySetInnerHTML={{__html: ASSIST_VAN_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -1980,6 +1987,117 @@ const HelpDialog = ({ open, onClose, t }) => {
           <span><kbd>Ctrl/⌘ K</kbd> Clear</span>
           <span><kbd>Ctrl/⌘ B</kbd> Batch 100</span>
           <span><kbd>Ctrl/⌘ ⇧ S</kbd> Export Markdown</span>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const AssistRequestDialog = ({ open, onClose, row, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [email, setEmail] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [note, setNote] = useState('');
+  const [requests, setRequests] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const loadRequests = async () => {
+    try {
+      const res = await fetch('/api/assist-requests');
+      const data = await res.json();
+      setRequests(Array.isArray(data.requests) ? data.requests : []);
+    } catch {
+      notify?.(L('No se pudo cargar la lista compartida', 'Could not load shared list'));
+    }
+  };
+  useEffect(() => {
+    if (open) loadRequests();
+  }, [open]);
+  if (!open) return null;
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !whatsapp.trim()) {
+      notify?.(L('Correo y WhatsApp son obligatorios', 'Email and WhatsApp are required'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { type } = findTypeMeta(row?.type);
+      const codeHash = (await digestHex(String(row?.value || ''))).toUpperCase();
+      const res = await fetch('/api/assist-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          whatsapp,
+          note,
+          codeType: row?.type,
+          primitive: type ? type.label : row?.type,
+          codeIndex: String(row?.idx || '').padStart(3, '0'),
+          codePreview: window.OCG_GEN?.display ? window.OCG_GEN.display(row?.value || '', 96) : String(row?.value || '').slice(0, 96),
+          codeHash,
+        }),
+      });
+      if (!res.ok) throw new Error('save failed');
+      setEmail('');
+      setWhatsapp('');
+      setNote('');
+      await loadRequests();
+      notify?.(L('Solicitud guardada en la plataforma', 'Request saved to platform'));
+    } catch {
+      notify?.(L('No se pudo guardar la solicitud', 'Could not save request'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async (id) => {
+    setBusy(true);
+    try {
+      await fetch(`/api/assist-requests?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await loadRequests();
+      notify?.(L('Solicitud eliminada', 'Request deleted'));
+    } catch {
+      notify?.(L('No se pudo eliminar', 'Could not delete'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg assistdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div>
+            <h2>{L('Ayuda para recibir archivo', 'Help receiving file')}</h2>
+            <p>{L('Guarda una solicitud visible desde otros ordenadores. Sirve para que otra persona pueda pasarte el archivo si tu no puedes descargarlo.', 'Save a request visible from other computers. It lets another person send you the file if you cannot download it yourself.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <form className="assist-form" onSubmit={submit}>
+          <label><span>{L('Correo electronico', 'Email')}</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" /></label>
+          <label><span>{L('Numero de WhatsApp', 'WhatsApp number')}</span><input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+1 829 000 0000" /></label>
+          <label className="wide"><span>{L('Mensaje opcional', 'Optional message')}</span><textarea value={note} onChange={e => setNote(e.target.value)} placeholder={L('Necesito que alguien me pase este archivo generado.', 'I need someone to send me this generated file.')} /></label>
+          <button disabled={busy}>{busy ? L('Guardando...', 'Saving...') : L('Guardar solicitud', 'Save request')}</button>
+        </form>
+        <div className="assist-current">
+          <span>{L('Code seleccionado', 'Selected code')}</span>
+          <b>{row ? `${String(row.idx).padStart(3, '0')} | ${row.type}` : 'NO CODE'}</b>
+          <em>{row?.value ? window.OCG_GEN.display(row.value, 120) : ''}</em>
+        </div>
+        <div className="assist-list">
+          <div className="assist-list-head">
+            <b>{L('Solicitudes compartidas', 'Shared requests')}</b>
+            <button onClick={loadRequests} disabled={busy}>{L('Actualizar', 'Refresh')}</button>
+          </div>
+          {!requests.length ? <p>{L('Aun no hay solicitudes guardadas.', 'No saved requests yet.')}</p> : requests.map(item => (
+            <article key={item.id} className="assist-row">
+              <div>
+                <b>{item.email}</b>
+                <span>{item.whatsapp} | {item.primitive || item.codeType} | #{item.codeIndex}</span>
+                <em>{item.note || L('Sin nota', 'No note')}</em>
+                <small>{item.createdAt} | {item.codePreview}</small>
+              </div>
+              <button onClick={() => remove(item.id)} disabled={busy}>{L('Eliminar', 'Delete')}</button>
+            </article>
+          ))}
         </div>
       </section>
     </div>
@@ -7374,6 +7492,7 @@ const App = () => {
   const [freeDailyUsage, setFreeDailyUsage] = useState(() => readFreeDailyUsage());
   const [ivoryIdeasOpen, setIvoryIdeasOpen] = useState(false);
   const [ocgUnitsOpen, setOcgUnitsOpen] = useState(false);
+  const [assistRow, setAssistRow] = useState(null);
   const [dbQuery, setDbQuery] = useState('');
   const [copyDb, setCopyDb] = useState(() => COPY_DB.list());
   const [toast, setToast] = useState('');
@@ -8113,6 +8232,7 @@ const App = () => {
   const openIvoryIdeas = () => setIvoryIdeasOpen(true);
   const openOcgUnits = () => setOcgUnitsOpen(true);
   const openBaseMat = () => setBaseMatOpen(true);
+  const openAssistRequest = (row) => setAssistRow(row);
   const openMountainTool = (key) => {
     if (!MOUNTAIN_TOOL_CONFIG[key]) return;
     setMountainToolOpen(key);
@@ -8602,6 +8722,7 @@ const App = () => {
       <BaseMatDialog open={baseMatOpen} onClose={() => setBaseMatOpen(false)} notify={notify} language={language} rows={copyDb} activePlan={activePlan} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
+      <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
       {toast && <div className="ocg-toast">{toast}</div>}
       <FreeUpgradeNudge
@@ -8728,7 +8849,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -8808,6 +8929,7 @@ const YAML_FEATHER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" he
 const ZIP_FILE_BOX_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v3.8"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M11.7 14.2 7 17l-4.7-2.8"/><path d="M3 13.1a2 2 0 0 0-.999 1.76v3.24a2 2 0 0 0 .969 1.78L6 21.7a2 2 0 0 0 2.03.01L11 19.9a2 2 0 0 0 1-1.76V14.9a2 2 0 0 0-.97-1.78L8 11.3a2 2 0 0 0-2.03-.01z"/><path d="M7 17v5"/></svg>`;
 const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.264 2.205A4 4 0 0 0 6.42 4.211l-4 8a4 4 0 0 0 1.359 5.117l6 4a4 4 0 0 0 4.438 0l6-4a4 4 0 0 0 1.576-4.592l-2-6a4 4 0 0 0-2.53-2.53z"/><path d="M11.99 22 14 12l7.822 3.184"/><path d="M14 12 8.47 2.302"/></svg>`;
 const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
+const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;

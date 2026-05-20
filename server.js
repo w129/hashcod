@@ -7,6 +7,8 @@ const path = require('path');
 const PORT = Number(process.env.PORT || 2340);
 const HOST = process.env.HOST || '0.0.0.0';
 const ROOT = __dirname;
+const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data');
+const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -50,6 +52,96 @@ function send(res, status, headers, body) {
   res.end(body);
 }
 
+function ensureDataDir() {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1024 * 1024) {
+        req.destroy();
+        reject(new Error('Payload too large'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function safeText(value, max = 500) {
+  return String(value || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
+}
+
+function readAssistRequests() {
+  try {
+    ensureDataDir();
+    const raw = fs.existsSync(HELP_REQUESTS_FILE) ? fs.readFileSync(HELP_REQUESTS_FILE, 'utf8') : '[]';
+    const rows = JSON.parse(raw);
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAssistRequests(rows) {
+  ensureDataDir();
+  fs.writeFileSync(HELP_REQUESTS_FILE, JSON.stringify(rows.slice(0, 500), null, 2));
+}
+
+async function handleAssistRequests(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (req.method === 'GET') {
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, requests: readAssistRequests() }, null, 2));
+    return;
+  }
+  if (req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const row = {
+        id: `assist_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        email: safeText(body.email, 180),
+        whatsapp: safeText(body.whatsapp, 60),
+        note: safeText(body.note, 600),
+        codeType: safeText(body.codeType, 120),
+        primitive: safeText(body.primitive, 180),
+        codeIndex: safeText(body.codeIndex, 20),
+        codePreview: safeText(body.codePreview, 220),
+        codeHash: safeText(body.codeHash, 80),
+        createdAt: new Date().toISOString(),
+        status: 'OPEN'
+      };
+      if (!row.email || !row.whatsapp) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'email_and_whatsapp_required' }));
+        return;
+      }
+      const rows = [row, ...readAssistRequests()].slice(0, 500);
+      writeAssistRequests(rows);
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: row }, null, 2));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+  if (req.method === 'DELETE') {
+    const id = safeText(url.searchParams.get('id'), 120);
+    const before = readAssistRequests();
+    const rows = before.filter(row => row.id !== id);
+    writeAssistRequests(rows);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: before.length - rows.length }));
+    return;
+  }
+  send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+}
+
 function enterpriseManifest() {
   const catalogPath = path.join(ROOT, 'data', 'catalog.js');
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
@@ -90,6 +182,11 @@ function safePath(urlPath) {
 }
 
 const server = http.createServer((req, res) => {
+  if ((req.url || '').split('?')[0] === '/api/assist-requests') {
+    handleAssistRequests(req, res);
+    return;
+  }
+
   if ((req.url || '').split('?')[0] === '/enterprise/manifest.json') {
     send(res, 200, { 'Content-Type': MIME['.json'] }, enterpriseManifest());
     return;
