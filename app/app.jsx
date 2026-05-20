@@ -2101,13 +2101,15 @@ const AuthUsersDialog = ({ open, onClose }) => {
   const setRequestChoice = (id, patch) => {
     setRequestChoices(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }));
   };
+  const pendingRequests = requests.filter(req => req.status === 'PENDING');
+  const archivedRequests = requests.filter(req => req.status !== 'PENDING');
   const reviewRequest = async (request, action) => {
     const choice = requestChoices[request.id] || {};
     const role = choice.role || request.role || 'viewer';
     const plan = choice.plan || request.plan || 'free';
     const res = await authFetch('/api/access/requests', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: request.id, action, role, plan }) });
     const data = await res.json();
-    setStatus(res.ok ? (action === 'approve' ? `Solicitud aprobada. Recovery: ${data.recoveryCode}` : 'Solicitud rechazada.') : 'No se pudo revisar la solicitud.');
+    setStatus(res.ok ? (action === 'approve' ? `Solicitud aprobada y archivada. Recovery: ${data.recoveryCode}` : 'Solicitud rechazada y archivada.') : 'No se pudo revisar la solicitud.');
     await loadAll();
   };
   return (
@@ -2157,10 +2159,10 @@ const AuthUsersDialog = ({ open, onClose }) => {
                 <span>Rate limit por usuario</span>
                 <span>HTTPS obligatorio en produccion</span>
               </article>
-              {requests.length > 0 && <h3 className="authusers-title">Lista de espera</h3>}
-              {requests.map(req => (
+              <h3 className="authusers-title">Solicitudes pendientes ({pendingRequests.length})</h3>
+              {pendingRequests.map(req => (
                 <article key={req.id} className="authusers-row wait">
-                  <div><b>{req.email}</b><span>{req.blowfishId} | {req.serial} | {req.status}</span></div>
+                  <div><b>{req.email}</b><span>{req.blowfishId} | {req.serial} | creada {req.createdAt || ''}</span></div>
                   <select value={(requestChoices[req.id]?.role || req.role || 'viewer')} onChange={e => setRequestChoice(req.id, { role: e.target.value })}>
                     <option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option>
                   </select>
@@ -2171,6 +2173,25 @@ const AuthUsersDialog = ({ open, onClose }) => {
                   <button onClick={() => reviewRequest(req, 'reject')}>Reject</button>
                 </article>
               ))}
+              {!pendingRequests.length && <article className="authusers-empty">No hay solicitudes pendientes.</article>}
+              <h3 className="authusers-title">Historial de solicitudes ({archivedRequests.length})</h3>
+              {archivedRequests.map(req => (
+                <article key={req.id} className={`authusers-history ${req.status === 'APPROVED' ? 'approved' : 'rejected'}`}>
+                  <div>
+                    <b>{req.email}</b>
+                    <span>{req.blowfishId} | {req.serial}</span>
+                  </div>
+                  <div>
+                    <strong>{req.status}</strong>
+                    <span>{req.reviewedAt || 'sin fecha'} | {req.reviewedBy || 'admin'}</span>
+                  </div>
+                  <div>
+                    <span>Role: {req.role || 'n/a'}</span>
+                    <span>Plan: {req.plan || 'n/a'}</span>
+                  </div>
+                </article>
+              ))}
+              {!archivedRequests.length && <article className="authusers-empty">Aun no hay solicitudes aceptadas o rechazadas.</article>}
               <h3 className="authusers-title">Usuarios activos</h3>
               {users.map(user => (
                 <article key={user.id} className="authusers-row">

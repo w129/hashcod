@@ -518,12 +518,21 @@ async function handleAuth(req, res) {
       }
       const action = body.action === 'reject' ? 'reject' : 'approve';
       if (action === 'reject') {
+        if (reqRow.status !== 'PENDING') {
+          send(res, 409, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'request_already_reviewed' }));
+          return;
+        }
         reqRow.status = 'REJECTED';
         reqRow.reviewedAt = new Date().toISOString();
         reqRow.reviewedBy = auth.actorId;
+        reqRow.decisionHistory = [...(Array.isArray(reqRow.decisionHistory) ? reqRow.decisionHistory : []), { action: 'reject', at: reqRow.reviewedAt, by: auth.actorId }];
         writeAuthDb(db);
         audit('access.reject', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id });
         send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, request: { ...reqRow, desiredPasswordHash: undefined } }));
+        return;
+      }
+      if (reqRow.status !== 'PENDING') {
+        send(res, 409, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'request_already_reviewed' }));
         return;
       }
       const role = ['viewer', 'editor', 'admin'].includes(body.role) ? body.role : 'viewer';
@@ -546,6 +555,8 @@ async function handleAuth(req, res) {
       reqRow.plan = plan;
       reqRow.reviewedAt = new Date().toISOString();
       reqRow.reviewedBy = auth.actorId;
+      reqRow.approvedUserId = user.id;
+      reqRow.decisionHistory = [...(Array.isArray(reqRow.decisionHistory) ? reqRow.decisionHistory : []), { action: 'approve', at: reqRow.reviewedAt, by: auth.actorId, role, plan, userId: user.id }];
       writeAuthDb(db);
       audit('access.approve', { ip: clientIp(req), actor: auth.actorId, requestId: reqRow.id, userId: user.id, role, plan });
       send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, user: publicUser(user), recoveryCode }));
