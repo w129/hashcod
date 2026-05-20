@@ -1,6 +1,7 @@
 // Hashcod local server — no external npm packages required.
 // Run: npm start
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -23,6 +24,9 @@ const sessions = new Map();
 const adminPanelSessions = new Map();
 const CAST128_ACCESS_KEY_HASH = process.env.HASHCOD_CAST128_ACCESS_KEY_HASH || '3faaeec1d952b48018b33f6d6ce3d81e76522438a7735823bf465a5914ebc5e3';
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
+const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
+const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
+const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -204,6 +208,52 @@ function validEmail(email) {
 function validWhatsapp(value) {
   const phone = safeText(value, 60);
   return /^\+?[0-9][0-9\s().-]{6,24}$/.test(phone);
+}
+
+function normalizeSmsPhone(value) {
+  const raw = safeText(value, 60).replace(/[^\d+]/g, '');
+  if (/^\+\d{7,18}$/.test(raw)) return raw;
+  if (/^\d{10}$/.test(raw)) return `+1${raw}`;
+  if (/^1\d{10}$/.test(raw)) return `+${raw}`;
+  if (/^\d{7,18}$/.test(raw)) return `+${raw}`;
+  return '';
+}
+
+function postTwilioSms({ to, body }) {
+  return new Promise((resolve, reject) => {
+    const payload = new URLSearchParams({ To: to, From: SMS_FROM_NUMBER, Body: body }).toString();
+    const req = https.request({
+      hostname: 'api.twilio.com',
+      path: `/2010-04-01/Accounts/${encodeURIComponent(SMS_ACCOUNT_SID)}/Messages.json`,
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${SMS_ACCOUNT_SID}:${SMS_AUTH_TOKEN}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+      timeout: 15000,
+    }, (twilioRes) => {
+      let raw = '';
+      twilioRes.setEncoding('utf8');
+      twilioRes.on('data', chunk => { raw += chunk; });
+      twilioRes.on('end', () => {
+        let json = null;
+        try { json = JSON.parse(raw || '{}'); } catch {}
+        if (twilioRes.statusCode >= 200 && twilioRes.statusCode < 300) {
+          resolve({ statusCode: twilioRes.statusCode, body: json || {}, raw });
+          return;
+        }
+        const err = new Error(json?.message || `Twilio SMS failed (${twilioRes.statusCode})`);
+        err.statusCode = twilioRes.statusCode;
+        err.details = json || raw;
+        reject(err);
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('sms_provider_timeout')));
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
 }
 
 function moderationReason(value = '') {
@@ -889,6 +939,34 @@ async function handleAssistRequests(req, res) {
   send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
 }
 
+async function handleSmsSend(req, res) {
+  const auth = requireAuth(req, res, 'viewer');
+  if (!auth) return;
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  if (!SMS_ACCOUNT_SID || !SMS_AUTH_TOKEN || !SMS_FROM_NUMBER) {
+    send(res, 503, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'sms_provider_not_configured', required: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'] }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const to = normalizeSmsPhone(body.phone);
+    const text = safeText(body.payload, 1400);
+    if (!to || text.length < 1) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_sms_payload' }));
+      return;
+    }
+    const result = await postTwilioSms({ to, body: text });
+    audit('sms.send', { ip: clientIp(req), actor: auth.user.id, to: to.replace(/\d(?=\d{4})/g, '*'), format: safeText(body.format, 32), sid: result.body?.sid || null });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, to, sid: result.body?.sid || null, status: result.body?.status || 'sent' }));
+  } catch (err) {
+    audit('sms.send_failed', { ip: clientIp(req), actor: auth.user.id, reason: safeText(err.message, 160), statusCode: err.statusCode || null });
+    send(res, err.statusCode && err.statusCode < 500 ? 400 : 502, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'sms_send_failed', detail: safeText(err.message, 220) }));
+  }
+}
+
 async function handleCliConsole(req, res) {
   const auth = requireAuth(req, res, req.method === 'GET' ? 'viewer' : 'editor');
   if (!auth) return;
@@ -1090,6 +1168,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0] === '/api/assist-requests') {
     handleAssistRequests(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0] === '/api/sms/send') {
+    handleSmsSend(req, res);
     return;
   }
 

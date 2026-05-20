@@ -1163,6 +1163,8 @@ kbd {
 .sms-actions button { border:1px solid var(--line-2); background:#fff; min-height:40px; padding:0 14px; font-size:10px; letter-spacing:1.6px; text-transform:uppercase; }
 .sms-actions button:first-child { background:#111; color:#fff; border-color:#111; }
 .sms-actions button:hover { background:#111; color:#fff; border-color:#111; }
+.sms-actions button:disabled { opacity:.55; cursor:wait; }
+.sms-status { grid-column:1 / -1; border:1px solid var(--line); border-left:4px solid #177c43; background:#f7f7f4; padding:12px; font-family:var(--mono); font-size:11px; line-height:1.55; }
 @media (max-width: 760px) {
   .smsdlg { width:calc(100vw - 22px); }
   .sms-form { grid-template-columns:1fr; padding:14px; }

@@ -2693,9 +2693,12 @@ const SmsSendDialog = ({ open, onClose, row, notify, language }) => {
   const formats = useMemo(() => smsFormatOptions(language), [language]);
   const [phone, setPhone] = useState('');
   const [format, setFormat] = useState('raw');
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState('');
   const payload = useMemo(() => row ? rowToSmsPayload(row, format, language) : '', [row, format, language]);
   useEffect(() => {
     if (open) setFormat('raw');
+    if (open) setStatus('');
   }, [open, row?.id]);
   if (!open) return null;
   const normalizedPhone = phone.replace(/[^\d+]/g, '');
@@ -2719,10 +2722,31 @@ const SmsSendDialog = ({ open, onClose, row, notify, language }) => {
       notify?.(L('Escribe un telefono valido con codigo de pais si aplica', 'Enter a valid phone number, including country code when needed'));
       return;
     }
-    await copyPayload();
-    const uri = `sms:${normalizedPhone}?body=${encodeURIComponent(payload)}`;
-    window.location.href = uri;
-    notify?.(L('Abriendo la app de SMS del dispositivo', 'Opening the device SMS app'));
+    setSending(true);
+    setStatus('');
+    try {
+      const res = await authFetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: normalizedPhone, format, payload, codeType: row?.type, codeIndex: row?.idx }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data.error === 'sms_provider_not_configured') {
+          setStatus(L('SMS real no configurado. En Render agrega TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN y TWILIO_FROM_NUMBER.', 'Real SMS is not configured. Add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER in Render.'));
+          notify?.(L('Falta configurar proveedor SMS en Render', 'SMS provider is missing in Render'));
+          return;
+        }
+        throw new Error(data.detail || data.error || 'sms_failed');
+      }
+      setStatus(L(`SMS enviado a ${data.to || normalizedPhone}`, `SMS sent to ${data.to || normalizedPhone}`));
+      notify?.(L('SMS enviado al telefono', 'SMS sent to phone'));
+    } catch (err) {
+      setStatus(L('No se pudo enviar el SMS. Revisa el numero o la configuracion del proveedor.', 'Could not send SMS. Check the number or provider configuration.'));
+      notify?.(L('No se pudo enviar el SMS', 'Could not send SMS'));
+    } finally {
+      setSending(false);
+    }
   };
   return (
     <div className="dlg-back" onClick={onClose}>
@@ -2754,13 +2778,14 @@ const SmsSendDialog = ({ open, onClose, row, notify, language }) => {
             <pre>{payload}</pre>
           </div>
           <div className="sms-actions">
-            <button type="submit">{L('Abrir SMS', 'Open SMS')}</button>
+            <button type="submit" disabled={sending}>{sending ? L('Enviando...', 'Sending...') : L('Enviar SMS', 'Send SMS')}</button>
             <button type="button" onClick={copyPayload}>{L('Copiar payload', 'Copy payload')}</button>
             <button type="button" onClick={downloadPayload}>{L('Descargar payload', 'Download payload')}</button>
           </div>
+          {status && <div className="sms-status">{status}</div>}
         </form>
         <div className="security-note">
-          {L('En escritorio algunos navegadores no envian SMS directamente; por eso tambien se copia y descarga el payload como respaldo.', 'On desktop, some browsers cannot send SMS directly; the payload is also copied and downloadable as a fallback.')}
+          {L('El envio real usa el proveedor SMS configurado en el servidor. Para produccion configura Twilio en Render.', 'Real delivery uses the SMS provider configured on the server. For production, configure Twilio in Render.')}
         </div>
       </section>
     </div>
