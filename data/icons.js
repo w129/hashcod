@@ -133,7 +133,7 @@
     modern: (s=16) => renderPlainIcon('modern', s),
     card: (s=16) => renderPlainIcon('card', s),
     code: (meta, s=18) => renderCodeLayersIcon(s),
-    categoryBadge: (meta, s=16) => renderBadge(meta, s, true),
+    categoryBadge: (meta, s=16) => renderCodeLayersIcon(s),
   };
 
   window.OCG_ICONS = api;
