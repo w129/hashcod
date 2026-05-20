@@ -2739,6 +2739,11 @@ const SmsSendDialog = ({ open, onClose, row, notify, language }) => {
         }
         throw new Error(data.detail || data.error || 'sms_failed');
       }
+      if (data.queued) {
+        setStatus(L(`SMS en cola para Hashcod Android Gateway. Abre /gateway.html en el Android conectado. ID: ${data.id}`, `SMS queued for Hashcod Android Gateway. Open /gateway.html on the connected Android. ID: ${data.id}`));
+        notify?.(L('SMS puesto en cola del gateway Android', 'SMS queued for Android gateway'));
+        return;
+      }
       setStatus(L(`SMS enviado a ${data.to || normalizedPhone}`, `SMS sent to ${data.to || normalizedPhone}`));
       notify?.(L('SMS enviado al telefono', 'SMS sent to phone'));
     } catch (err) {

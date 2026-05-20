@@ -12,6 +12,7 @@ const ROOT = __dirname;
 const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data');
 const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
+const SMS_GATEWAY_FILE = path.join(DATA_DIR, 'sms-gateway.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
@@ -27,6 +28,8 @@ const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
+const SMS_PROVIDER = String(process.env.SMS_PROVIDER || (SMS_ACCOUNT_SID && SMS_AUTH_TOKEN && SMS_FROM_NUMBER ? 'twilio' : 'hashcod')).toLowerCase();
+const SMS_GATEWAY_PAIRING_KEY_HASH = process.env.HASHCOD_GATEWAY_PAIRING_KEY_HASH || ADMIN_PANEL_KEY_HASH;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -882,6 +885,59 @@ function writeCliConsole(rows) {
   ensureAutomaticBackup('cli-write');
 }
 
+function readSmsGatewayDb() {
+  try {
+    ensureDataDir();
+    const raw = fs.existsSync(SMS_GATEWAY_FILE) ? fs.readFileSync(SMS_GATEWAY_FILE, 'utf8') : '{}';
+    const db = JSON.parse(raw);
+    return {
+      devices: Array.isArray(db.devices) ? db.devices : [],
+      messages: Array.isArray(db.messages) ? db.messages : [],
+    };
+  } catch {
+    return { devices: [], messages: [] };
+  }
+}
+
+function writeSmsGatewayDb(db) {
+  ensureDataDir();
+  fs.writeFileSync(SMS_GATEWAY_FILE, JSON.stringify({
+    devices: (db.devices || []).slice(0, 50),
+    messages: (db.messages || []).slice(0, 1000),
+  }, null, 2));
+  ensureAutomaticBackup('sms-gateway-write');
+}
+
+function verifyGatewayDevice(db, deviceId, deviceSecret) {
+  const device = db.devices.find(row => row.id === safeText(deviceId, 120) && row.status !== 'DISABLED');
+  if (!device) return null;
+  const secretHash = crypto.createHash('sha256').update(String(deviceSecret || '')).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(secretHash), Buffer.from(device.secretHash))) return null;
+  device.lastSeenAt = new Date().toISOString();
+  device.status = 'ONLINE';
+  return device;
+}
+
+function enqueueGatewaySms({ to, text, actor, format, codeType, codeIndex }) {
+  const db = readSmsGatewayDb();
+  const row = {
+    id: `sms_${Date.now().toString(36)}_${b64url(crypto.randomBytes(6))}`,
+    to,
+    body: text,
+    actor,
+    format: safeText(format, 32),
+    codeType: safeText(codeType, 120),
+    codeIndex: safeText(codeIndex, 20),
+    status: 'PENDING',
+    attempts: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  db.messages.unshift(row);
+  writeSmsGatewayDb(db);
+  return row;
+}
+
 async function handleAssistRequests(req, res) {
   const auth = requireAuth(req, res, req.method === 'GET' ? 'viewer' : req.method === 'POST' ? 'editor' : 'admin');
   if (!auth) return;
@@ -946,10 +1002,6 @@ async function handleSmsSend(req, res) {
     send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
     return;
   }
-  if (!SMS_ACCOUNT_SID || !SMS_AUTH_TOKEN || !SMS_FROM_NUMBER) {
-    send(res, 503, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'sms_provider_not_configured', required: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'] }));
-    return;
-  }
   try {
     const body = await readJsonBody(req);
     const to = normalizeSmsPhone(body.phone);
@@ -958,12 +1010,108 @@ async function handleSmsSend(req, res) {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_sms_payload' }));
       return;
     }
+    if (SMS_PROVIDER !== 'twilio') {
+      const queued = enqueueGatewaySms({ to, text, actor: auth.user.id, format: body.format, codeType: body.codeType, codeIndex: body.codeIndex });
+      audit('sms.gateway_queue', { ip: clientIp(req), actor: auth.user.id, id: queued.id, to: to.replace(/\d(?=\d{4})/g, '*'), format: queued.format });
+      send(res, 202, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, provider: 'hashcod-gateway', queued: true, id: queued.id, to, status: queued.status }));
+      return;
+    }
+    if (!SMS_ACCOUNT_SID || !SMS_AUTH_TOKEN || !SMS_FROM_NUMBER) {
+      send(res, 503, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'sms_provider_not_configured', required: ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM_NUMBER'] }));
+      return;
+    }
     const result = await postTwilioSms({ to, body: text });
     audit('sms.send', { ip: clientIp(req), actor: auth.user.id, to: to.replace(/\d(?=\d{4})/g, '*'), format: safeText(body.format, 32), sid: result.body?.sid || null });
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, to, sid: result.body?.sid || null, status: result.body?.status || 'sent' }));
   } catch (err) {
     audit('sms.send_failed', { ip: clientIp(req), actor: auth.user.id, reason: safeText(err.message, 160), statusCode: err.statusCode || null });
     send(res, err.statusCode && err.statusCode < 500 ? 400 : 502, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'sms_send_failed', detail: safeText(err.message, 220) }));
+  }
+}
+
+async function handleSmsGateway(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const action = url.pathname.split('/').pop();
+  if (req.method === 'GET' && action === 'status') {
+    const auth = requireAuth(req, res, 'viewer');
+    if (!auth) return;
+    const db = readSmsGatewayDb();
+    const messages = db.messages.slice(0, 120).map(row => ({ ...row, body: undefined }));
+    const devices = db.devices.map(({ secretHash, ...device }) => device);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, provider: SMS_PROVIDER, devices, messages }, null, 2));
+    return;
+  }
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const db = readSmsGatewayDb();
+    if (action === 'register') {
+      const keyHash = crypto.createHash('sha256').update(String(body.pairingKey || '')).digest('hex');
+      const expectedPairHash = String(SMS_GATEWAY_PAIRING_KEY_HASH || '').trim();
+      if (expectedPairHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedPairHash))) {
+        audit('sms.gateway_pair_failed', { ip: clientIp(req) });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_pairing_key' }));
+        return;
+      }
+      const secret = b64url(crypto.randomBytes(32));
+      const device = {
+        id: `gw_${Date.now().toString(36)}_${b64url(crypto.randomBytes(5))}`,
+        name: safeText(body.name, 80) || 'Hashcod Android Gateway',
+        secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
+        status: 'ONLINE',
+        createdAt: new Date().toISOString(),
+        lastSeenAt: new Date().toISOString(),
+        sent: 0,
+        failed: 0,
+      };
+      db.devices.unshift(device);
+      writeSmsGatewayDb(db);
+      audit('sms.gateway_register', { ip: clientIp(req), deviceId: device.id });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deviceId: device.id, deviceSecret: secret, name: device.name }));
+      return;
+    }
+    const device = verifyGatewayDevice(db, body.deviceId, body.deviceSecret);
+    if (!device) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_gateway_device' }));
+      return;
+    }
+    if (action === 'poll') {
+      const job = db.messages.find(row => row.status === 'PENDING' || row.status === 'RETRY');
+      if (job) {
+        job.status = 'DISPATCHING';
+        job.deviceId = device.id;
+        job.attempts = Number(job.attempts || 0) + 1;
+        job.updatedAt = new Date().toISOString();
+      }
+      writeSmsGatewayDb(db);
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, job: job ? { id: job.id, to: job.to, body: job.body, format: job.format, codeType: job.codeType, codeIndex: job.codeIndex } : null }));
+      return;
+    }
+    if (action === 'report') {
+      const id = safeText(body.messageId, 120);
+      const status = ['SENT', 'FAILED', 'RETRY'].includes(body.status) ? body.status : 'SENT';
+      const job = db.messages.find(row => row.id === id && row.deviceId === device.id);
+      if (!job) {
+        send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'message_not_found' }));
+        return;
+      }
+      job.status = status;
+      job.error = safeText(body.error, 180);
+      job.completedAt = status === 'SENT' || status === 'FAILED' ? new Date().toISOString() : null;
+      job.updatedAt = new Date().toISOString();
+      if (status === 'SENT') device.sent = Number(device.sent || 0) + 1;
+      if (status === 'FAILED') device.failed = Number(device.failed || 0) + 1;
+      writeSmsGatewayDb(db);
+      audit('sms.gateway_report', { ip: clientIp(req), deviceId: device.id, messageId: id, status });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, message: { id: job.id, status: job.status } }));
+      return;
+    }
+    send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'gateway_route_not_found' }));
+  } catch {
+    send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
   }
 }
 
@@ -1173,6 +1321,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0] === '/api/sms/send') {
     handleSmsSend(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0].startsWith('/api/sms-gateway/')) {
+    handleSmsGateway(req, res);
     return;
   }
 
