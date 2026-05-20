@@ -231,7 +231,7 @@ const readPlanLicense = () => {
     return { plan: 'free' };
   }
 };
-const activePlanFromLicense = (license) => PLAN_DEFINITIONS[license?.plan] || PLAN_DEFINITIONS.free;
+const activePlanFromLicense = () => PLAN_DEFINITIONS.enterprise;
 const writePlanLicense = (license) => localStorage.setItem(PLAN_LICENSE_KEY, JSON.stringify(license));
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const readFreeDailyUsage = () => {
@@ -2161,7 +2161,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
   const [requests, setRequests] = useState([]);
   const [auditRows, setAuditRows] = useState([]);
   const [requestChoices, setRequestChoices] = useState({});
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', plan: 'enterprise' });
   const [status, setStatus] = useState('');
   if (!open) return null;
   const loadUsers = async () => {
@@ -2216,8 +2216,8 @@ const AuthUsersDialog = ({ open, onClose }) => {
       const res = await authFetch('/api/auth/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'failed');
-      setForm({ name: '', email: '', password: '', role: 'viewer', plan: 'free' });
-      setStatus(`Usuario creado: ${data.user.email} (${data.user.role} / ${data.user.plan}) | Recovery: ${data.recoveryCode}`);
+      setForm({ name: '', email: '', password: '', role: 'viewer', plan: 'enterprise' });
+      setStatus(`Usuario creado: ${data.user.email} (${data.user.role} / Enterprise) | Recovery: ${data.recoveryCode}`);
       await loadAll();
     } catch {
       setStatus('No se pudo crear. Usa password fuerte y email no repetido.');
@@ -2240,7 +2240,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
   const reviewRequest = async (request, action) => {
     const choice = requestChoices[request.id] || {};
     const role = choice.role || request.role || 'viewer';
-    const plan = choice.plan || request.plan || 'free';
+    const plan = 'enterprise';
     const res = await authFetch('/api/access/requests', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: request.id, action, role, plan }) });
     const data = await res.json();
     setStatus(res.ok ? (action === 'approve' ? `Solicitud aprobada y archivada. Recovery: ${data.recoveryCode}` : 'Solicitud rechazada y archivada.') : 'No se pudo revisar la solicitud.');
@@ -2252,7 +2252,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
         <div className="dlg-h">
           <div>
             <h2>Usuarios y roles</h2>
-            <p>Aprueba solicitudes, asigna planes y controla permisos de acceso.</p>
+            <p>Aprueba solicitudes, asigna roles y controla permisos de acceso. Enterprise queda activo para todos.</p>
           </div>
           <button className="dlg-x" onClick={onClose}>×</button>
         </div>
@@ -2273,12 +2273,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
                 <option value="editor">editor</option>
                 <option value="admin">admin</option>
               </select>
-              <select value={form.plan} onChange={e => setForm({ ...form, plan: e.target.value })}>
-                <option value="free">free</option>
-                <option value="starter">starter</option>
-                <option value="professional">professional</option>
-                <option value="enterprise">enterprise</option>
-              </select>
+              <input value="enterprise" readOnly aria-label="Enterprise mode" />
               <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Strong password" />
               <button>Create user</button>
               {status && <em>{status}</em>}
@@ -2300,9 +2295,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
                   <select value={(requestChoices[req.id]?.role || req.role || 'viewer')} onChange={e => setRequestChoice(req.id, { role: e.target.value })}>
                     <option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option>
                   </select>
-                  <select value={(requestChoices[req.id]?.plan || req.plan || 'free')} onChange={e => setRequestChoice(req.id, { plan: e.target.value })}>
-                    <option value="free">free</option><option value="starter">starter</option><option value="professional">professional</option><option value="enterprise">enterprise</option>
-                  </select>
+                  <span className="authusers-enterprise-pill">enterprise</span>
                   <button onClick={() => reviewRequest(req, 'approve')}>Approve</button>
                   <button onClick={() => reviewRequest(req, 'reject')}>Reject</button>
                 </article>
@@ -2321,7 +2314,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
                   </div>
                   <div>
                     <span>Role: {req.role || 'n/a'}</span>
-                    <span>Plan: {req.plan || 'n/a'}</span>
+                    <span>Mode: Enterprise</span>
                   </div>
                 </article>
               ))}
@@ -2333,9 +2326,7 @@ const AuthUsersDialog = ({ open, onClose }) => {
                   <select value={user.role} onChange={e => updateUser(user, { role: e.target.value })}>
                     <option value="viewer">viewer</option><option value="editor">editor</option><option value="admin">admin</option>
                   </select>
-                  <select value={user.plan || 'free'} onChange={e => updateUser(user, { plan: e.target.value })}>
-                    <option value="free">free</option><option value="starter">starter</option><option value="professional">professional</option><option value="enterprise">enterprise</option>
-                  </select>
+                  <span className="authusers-enterprise-pill">enterprise</span>
                   <button onClick={() => updateUser(user, { status: user.status === 'DISABLED' ? 'ACTIVE' : 'DISABLED' })}>{user.status === 'DISABLED' ? 'Enable' : 'Disable'}</button>
                 </article>
               ))}
@@ -2370,9 +2361,7 @@ const AuthGate = ({ children }) => {
   const [droneTaps, setDroneTaps] = useState(0);
   const [loginVisible, setLoginVisible] = useState(() => sessionStorage.getItem('hashcod_cast_login_visible') === '1');
   const applyServerPlan = (user) => {
-    if (user?.plan && PLAN_DEFINITIONS[user.plan]) {
-      writePlanLicense({ plan: user.plan, activatedAt: new Date().toISOString(), fingerprint: `SERVER-${user.role || 'user'}` });
-    }
+    writePlanLicense({ plan: 'enterprise', activatedAt: new Date().toISOString(), fingerprint: `ENTERPRISE-${user?.role || 'user'}` });
   };
   const refresh = async () => {
     try {
@@ -8654,12 +8643,7 @@ const App = () => {
     window.clearTimeout(window.__ocgToastTimer);
     window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
   }, []);
-  const planAllows = useCallback((feature, message = '') => {
-    if (activePlan.features?.[feature]) return true;
-    notify(message || (language === 'es' ? `Tu plan ${activePlan.name} no incluye esta funcion.` : `Your ${activePlan.name} plan does not include this feature.`));
-    setPlanOpen(true);
-    return false;
-  }, [activePlan, language, notify]);
+  const planAllows = useCallback(() => true, []);
   const activatePlan = useCallback((nextLicense) => {
     writePlanLicense(nextLicense);
     setPlanLicense(nextLicense);
@@ -8673,28 +8657,8 @@ const App = () => {
   }, [language, notify]);
 
   const reserveFreeDailyCodes = useCallback((requested) => {
-    if (activePlan.id !== 'free') return requested;
-    const usage = readFreeDailyUsage();
-    const remaining = Math.max(0, FREE_DAILY_CODE_LIMIT - Number(usage.count || 0));
-    if (remaining <= 0) {
-      notify(language === 'es'
-        ? `Free llego al limite diario de ${FREE_DAILY_CODE_LIMIT} codes. Cambia de plan para seguir generando hoy.`
-        : `Free reached the daily limit of ${FREE_DAILY_CODE_LIMIT} codes. Upgrade to keep generating today.`);
-      setPlanOpen(true);
-      setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
-      return 0;
-    }
-    const allowed = Math.min(requested, remaining);
-    const next = { date: usage.date || todayKey(), count: Number(usage.count || 0) + allowed };
-    writeFreeDailyUsage(next);
-    setFreeDailyUsage(next);
-    if (requested > allowed) {
-      notify(language === 'es'
-        ? `Free solo permite ${FREE_DAILY_CODE_LIMIT} codes diarios. Quedan ${allowed} para hoy.`
-        : `Free allows only ${FREE_DAILY_CODE_LIMIT} codes daily. ${allowed} remain for today.`);
-    }
-    return allowed;
-  }, [activePlan.id, language, notify]);
+    return requested;
+  }, []);
 
   const generate = useCallback(async (amount) => {
     if (!selectedType || busy) return;
@@ -9807,7 +9771,6 @@ const App = () => {
       <Tweaks tweaks={tweaks} setTweak={setTweak} />
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} t={t} />
       <SharedCliConsoleDialog open={sharedCliOpen} onClose={() => setSharedCliOpen(false)} notify={notify} language={language} />
-      <PlanLicenseDialog open={planOpen} onClose={() => setPlanOpen(false)} license={planLicense} onActivate={activatePlan} onReset={resetPlan} language={language} initialPlan={planFocus} />
       <DatabaseDialog open={dbOpen} onClose={() => setDbOpen(false)} rows={copyDb} query={dbQuery} setQuery={setDbQuery} onExport={exportDatabase} onClear={clearDatabase} onDelete={deleteDatabaseRow} onCopyAgain={copyDatabaseRow} t={t} language={language} />
       <QrVaultDialog open={qrOpen} onClose={() => setQrOpen(false)} rows={copyDb} t={t} language={language} />
       <TextStudioDialog open={textOpen} onClose={() => setTextOpen(false)} notify={notify} language={language} />
@@ -9832,14 +9795,6 @@ const App = () => {
       <PixelNoteDialog open={!!pixelNoteRow} onClose={() => setPixelNoteRow(null)} row={pixelNoteRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
       {toast && <div className="ocg-toast">{toast}</div>}
-      <FreeUpgradeNudge
-        open={activePlan.id === 'free' && freeNudge.open}
-        story={FREE_UPGRADE_STORIES[freeNudge.index]}
-        onUpgrade={openPlansFromFreeNudge}
-        onSkip={skipFreeNudge}
-        language={language}
-      />
-
       <div className={`app ${density}`} onClick={() => activeMenu && setActiveMenu(null)}>
         {/* Title bar */}
         <header className="tb">
@@ -9855,7 +9810,6 @@ const App = () => {
             <MenuButton label={t('menuView')} icon={TOP_MENU_ICONS.view} iconOnly items={viewItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuHelp')} icon={TOP_MENU_ICONS.help} iconOnly items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuLanguages')} icon={TOP_MENU_ICONS.languages} iconOnly items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-            <MenuButton label="PLANS" icon={TOP_MENU_ICONS.plans} iconOnly items={planItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPlans} />
             <MenuButton label={t('menuDatabase')} icon={TOP_MENU_ICONS.database} iconOnly items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
             <MenuButton label={t('qrMenu')} icon={TOP_MENU_ICONS.qr} iconOnly items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
             <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} icon={TOP_MENU_ICONS.textLab} iconOnly items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
@@ -9883,10 +9837,10 @@ const App = () => {
             <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
               <span dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
             </button>
-            <button className="tb-plan" onClick={openPlans} title="Plans & Licensing">
-              <span>{activePlan.name}</span>
+            <div className="tb-enterprise" title="Enterprise mode">
+              <span>Enterprise</span>
               <b>{activePlan.maxBatch.toLocaleString()}</b>
-            </button>
+            </div>
             <div className="tb-clk">{clock}</div>
           </div>
         </header>

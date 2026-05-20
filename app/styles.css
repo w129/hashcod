@@ -175,7 +175,7 @@ kbd {
 .tb-dot { width: 6px; height: 6px; background: #d4d4d4; border-radius: 50%; box-shadow: 0 0 8px rgba(255,255,255,.3); animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 .tb-clk { font-size: 10px; color: #aaa; letter-spacing: 1px; font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
-.tb-plan {
+.tb-plan, .tb-enterprise {
   height: 24px;
   display: flex;
   align-items: center;
@@ -188,7 +188,8 @@ kbd {
   letter-spacing: .8px;
   font-size: 9px;
 }
-.tb-plan b { color: #8fd19e; font-weight: 700; }
+.tb-plan b, .tb-enterprise b { color: #8fd19e; font-weight: 700; }
+.tb-enterprise { background:#090909; border-color:#4a4a4a; }
 .auth-session {
   position: fixed;
   right: 12px;
@@ -336,6 +337,7 @@ kbd {
 .authusers-row b { font-family:var(--mono); font-size:12px; overflow-wrap:anywhere; }
 .authusers-row span { color:var(--ink-4); font-size:10px; }
 .authusers-row select, .authusers-row button { min-height:32px; border:1px solid var(--line-2); background:#fff; padding:0 8px; font-family:var(--mono); font-size:10px; }
+.authusers-enterprise-pill { min-height:32px; border:1px solid #111; background:#111; color:#fff!important; display:flex; align-items:center; justify-content:center; padding:0 10px; font-family:var(--mono); letter-spacing:1.4px; text-transform:uppercase; }
 .authusers-row button:hover { background:#111; color:#fff; border-color:#111; }
 .authusers-empty {
   background:#fff;
@@ -2919,9 +2921,12 @@ kbd {
 
   .tb-plan span,
   .tb-plan b,
+  .tb-enterprise span,
+  .tb-enterprise b,
   .tb-clk { display: none; }
 
   .tb-plan,
+  .tb-enterprise,
   .tb-cli {
     width: 34px;
     height: 34px;

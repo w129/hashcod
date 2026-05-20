@@ -1,8 +1,8 @@
-/* Hashcod - advanced guided tour with plan education. */
+/* Hashcod - advanced guided tour for Enterprise mode. */
 
 const { useState, useEffect, useLayoutEffect, useRef } = React;
 
-const TOUR_KEY = 'opencriptG_tour_seen_v3_plans';
+const TOUR_KEY = 'opencriptG_tour_seen_v4_enterprise';
 
 const PlatformPillList = () => (
   <div className="tour-pill-list">
@@ -12,10 +12,10 @@ const PlatformPillList = () => (
 
 const PlanTourGrid = () => (
   <div className="tour-plan-grid">
-    <div className="bad"><b>FREE</b><span>10 por lote</span><span>50 diarios</span><span>sin QR/export real</span><span>sin sesiones</span></div>
-    <div><b>STARTER</b><span>5,000 por lote</span><span>250 codes</span><span>QR + export</span><span>vault mayor</span></div>
-    <div><b>PRO</b><span>50,000 por lote</span><span>900 codes</span><span>certificados</span><span>Format Forge</span></div>
-    <div><b>ENTERPRISE</b><span>100,000 por lote</span><span>catalogo completo</span><span>todas las tools</span><span>menos friccion</span></div>
+    <div><b>ENTERPRISE</b><span>100,000 por lote</span><span>catalogo completo</span><span>todas las tools</span><span>sin bloqueo por planes</span></div>
+    <div><b>VAULT</b><span>50,000 registros</span><span>exportacion completa</span><span>QR + pack</span><span>flujo continuo</span></div>
+    <div><b>SECURITY</b><span>login real</span><span>roles</span><span>auditoria</span><span>CSRF</span></div>
+    <div><b>LABS</b><span>BASEMAT</span><span>HNS/HOS/HCP</span><span>Format Forge</span><span>Phone OS</span></div>
   </div>
 );
 
@@ -23,67 +23,51 @@ const TOUR_STEPS = [
   {
     id: 'welcome', selector: null, title: 'TOUR HASHCOD',
     body: <>
-      <p>Este tour explica como funciona la plataforma completa: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y planes.</p>
-      <p>Tambien muestra por que <b>Free es solo una prueba</b> y que tendria el usuario si activa Starter, Professional o Enterprise con su <b>GOST EC Key</b>.</p>
+      <p>Este tour explica como funciona Hashcod en modo Enterprise: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y laboratorios avanzados.</p>
+      <p>La plataforma entra siempre con el catalogo completo y las funciones productivas disponibles desde el inicio.</p>
       <PlatformPillList />
-      <div className="tour-meta"><span>HASHCOD</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>PLANES</span></div>
+      <div className="tour-meta"><span>HASHCOD</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>ENTERPRISE</span></div>
     </>,
   },
   { id:'brand', selector:'.tb-brand', place:'bottom-start', title:'IDENTIDAD DE LA PLATAFORMA', body:<>
     <p>Hashcod es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos.</p>
     <p>No es solo un generador: es un entorno operativo con catalogo, vault, QR, certificados, formatos propietarios y herramientas internas.</p>
   </>},
-  { id:'plans-menu', selector:'.tb-nav', place:'bottom', title:'MENU PLANS: DONDE SE DESBLOQUEA TODO', body:<>
-    <p>El menu <b>PLANS</b> abre la comparacion de planes. Desde ahi puedes revisar Free, Starter, Professional y Enterprise.</p>
-    <p>Los planes pagos se activan con una <b>GOST EC Key</b>. Para obtener el code de pago, el menu muestra el contacto configurado en la plataforma.</p>
-    <PlanTourGrid />
-  </>},
-  { id:'free-warning', selector:'.tb-plan', place:'bottom-end', title:'FREE ES BUENO PARA MIRAR, MALO PARA TRABAJAR', body:<>
-    <p>Free deja probar OCG, pero esta hecho para sentirse limitado: solo <b>10 codes por lote</b>, <b>50 diarios</b>, <b>10 primitivas visibles</b>, vault pequeno y marca <b>Generated with OCG Free</b> al copiar.</p>
-    <p>Tambien pierde sesiones, exportaciones reales, QR descargable, certificados, Format Forge, CMD avanzado y gran parte del catalogo. Si el usuario quiere producir, Free se queda corto rapido.</p>
-  </>},
-  { id:'starter-plan', selector:'.tb-plan', place:'bottom-end', title:'STARTER: EL PRIMER PLAN REAL', body:<>
-    <p>Starter es para dejar de probar y empezar a usar. Desbloquea <b>5,000 codes por lote</b>, <b>250 primitivas</b>, QR, exportaciones, base de datos exportable y vault mas amplio.</p>
-    <p>El usuario ya puede generar material util, descargarlo, moverlo por QR y trabajar sin la marca Free.</p>
-  </>},
-  { id:'professional-plan', selector:'.tb-plan', place:'bottom-end', title:'PROFESSIONAL: PRODUCCION Y TOKENIZACION SERIA', body:<>
-    <p>Professional sube a <b>50,000 codes por lote</b>, <b>900 primitivas</b>, certificados, Format Forge, exportaciones completas y CMD avanzado.</p>
-    <p>Es el plan para documentar, certificar, convertir archivos a formatos nuevos, crear paquetes y trabajar con menos interrupciones.</p>
-  </>},
-  { id:'enterprise-plan', selector:'.tb-plan', place:'bottom-end', title:'ENTERPRISE: LA PLATAFORMA COMPLETA', body:<>
+  { id:'enterprise-mode', selector:'.tb-enterprise', place:'bottom-end', title:'ENTERPRISE SIEMPRE ACTIVO', body:<>
     <p>Enterprise abre el sistema completo: <b>100,000 codes por lote</b>, catalogo completo, vault de 50,000, todas las herramientas y menor ruido de similaridad.</p>
     <p>Es el modo de alta escala: menos friccion, mas volumen, mas control y mejor flujo para operaciones grandes.</p>
+    <PlanTourGrid />
   </>},
   { id:'top-tools', selector:'.tb-nav', place:'bottom', title:'BARRA SUPERIOR DE HERRAMIENTAS', body:<>
     <p>La barra superior es deslizante. Usa rueda o trackpad para ver todas las herramientas.</p>
     <p><b>Clic normal</b> abre una herramienta. <b>Clic derecho</b> abre opciones adicionales cuando existan.</p>
   </>},
   { id:'classic-menus', selector:'.tb-nav', place:'bottom-start', title:'MENUS CLASICOS', body:<>
-    <p><b>Archivo</b> maneja sesiones. En Free guardar/cargar esta bloqueado; en pagos permite continuidad.</p>
-    <p><b>Generar</b> crea codes. <b>Exportar</b> descarga resultados. En Free se limita; en pagos se vuelve parte del flujo real.</p>
+    <p><b>Archivo</b> maneja sesiones. Las sesiones, exportaciones y herramientas avanzadas quedan disponibles en modo Enterprise.</p>
+    <p><b>Generar</b> crea codes. <b>Exportar</b> descarga resultados. Generar y exportar funcionan como parte del flujo real de produccion.</p>
   </>},
   { id:'tools', selector:'.tb-nav', place:'bottom-end', title:'HERRAMIENTAS PRINCIPALES', body:<>
     <p>Desde aqui entras a Base de datos, QR Vault, Text Lab, Disco Lab, P-Andora, Desk, OSDG-rest, Markdown, Sequence-A, Certificados, Ivory DID, Format Forge y OCG Units.</p>
-    <p>Free deja ver la plataforma, pero muchas herramientas fuertes viven en Starter, Professional y Enterprise.</p>
+    <p>Todas las herramientas fuertes quedan disponibles: QR Vault, Certificados, Format Forge, BASEMAT, HNS, HOS y HCP.</p>
   </>},
   { id:'breadcrumb', selector:'.bcr', place:'bottom', title:'ESTADO DEL CODE ACTUAL', body:<>
     <p>Esta barra muestra categoria, code seleccionado, valores generados, unicos y tiempo de sesion.</p>
   </>},
   { id:'sidebar-search', selector:'.sb-search-row', place:'right', title:'BUSQUEDA DE CODES', body:<>
     <p>Busca por nombre, estandar, familia, identificador o uso: AES, SHA, UUID, BIP, HKDF, Ascon, Kuznyechik, NEO, token, vault y mas.</p>
-    <p>En Free veras solo una pequena parte del catalogo. Los planes superiores abren cientos o todo el catalogo.</p>
+    <p>El catalogo completo queda visible para buscar por nombre, estandar, familia, identificador o uso.</p>
   </>},
   { id:'catalog', selector:'.sb', place:'right', title:'CATALOGO DE CODES', body:<>
     <p>La columna izquierda contiene las primitivas/codes organizadas por familias: claves, hashes, tokens, contrasenas, identificadores, post-cuanticos y NEO codes.</p>
-    <p>Starter muestra mas variedad, Professional abre catalogo avanzado y Enterprise deja ver todo.</p>
+    <p>Enterprise deja ver todo el catalogo y todas sus familias criptograficas.</p>
   </>},
   { id:'config', selector:'.cfg', place:'bottom', title:'CONFIGURACION ANTES DE GENERAR', body:<>
     <p>Ajusta longitud, cantidad, prefijo y caracteres. La UI se adapta a lo que permite el code seleccionado.</p>
-    <p>El numero maximo tambien se adapta al plan: Free corta rapido; los planes pagos permiten lotes reales.</p>
+    <p>El numero maximo queda preparado para lotes reales de hasta 100,000 codes.</p>
   </>},
   { id:'actions', selector:'.cfg-acts', place:'bottom-end', title:'GENERAR, COPIAR Y DESCARGAR', body:<>
     <p><b>Generar</b> crea el code. <b>Copiar</b> guarda el resultado. <b>Descargar</b> exporta.</p>
-    <p>En Free copiar agrega marca y descargar esta limitado. En pagos el material sale limpio y operativo.</p>
+    <p>Copiar y descargar generan material limpio, operativo y listo para documentar.</p>
     <p className="tour-tip"><kbd>Ctrl/⌘ + Enter</kbd> genera · <kbd>Ctrl/⌘ + B</kbd> lote grande · <kbd>Ctrl/⌘ + Shift + S</kbd> exporta.</p>
   </>},
   { id:'output', selector:'.out', place:'top', title:'SALIDA DE CODES GENERADOS', body:<>
@@ -92,11 +76,11 @@ const TOUR_STEPS = [
   </>},
   { id:'similarity', selector:'.out', place:'top', title:'FLECHAS DE SIMILARIDAD', body:<>
     <p>Las flechas muestran cuando un code se parece a otro del lote. Puedes hacer clic para saltar al code relacionado.</p>
-    <p>Free muestra mas marcas de similaridad; mientras mejor es el plan, menos ruido visual hay y mas limpia queda la generacion.</p>
+    <p>La similaridad se mantiene como senal tecnica para comparar codes sin ruido comercial.</p>
   </>},
   { id:'row-actions', selector:'.out', place:'top', title:'ICONOS DE CADA CODE', body:<>
     <p>Las filas tienen acciones: copiar, QR PNG, captura PNG, ticket, LOG, JSON, TXT, Markdown y eliminar.</p>
-    <p>Free bloquea o marca parte de estas salidas. Starter y superiores las convierten en herramientas reales de produccion.</p>
+    <p>Todas estas salidas quedan activas como herramientas reales de produccion.</p>
   </>},
   { id:'right-panel', selector:'.rp', place:'left', title:'PANEL TECNICO DERECHO', body:<>
     <p>El panel derecho explica estandar, entropia, motor, espacio de busqueda, mejor uso, postura de seguridad y escenarios recomendados.</p>
@@ -104,19 +88,19 @@ const TOUR_STEPS = [
   </>},
   { id:'database', selector:'.tb-nav', place:'bottom', title:'BASE DE DATOS Y VAULT', body:<>
     <p>La base de datos guarda codes copiados. Desde ahi puedes buscar, exportar, reutilizar en QR Vault, certificados, Sequence-A, Ivory DID y OCG Units.</p>
-    <p>Free tiene vault pequeno. Los planes pagos lo vuelven util para flujo continuo.</p>
+    <p>El vault queda amplio para flujo continuo y reutilizacion entre herramientas.</p>
   </>},
   { id:'qr-vault', selector:'.tb-nav', place:'bottom', title:'QR VAULT', body:<>
     <p>QR Vault crea paquetes QR con codes guardados. Sirve para transportar, presentar o verificar codes.</p>
-    <p>Free lo pierde; Starter ya lo desbloquea.</p>
+    <p>QR Vault queda disponible para paquetes y transporte de codes.</p>
   </>},
   { id:'format-forge', selector:'.tb-nav', place:'bottom', title:'FORMAT FORGE', body:<>
     <p>Format Forge permite crear formatos nuevos y convertir archivos a paquetes propietarios OCG.</p>
-    <p>Esta es una funcion de valor alto: en Free no existe; en Professional y Enterprise se vuelve parte del sistema de tokenizacion.</p>
+    <p>Esta funcion queda activa como parte del sistema de tokenizacion y conversion de archivos.</p>
   </>},
   { id:'certificates', selector:'.tb-nav', place:'bottom', title:'CERTIFICADOS', body:<>
     <p>Certificados crea documentos formales para codes: titular, ID, hash, QR, fecha, estado y notas internas.</p>
-    <p>Professional y Enterprise pueden convertir un code en material documentado y presentable.</p>
+    <p>Enterprise convierte un code en material documentado y presentable.</p>
   </>},
   { id:'osdg', selector:'.tb-nav', place:'bottom', title:'OSDG-REST Y ARCHIVOS', body:<>
     <p>OSDG-rest cifra y desbloquea archivos usando key visible y nonce. Es una herramienta para documentos, paquetes y archivos sensibles.</p>
@@ -126,7 +110,7 @@ const TOUR_STEPS = [
   </>},
   { id:'workflow', selector:null, title:'FLUJO RECOMENDADO', body:<>
     <p>Flujo simple: elige code, configura parametros, genera, revisa el panel tecnico, copia al vault, crea QR o certificado, exporta LOG/JSON y documenta.</p>
-    <p>En Free este flujo se corta varias veces. En Starter empieza a ser util. En Professional se vuelve productivo. En Enterprise se vuelve completo.</p>
+    <p>En modo Enterprise el flujo queda completo desde el inicio.</p>
     <PlanTourGrid />
   </>},
   { id:'security', selector:null, title:'SEGURIDAD Y RESPONSABILIDAD', body:<>
@@ -134,7 +118,7 @@ const TOUR_STEPS = [
     <p>Para produccion: valida permisos, leyes aplicables, auditoria, control de acceso y almacenamiento seguro.</p>
   </>},
   { id:'finish', selector:null, title:'LISTO PARA USAR', body:<>
-    <p>Ya conoces la plataforma: catalogo, generacion, salida, similaridad, vault, QR, certificados, formatos, planes y limites.</p>
+    <p>Ya conoces la plataforma: catalogo, generacion, salida, similaridad, vault, QR, certificados, formatos, ENTERPRISE y limites.</p>
     <p className="tour-tip">Repite este tour desde <b>TOUR</b> en la barra inferior o desde <b>VER -> Repetir tour</b>.</p>
   </>},
 ];
