@@ -1271,6 +1271,45 @@ kbd {
   .hnsb-format-actions { display:grid; grid-template-columns:1fr; }
   .hnsb-cli { min-height:360px; }
 }
+.cryptoaidlg { width:min(1180px, calc(100vw - 30px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; }
+.cryptoai-head { flex:0 0 auto; }
+.cryptoai-title { display:flex; align-items:center; gap:14px; min-width:0; }
+.cryptoai-mark { width:42px; height:42px; display:grid; place-items:center; color:#fff; background:#111; border:1px solid #111; flex:0 0 auto; }
+.cryptoai-mark svg { width:24px; height:24px; }
+.cryptoai-shell { min-height:0; display:grid; grid-template-columns:330px minmax(0,1fr); border-top:1px solid var(--line); background:#f7f7f4; }
+.cryptoai-side { min-width:0; overflow:auto; border-right:1px solid var(--line); padding:14px; display:grid; gap:11px; align-content:start; }
+.cryptoai-side label { display:grid; gap:6px; min-width:0; }
+.cryptoai-side span, .cryptoai-model-card span { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.cryptoai-side input, .cryptoai-side select, .cryptoai-side textarea, .cryptoai-compose textarea { border:1px solid var(--line-2); background:#fff; color:#111; padding:10px 11px; font-family:var(--mono); font-size:12px; min-width:0; }
+.cryptoai-side input, .cryptoai-side select { min-height:40px; }
+.cryptoai-side textarea { min-height:110px; resize:vertical; line-height:1.45; }
+.cryptoai-model-card { border:1px solid #111; background:#fff; padding:12px; display:grid; gap:6px; box-shadow:5px 5px 0 rgba(0,0,0,.08); }
+.cryptoai-model-card b { font-family:var(--mono); font-size:20px; letter-spacing:1px; }
+.cryptoai-model-card em, .cryptoai-note { font-style:normal; color:var(--ink-3); font-size:10px; line-height:1.45; }
+.cryptoai-note { border:1px solid var(--line); background:#fff; padding:10px; }
+.cryptoai-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.cryptoai-actions button, .cryptoai-compose button { min-height:38px; border:1px solid #111; background:#111; color:#fff; padding:0 12px; font-size:10px; letter-spacing:1.7px; text-transform:uppercase; }
+.cryptoai-actions button:hover, .cryptoai-compose button:hover { background:#fff; color:#111; }
+.cryptoai-chat { min-width:0; min-height:620px; max-height:calc(100vh - 180px); display:grid; grid-template-rows:minmax(0,1fr) auto auto; background:#fff; }
+.cryptoai-log { overflow:auto; padding:16px; display:grid; gap:12px; align-content:start; }
+.cryptoai-msg { max-width:86%; border:1px solid var(--line); background:#f7f7f4; padding:12px; display:grid; gap:7px; }
+.cryptoai-msg.user { margin-left:auto; background:#111; color:#fff; border-color:#111; }
+.cryptoai-msg.error { border-left:4px solid #9b111e; }
+.cryptoai-msg span { font-family:var(--mono); font-size:10px; letter-spacing:1.7px; text-transform:uppercase; color:var(--ink-4); }
+.cryptoai-msg.user span { color:#d7d7d7; }
+.cryptoai-msg p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-family:var(--mono); font-size:12px; line-height:1.58; }
+.cryptoai-compose { border-top:1px solid var(--line); padding:12px; display:grid; grid-template-columns:minmax(0,1fr) 110px; gap:10px; background:#f7f7f4; }
+.cryptoai-compose textarea { min-height:78px; resize:vertical; line-height:1.45; }
+.cryptoai-compose button:disabled { opacity:.55; cursor:wait; }
+.cryptoai-status { border-top:1px solid var(--line); border-left:4px solid #177c43; background:#f7f7f4; padding:11px 14px; font-family:var(--mono); font-size:11px; line-height:1.45; }
+@media (max-width: 860px) {
+  .cryptoaidlg { width:calc(100vw - 16px); }
+  .cryptoai-shell { grid-template-columns:1fr; }
+  .cryptoai-side { border-right:0; border-bottom:1px solid var(--line); max-height:none; }
+  .cryptoai-chat { min-height:520px; max-height:none; }
+  .cryptoai-compose { grid-template-columns:1fr; }
+  .cryptoai-msg { max-width:100%; }
+}
 .cliconsdlg { width:min(1080px, calc(100vw - 42px)); }
 .clicons-form { padding:18px; border-bottom:1px solid var(--line); background:#f7f7f4; display:grid; gap:10px; }
 .clicons-fields { display:grid; grid-template-columns:1fr 220px; gap:10px; }

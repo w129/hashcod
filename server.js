@@ -259,6 +259,51 @@ function postTwilioSms({ to, body }) {
   });
 }
 
+function httpsJsonRequest({ hostname, path: requestPath, method = 'POST', headers = {}, body = {}, timeout = 30000 }) {
+  const payload = typeof body === 'string' ? body : JSON.stringify(body || {});
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname,
+      path: requestPath,
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        ...headers,
+      },
+      timeout,
+    }, (providerRes) => {
+      let raw = '';
+      providerRes.setEncoding('utf8');
+      providerRes.on('data', chunk => { raw += chunk; });
+      providerRes.on('end', () => {
+        let json = null;
+        try { json = JSON.parse(raw || '{}'); } catch {}
+        if (providerRes.statusCode >= 200 && providerRes.statusCode < 300) {
+          resolve({ statusCode: providerRes.statusCode, body: json || {}, raw });
+          return;
+        }
+        const err = new Error(json?.error?.message || json?.message || `ai_provider_failed_${providerRes.statusCode}`);
+        err.statusCode = providerRes.statusCode;
+        err.details = json || raw;
+        reject(err);
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('ai_provider_timeout')));
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+function aiProviderProfile(provider) {
+  const key = String(provider || '').toLowerCase();
+  if (key === 'claude' || key === 'anthropic') return { id: 'claude', hashModel: 'HSC-02910', defaultModel: 'claude-3-5-haiku-latest' };
+  if (key === 'gpt' || key === 'openai') return { id: 'openai', hashModel: 'HSC-28193', defaultModel: 'gpt-4o-mini' };
+  if (key === 'gemini' || key === 'google') return { id: 'gemini', hashModel: 'HSC-44201', defaultModel: 'gemini-1.5-flash' };
+  return { id: 'other', hashModel: 'HSC00128', defaultModel: 'openai-compatible' };
+}
+
 function moderationReason(value = '') {
   const text = String(value || '');
   const lower = text.toLowerCase();
@@ -1383,6 +1428,102 @@ async function handleCliConsole(req, res) {
   send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
 }
 
+async function handleCryptoAiChat(req, res) {
+  const auth = requireAuth(req, res, 'viewer');
+  if (!auth) return;
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req);
+    const provider = aiProviderProfile(body.provider);
+    const apiKey = String(body.apiKey || '').trim();
+    const customUrl = safeText(body.customUrl, 300);
+    const actualModel = safeText(body.actualModel, 120) || provider.defaultModel;
+    const messages = Array.isArray(body.messages) ? body.messages.slice(-12).map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: safeText(msg.content, 6000),
+    })).filter(msg => msg.content) : [];
+    const codeContext = safeText(body.codeContext, 3500);
+    if (!apiKey || !messages.length) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'missing_api_key_or_messages' }));
+      return;
+    }
+    const systemPrompt = [
+      'You are Hashcod Crypto AI, a specialized assistant for cryptographic codes, tokenization payloads, key handling, encoding formats, QR/export formats, HNS/HOS/HCP flows, and security review.',
+      'Give practical, safe, production-minded answers. Do not invent impossible cryptographic guarantees. Warn when a request would expose secrets or misuse keys.',
+      `Internal Hashcod model name: ${provider.hashModel}.`,
+      codeContext ? `Current Hashcod code context:\n${codeContext}` : '',
+    ].filter(Boolean).join('\n\n');
+    let answer = '';
+    if (provider.id === 'openai') {
+      const result = await httpsJsonRequest({
+        hostname: 'api.openai.com',
+        path: '/v1/chat/completions',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: {
+          model: actualModel,
+          temperature: 0.25,
+          messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        },
+      });
+      answer = result.body?.choices?.[0]?.message?.content || '';
+    } else if (provider.id === 'claude') {
+      const result = await httpsJsonRequest({
+        hostname: 'api.anthropic.com',
+        path: '/v1/messages',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: {
+          model: actualModel,
+          max_tokens: 1200,
+          temperature: 0.25,
+          system: systemPrompt,
+          messages,
+        },
+      });
+      answer = (result.body?.content || []).map(part => part.text || '').join('\n').trim();
+    } else if (provider.id === 'gemini') {
+      const result = await httpsJsonRequest({
+        hostname: 'generativelanguage.googleapis.com',
+        path: `/v1beta/models/${encodeURIComponent(actualModel)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        body: {
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: messages.map(msg => ({ role: msg.role === 'assistant' ? 'model' : 'user', parts: [{ text: msg.content }] })),
+          generationConfig: { temperature: 0.25, maxOutputTokens: 1200 },
+        },
+      });
+      answer = (result.body?.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('\n').trim();
+    } else {
+      if (!/^https:\/\/[^/]+\/.+/i.test(customUrl)) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'custom_https_url_required' }));
+        return;
+      }
+      const target = new URL(customUrl);
+      const result = await httpsJsonRequest({
+        hostname: target.hostname,
+        path: `${target.pathname}${target.search}`,
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: {
+          model: actualModel,
+          temperature: 0.25,
+          messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        },
+      });
+      answer = result.body?.choices?.[0]?.message?.content || result.body?.output_text || JSON.stringify(result.body, null, 2);
+    }
+    if (!answer) answer = 'Provider returned an empty response.';
+    audit('crypto_ai.chat', { ip: clientIp(req), actor: auth.user.id, provider: provider.id, hashModel: provider.hashModel });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, provider: provider.id, hashModel: provider.hashModel, actualModel, answer }));
+  } catch (err) {
+    audit('crypto_ai.error', { ip: clientIp(req), actor: auth.user?.id, error: safeText(err.message, 160) });
+    send(res, err.statusCode === 401 ? 401 : 502, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'ai_provider_error', detail: safeText(err.message, 240) }));
+  }
+}
+
 function enterpriseManifest() {
   const catalogPath = path.join(ROOT, 'data', 'catalog.js');
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
@@ -1469,6 +1610,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0] === '/api/cli-console') {
     handleCliConsole(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0] === '/api/crypto-ai/chat') {
+    handleCryptoAiChat(req, res);
     return;
   }
 

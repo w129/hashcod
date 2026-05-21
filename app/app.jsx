@@ -2043,6 +2043,7 @@ const TOP_MENU_ICONS = {
   hos: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>`,
   hcp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg>`,
   hnsBrowser: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>`,
+  cryptoAi: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h4"/><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27"/><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122"/><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3435,6 +3436,141 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
               <input value={cmdInput} onChange={e => setCmdInput(e.target.value)} placeholder="resolve | packet | send-gateway | notify-phone" />
             </form>
           </section>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CRYPTO_AI_PROVIDERS = [
+  { id: 'openai', name: 'GPT', hashModel: 'HSC-28193', defaultModel: 'gpt-4o-mini', placeholder: 'sk-...' },
+  { id: 'claude', name: 'Claude', hashModel: 'HSC-02910', defaultModel: 'claude-3-5-haiku-latest', placeholder: 'sk-ant-...' },
+  { id: 'gemini', name: 'Gemini', hashModel: 'HSC-44201', defaultModel: 'gemini-1.5-flash', placeholder: 'AIza...' },
+  { id: 'other', name: 'Other API', hashModel: 'HSC00128', defaultModel: 'openai-compatible', placeholder: 'Bearer/API key' },
+];
+
+const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 400), [rows, outputRows]);
+  const [provider, setProvider] = useState('openai');
+  const profile = CRYPTO_AI_PROVIDERS.find(item => item.id === provider) || CRYPTO_AI_PROVIDERS[0];
+  const [apiKey, setApiKey] = useState('');
+  const [actualModel, setActualModel] = useState(profile.defaultModel);
+  const [customUrl, setCustomUrl] = useState('https://api.example.com/v1/chat/completions');
+  const [selectedCodeId, setSelectedCodeId] = useState('');
+  const [manualContext, setManualContext] = useState('');
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+  const [messages, setMessages] = useState(() => [
+    { role: 'assistant', content: L('Soy Hashcod Crypto AI. Puedo analizar codes, explicar formatos, revisar payloads HNS/HOS/HCP, proponer tokenizacion y detectar riesgos de seguridad.', 'I am Hashcod Crypto AI. I can analyze codes, explain formats, review HNS/HOS/HCP payloads, propose tokenization, and detect security risks.') },
+  ]);
+  const selectedCode = useMemo(() => source.find(row => String(row.id || row.idx || row.value) === selectedCodeId) || source[0] || null, [source, selectedCodeId]);
+  useEffect(() => {
+    const next = CRYPTO_AI_PROVIDERS.find(item => item.id === provider) || CRYPTO_AI_PROVIDERS[0];
+    setActualModel(next.defaultModel);
+    setStatus('');
+  }, [provider]);
+  if (!open) return null;
+  const codeContext = [
+    selectedCode ? `Selected code index: ${String(selectedCode.idx || '').padStart(3, '0')}\nType: ${selectedCode.type}\nValue: ${String(selectedCode.value || '').slice(0, 1800)}` : '',
+    manualContext ? `Manual platform context:\n${manualContext}` : '',
+  ].filter(Boolean).join('\n\n');
+  const sendChat = async (e) => {
+    e.preventDefault();
+    const prompt = input.trim();
+    if (!prompt || !apiKey.trim()) {
+      setStatus(L('Escribe un mensaje y coloca la API key del proveedor.', 'Write a message and enter the provider API key.'));
+      return;
+    }
+    const nextMessages = [...messages, { role: 'user', content: prompt }];
+    setMessages(nextMessages);
+    setInput('');
+    setBusy(true);
+    setStatus('');
+    try {
+      const res = await authFetch('/api/crypto-ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          apiKey: apiKey.trim(),
+          actualModel: actualModel.trim(),
+          customUrl: provider === 'other' ? customUrl.trim() : '',
+          messages: nextMessages.filter(msg => msg.role !== 'system'),
+          codeContext,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.detail || data.error || 'ai_failed');
+      setMessages(prev => [...prev, { role: 'assistant', content: data.answer, hashModel: data.hashModel }]);
+      notify?.(L(`${data.hashModel} respondio`, `${data.hashModel} answered`));
+    } catch (err) {
+      const msg = L(`No se pudo conectar con ${profile.name}. Revisa la API key, el modelo real o el limite del proveedor.`, `Could not connect to ${profile.name}. Check the API key, real model, or provider quota.`);
+      setStatus(`${msg} ${err.message ? `(${err.message})` : ''}`);
+      setMessages(prev => [...prev, { role: 'assistant', content: msg, hashModel: profile.hashModel, error: true }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copyChat = async () => {
+    const text = messages.map(msg => `${msg.role.toUpperCase()}${msg.hashModel ? ` ${msg.hashModel}` : ''}\n${msg.content}`).join('\n\n---\n\n');
+    try {
+      await navigator.clipboard?.writeText(text);
+      notify?.(L('Chat IA copiado', 'AI chat copied'));
+    } catch {
+      notify?.(L('No se pudo copiar el chat', 'Could not copy chat'));
+    }
+  };
+  const clearChat = () => {
+    setMessages([{ role: 'assistant', content: L('Sesion limpia. Coloca un code, escribe tu pregunta y elige proveedor.', 'Clean session. Add a code, write your question, and choose provider.') }]);
+    setStatus('');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg cryptoaidlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h cryptoai-head">
+          <div className="cryptoai-title">
+            <span className="cryptoai-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoAi}} />
+            <div>
+              <h2>Hashcod Crypto AI</h2>
+              <p>{L('Chat IA especializado en codes criptograficos, tokenizacion, formatos, HNS, seguridad y produccion.', 'AI chat specialized in cryptographic codes, tokenization, formats, HNS, security, and production.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="cryptoai-shell">
+          <aside className="cryptoai-side">
+            <label><span>{L('Proveedor IA', 'AI provider')}</span><select value={provider} onChange={e => setProvider(e.target.value)}>{CRYPTO_AI_PROVIDERS.map(item => <option key={item.id} value={item.id}>{item.name} / {item.hashModel}</option>)}</select></label>
+            <div className="cryptoai-model-card">
+              <span>{L('Modelo Hashcod', 'Hashcod model')}</span>
+              <b>{profile.hashModel}</b>
+              <em>{L('Nombre interno segun API elegida', 'Internal name by selected API')}</em>
+            </div>
+            <label><span>{L('API key del usuario', 'User API key')}</span><input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={profile.placeholder} autoComplete="off" /></label>
+            <label><span>{L('Modelo real del proveedor', 'Real provider model')}</span><input value={actualModel} onChange={e => setActualModel(e.target.value)} /></label>
+            {provider === 'other' && <label><span>{L('Endpoint HTTPS compatible', 'Compatible HTTPS endpoint')}</span><input value={customUrl} onChange={e => setCustomUrl(e.target.value)} /></label>}
+            <label><span>{L('Code de contexto', 'Context code')}</span><select value={selectedCodeId} onChange={e => setSelectedCodeId(e.target.value)}>{source.map((row, i) => <option key={`${row.id || row.idx || i}`} value={String(row.id || row.idx || row.value)}>{String(row.idx || i + 1).padStart(3, '0')} | {row.type}</option>)}</select></label>
+            <label><span>{L('Contexto manual', 'Manual context')}</span><textarea value={manualContext} onChange={e => setManualContext(e.target.value)} placeholder={L('Pega payloads, dudas, HNS URLs o requisitos de tokenizacion...', 'Paste payloads, questions, HNS URLs, or tokenization requirements...')} /></label>
+            <div className="cryptoai-note">{L('La API key se envia al servidor solo para ejecutar esta llamada. No se guarda en disco ni en la base de datos.', 'The API key is sent to the server only for this call. It is not saved to disk or the database.')}</div>
+            <div className="cryptoai-actions"><button onClick={copyChat}>{L('Copiar chat', 'Copy chat')}</button><button onClick={clearChat}>{L('Limpiar', 'Clear')}</button></div>
+          </aside>
+          <main className="cryptoai-chat">
+            <div className="cryptoai-log">
+              {messages.map((msg, i) => (
+                <article key={i} className={`cryptoai-msg ${msg.role} ${msg.error ? 'error' : ''}`}>
+                  <span>{msg.role === 'assistant' ? (msg.hashModel || profile.hashModel) : 'USER'}</span>
+                  <p>{msg.content}</p>
+                </article>
+              ))}
+              {busy && <article className="cryptoai-msg assistant"><span>{profile.hashModel}</span><p>{L('Analizando code criptografico...', 'Analyzing cryptographic code...')}</p></article>}
+            </div>
+            <form className="cryptoai-compose" onSubmit={sendChat}>
+              <textarea value={input} onChange={e => setInput(e.target.value)} placeholder={L('Pregunta algo sobre el code, seguridad, tokenizacion, formato o despliegue...', 'Ask about the code, security, tokenization, format, or deployment...')} />
+              <button disabled={busy}>{busy ? L('Pensando', 'Thinking') : L('Enviar', 'Send')}</button>
+            </form>
+            {status && <div className="cryptoai-status">{status}</div>}
+          </main>
         </div>
       </section>
     </div>
@@ -8903,6 +9039,7 @@ const App = () => {
   const [hosOpen, setHosOpen] = useState(false);
   const [hcpOpen, setHcpOpen] = useState(false);
   const [hnsBrowserOpen, setHnsBrowserOpen] = useState(false);
+  const [cryptoAiOpen, setCryptoAiOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
   const [planLicense, setPlanLicense] = useState(() => readPlanLicense());
@@ -9666,6 +9803,7 @@ const App = () => {
   const openHos = () => setHosOpen(true);
   const openHcp = () => setHcpOpen(true);
   const openHnsBrowser = () => setHnsBrowserOpen(true);
+  const openCryptoAi = () => setCryptoAiOpen(true);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openSmsSender = (row) => setSmsRow(row);
@@ -9816,6 +9954,12 @@ const App = () => {
   const hnsBrowserItems = [
     { label: language === 'es' ? 'Abrir URL hns:// en consola' : 'Open hns:// URL in console', onClick: openHnsBrowser },
     { label: language === 'es' ? 'Enviar control al gateway telefono' : 'Send control to phone gateway', onClick: openHnsBrowser },
+  ];
+  const cryptoAiItems = [
+    { label: language === 'es' ? 'Abrir chat IA criptografico' : 'Open cryptographic AI chat', onClick: openCryptoAi },
+    { label: 'Claude -> HSC-02910', onClick: openCryptoAi },
+    { label: 'GPT -> HSC-28193', onClick: openCryptoAi },
+    { label: 'Gemini -> HSC-44201', onClick: openCryptoAi },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -10004,6 +10148,7 @@ const App = () => {
         basemat: openBaseMat, math: openBaseMat, matematicas: openBaseMat,
         hns: openHns, namesystem: openHns, 'hash-name-system': openHns,
         hnsbrowser: openHnsBrowser, browserhns: openHnsBrowser, 'hns-browser': openHnsBrowser,
+        cryptoai: openCryptoAi, ai: openCryptoAi, hsc: openCryptoAi, 'crypto-ai': openCryptoAi,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -10137,6 +10282,7 @@ const App = () => {
       math: { open: openBaseMat, label: 'BASEMAT', verbs: ['entropy','collision','shamir','merkle','lattice','prime','avalanche','hamming','token-space','threshold','export','help'] },
       hns: { open: openHns, label: 'HNS', verbs: ['name','zone','export','namespace','secret','www','help'] },
       hnsbrowser: { open: openHnsBrowser, label: 'HNS Browser', verbs: ['open','resolve','packet','gateway','phone','cli','help'] },
+      cryptoai: { open: openCryptoAi, label: 'Crypto AI', verbs: ['chat','claude','gpt','gemini','review','tokenize','security','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -10162,7 +10308,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -10186,6 +10332,7 @@ const App = () => {
       <HashOperativeSystemDialog open={hosOpen} onClose={() => setHosOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HashCommandPromptingDialog open={hcpOpen} onClose={() => setHcpOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HnsBrowserDialog open={hnsBrowserOpen} onClose={() => setHnsBrowserOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <CryptoAiDialog open={cryptoAiOpen} onClose={() => setCryptoAiOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -10230,6 +10377,7 @@ const App = () => {
             <MenuButton label="TOKENIZATION STUDIO" icon={TOP_MENU_ICONS.tokenizationStudio} iconOnly items={mountainToolItems('tokenizationStudio')} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={() => openMountainTool('tokenizationStudio')} />
             <MenuButton label="HNS" icon={TOP_MENU_ICONS.hns} iconOnly items={hnsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHns} />
             <MenuButton label="HNS BROWSER" icon={TOP_MENU_ICONS.hnsBrowser} iconOnly items={hnsBrowserItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHnsBrowser} />
+            <MenuButton label="CRYPTO AI" icon={TOP_MENU_ICONS.cryptoAi} iconOnly items={cryptoAiItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoAi} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
