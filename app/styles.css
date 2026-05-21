@@ -1,17 +1,18 @@
 /* opencriptG v12 — pure black & white, IDE-classic IBM/Plex pairing */
 
 :root {
-  --bg: #ffffff;
-  --bg-alt: #fafafa;
-  --bg-soft: #f4f4f4;
-  --line: #e6e6e6;
-  --line-2: #d4d4d4;
-  --line-3: #c0c0c0;
-  --ink: #0a0a0a;
-  --ink-2: #2a2a2a;
-  --ink-3: #5c5c5c;
-  --ink-4: #8a8a8a;
-  --ink-5: #b8b8b8;
+  --bg: #0F0F0F;
+  --bg-alt: #1A1A1A;
+  --bg-soft: #141414;
+  --card: #1A1A1A;
+  --line: #2A2A2A;
+  --line-2: #333333;
+  --line-3: #444444;
+  --ink: #F5F5F5;
+  --ink-2: #E5E5E5;
+  --ink-3: #C7C7C7;
+  --ink-4: #A3A3A3;
+  --ink-5: #737373;
   --warn: #aa1f1f;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --brand: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
@@ -3815,4 +3816,415 @@ kbd {
   .bcr-c { max-width: 100%; }
   .oc-val { max-height: 150px; }
   .authusers-list { padding-left: 8px; padding-right: 8px; }
+}
+
+/* Hashcod dark contrast pass */
+body {
+  background: #0F0F0F;
+  color: #F5F5F5;
+}
+
+body ::selection { background: #F5F5F5; color: #0F0F0F; }
+
+.tb,
+.sf,
+.cmd-window,
+.cmd-window-bar,
+.codegui-log,
+.hnsb-cli,
+.colorlog,
+.colorcss {
+  background: #0F0F0F !important;
+  color: #F5F5F5 !important;
+  border-color: #2A2A2A !important;
+}
+
+.app,
+.body,
+.ed,
+.cfg,
+.main,
+.empty,
+.bcr,
+.sb,
+.sb-search-row,
+.sb-cat-n,
+.sb-item-b,
+.side,
+.ti,
+.ti-quickcard,
+.ti-concrete,
+.ti-spec,
+.dlg,
+.dlg-h,
+.dlg-card,
+.authbox,
+.authusers-form,
+.authusers-list,
+.authusers-title,
+.authusers-security,
+.authusers-row,
+.authusers-row.wait,
+.authusers-history,
+.authusers-audit-row,
+.authusers-empty,
+.assist-form,
+.assist-current,
+.assist-row,
+.sms-form,
+.sms-current,
+.sms-preview pre,
+.sms-status,
+.pixelnote-form,
+.hashsyt-form,
+.hashsyt-body,
+.hashsyt-card,
+.hashsyt-output,
+.hashsyt-row,
+.hnsb-bar,
+.hnsb-main,
+.hnsb-card,
+.hnsb-grid div,
+.hnsb-packet,
+.hnsb-dbcode,
+.hnsb-phone-format,
+.hnsb-format-selected,
+.hnsb-format-preview pre,
+.hnsb-format-status,
+.cryptoai-shell,
+.cryptoai-model-card,
+.cryptoai-note,
+.cryptoai-chat,
+.cryptoai-msg,
+.cryptoai-compose,
+.cryptoai-status,
+.container-formula,
+.container-shell,
+.container-side,
+.container-metrics div,
+.container-history div,
+.container-empty,
+.container-list button,
+.box-grid button,
+.code-grid article,
+.deriv-shell,
+.deriv-side,
+.deriv-source,
+.deriv-main,
+.deriv-toolbar,
+.deriv-empty,
+.deriv-row,
+.fileview-shell,
+.fileview-side,
+.fileview-meta div,
+.fileview-note,
+.fileview-main,
+.fileview-empty,
+.fileview-error,
+.fileview-media,
+.fileview-audio,
+.fileview-frame,
+.fileview-text,
+.graph-shell,
+.graph-side,
+.graph-symbols,
+.graph-textboard,
+.graph-symbol-grid button,
+.graph-help,
+.graph-status,
+.graph-main,
+.graph-main canvas,
+.clicons-form,
+.clicons-list,
+.clicons-entry,
+.clicons-entry header,
+.clicons-entry pre,
+.codedesk-hero,
+.codedesk-hero > div,
+.codedesk-actions,
+.codedesk-grid,
+.codedesk-slot,
+.codegui-shell,
+.codegui-side,
+.codegui-id,
+.codegui-metrics div,
+.codegui-report div,
+.codegui-editor,
+.codegui-command,
+.plandlg-hero,
+.plandlg-card,
+.plandlg-detail > div,
+.free-nudge,
+.dbdlg,
+.qrdlg-card,
+.textdlg-main,
+.textdlg-editwrap,
+.textdlg-tabs,
+.textdlg-tab,
+.textdlg-aiout,
+.padlg-chartbox,
+.padlg-summarygrid div,
+.padlg-templatecard,
+.padlg-bottomtab,
+.rustdlg-card,
+.rustdlg-deps div,
+.rustdlg-checks p,
+.rustdlg-editor,
+.mddlg-preview,
+.mnotes-balance,
+.mnotes-item,
+.mnotes-editor-head,
+.mnotes-card-preview,
+.mnotes-metrics div,
+.mnotes-codebox,
+.mnotes-textarea,
+.mnotes-index-panel,
+.certdlg-certbox div,
+.certdlg-legal-mini,
+.cmdide,
+.cmd-panel,
+.cmdchips button,
+.cmd-btn,
+.cmd-module,
+.cmdform-row,
+.cmdform-codecatalog,
+.colorswatch,
+.formatdlg-file,
+.formatdlg-packmeta,
+.formatdlg-hero div,
+.formatdlg-preview,
+.formatdlg-headline,
+.formatdlg-code,
+.ivorydoc-preview,
+.ivory-warning,
+.ivory-clause,
+.ivory-db-panel,
+.ivory-db-search,
+.ivory-db-row,
+.ivory-db-empty,
+.ocgu-main,
+.ocgu-list,
+.ocgu-qrdata-code,
+.ocgu-qrdata-table,
+.ocgu-qrdata-plain,
+.mountain-tool-hero,
+.mountain-tool-form,
+.mountain-tool-actions,
+.mountain-tool-list,
+.mountain-tool-empty,
+.mountain-tool-row,
+.basemat-tabs,
+.basemat-tabs button,
+.basemat-main,
+.basemat-card,
+.basemat-card code {
+  background: #1A1A1A !important;
+  color: #F5F5F5 !important;
+  border-color: #2A2A2A !important;
+}
+
+.bcr,
+.cfg-l,
+.sb-search::placeholder,
+.sb-item,
+.tb-tag,
+.dlg p,
+.dlg span,
+.dlg small,
+.dlg em,
+.ti-about,
+.graph-help,
+.fileview-note,
+.authusers-audit-row code,
+.hashsyt-card span,
+.hnsb-card span,
+.cryptoai-note,
+.container-empty,
+.deriv-empty,
+.fileview-empty,
+.codedesk-slot em,
+.plandlg-contact,
+.mnotes-metrics small,
+.formatdlg-code span,
+.ivory-db-empty {
+  color: #A3A3A3 !important;
+}
+
+input,
+textarea,
+select,
+.cfg-inp,
+.stp,
+.cs-b,
+.authbox input,
+.authusers-form input,
+.authusers-form select,
+.authusers-row select,
+.assist-form input,
+.assist-form textarea,
+.sms-form input,
+.sms-form select,
+.pixelnote-form textarea,
+.hashsyt-form input,
+.hashsyt-form select,
+.hnsb-bar input,
+.hnsb-phone input,
+.hnsb-dbcode select,
+.hnsb-dbcode textarea,
+.hnsb-phone-format select,
+.cryptoai-side input,
+.cryptoai-side select,
+.cryptoai-side textarea,
+.cryptoai-compose textarea,
+.container-times input,
+.deriv-side input,
+.deriv-side select,
+.codegui-command input,
+.mountain-tool-form input,
+.mountain-tool-actions input,
+.basemat-form textarea,
+.basemat-form input {
+  background: #0F0F0F !important;
+  color: #F5F5F5 !important;
+  border-color: #2A2A2A !important;
+}
+
+input::placeholder,
+textarea::placeholder { color: #737373 !important; }
+
+button,
+.assist-form button,
+.assist-list-head button,
+.assist-row button,
+.sms-actions button,
+.hashsyt-actions button,
+.hnsb-format-actions button,
+.deriv-toolbar button,
+.fileview-clear,
+.graph-symbols header button,
+.graph-textboard button,
+.graph-note-list button,
+.codedesk-actions button,
+.codegui-fast button,
+.codegui-command button,
+.dbdlg-btn,
+.textdlg-tool,
+.padlg-bottomtab,
+.deskdlg-del,
+.cmdchips button,
+.cmd-btn,
+.cmd-module,
+.colorswatch button,
+.formatdlg-code button,
+.mountain-tool-row-actions button {
+  background: #1A1A1A !important;
+  color: #F5F5F5 !important;
+  border-color: #2A2A2A !important;
+}
+
+button:hover,
+.sb-item:hover,
+.assist-form button:hover,
+.assist-list-head button:hover,
+.assist-row button:hover,
+.sms-actions button:hover,
+.hashsyt-actions button:hover,
+.hnsb-format-actions button:hover,
+.deriv-toolbar button:hover,
+.fileview-clear:hover,
+.graph-symbol-grid button:hover,
+.graph-symbols header button:hover,
+.graph-textboard button:hover,
+.graph-note-list button:hover,
+.codedesk-actions button:hover,
+.codegui-fast button:hover,
+.codegui-command button:hover,
+.dbdlg-btn:hover:not(:disabled),
+.textdlg-tool:hover,
+.padlg-bottomtab:hover,
+.deskdlg-del:hover,
+.cmdchips button:hover,
+.cmd-btn:hover,
+.cmd-module:hover,
+.colorswatch button:hover,
+.formatdlg-code button:hover,
+.mountain-tool-row-actions button:hover {
+  background: #F5F5F5 !important;
+  color: #0F0F0F !important;
+  border-color: #F5F5F5 !important;
+}
+
+.sb-item.on,
+.tb-n.on,
+.authbox button,
+.authusers-form button,
+.authusers-enterprise-pill,
+.sms-actions button:first-child,
+.pixelnote-actions button,
+.hashsyt-form button,
+.hnsb-bar button,
+.hnsb-actions button,
+.hnsb-db-actions button,
+.cryptoai-actions button,
+.cryptoai-compose button,
+.container-actions button,
+.container-list button.on,
+.box-grid button.on,
+.deriv-actions button,
+.fileview-upload,
+.graph-actions button,
+.graph-textboard > button,
+.codegui-fast button,
+.codegui-command button,
+.osdgenc-primary,
+.osdgenc-download,
+.mnotes-plus,
+.cmdide-status b,
+.cmdform-row button,
+.basemat-tabs button.active {
+  background: #F5F5F5 !important;
+  color: #0F0F0F !important;
+  border-color: #F5F5F5 !important;
+}
+
+.tb-n,
+.tb-n-icon,
+.tb-mark,
+.tb-name b,
+.tb-name i,
+.auth-session,
+.auth-session b,
+.auth-session button,
+.cmd-line.in,
+.cmd-code-row code {
+  color: #F5F5F5 !important;
+}
+
+.oc-sim.high,
+.cryptoai-msg.user,
+.hashsyt-output.hcp,
+.hnsb-cli input,
+.codegui-log,
+.colorlog,
+.colorcss,
+.cmd-window {
+  background: #0F0F0F !important;
+  color: #F5F5F5 !important;
+}
+
+.pixelnote-current,
+.mnotes-card-preview,
+.formatdlg-hero div,
+.cryptoai-model-card,
+.fileview-main,
+.graph-main canvas {
+  box-shadow: 6px 6px 0 rgba(255,255,255,.06) !important;
+}
+
+.ocgu-bill .ocgu-qr,
+.ocgu-code .ocgu-qr,
+.ocgu-qrdata-code .ocgu-qr,
+.qrdlg-qr,
+canvas[data-qr="true"] {
+  background: #F5F5F5 !important;
 }

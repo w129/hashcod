@@ -4098,7 +4098,7 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
   const [noteY, setNoteY] = useState(0);
   const [notes, setNotes] = useState([]);
   const [status, setStatus] = useState('');
-  const palette = ['#111111', '#177c43', '#7a4cff', '#be4b00', '#006f9f', '#9b111e'];
+  const palette = ['#F5F5F5', '#66d38d', '#a78bfa', '#ff9f45', '#54c8ff', '#ff6b81'];
   const symbolGroups = [
     { label: L('Basicos', 'Basics'), items: [['+', '+'], ['-', '-'], ['x', 'x'], ['=', '='], ['^', '^'], ['(', '('], [')', ')'], ['.', '.'], [',', ',']] },
     { label: L('Operadores', 'Operators'), items: [['±', '+/-'], ['×', '*'], ['÷', '/'], ['√', 'sqrt('], ['|x|', 'abs('], ['π', 'PI'], ['e', 'E'], ['∞', '1/0'], ['%', '%']] },
@@ -4163,17 +4163,17 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
     const ymax = Number(yMax);
     const n = Math.max(80, Math.min(5000, Number(samples) || 900));
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#f7f7f4';
+    ctx.fillStyle = '#1A1A1A';
     ctx.fillRect(0, 0, w, h);
     const px = (x) => ((x - xmin) / (xmax - xmin)) * w;
     const py = (y) => h - ((y - ymin) / (ymax - ymin)) * h;
-    ctx.strokeStyle = '#ddddd6';
+    ctx.strokeStyle = '#2A2A2A';
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let x = Math.ceil(xmin); x <= xmax; x++) { const gx = px(x); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); }
     for (let y = Math.ceil(ymin); y <= ymax; y++) { const gy = py(y); ctx.moveTo(0, gy); ctx.lineTo(w, gy); }
     ctx.stroke();
-    ctx.strokeStyle = '#111111';
+    ctx.strokeStyle = '#A3A3A3';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     if (ymin <= 0 && ymax >= 0) { const y0 = py(0); ctx.moveTo(0, y0); ctx.lineTo(w, y0); }
@@ -4204,7 +4204,7 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
         ctx.stroke();
         plotted++;
       });
-      ctx.fillStyle = '#111';
+      ctx.fillStyle = '#F5F5F5';
       ctx.font = '13px IBM Plex Mono, Courier New, monospace';
       fns.forEach((expr, idx) => {
         ctx.fillStyle = palette[idx % palette.length];
@@ -4215,8 +4215,8 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
         const ay = py(Number(note.y) || 0);
         ctx.font = '18px IBM Plex Mono, Courier New, monospace';
         ctx.lineWidth = 5;
-        ctx.strokeStyle = 'rgba(255,255,255,.92)';
-        ctx.fillStyle = '#111';
+        ctx.strokeStyle = 'rgba(15,15,15,.92)';
+        ctx.fillStyle = '#F5F5F5';
         ctx.beginPath();
         ctx.arc(ax, ay, 4, 0, Math.PI * 2);
         ctx.fill();
