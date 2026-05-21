@@ -3065,6 +3065,9 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
   const [cmdInput, setCmdInput] = useState('');
   const [selectedCodeId, setSelectedCodeId] = useState('');
   const [manualCode, setManualCode] = useState('');
+  const [phoneFormat, setPhoneFormat] = useState('md');
+  const [phoneBrowserStatus, setPhoneBrowserStatus] = useState('');
+  const phoneFormats = useMemo(() => smsFormatOptions(language), [language]);
   const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 300), [rows, outputRows]);
   const selectedDbCode = useMemo(() => source.find(row => String(row.id || row.idx || row.value) === selectedCodeId) || source[0] || null, [source, selectedCodeId]);
   const codeSourceValue = String(manualCode || selectedDbCode?.value || '');
@@ -3147,6 +3150,51 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
     return next;
   };
   const packetText = (p = packet) => p ? `HASHCOD HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nCODE: ${p.codeValue || p.matchedCode?.valuePreview || ''}\nTIME: ${p.createdAt}` : '';
+  const makePhoneBrowserRow = (inputRecord = record) => {
+    if (inputRecord?.matchedCode?.value) {
+      return {
+        id: inputRecord.routeId,
+        idx: inputRecord.matchedCode.idx || 'hns',
+        type: inputRecord.matchedCode.type || inputRecord.name || 'hns-code',
+        value: inputRecord.matchedCode.value,
+        ts: Date.now(),
+      };
+    }
+    if (codeSourceValue.trim()) {
+      return {
+        id: selectedDbCode?.id || 'manual-phone-browser',
+        idx: selectedDbCode?.idx || 'manual',
+        type: manualCode ? 'manual-code' : (selectedDbCode?.type || 'database-code'),
+        value: codeSourceValue.trim(),
+        ts: selectedDbCode?.ts || Date.now(),
+      };
+    }
+    return null;
+  };
+  const phoneBrowserPayload = (format = phoneFormat, inputRecord = record, inputPacket = packet) => {
+    const row = makePhoneBrowserRow(inputRecord);
+    const hnsUrl = inputRecord?.raw || url;
+    const route = inputRecord?.routeId || 'HNS-CTRL-PENDING';
+    const base = row ? rowToSmsPayload(row, format, language) : packetText(inputPacket);
+    const control = packetText(inputPacket);
+    if (format === 'raw') {
+      return `${base || ''}\n\nHNS: ${hnsUrl}\nROUTE: ${route}`;
+    }
+    return [
+      'HASHCOD PHONE BROWSER PAYLOAD',
+      `FORMAT: ${format.toUpperCase()}`,
+      `HNS: ${hnsUrl}`,
+      `ROUTE: ${route}`,
+      `ACTION: PHONE_BROWSER_OPEN`,
+      `MATCH: ${row ? `${row.idx}|${row.type}` : 'hns-control'}`,
+      `TIME: ${new Date().toISOString()}`,
+      '',
+      base || control || '',
+      '',
+      '--- HNS CONTROL ---',
+      control || `URL: ${hnsUrl}\nROUTE: ${route}\nACTION: PHONE_BROWSER_OPEN`,
+    ].join('\n');
+  };
   const openDatabaseCode = async () => {
     const value = codeSourceValue.trim();
     if (!value) { push('No database/manual code selected.', 'err'); return null; }
@@ -3195,6 +3243,52 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
       notify?.(L('Code de base enviado al Phone OS', 'Database code sent to Phone OS'));
     } catch (err) {
       push(`database phone-os error: ${err.message}`, 'err');
+    }
+  };
+  const notifyPhoneBrowserFormat = async () => {
+    setPhoneBrowserStatus('');
+    let nextRecord = record;
+    if (codeSourceValue.trim()) {
+      nextRecord = await openDatabaseCode();
+    } else if (!nextRecord) {
+      nextRecord = await resolveUrl(url, false);
+    }
+    if (!nextRecord) {
+      setPhoneBrowserStatus(L('No hay code o URL HNS para enviar al Phone Browser.', 'No code or HNS URL available to send to Phone Browser.'));
+      return;
+    }
+    const p = await buildPacket(nextRecord, false);
+    const payload = phoneBrowserPayload(phoneFormat, nextRecord, p);
+    try {
+      const res = await authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Hashcod ${phoneFormat.toUpperCase()} code`,
+          body: payload,
+          type: 'phone-browser-code',
+          codeType: nextRecord.matchedCode?.type || nextRecord.name || 'hns-code',
+          codeIndex: nextRecord.routeId,
+          value: nextRecord.raw,
+          format: phoneFormat,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'phone_browser_failed');
+      push(`phone-browser notified ${nextRecord.routeId} as ${phoneFormat}`, 'ok');
+      setPhoneBrowserStatus(L('Enviado al Phone Browser. Abre la notificacion en el telefono para ver el code.', 'Sent to Phone Browser. Open the notification on the phone to view the code.'));
+      notify?.(L('Code enviado al Phone Browser', 'Code sent to Phone Browser'));
+    } catch (err) {
+      push(`phone-browser error: ${err.message}`, 'err');
+      setPhoneBrowserStatus(L('No se pudo enviar al Phone Browser. Revisa que el telefono este conectado.', 'Could not send to Phone Browser. Check that the phone is connected.'));
+    }
+  };
+  const copyPhoneBrowserPayload = async () => {
+    try {
+      await navigator.clipboard?.writeText(phoneBrowserPayload());
+      notify?.(L('Payload Phone Browser copiado', 'Phone Browser payload copied'));
+    } catch {
+      notify?.(L('No se pudo copiar el payload', 'Could not copy payload'));
     }
   };
   const sendGateway = async () => {
@@ -3251,6 +3345,7 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
     if (cmd === 'packet') { await buildPacket(record || await resolveUrl(url, false)); return; }
     if (cmd === 'db-code' || cmd === 'database-code') { await openDatabaseCode(); return; }
     if (cmd === 'send-db-phone' || cmd === 'notify-db') { await notifyDatabaseCode(); return; }
+    if (cmd === 'phone-format' || cmd === 'send-phone-format' || cmd === 'phone-browser') { await notifyPhoneBrowserFormat(); return; }
     if (cmd === 'send-gateway' || cmd === 'send') { await sendGateway(); return; }
     if (cmd === 'notify-phone' || cmd === 'phone') { await notifyPhone(); return; }
     if (cmd === 'copy') { copyPacket(); push('packet copied', 'ok'); return; }
@@ -3299,6 +3394,30 @@ const HnsBrowserDialog = ({ open, onClose, rows, outputRows, notify, language })
                 <button onClick={openDatabaseCode} disabled={!codeSourceValue.trim()}>{L('Usar code', 'Use code')}</button>
                 <button onClick={notifyDatabaseCode} disabled={!codeSourceValue.trim()}>PHONE OS</button>
               </div>
+            </div>
+            <div className="hnsb-phone-format">
+              <div className="hnsb-format-head">
+                <div>
+                  <span>{L('Enviar code por Phone Browser', 'Send code by Phone Browser')}</span>
+                  <b>{L('Formato visible en el telefono', 'Phone-visible format')}</b>
+                </div>
+                <select value={phoneFormat} onChange={e => setPhoneFormat(e.target.value)}>
+                  {phoneFormats.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                </select>
+              </div>
+              <div className="hnsb-format-selected">
+                <span>{L('Code seleccionado', 'Selected code')}</span>
+                <b>{makePhoneBrowserRow()?.idx || '---'} | {makePhoneBrowserRow()?.type || 'HNS'}</b>
+              </div>
+              <div className="hnsb-format-preview">
+                <span>{L('Vista previa para el Phone Browser', 'Phone Browser preview')}</span>
+                <pre>{phoneBrowserPayload()}</pre>
+              </div>
+              <div className="hnsb-format-actions">
+                <button onClick={notifyPhoneBrowserFormat}>{L('Enviar Phone Browser', 'Send Phone Browser')}</button>
+                <button onClick={copyPhoneBrowserPayload}>{L('Copiar payload', 'Copy payload')}</button>
+              </div>
+              {phoneBrowserStatus && <div className="hnsb-format-status">{phoneBrowserStatus}</div>}
             </div>
             <pre className="hnsb-packet">{packetText() || L('Abre una URL HNS para construir el paquete de control.', 'Open an HNS URL to build the control packet.')}</pre>
             <label className="hnsb-phone"><span>{L('Telefono gateway', 'Gateway phone')}</span><input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 829 000 0000" inputMode="tel" /></label>
