@@ -2117,6 +2117,7 @@ const TOP_MENU_ICONS = {
   hnsBrowser: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>`,
   cryptoAi: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h4"/><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27"/><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122"/><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>`,
   containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
+  derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3786,6 +3787,165 @@ const ContainerPortDialog = ({ open, onClose, portState, setPortState, notify, l
                 </div>
               </>
             )}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const DerivativesLabDialog = ({ open, onClose, rows, notify, language, onSaveRows }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [sourceId, setSourceId] = useState('');
+  const [count, setCount] = useState(100);
+  const [algorithm, setAlgorithm] = useState('HMAC-SHA-256');
+  const [format, setFormat] = useState('hex');
+  const [domain, setDomain] = useState('hashcod.derivative.v1');
+  const [salt, setSalt] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState([]);
+  const sourceRows = useMemo(() => (rows || []).filter(row => row?.value).slice(0, 1000), [rows]);
+  const source = sourceRows.find(row => String(row.id) === sourceId) || sourceRows[0] || null;
+
+  useEffect(() => {
+    if (open && !sourceId && sourceRows[0]) setSourceId(String(sourceRows[0].id));
+  }, [open, sourceId, sourceRows]);
+
+  if (!open) return null;
+
+  const enc = new TextEncoder();
+  const toHex = (buffer) => Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
+  const toB64Url = (buffer) => {
+    const bytes = new Uint8Array(buffer);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  };
+  const formatBytes = (buffer) => format === 'base64url' ? toB64Url(buffer) : toHex(buffer);
+  const randomSalt = () => {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    setSalt(toHex(bytes));
+  };
+  const deriveOne = async (baseValue, i, activeSalt) => {
+    const info = `${domain}|${activeSalt}|${source?.type || 'code'}|${source?.idx || 0}|${i}`;
+    if (algorithm === 'HKDF-SHA-256') {
+      const key = await crypto.subtle.importKey('raw', enc.encode(String(baseValue)), 'HKDF', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: enc.encode(activeSalt), info: enc.encode(info) }, key, 256);
+      return formatBytes(bits);
+    }
+    const key = await crypto.subtle.importKey('raw', enc.encode(String(baseValue)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(info));
+    return formatBytes(sig);
+  };
+  const generateDerivatives = async () => {
+    if (!source?.value) {
+      notify?.(L('Primero guarda codes en la base de datos.', 'Save codes to the database first.'));
+      return;
+    }
+    const total = Math.max(1, Math.min(1000, Number(count) || 1));
+    const activeSalt = salt || toHex(crypto.getRandomValues(new Uint8Array(16)));
+    if (!salt) setSalt(activeSalt);
+    setBusy(true);
+    try {
+      const parentDigest = (await digestHex(String(source.value))).slice(0, 24).toUpperCase();
+      const out = [];
+      for (let i = 1; i <= total; i++) {
+        const value = await deriveOne(source.value, i, activeSalt);
+        out.push({
+          id: Date.now() + i,
+          idx: i,
+          type: `derivative-${algorithm.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          primitiveLabel: `Derivative ${algorithm}`,
+          value,
+          ts: Date.now(),
+          parent: { id: source.id, idx: source.idx, type: source.type, digest: parentDigest },
+          derivation: { algorithm, salt: activeSalt, domain, index: i, format },
+        });
+        if (i % 50 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      setResults(out);
+      notify?.(L(`${out.length} derivadas creadas desde un code guardado.`, `${out.length} derivatives created from one saved code.`));
+    } catch (err) {
+      console.error(err);
+      notify?.(L('No se pudieron crear las derivadas.', 'Could not create derivatives.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const saveToDatabase = () => {
+    if (!results.length) return;
+    onSaveRows?.(results, 'derivatives');
+    notify?.(L('Derivadas guardadas en la base de datos.', 'Derivatives saved to database.'));
+  };
+  const exportJson = () => {
+    const manifest = { tool: 'Hashcod Derivatives Lab', algorithm, domain, salt, count: results.length, source: source ? { id: source.id, idx: source.idx, type: source.type } : null, results };
+    triggerDownload(`Hashcod-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportTxt = () => {
+    const text = results.map(row => row.value).join('\n');
+    triggerDownload(`Hashcod-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.txt`, text, 'text/plain;charset=utf-8');
+  };
+  const copyAll = () => {
+    navigator.clipboard?.writeText(results.map(row => row.value).join('\n'));
+    notify?.(L('Derivadas copiadas.', 'Derivatives copied.'));
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg derivdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h deriv-head">
+          <div className="deriv-title">
+            <span className="deriv-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.derivatives}} />
+            <div>
+              <h2>{L('Derivador de Codes Guardados', 'Saved Code Derivatives Lab')}</h2>
+              <p>{L('Deriva hasta 1000 codes nuevos desde un solo code de la base usando HMAC/HKDF SHA-256 con salt, dominio e indice.', 'Derive up to 1000 new codes from one database code using HMAC/HKDF SHA-256 with salt, domain, and index.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="deriv-shell">
+          <aside className="deriv-side">
+            <label><span>{L('Code fuente de la base', 'Source database code')}</span>
+              <select value={source ? String(source.id) : ''} onChange={e => setSourceId(e.target.value)} disabled={!sourceRows.length}>
+                {!sourceRows.length && <option>{L('Base de datos vacia', 'Database is empty')}</option>}
+                {sourceRows.map(row => <option key={row.id} value={String(row.id)}>{String(row.idx || 0).padStart(3, '0')} | {row.type || row.primitiveLabel || 'code'}</option>)}
+              </select>
+            </label>
+            <label><span>{L('Cantidad', 'Quantity')}</span><input type="number" min="1" max="1000" value={count} onChange={e => setCount(e.target.value)} /></label>
+            <label><span>{L('Motor criptografico', 'Cryptographic engine')}</span><select value={algorithm} onChange={e => setAlgorithm(e.target.value)}><option>HMAC-SHA-256</option><option>HKDF-SHA-256</option></select></label>
+            <label><span>{L('Formato', 'Format')}</span><select value={format} onChange={e => setFormat(e.target.value)}><option value="hex">HEX 256-bit</option><option value="base64url">Base64URL 256-bit</option></select></label>
+            <label><span>{L('Dominio de derivacion', 'Derivation domain')}</span><input value={domain} onChange={e => setDomain(e.target.value)} /></label>
+            <label><span>Salt</span><input value={salt} onChange={e => setSalt(e.target.value)} placeholder={L('Auto si esta vacio', 'Auto if empty')} /></label>
+            <div className="deriv-actions">
+              <button onClick={randomSalt}>{L('Nuevo salt', 'New salt')}</button>
+              <button onClick={generateDerivatives} disabled={busy || !sourceRows.length}>{busy ? L('Derivando', 'Deriving') : L('Crear derivadas', 'Create derivatives')}</button>
+            </div>
+            <div className="deriv-source">
+              <span>{L('Fuente activa', 'Active source')}</span>
+              <b>{source ? `${String(source.idx || 0).padStart(3, '0')} | ${source.type}` : '---'}</b>
+              <code>{source?.value ? window.OCG_GEN.display(source.value, 180) : L('Sin codes guardados.', 'No saved codes.')}</code>
+            </div>
+          </aside>
+          <main className="deriv-main">
+            <div className="deriv-toolbar">
+              <div><b>{results.length}</b><span>{L('derivadas listas', 'derivatives ready')}</span></div>
+              <button onClick={saveToDatabase} disabled={!results.length}>{L('Guardar en base', 'Save to database')}</button>
+              <button onClick={copyAll} disabled={!results.length}>{L('Copiar', 'Copy')}</button>
+              <button onClick={exportJson} disabled={!results.length}>JSON</button>
+              <button onClick={exportTxt} disabled={!results.length}>TXT</button>
+            </div>
+            <div className="deriv-results">
+              {!results.length ? <div className="deriv-empty">{L('Selecciona un code guardado y crea derivadas criptograficas nuevas.', 'Select a saved code and create new cryptographic derivatives.')}</div> : results.slice(0, 1000).map(row => (
+                <article key={row.id} className="deriv-row">
+                  <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.derivatives}} />
+                  <div>
+                    <b>{String(row.idx).padStart(4, '0')} | {algorithm}</b>
+                    <code>{window.OCG_GEN.display(row.value, 160)}</code>
+                  </div>
+                </article>
+              ))}
+            </div>
           </main>
         </div>
       </section>
@@ -9257,6 +9417,7 @@ const App = () => {
   const [hnsBrowserOpen, setHnsBrowserOpen] = useState(false);
   const [cryptoAiOpen, setCryptoAiOpen] = useState(false);
   const [containerPortOpen, setContainerPortOpen] = useState(false);
+  const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -10023,6 +10184,7 @@ const App = () => {
   const openHnsBrowser = () => setHnsBrowserOpen(true);
   const openCryptoAi = () => setCryptoAiOpen(true);
   const openContainerPort = () => setContainerPortOpen(true);
+  const openDerivativesLab = () => setDerivativesOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -10227,6 +10389,12 @@ const App = () => {
     { label: language === 'es' ? 'Contenedores de 100 cajas' : '100-box containers', onClick: openContainerPort },
     { label: 'IH HMAC-SHA3-256', onClick: openContainerPort },
   ];
+  const derivativesItems = [
+    { label: language === 'es' ? 'Abrir Derivatives Lab' : 'Open Derivatives Lab', onClick: openDerivativesLab },
+    { label: language === 'es' ? 'Derivar hasta 1000 por code' : 'Derive up to 1000 per code', onClick: openDerivativesLab },
+    { label: 'HMAC-SHA-256 / HKDF-SHA-256', onClick: openDerivativesLab },
+    { label: language === 'es' ? 'Guardar derivadas en base' : 'Save derivatives to database', onClick: openDerivativesLab, disabled: !copyDb.length },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -10336,7 +10504,7 @@ const App = () => {
     lines.push('');
     named.forEach((name, i) => lines.push(`${String(i + 1).padStart(3, '0')} ocg code gen ${name} --qty 10 --save`));
     for (let i = 1; i <= 619; i++) lines.push(`${String(100 + i).padStart(3, '0')} ocg code${String(i).padStart(3, '0')} gen --qty 1`);
-    ['db','qr','cert','osdg','sequence','color','markdown','desk','pandora','text','drive','report','audit','backup','workflow','legal','system'].forEach((m, mi) => {
+    ['db','qr','cert','osdg','sequence','color','markdown','desk','pandora','text','drive','derivatives','report','audit','backup','workflow','legal','system'].forEach((m, mi) => {
       ['open','list','create','export','verify','audit','help','status','clear','download','print','copy','save','load','reset','guide','json','pdf','html','txt','csv','manifest'].forEach((a, ai) => {
         lines.push(`${String(720 + mi * 20 + ai).padStart(3, '0')} ocg ${m} ${a}`);
       });
@@ -10416,6 +10584,7 @@ const App = () => {
         hnsbrowser: openHnsBrowser, browserhns: openHnsBrowser, 'hns-browser': openHnsBrowser,
         cryptoai: openCryptoAi, ai: openCryptoAi, hsc: openCryptoAi, 'crypto-ai': openCryptoAi,
         containerport: openContainerPort, container: openContainerPort, containers: openContainerPort, puerto: openContainerPort, 'container-port': openContainerPort,
+        derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -10551,6 +10720,8 @@ const App = () => {
       hnsbrowser: { open: openHnsBrowser, label: 'HNS Browser', verbs: ['open','resolve','packet','gateway','phone','cli','help'] },
       cryptoai: { open: openCryptoAi, label: 'Crypto AI', verbs: ['chat','claude','gpt','gemini','review','tokenize','security','help'] },
       containerport: { open: openContainerPort, label: 'Container Port', verbs: ['box','container','ih','hmac','phone','manifest','formula','help'] },
+      derivatives: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['create','derive','hkdf','hmac','save','export','salt','domain','help'] },
+      derivadas: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['crear','derivar','guardar','exportar','salt','dominio','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -10576,7 +10747,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -10602,6 +10773,7 @@ const App = () => {
       <HnsBrowserDialog open={hnsBrowserOpen} onClose={() => setHnsBrowserOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <CryptoAiDialog open={cryptoAiOpen} onClose={() => setCryptoAiOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
+      <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -10648,6 +10820,7 @@ const App = () => {
             <MenuButton label="HNS BROWSER" icon={TOP_MENU_ICONS.hnsBrowser} iconOnly items={hnsBrowserItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHnsBrowser} />
             <MenuButton label="CRYPTO AI" icon={TOP_MENU_ICONS.cryptoAi} iconOnly items={cryptoAiItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoAi} />
             <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
+            <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
