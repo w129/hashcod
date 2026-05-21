@@ -79,8 +79,8 @@
     return `<img class="ocg-brand-icon" src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
   }
 
-  function renderCodeLayersIcon(s=16) {
-    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>`;
+  function renderCodeContainerIcon(s=16) {
+    return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z"/><path d="M10 21.9V14L2.1 9.1"/><path d="m10 14 11.9-6.9"/><path d="M14 19.8v-8.1"/><path d="M18 17.5V9.4"/></svg>`;
   }
 
   function renderBadge(meta={}, s=18, category=false) {
@@ -132,8 +132,8 @@
     curve: (s=16) => renderPlainIcon('curve', s),
     modern: (s=16) => renderPlainIcon('modern', s),
     card: (s=16) => renderPlainIcon('card', s),
-    code: (meta, s=18) => renderCodeLayersIcon(s),
-    categoryBadge: (meta, s=16) => renderCodeLayersIcon(s),
+    code: (meta, s=18) => renderCodeContainerIcon(s),
+    categoryBadge: (meta, s=16) => renderCodeContainerIcon(s),
   };
 
   window.OCG_ICONS = api;
