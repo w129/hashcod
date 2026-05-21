@@ -2118,6 +2118,7 @@ const TOP_MENU_ICONS = {
   cryptoAi: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h4"/><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27"/><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122"/><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>`,
   containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
+  fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3946,6 +3947,127 @@ const DerivativesLabDialog = ({ open, onClose, rows, notify, language, onSaveRow
                 </article>
               ))}
             </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const UniversalFileViewerDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [fileInfo, setFileInfo] = useState(null);
+  const [objectUrl, setObjectUrl] = useState('');
+  const [text, setText] = useState('');
+  const [hex, setHex] = useState('');
+  const [sha, setSha] = useState('');
+  const [error, setError] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => () => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, [objectUrl]);
+
+  if (!open) return null;
+
+  const bytesToHexLines = (bytes, max = 4096) => {
+    const slice = bytes.slice(0, max);
+    const lines = [];
+    for (let i = 0; i < slice.length; i += 16) {
+      const chunk = slice.slice(i, i + 16);
+      const addr = i.toString(16).padStart(8, '0');
+      const hx = Array.from(chunk, b => b.toString(16).padStart(2, '0')).join(' ').padEnd(47, ' ');
+      const ascii = Array.from(chunk, b => b >= 32 && b <= 126 ? String.fromCharCode(b) : '.').join('');
+      lines.push(`${addr}  ${hx}  ${ascii}`);
+    }
+    return lines.join('\n');
+  };
+  const bufferHex = (buffer) => Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
+  const kindFor = (file) => {
+    const type = String(file?.type || '').toLowerCase();
+    const name = String(file?.name || '').toLowerCase();
+    if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|svg|ico)$/i.test(name)) return 'image';
+    if (type === 'application/pdf' || /\.pdf$/i.test(name)) return 'pdf';
+    if (type.startsWith('video/') || /\.(mp4|webm|ogg|mov|m4v)$/i.test(name)) return 'video';
+    if (type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|flac)$/i.test(name)) return 'audio';
+    if (type.includes('json') || /\.json$/i.test(name)) return 'json';
+    if (type.startsWith('text/') || /\.(txt|md|csv|tsv|xml|html?|css|js|jsx|ts|tsx|log|yaml|yml|ini|env|sql|py|java|c|cpp|h|rs|go|rb|php|sh|ps1)$/i.test(name)) return 'text';
+    return 'binary';
+  };
+  const resetView = () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    setObjectUrl('');
+    setFileInfo(null);
+    setText('');
+    setHex('');
+    setSha('');
+    setError('');
+  };
+  const loadFile = async (file) => {
+    if (!file) return;
+    resetView();
+    setError('');
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+    const kind = kindFor(file);
+    setFileInfo({ name: file.name, size: file.size, type: file.type || 'application/octet-stream', lastModified: file.lastModified, kind });
+    try {
+      const buffer = await file.arrayBuffer();
+      setSha(bufferHex(await crypto.subtle.digest('SHA-256', buffer)).toUpperCase());
+      setHex(bytesToHexLines(new Uint8Array(buffer)));
+      if (['text', 'json'].includes(kind) || file.size <= 1024 * 1024) {
+        try { setText(new TextDecoder('utf-8', { fatal: false }).decode(buffer)); } catch { setText(''); }
+      }
+      notify?.(L('Archivo cargado en el visualizador.', 'File loaded in viewer.'));
+    } catch (err) {
+      console.error(err);
+      setError(L('No se pudo leer el archivo.', 'Could not read file.'));
+    }
+  };
+  const fileSize = fileInfo ? `${(fileInfo.size / 1024).toFixed(fileInfo.size > 1024 * 1024 ? 1 : 2)} KB` : '---';
+  const renderPreview = () => {
+    if (!fileInfo) return <div className="fileview-empty">{L('Sube un archivo para visualizarlo aqui.', 'Upload a file to preview it here.')}</div>;
+    if (fileInfo.kind === 'image') return <div className="fileview-media"><img src={objectUrl} alt={fileInfo.name} /></div>;
+    if (fileInfo.kind === 'pdf') return <iframe className="fileview-frame" src={objectUrl} title={fileInfo.name} />;
+    if (fileInfo.kind === 'video') return <div className="fileview-media"><video src={objectUrl} controls /></div>;
+    if (fileInfo.kind === 'audio') return <div className="fileview-audio"><audio src={objectUrl} controls /></div>;
+    if (fileInfo.kind === 'json') {
+      let pretty = text;
+      try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch {}
+      return <pre className="fileview-text">{pretty}</pre>;
+    }
+    if (fileInfo.kind === 'text') return <pre className="fileview-text">{text || L('Texto vacio o no legible.', 'Empty or unreadable text.')}</pre>;
+    return <pre className="fileview-text">{hex}</pre>;
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg fileviewdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h fileview-head">
+          <div className="fileview-title">
+            <span className="fileview-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.fileViewer}} />
+            <div>
+              <h2>{L('Visualizador Universal de Archivos', 'Universal File Viewer')}</h2>
+              <p>{L('Sube cualquier archivo: Hashcod lo visualiza si el navegador lo soporta y muestra metadatos, SHA-256 y vista hexadecimal para binarios.', 'Upload any file: Hashcod previews browser-supported types and shows metadata, SHA-256, and hex view for binaries.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="fileview-shell">
+          <aside className="fileview-side">
+            <input ref={inputRef} type="file" className="hidden-file" onChange={e => loadFile(e.target.files?.[0])} />
+            <button className="fileview-upload" onClick={() => inputRef.current?.click()}>{L('Subir archivo', 'Upload file')}</button>
+            <button className="fileview-clear" onClick={resetView} disabled={!fileInfo}>{L('Limpiar visor', 'Clear viewer')}</button>
+            <div className="fileview-meta">
+              <div><span>{L('Nombre', 'Name')}</span><b>{fileInfo?.name || '---'}</b></div>
+              <div><span>{L('Tipo', 'Type')}</span><b>{fileInfo?.type || '---'}</b></div>
+              <div><span>{L('Vista', 'View')}</span><b>{fileInfo?.kind || '---'}</b></div>
+              <div><span>{L('Tamano', 'Size')}</span><b>{fileSize}</b></div>
+              <div><span>SHA-256</span><code>{sha || '---'}</code></div>
+            </div>
+            <div className="fileview-note">{L('Formatos con preview nativo: imagenes, PDF, video, audio, JSON, texto, codigo, CSV, Markdown, HTML, SVG. Otros se muestran como binario/hex.', 'Native preview formats: images, PDF, video, audio, JSON, text, code, CSV, Markdown, HTML, SVG. Others show as binary/hex.')}</div>
+          </aside>
+          <main className="fileview-main">
+            {error && <div className="fileview-error">{error}</div>}
+            {renderPreview()}
           </main>
         </div>
       </section>
@@ -9418,6 +9540,7 @@ const App = () => {
   const [cryptoAiOpen, setCryptoAiOpen] = useState(false);
   const [containerPortOpen, setContainerPortOpen] = useState(false);
   const [derivativesOpen, setDerivativesOpen] = useState(false);
+  const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -10185,6 +10308,7 @@ const App = () => {
   const openCryptoAi = () => setCryptoAiOpen(true);
   const openContainerPort = () => setContainerPortOpen(true);
   const openDerivativesLab = () => setDerivativesOpen(true);
+  const openFileViewer = () => setFileViewerOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -10395,6 +10519,12 @@ const App = () => {
     { label: 'HMAC-SHA-256 / HKDF-SHA-256', onClick: openDerivativesLab },
     { label: language === 'es' ? 'Guardar derivadas en base' : 'Save derivatives to database', onClick: openDerivativesLab, disabled: !copyDb.length },
   ];
+  const fileViewerItems = [
+    { label: language === 'es' ? 'Abrir visualizador universal' : 'Open universal viewer', onClick: openFileViewer },
+    { label: language === 'es' ? 'Imagen, PDF, audio y video' : 'Image, PDF, audio and video', onClick: openFileViewer },
+    { label: language === 'es' ? 'Texto, JSON, codigo y CSV' : 'Text, JSON, code and CSV', onClick: openFileViewer },
+    { label: language === 'es' ? 'SHA-256 y vista hexadecimal' : 'SHA-256 and hex view', onClick: openFileViewer },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -10585,6 +10715,7 @@ const App = () => {
         cryptoai: openCryptoAi, ai: openCryptoAi, hsc: openCryptoAi, 'crypto-ai': openCryptoAi,
         containerport: openContainerPort, container: openContainerPort, containers: openContainerPort, puerto: openContainerPort, 'container-port': openContainerPort,
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
+        fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -10722,6 +10853,8 @@ const App = () => {
       containerport: { open: openContainerPort, label: 'Container Port', verbs: ['box','container','ih','hmac','phone','manifest','formula','help'] },
       derivatives: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['create','derive','hkdf','hmac','save','export','salt','domain','help'] },
       derivadas: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['crear','derivar','guardar','exportar','salt','dominio','help'] },
+      fileviewer: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['open','upload','preview','pdf','image','video','audio','json','hex','sha256','help'] },
+      visualizador: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['abrir','subir','ver','pdf','imagen','video','audio','json','hex','sha256','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -10747,7 +10880,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -10774,6 +10907,7 @@ const App = () => {
       <CryptoAiDialog open={cryptoAiOpen} onClose={() => setCryptoAiOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
+      <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -10821,6 +10955,7 @@ const App = () => {
             <MenuButton label="CRYPTO AI" icon={TOP_MENU_ICONS.cryptoAi} iconOnly items={cryptoAiItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoAi} />
             <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
+            <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
