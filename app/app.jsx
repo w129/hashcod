@@ -2126,6 +2126,7 @@ const TOP_MENU_ICONS = {
   containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
+  graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -4075,6 +4076,183 @@ const UniversalFileViewerDialog = ({ open, onClose, notify, language }) => {
           <main className="fileview-main">
             {error && <div className="fileview-error">{error}</div>}
             {renderPreview()}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const GraphLabDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const canvasRef = useRef(null);
+  const [expressions, setExpressions] = useState('sin(x)\ncos(x)\nx^2 / 8');
+  const [xMin, setXMin] = useState(-10);
+  const [xMax, setXMax] = useState(10);
+  const [yMin, setYMin] = useState(-6);
+  const [yMax, setYMax] = useState(6);
+  const [samples, setSamples] = useState(900);
+  const [status, setStatus] = useState('');
+  const palette = ['#111111', '#177c43', '#7a4cff', '#be4b00', '#006f9f', '#9b111e'];
+
+  const compileExpression = (raw) => {
+    const names = ['sin','cos','tan','asin','acos','atan','sqrt','abs','log','log10','exp','pow','min','max','floor','ceil','round','PI','E'];
+    const expr = String(raw || '')
+      .replace(/\^/g, '**')
+      .replace(/\bpi\b/gi, 'PI')
+      .replace(/\be\b/g, 'E');
+    const cleaned = expr.replace(/\b(sin|cos|tan|asin|acos|atan|sqrt|abs|log|log10|exp|pow|min|max|floor|ceil|round|PI|E|x)\b/g, '');
+    if (/[^0-9+\-*/%().,\s*]/.test(cleaned)) throw new Error(`Invalid expression: ${raw}`);
+    return new Function('x', ...names, `"use strict"; return (${expr});`);
+  };
+  const drawGraph = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const xmin = Number(xMin);
+    const xmax = Number(xMax);
+    const ymin = Number(yMin);
+    const ymax = Number(yMax);
+    const n = Math.max(80, Math.min(5000, Number(samples) || 900));
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#f7f7f4';
+    ctx.fillRect(0, 0, w, h);
+    const px = (x) => ((x - xmin) / (xmax - xmin)) * w;
+    const py = (y) => h - ((y - ymin) / (ymax - ymin)) * h;
+    ctx.strokeStyle = '#ddddd6';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = Math.ceil(xmin); x <= xmax; x++) { const gx = px(x); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); }
+    for (let y = Math.ceil(ymin); y <= ymax; y++) { const gy = py(y); ctx.moveTo(0, gy); ctx.lineTo(w, gy); }
+    ctx.stroke();
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    if (ymin <= 0 && ymax >= 0) { const y0 = py(0); ctx.moveTo(0, y0); ctx.lineTo(w, y0); }
+    if (xmin <= 0 && xmax >= 0) { const x0 = px(0); ctx.moveTo(x0, 0); ctx.lineTo(x0, h); }
+    ctx.stroke();
+    const fns = expressions.split('\n').map(v => v.trim()).filter(Boolean);
+    const mathValues = [Math.sin, Math.cos, Math.tan, Math.asin, Math.acos, Math.atan, Math.sqrt, Math.abs, Math.log, Math.log10, Math.exp, Math.pow, Math.min, Math.max, Math.floor, Math.ceil, Math.round, Math.PI, Math.E];
+    let plotted = 0;
+    try {
+      fns.forEach((expr, idx) => {
+        const fn = compileExpression(expr);
+        ctx.strokeStyle = palette[idx % palette.length];
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        let started = false;
+        for (let i = 0; i <= n; i++) {
+          const x = xmin + (i / n) * (xmax - xmin);
+          const y = fn(x, ...mathValues);
+          if (!Number.isFinite(y) || y < ymin - Math.abs(ymax - ymin) * 4 || y > ymax + Math.abs(ymax - ymin) * 4) {
+            started = false;
+            continue;
+          }
+          const cx = px(x);
+          const cy = py(y);
+          if (!started) { ctx.moveTo(cx, cy); started = true; }
+          else ctx.lineTo(cx, cy);
+        }
+        ctx.stroke();
+        plotted++;
+      });
+      ctx.fillStyle = '#111';
+      ctx.font = '13px IBM Plex Mono, Courier New, monospace';
+      fns.forEach((expr, idx) => {
+        ctx.fillStyle = palette[idx % palette.length];
+        ctx.fillText(`y = ${expr}`, 16, 24 + idx * 18);
+      });
+      setStatus(L(`${plotted} operacion(es) graficadas.`, `${plotted} operation(s) graphed.`));
+    } catch (err) {
+      console.error(err);
+      setStatus(err.message || L('Operacion invalida.', 'Invalid operation.'));
+    }
+  };
+  useEffect(() => { if (open) setTimeout(drawGraph, 40); }, [open]);
+  if (!open) return null;
+
+  const downloadPng = () => {
+    drawGraph();
+    const a = document.createElement('a');
+    a.href = canvasRef.current.toDataURL('image/png');
+    a.download = `Hashcod-GraphLab-${tsStamp()}.png`;
+    a.click();
+  };
+  const uint = (str) => new Uint8Array([...str].map(ch => ch.charCodeAt(0)));
+  const buildPdfBytes = (jpegBytes, width = 842, height = 595) => {
+    const parts = [];
+    const add = (v) => parts.push(typeof v === 'string' ? uint(v) : v);
+    const offsets = [0];
+    add('%PDF-1.4\n');
+    const obj = (n, body) => { offsets[n] = parts.reduce((s, p) => s + p.length, 0); add(`${n} 0 obj\n${body}\nendobj\n`); };
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+    obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+    offsets[4] = parts.reduce((s, p) => s + p.length, 0);
+    add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width 1400 /Height 840 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+    add(jpegBytes);
+    add('\nendstream\nendobj\n');
+    const content = `q\n${width - 48} 0 0 ${height - 48} 24 24 cm\n/Im0 Do\nQ`;
+    obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+    const xref = parts.reduce((s, p) => s + p.length, 0);
+    add(`xref\n0 6\n0000000000 65535 f \n`);
+    for (let i = 1; i <= 5; i++) add(`${String(offsets[i]).padStart(10, '0')} 00000 n \n`);
+    add(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    const total = parts.reduce((s, p) => s + p.length, 0);
+    const out = new Uint8Array(total);
+    let at = 0;
+    parts.forEach(p => { out.set(p, at); at += p.length; });
+    return out;
+  };
+  const downloadPdf = async () => {
+    drawGraph();
+    const dataUrl = canvasRef.current.toDataURL('image/jpeg', 0.92);
+    const bin = atob(dataUrl.split(',')[1]);
+    const jpeg = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) jpeg[i] = bin.charCodeAt(i);
+    const blob = new Blob([buildPdfBytes(jpeg)], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Hashcod-GraphLab-${tsStamp()}.pdf`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 500);
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg graphdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h graph-head">
+          <div className="graph-title">
+            <span className="graph-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.graphLab}} />
+            <div>
+              <h2>{L('Graficadora Matematica', 'Mathematical Graph Lab')}</h2>
+              <p>{L('Escribe operaciones matematicas, graficalas y descarga el resultado en PDF o PNG.', 'Enter mathematical operations, graph them, and download the result as PDF or PNG.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="graph-shell">
+          <aside className="graph-side">
+            <label><span>{L('Operaciones', 'Operations')}</span><textarea value={expressions} onChange={e => setExpressions(e.target.value)} spellCheck="false" /></label>
+            <div className="graph-ranges">
+              <label><span>X min</span><input type="number" value={xMin} onChange={e => setXMin(e.target.value)} /></label>
+              <label><span>X max</span><input type="number" value={xMax} onChange={e => setXMax(e.target.value)} /></label>
+              <label><span>Y min</span><input type="number" value={yMin} onChange={e => setYMin(e.target.value)} /></label>
+              <label><span>Y max</span><input type="number" value={yMax} onChange={e => setYMax(e.target.value)} /></label>
+            </div>
+            <label><span>{L('Muestras', 'Samples')}</span><input type="number" min="80" max="5000" value={samples} onChange={e => setSamples(e.target.value)} /></label>
+            <div className="graph-actions">
+              <button onClick={drawGraph}>{L('Graficar', 'Graph')}</button>
+              <button onClick={downloadPdf}>PDF</button>
+              <button onClick={downloadPng}>PNG</button>
+            </div>
+            <div className="graph-help">sin, cos, tan, sqrt, abs, log, log10, exp, pow, min, max, PI, E. {L('Usa ^ para potencias.', 'Use ^ for powers.')}</div>
+            {status && <div className="graph-status">{status}</div>}
+          </aside>
+          <main className="graph-main">
+            <canvas ref={canvasRef} width="1400" height="840" />
           </main>
         </div>
       </section>
@@ -9699,6 +9877,7 @@ const App = () => {
   const [containerPortOpen, setContainerPortOpen] = useState(false);
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
+  const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -10468,6 +10647,7 @@ const App = () => {
   const openContainerPort = () => setContainerPortOpen(true);
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
+  const openGraphLab = () => setGraphLabOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -10690,6 +10870,12 @@ const App = () => {
     { label: language === 'es' ? 'Texto, JSON, codigo y CSV' : 'Text, JSON, code and CSV', onClick: openFileViewer },
     { label: language === 'es' ? 'SHA-256 y vista hexadecimal' : 'SHA-256 and hex view', onClick: openFileViewer },
   ];
+  const graphLabItems = [
+    { label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab', onClick: openGraphLab },
+    { label: language === 'es' ? 'Operaciones por linea' : 'Line-based operations', onClick: openGraphLab },
+    { label: language === 'es' ? 'Funciones trigonométricas y potencias' : 'Trig functions and powers', onClick: openGraphLab },
+    { label: language === 'es' ? 'Descargar PDF / PNG' : 'Download PDF / PNG', onClick: openGraphLab },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -10881,6 +11067,7 @@ const App = () => {
         containerport: openContainerPort, container: openContainerPort, containers: openContainerPort, puerto: openContainerPort, 'container-port': openContainerPort,
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
+        graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -11020,6 +11207,8 @@ const App = () => {
       derivadas: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['crear','derivar','guardar','exportar','salt','dominio','help'] },
       fileviewer: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['open','upload','preview','pdf','image','video','audio','json','hex','sha256','help'] },
       visualizador: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['abrir','subir','ver','pdf','imagen','video','audio','json','hex','sha256','help'] },
+      graph: { open: openGraphLab, label: 'Graph Lab', verbs: ['plot','function','range','pdf','png','sin','cos','pow','help'] },
+      graficadora: { open: openGraphLab, label: 'Graph Lab', verbs: ['graficar','funcion','rango','pdf','png','seno','coseno','potencia','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -11045,7 +11234,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -11073,6 +11262,7 @@ const App = () => {
       <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
+      <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -11122,6 +11312,7 @@ const App = () => {
             <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
+            <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
