@@ -1792,13 +1792,19 @@ kbd {
   padding: 16px 18px;
   border-bottom: 1px solid var(--line);
 }
+.dbdlg-row.sample { border-left: 4px solid var(--ink); }
 .dbdlg-value-k {
   margin-bottom: 8px;
   color: var(--ink-3);
   font-size: 10px;
   letter-spacing: 1.7px;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
+.dbdlg-sample-ico { width: 17px; height: 17px; display: inline-grid; place-items: center; color: var(--ink); }
+.dbdlg-sample-ico svg { width: 15px; height: 15px; display: block; }
 .dbdlg-value {
   font-family: var(--mono);
   font-size: 14px;
@@ -4228,3 +4234,6 @@ button:hover,
 canvas[data-qr="true"] {
   background: #F5F5F5 !important;
 }
+
+.dbdlg-row.sample { border-left-color: #F5F5F5 !important; }
+.dbdlg-sample-ico { color: #F5F5F5 !important; }

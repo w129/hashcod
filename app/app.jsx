@@ -285,6 +285,9 @@ const COPY_DB = {
         copiedAt: new Date(now + idx).toLocaleString(),
         chars: (row.value || '').length,
         mode,
+        kind: row.kind || (mode === 'sample' ? 'sample' : 'code'),
+        sampleOf: row.sampleOf || null,
+        sampleMeta: row.sampleMeta || null,
       };
     });
     COPY_DB.save([...prepared.reverse(), ...current]);
@@ -1906,7 +1909,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, onSampleExtract, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -2002,6 +2005,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onContainerAdd?.(row);
   };
+  const extractSample = (e) => {
+    e.stopPropagation();
+    onSampleExtract?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -2078,6 +2085,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-container-add" onClick={addContainer} title={language === 'es' ? 'Agregar code a caja/contenedor' : 'Add code to box/container'}>
           <span dangerouslySetInnerHTML={{__html: STICKY_NOTE_PLUS_ICON}} />
+        </button>
+        <button className="oc-act oc-act-sample" onClick={extractSample} title={language === 'es' ? 'Sustraer muestra y guardarla en base de datos' : 'Extract sample and save it to database'}>
+          <span dangerouslySetInnerHTML={{__html: PILL_BOTTLE_ICON}} />
         </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
@@ -4585,7 +4595,7 @@ const CodeGuiCmdDialog = ({ open, onClose, row, notify, language, onApply }) => 
 const DatabaseDialog = ({ open, onClose, rows, query, setQuery, onExport, onClear, onDelete, onCopyAgain, t, language }) => {
   if (!open) return null;
   const filtered = rows.filter(row => {
-    const hay = `${row.value} ${row.primitiveLabel} ${row.categoryId} ${row.copiedAt}`.toLowerCase();
+    const hay = `${row.value} ${row.primitiveLabel} ${row.categoryId} ${row.copiedAt} ${row.kind || ''} ${row.sampleOf?.sourceIndex || ''}`.toLowerCase();
     return hay.includes(String(query || '').toLowerCase());
   });
   return (
@@ -4617,14 +4627,18 @@ const DatabaseDialog = ({ open, onClose, rows, query, setQuery, onExport, onClea
           ) : filtered.map((row) => {
             const cat = { id: row.categoryId, label: row.categoryId };
             return (
-              <article key={row.id} className="dbdlg-row">
+              <article key={row.id} className={`dbdlg-row ${row.kind === 'sample' ? 'sample' : ''}`}>
                 <div className="dbdlg-main">
-                  <div className="dbdlg-value-k">{t('databaseValue')}</div>
+                  <div className="dbdlg-value-k">
+                    {row.kind === 'sample' && <span className="dbdlg-sample-ico" dangerouslySetInnerHTML={{__html: PILL_BOTTLE_ICON}} />}
+                    {row.kind === 'sample' ? (language === 'es' ? 'Muestra sustraida' : 'Extracted sample') : t('databaseValue')}
+                  </div>
                   <div className="dbdlg-value">{row.value}</div>
                   <div className="dbdlg-meta">
                     <span><b>{t('databasePrimitive')}:</b> {row.primitiveLabel}</span>
                     <span><b>{t('databaseCategory')}:</b> {getCategoryLabel(cat, language)}</span>
-                    <span><b>{t('databaseMode')}:</b> {row.mode === 'batch' ? t('databaseBatch') : t('databaseSingle')}</span>
+                    <span><b>{t('databaseMode')}:</b> {row.kind === 'sample' ? (language === 'es' ? 'muestra' : 'sample') : row.mode === 'batch' ? t('databaseBatch') : t('databaseSingle')}</span>
+                    {row.kind === 'sample' && row.sampleOf && <span><b>{language === 'es' ? 'Origen' : 'Source'}:</b> #{row.sampleOf.sourceIndex} · {row.sampleOf.offset}+{row.sampleOf.length}</span>}
                     <span><b>{t('databaseCopiedAt')}:</b> {row.copiedAt}</span>
                   </div>
                 </div>
@@ -10070,6 +10084,40 @@ const App = () => {
     }
   }, [syncCopyDb]);
 
+  const extractCodeSample = useCallback(async (row) => {
+    if (!row?.value) return;
+    const raw = String(row.value || '');
+    const digest = await digestHex(raw);
+    const sampleLen = Math.min(raw.length, Math.max(12, Math.min(96, Math.ceil(raw.length * 0.32))));
+    const maxStart = Math.max(0, raw.length - sampleLen);
+    const seed = parseInt(digest.slice(0, 8), 16) || 0;
+    const offset = maxStart ? seed % (maxStart + 1) : 0;
+    const sampleValue = raw.slice(offset, offset + sampleLen);
+    const sampleRow = {
+      ...row,
+      value: sampleValue,
+      kind: 'sample',
+      sampleOf: {
+        sourceId: row.id,
+        sourceIndex: row.idx,
+        sourceType: row.type,
+        sourceLength: raw.length,
+        sourceSha256: digest,
+        offset,
+        length: sampleValue.length,
+      },
+      sampleMeta: {
+        algorithm: 'HASHCOD-SAMPLE-V1',
+        method: 'sha256-seeded-window',
+        ratio: raw.length ? Number((sampleValue.length / raw.length).toFixed(4)) : 0,
+        extractedAt: new Date().toISOString(),
+      },
+    };
+    COPY_DB.addMany([sampleRow], 'sample');
+    syncCopyDb();
+    notify(language === 'es' ? `Muestra #${String(row.idx).padStart(3, '0')} guardada en la base de datos` : `Sample #${String(row.idx).padStart(3, '0')} saved to database`);
+  }, [language, notify, syncCopyDb]);
+
   // Find selected type
   const { selectedType, selectedCat } = useMemo(() => {
     for (const c of visibleCatalog) {
@@ -11487,7 +11535,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} onSampleExtract={extractCodeSample} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -11573,6 +11621,7 @@ const CODE_GUI_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
 const PHONE_OS_BOOK_UP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 13V7"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="m9 10 3-3 3 3"/></svg>`;
 const PIXEL_NOTEBOOK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M16 2v20"/></svg>`;
+const PILL_BOTTLE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11h-4a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h4"/><path d="M6 7v13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7"/><rect width="16" height="5" x="4" y="2" rx="1"/></svg>`;
 const CONTAINER_CYLINDER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/></svg>`;
 const PACKAGE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>`;
 const PACKAGE_OPEN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.83 2.2a1.64 1.64 0 0 0-1.63 0L3 4.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/></svg>`;
