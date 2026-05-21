@@ -942,6 +942,71 @@ const digestHex = async (value, algo = 'SHA-256') => {
   return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const hmacSha3ContainerHex = async (keyText, payload) => {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(keyText || 'HASHCOD-IH-HMAC-SHA3-256')), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`HMAC-SHA3-256|${String(payload || '')}`));
+  return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
+};
+
+const CONTAINER_PORT_STORAGE = 'hashcod_container_port_v1';
+const CONTAINER_PORT_BOX_SIZE = 10;
+const CONTAINER_PORT_BOXES_PER_CONTAINER = 100;
+
+const emptyContainerPort = () => ({
+  containers: [],
+  activeContainerId: '',
+  sentCodes: 0,
+  history: [],
+  portTimes: { Te: 1, To: 2, Ta: 1, Tl: 1 },
+});
+
+const readContainerPort = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CONTAINER_PORT_STORAGE) || 'null');
+    if (!parsed || !Array.isArray(parsed.containers)) return emptyContainerPort();
+    return { ...emptyContainerPort(), ...parsed };
+  } catch {
+    return emptyContainerPort();
+  }
+};
+
+const writeContainerPort = (state) => {
+  localStorage.setItem(CONTAINER_PORT_STORAGE, JSON.stringify(state));
+};
+
+const makeContainerPortManifest = (container, state = emptyContainerPort()) => {
+  const boxes = Array.isArray(container?.boxes) ? container.boxes : [];
+  const codes = boxes.flatMap(box => box.codes || []);
+  const capacity = CONTAINER_PORT_BOX_SIZE * CONTAINER_PORT_BOXES_PER_CONTAINER;
+  const completeBoxes = boxes.filter(box => (box.codes || []).length >= CONTAINER_PORT_BOX_SIZE).length;
+  const times = state.portTimes || {};
+  const Te = Math.max(.01, Number(times.Te) || 1);
+  const To = Math.max(.01, Number(times.To) || 1);
+  const Ta = Math.max(.01, Number(times.Ta) || 1);
+  const Tl = Math.max(.01, Number(times.Tl) || 1);
+  const Qd = codes.length;
+  const Qc = completeBoxes * CONTAINER_PORT_BOX_SIZE;
+  const Qs = Number(state.sentCodes || 0);
+  const Ep = Math.min(1, Math.max(0, Qd / capacity));
+  const FPC = ((Qd + Qc + Qs) * Ep) / (Te + To + Ta + Tl);
+  return {
+    platform: 'Hashcod',
+    type: 'HASHCOD-CODE-CONTAINER/1',
+    formula: 'FPC = ((Qd + Qc + Qs) x Ep) / (Te + To + Ta + Tl)',
+    ihAlgorithm: 'HMAC-SHA3-256',
+    containerId: container?.id,
+    containerIH: container?.ih,
+    createdAt: container?.createdAt,
+    capacity,
+    boxesTotal: boxes.length,
+    boxesComplete: completeBoxes,
+    codesTotal: Qd,
+    metrics: { Qd, Qc, Qs, Ep: Number(Ep.toFixed(4)), Te, To, Ta, Tl, FPC: Number(FPC.toFixed(4)) },
+    boxes: boxes.map(box => ({ id: box.id, ih: box.ih, status: box.status, count: (box.codes || []).length, codes: box.codes || [] })),
+  };
+};
+
 const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 const rowsToText = (rows) => rows.map(r => r.value).join('\n');
@@ -1841,7 +1906,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, onPhonePush, onPixelNote, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1929,6 +1994,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
     e.stopPropagation();
     onPixelNote?.(row);
   };
+  const addContainer = (e) => {
+    e.stopPropagation();
+    onContainerAdd?.(row);
+  };
   return (
     <div className={`oc ${density} ${flash ? 'flash' : ''} ${isMulti ? 'multiline' : ''}`} data-row-id={row.id}>
       <div className="oc-main">
@@ -2000,6 +2069,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         <button className="oc-act oc-act-pixelnote" onClick={openPixelNote} title={language === 'es' ? 'Descargar nota pixel del code' : 'Download pixel note for code'}>
           <span dangerouslySetInnerHTML={{__html: PIXEL_NOTEBOOK_ICON}} />
         </button>
+        <button className="oc-act oc-act-container-add" onClick={addContainer} title={language === 'es' ? 'Agregar code a caja/contenedor' : 'Add code to box/container'}>
+          <span dangerouslySetInnerHTML={{__html: STICKY_NOTE_PLUS_ICON}} />
+        </button>
         <button className="oc-act" onClick={dl} title="Download as Markdown (.md)">
           <span dangerouslySetInnerHTML={{__html: DL_ICON}} />
         </button>
@@ -2044,6 +2116,7 @@ const TOP_MENU_ICONS = {
   hcp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg>`,
   hnsBrowser: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>`,
   cryptoAi: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h4"/><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27"/><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122"/><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>`,
+  containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3570,6 +3643,149 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
               <button disabled={busy}>{busy ? L('Pensando', 'Thinking') : L('Enviar', 'Send')}</button>
             </form>
             {status && <div className="cryptoai-status">{status}</div>}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const ContainerPortDialog = ({ open, onClose, portState, setPortState, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [activeContainerId, setActiveContainerId] = useState('');
+  const [activeBoxId, setActiveBoxId] = useState('');
+  if (!open) return null;
+  const state = portState || emptyContainerPort();
+  const containers = state.containers || [];
+  const activeContainer = containers.find(item => item.id === (activeContainerId || state.activeContainerId)) || containers[0] || null;
+  const boxes = activeContainer?.boxes || [];
+  const activeBox = boxes.find(box => box.id === activeBoxId) || boxes[0] || null;
+  const manifest = makeContainerPortManifest(activeContainer || { boxes: [] }, state);
+  const saveTimes = (key, value) => {
+    const next = { ...state, portTimes: { ...(state.portTimes || {}), [key]: Number(value) || 0 } };
+    writeContainerPort(next);
+    setPortState(next);
+  };
+  const exportManifest = () => {
+    if (!activeContainer) return;
+    triggerDownload(`Hashcod-Code-Container-${activeContainer.id}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    notify?.(L('Manifiesto del contenedor descargado', 'Container manifest downloaded'));
+  };
+  const removeLast = async () => {
+    if (!activeContainer || !activeBox?.codes?.length) return;
+    const next = structuredClone(state);
+    const c = next.containers.find(item => item.id === activeContainer.id);
+    const b = c?.boxes?.find(item => item.id === activeBox.id);
+    const removed = b.codes.pop();
+    b.status = b.codes.length >= CONTAINER_PORT_BOX_SIZE ? 'SEALED' : 'OPEN';
+    b.ih = await hmacSha3ContainerHex(`${c.id}:${b.id}`, JSON.stringify(b.codes));
+    c.ih = await hmacSha3ContainerHex(c.seed, JSON.stringify(c.boxes));
+    next.history = [{ at: new Date().toISOString(), event: 'code-minus', containerId: c.id, boxId: b.id, codeIndex: removed?.idx }, ...(next.history || [])].slice(0, 300);
+    writeContainerPort(next);
+    setPortState(next);
+    notify?.(L('Code restado de la caja', 'Code removed from box'));
+  };
+  const sendPhone = async () => {
+    if (!activeContainer) return;
+    try {
+      const body = [
+        'HASHCOD CONTAINER PORT',
+        `URL: hns://www.hashcod.sec/container/${activeContainer.id}`,
+        `ROUTE: CONTAINER-PORT-${String(activeContainer.ih || '').slice(0, 12).toUpperCase()}`,
+        'ACTION: PHONE_BROWSER_CONTAINER_OPEN',
+        `IH: ${activeContainer.ih}`,
+        `ALGORITHM: HMAC-SHA3-256`,
+        `BOXES: ${manifest.boxesTotal}/${CONTAINER_PORT_BOXES_PER_CONTAINER}`,
+        `CODES: ${manifest.codesTotal}/${manifest.capacity}`,
+        `FPC: ${manifest.metrics.FPC}`,
+        `FORMULA: ${manifest.formula}`,
+        '',
+        JSON.stringify(manifest, null, 2),
+      ].join('\n');
+      const res = await authFetch('/api/phone-os/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Hashcod Code Container', body, type: 'hashcod-container-port', codeType: 'container-port', codeIndex: activeContainer.id, value: `hns://www.hashcod.sec/container/${activeContainer.id}` }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'phoneos_failed');
+      const next = { ...state, sentCodes: Number(state.sentCodes || 0) + manifest.codesTotal, history: [{ at: new Date().toISOString(), event: 'phone-os-send', containerId: activeContainer.id, codes: manifest.codesTotal }, ...(state.history || [])].slice(0, 300) };
+      writeContainerPort(next);
+      setPortState(next);
+      notify?.(L('Contenedor enviado al Phone OS Browser', 'Container sent to Phone OS Browser'));
+    } catch {
+      notify?.(L('No se pudo enviar el contenedor al Phone OS', 'Could not send container to Phone OS'));
+    }
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg containerdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h container-head">
+          <div className="container-title">
+            <span className="container-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.containerPort}} />
+            <div>
+              <h2>{L('Puerto de Contenedores de Codes', 'Code Container Port')}</h2>
+              <p>{L('Agrupa codes en cajas de 10, llena contenedores de 100 cajas y sella cada contenedor con IH HMAC-SHA3-256.', 'Groups codes into boxes of 10, fills 100-box containers, and seals each container with HMAC-SHA3-256 IH.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="container-formula">
+          <b>FPC = ((Qd + Qc + Qs) x Ep) / (Te + To + Ta + Tl)</b>
+          <span>Qd {manifest.metrics.Qd} · Qc {manifest.metrics.Qc} · Qs {manifest.metrics.Qs} · Ep {manifest.metrics.Ep} · FPC {manifest.metrics.FPC}</span>
+        </div>
+        <div className="container-shell">
+          <aside className="container-side">
+            <div className="container-metrics">
+              <div><span>{L('Contenedores', 'Containers')}</span><b>{containers.length}</b></div>
+              <div><span>{L('Cajas', 'Boxes')}</span><b>{manifest.boxesTotal}/100</b></div>
+              <div><span>{L('Codes', 'Codes')}</span><b>{manifest.codesTotal}/1000</b></div>
+              <div><span>IH</span><b>{String(activeContainer?.ih || '---').slice(0, 18)}</b></div>
+            </div>
+            <div className="container-times">
+              {['Te','To','Ta','Tl'].map(key => <label key={key}><span>{key}</span><input type="number" min="0.01" step="0.25" value={state.portTimes?.[key] ?? 1} onChange={e => saveTimes(key, e.target.value)} /></label>)}
+            </div>
+            <div className="container-actions">
+              <button onClick={sendPhone} disabled={!activeContainer}>{L('Enviar Phone OS', 'Send Phone OS')}</button>
+              <button onClick={exportManifest} disabled={!activeContainer}>{L('Exportar manifiesto', 'Export manifest')}</button>
+              <button onClick={removeLast} disabled={!activeBox?.codes?.length}>{L('Restar code', 'Remove code')}</button>
+            </div>
+            <div className="container-history">
+              {(state.history || []).slice(0, 12).map((item, i) => <div key={i}><b>{item.event}</b><span>{item.containerId || '---'} · {item.boxId || ''}</span></div>)}
+            </div>
+          </aside>
+          <main className="container-main">
+            {!containers.length ? <div className="container-empty">{L('Aun no hay contenedores. Toca el icono + de un code generado para meterlo en una caja.', 'No containers yet. Tap the + icon on a generated code to place it into a box.')}</div> : (
+              <>
+                <div className="container-list">
+                  {containers.map(container => (
+                    <button key={container.id} className={container.id === activeContainer?.id ? 'on' : ''} onClick={() => { setActiveContainerId(container.id); setActiveBoxId(''); }}>
+                      <span dangerouslySetInnerHTML={{__html: CONTAINER_CYLINDER_ICON}} />
+                      <b>{container.id}</b>
+                      <em>{container.boxes?.length || 0} boxes · IH {String(container.ih || '').slice(0, 12)}</em>
+                    </button>
+                  ))}
+                </div>
+                <div className="box-grid">
+                  {boxes.map(box => (
+                    <button key={box.id} className={box.id === activeBox?.id ? 'on' : ''} onClick={() => setActiveBoxId(box.id)}>
+                      <span dangerouslySetInnerHTML={{__html: box.codes?.length >= CONTAINER_PORT_BOX_SIZE ? PACKAGE_ICON : PACKAGE_OPEN_ICON}} />
+                      <b>{box.id}</b>
+                      <em>{box.codes?.length || 0}/10 · {box.status}</em>
+                    </button>
+                  ))}
+                </div>
+                <div className="code-grid">
+                  {(activeBox?.codes || []).map(code => (
+                    <article key={code.id}>
+                      <span dangerouslySetInnerHTML={{__html: STICKY_NOTE_CHECK_ICON}} />
+                      <b>{String(code.idx).padStart(3, '0')} · {code.type}</b>
+                      <code>{window.OCG_GEN.display(code.value, 120)}</code>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
           </main>
         </div>
       </section>
@@ -9040,6 +9256,8 @@ const App = () => {
   const [hcpOpen, setHcpOpen] = useState(false);
   const [hnsBrowserOpen, setHnsBrowserOpen] = useState(false);
   const [cryptoAiOpen, setCryptoAiOpen] = useState(false);
+  const [containerPortOpen, setContainerPortOpen] = useState(false);
+  const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
   const [planLicense, setPlanLicense] = useState(() => readPlanLicense());
@@ -9804,6 +10022,48 @@ const App = () => {
   const openHcp = () => setHcpOpen(true);
   const openHnsBrowser = () => setHnsBrowserOpen(true);
   const openCryptoAi = () => setCryptoAiOpen(true);
+  const openContainerPort = () => setContainerPortOpen(true);
+  const addCodeToContainerPort = useCallback(async (row) => {
+    if (!row?.value) return;
+    const containerRandom = (len = 18, prefixValue = 'IH') => {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const bytes = new Uint8Array(len);
+      crypto.getRandomValues(bytes);
+      return `${prefixValue}-${Array.from(bytes, b => alphabet[b % alphabet.length]).join('')}`;
+    };
+    const state = readContainerPort();
+    let containers = Array.isArray(state.containers) ? state.containers : [];
+    let container = containers.find(item => item.id === state.activeContainerId && (item.boxes || []).length < CONTAINER_PORT_BOXES_PER_CONTAINER);
+    if (!container) {
+      const stamp = Date.now().toString(36).toUpperCase();
+      container = { id: `HCC-${stamp}-${String(containers.length + 1).padStart(3, '0')}`, seed: containerRandom(18, 'IH'), ih: '', boxes: [], createdAt: new Date().toISOString(), status: 'OPEN' };
+      containers = [container, ...containers];
+      state.activeContainerId = container.id;
+    }
+    let box = (container.boxes || []).find(item => (item.codes || []).length < CONTAINER_PORT_BOX_SIZE);
+    if (!box) {
+      if ((container.boxes || []).length >= CONTAINER_PORT_BOXES_PER_CONTAINER) {
+        container.status = 'SEALED';
+        const stamp = Date.now().toString(36).toUpperCase();
+        container = { id: `HCC-${stamp}-${String(containers.length + 1).padStart(3, '0')}`, seed: containerRandom(18, 'IH'), ih: '', boxes: [], createdAt: new Date().toISOString(), status: 'OPEN' };
+        containers = [container, ...containers];
+        state.activeContainerId = container.id;
+      }
+      box = { id: `BOX-${String((container.boxes || []).length + 1).padStart(3, '0')}`, ih: '', status: 'OPEN', createdAt: new Date().toISOString(), codes: [] };
+      container.boxes = [...(container.boxes || []), box];
+    }
+    if (!box.codes.some(item => item.value === row.value)) {
+      box.codes.push({ id: `CODE-${Date.now().toString(36)}-${box.codes.length + 1}`, idx: row.idx, type: row.type, value: row.value, ts: row.ts || Date.now(), loadedAt: new Date().toISOString(), icon: 'sticky-note-check' });
+    }
+    box.status = box.codes.length >= CONTAINER_PORT_BOX_SIZE ? 'SEALED' : 'OPEN';
+    box.ih = await hmacSha3ContainerHex(`${container.id}:${box.id}`, JSON.stringify(box.codes));
+    container.ih = await hmacSha3ContainerHex(container.seed, JSON.stringify(container.boxes));
+    container.status = (container.boxes || []).length >= CONTAINER_PORT_BOXES_PER_CONTAINER && (container.boxes || []).every(item => (item.codes || []).length >= CONTAINER_PORT_BOX_SIZE) ? 'SEALED' : 'OPEN';
+    const next = { ...state, containers, history: [{ at: new Date().toISOString(), event: 'code-plus', containerId: container.id, boxId: box.id, codeIndex: row.idx }, ...(state.history || [])].slice(0, 300) };
+    writeContainerPort(next);
+    setContainerPortState(next);
+    notify(`${String(row.idx).padStart(3, '0')} agregado a ${box.id} / ${container.id}`);
+  }, [notify]);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openSmsSender = (row) => setSmsRow(row);
@@ -9960,6 +10220,12 @@ const App = () => {
     { label: 'Claude -> HSC-02910', onClick: openCryptoAi },
     { label: 'GPT -> HSC-28193', onClick: openCryptoAi },
     { label: 'Gemini -> HSC-44201', onClick: openCryptoAi },
+  ];
+  const containerPortItems = [
+    { label: language === 'es' ? 'Abrir puerto de contenedores' : 'Open container port', onClick: openContainerPort },
+    { label: language === 'es' ? 'Cajas de 10 codes' : '10-code boxes', onClick: openContainerPort },
+    { label: language === 'es' ? 'Contenedores de 100 cajas' : '100-box containers', onClick: openContainerPort },
+    { label: 'IH HMAC-SHA3-256', onClick: openContainerPort },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -10149,6 +10415,7 @@ const App = () => {
         hns: openHns, namesystem: openHns, 'hash-name-system': openHns,
         hnsbrowser: openHnsBrowser, browserhns: openHnsBrowser, 'hns-browser': openHnsBrowser,
         cryptoai: openCryptoAi, ai: openCryptoAi, hsc: openCryptoAi, 'crypto-ai': openCryptoAi,
+        containerport: openContainerPort, container: openContainerPort, containers: openContainerPort, puerto: openContainerPort, 'container-port': openContainerPort,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -10283,6 +10550,7 @@ const App = () => {
       hns: { open: openHns, label: 'HNS', verbs: ['name','zone','export','namespace','secret','www','help'] },
       hnsbrowser: { open: openHnsBrowser, label: 'HNS Browser', verbs: ['open','resolve','packet','gateway','phone','cli','help'] },
       cryptoai: { open: openCryptoAi, label: 'Crypto AI', verbs: ['chat','claude','gpt','gemini','review','tokenize','security','help'] },
+      containerport: { open: openContainerPort, label: 'Container Port', verbs: ['box','container','ih','hmac','phone','manifest','formula','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -10308,7 +10576,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -10333,6 +10601,7 @@ const App = () => {
       <HashCommandPromptingDialog open={hcpOpen} onClose={() => setHcpOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HnsBrowserDialog open={hnsBrowserOpen} onClose={() => setHnsBrowserOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <CryptoAiDialog open={cryptoAiOpen} onClose={() => setCryptoAiOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -10378,6 +10647,7 @@ const App = () => {
             <MenuButton label="HNS" icon={TOP_MENU_ICONS.hns} iconOnly items={hnsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHns} />
             <MenuButton label="HNS BROWSER" icon={TOP_MENU_ICONS.hnsBrowser} iconOnly items={hnsBrowserItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHnsBrowser} />
             <MenuButton label="CRYPTO AI" icon={TOP_MENU_ICONS.cryptoAi} iconOnly items={cryptoAiItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoAi} />
+            <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -10457,7 +10727,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -10542,6 +10812,12 @@ const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13
 const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
 const PHONE_OS_BOOK_UP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 13V7"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="m9 10 3-3 3 3"/></svg>`;
 const PIXEL_NOTEBOOK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M16 2v20"/></svg>`;
+const CONTAINER_CYLINDER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/></svg>`;
+const PACKAGE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>`;
+const PACKAGE_OPEN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.83 2.2a1.64 1.64 0 0 0-1.63 0L3 4.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/></svg>`;
+const STICKY_NOTE_PLUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M18 15v6"/><path d="M21 12.356V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.355"/><path d="M21 18h-6"/></svg>`;
+const STICKY_NOTE_CHECK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 19 2 2 4-4"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M21 13V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6.5"/></svg>`;
+const STICKY_NOTE_MINUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M21 14V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.35"/><path d="M21 18h-6"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;
 const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
 const DRONE_GATE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10 7 7"/><path d="m10 14-3 3"/><path d="m14 10 3-3"/><path d="m14 14 3 3"/><path d="M14.205 4.139a4 4 0 1 1 5.439 5.863"/><path d="M19.637 14a4 4 0 1 1-5.432 5.868"/><path d="M4.367 10a4 4 0 1 1 5.438-5.862"/><path d="M9.795 19.862a4 4 0 1 1-5.429-5.873"/><rect x="10" y="8" width="4" height="8" rx="1"/></svg>`;

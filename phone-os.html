@@ -167,7 +167,7 @@
       notes.forEach(note => {
         showNotification(note);
         const el = document.createElement('article');
-        if (extractHnsUrl(note) || note.type === 'hns-control') {
+        if (extractHnsUrl(note) || note.type === 'hns-control' || String(note.type || '').startsWith('hashcod-container')) {
           el.className = 'openable';
           el.onclick = () => openPhoneBrowser(note);
         }
