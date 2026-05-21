@@ -212,6 +212,28 @@ kbd {
 .auth-session button:hover { background:#fff; color:#111; }
 .auth-session .auth-admin-icon { width:24px; height:24px; padding:0; display:grid; place-items:center; }
 .auth-session .auth-admin-icon span, .auth-session .auth-admin-icon svg { display:block; width:15px; height:15px; }
+.auth-session-list {
+  position: fixed;
+  right: 12px;
+  bottom: 76px;
+  z-index: 181;
+  width: min(420px, calc(100vw - 24px));
+  display: grid;
+  gap: 1px;
+  border: 1px solid #2a2a2a;
+  background: #2a2a2a;
+  font-family: var(--mono);
+}
+.auth-session-list article {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  background: #1a1a1a;
+  color: #f5f5f5;
+}
+.auth-session-list b { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
+.auth-session-list span,
+.auth-session-list small { color: #a3a3a3; font-size: 10px; overflow-wrap: anywhere; }
 .auth-admin-fab {
   position: fixed;
   right: 18px;
@@ -277,6 +299,28 @@ kbd {
 .authbox em.ok { color:#11652d; word-break:break-all; }
 .authbox button { min-height:48px; border:1px solid #111; background:#111; color:#fff; font-size:11px; letter-spacing:2px; text-transform:uppercase; }
 .authbox button.ghost { background:#fff; color:#111; }
+.authbox-modern { max-width: 840px; }
+.oauth-row,
+.auth-mode-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.auth-stack-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 1px;
+  border: 1px solid #2a2a2a;
+  background: #2a2a2a;
+}
+.auth-stack-list b {
+  padding: 10px;
+  background: #f7f7f4;
+  color: #111;
+  font: 10px var(--mono);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
 .dronegate {
   width: min(640px, calc(100vw - 42px));
   border: 1px solid #cfcfca;

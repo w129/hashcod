@@ -2448,59 +2448,74 @@ const AuthUsersDialog = ({ open, onClose }) => {
 const AuthGate = ({ children }) => {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
   const [mode, setMode] = useState('login');
-  const [form, setForm] = useState({ email: '', password: '', recoveryCode: '', serial: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', recoveryCode: '', serial: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [requestInfo, setRequestInfo] = useState(null);
   const [usersOpen, setUsersOpen] = useState(false);
-  const [droneTaps, setDroneTaps] = useState(0);
-  const [loginVisible, setLoginVisible] = useState(() => sessionStorage.getItem('hashcod_cast_login_visible') === '1');
+  const [providers, setProviders] = useState([]);
+  const [sessionsList, setSessionsList] = useState([]);
   const applyServerPlan = (user) => {
-    writePlanLicense({ plan: 'enterprise', activatedAt: new Date().toISOString(), fingerprint: `ENTERPRISE-${user?.role || 'user'}` });
+    writePlanLicense({ plan: 'enterprise', activatedAt: new Date().toISOString(), fingerprint: 'ENTERPRISE-' + (user?.role || 'user') });
   };
   const refresh = async () => {
     try {
       const res = await fetch('/api/auth/me');
       const data = await res.json();
       window.HASHCOD_CSRF = data.csrf || '';
+      setProviders(data.providers || []);
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
-      if (!data.user) setMode('login');
+      if (!data.user) setMode(data.setupRequired ? 'setup' : 'login');
     } catch {
       setAuth({ loading: false, setupRequired: false, user: null });
       setError('No se pudo conectar con autenticacion.');
     }
   };
   useEffect(() => { refresh(); }, []);
+  const loadSessions = async () => {
+    try {
+      const res = await authFetch('/api/auth/sessions');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'sessions_failed');
+      setSessionsList(data.sessions || []);
+    } catch {
+      setNotice('No se pudieron cargar las sesiones activas.');
+    }
+  };
   if (auth.loading) return <div className="authgate"><div className="authbox"><h1>Hashcod</h1><p>Loading secure session...</p></div></div>;
   if (auth.user) {
     return (
       <>
         <div className="auth-session">
-          <span>{auth.user.email} · {auth.user.role}</span>
+          <span>{auth.user.email} - {auth.user.role}</span>
+          <button onClick={loadSessions}>Sessions</button>
+          <button onClick={async () => { await authFetch('/api/auth/logout-all', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout all</button>
           {auth.user.role === 'admin' && <button className="auth-admin-icon" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></button>}
-          <button onClick={async () => { await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); }}>Logout</button>
+          <button onClick={async () => { await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout</button>
         </div>
+        {!!sessionsList.length && (
+          <div className="auth-session-list">
+            {sessionsList.map(row => (
+              <article key={row.id}>
+                <b>{row.current ? 'Current session' : 'Session ' + row.id}</b>
+                <span>{row.ip} - {new Date(row.lastSeenAt).toLocaleString()}</span>
+                <small>{row.userAgent}</small>
+              </article>
+            ))}
+          </div>
+        )}
         <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
         {children}
       </>
     );
   }
-  const tapDrone = () => {
-    const next = droneTaps + 1;
-    setDroneTaps(next);
-    if (next >= 4) {
-      sessionStorage.setItem('hashcod_cast_login_visible', '1');
-      setLoginVisible(true);
-      setNotice('CAST-128 login ready.');
-    }
-  };
   const submit = async (e) => {
     e.preventDefault();
     setError('');
     setNotice('');
-    const route = mode === 'request' ? '/api/access/request' : mode === 'check' ? '/api/access/check' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/cast-login';
-    const body = mode === 'login' ? { castKey: form.password } : form;
+    const route = mode === 'setup' ? '/api/auth/register' : mode === 'request' ? '/api/access/request' : mode === 'check' ? '/api/access/check' : mode === 'recover' ? '/api/auth/recover' : '/api/auth/login';
+    const body = mode === 'setup' ? { name: form.name, email: form.email, password: form.password } : form;
     try {
       const res = await fetch(route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
@@ -2508,7 +2523,7 @@ const AuthGate = ({ children }) => {
       if (mode === 'request') {
         setRequestInfo(data.request);
         setForm({ ...form, serial: data.request.serial });
-        setNotice(`Solicitud guardada. Blowfish: ${data.request.blowfishId} | Serial: ${data.request.serial}`);
+        setNotice('Solicitud guardada. Blowfish: ' + data.request.blowfishId + ' | Serial: ' + data.request.serial);
         setMode('check');
         return;
       }
@@ -2518,69 +2533,74 @@ const AuthGate = ({ children }) => {
           applyServerPlan(data.user);
           setAuth({ loading: false, setupRequired: false, user: data.user });
         } else {
-          setNotice(`Estado de solicitud: ${data.status}. Serial: ${data.serial}`);
+          setNotice('Estado de solicitud: ' + data.status + '. Serial: ' + data.serial);
         }
         return;
       }
       if (mode === 'recover') {
         setMode('login');
-        setNotice(`Password actualizado. Nuevo recovery code: ${data.recoveryCode}`);
+        setNotice('Password actualizado. Nuevo recovery code: ' + data.recoveryCode);
         return;
       }
       window.HASHCOD_CSRF = data.csrf || '';
-      if (data.recoveryCode) setNotice(`Recovery code: ${data.recoveryCode}`);
+      if (data.recoveryCode) setNotice('Recovery code: ' + data.recoveryCode);
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: false, user: data.user });
     } catch (err) {
-      setError(mode === 'request' ? 'Solicitud invalida. Usa un email real y escribe la clave que quieras usar.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
+      setError(mode === 'setup' ? 'No se pudo crear el primer usuario. Usa email real y una clave de 8+ caracteres.' : mode === 'request' ? 'Solicitud invalida. Usa un email real y escribe la clave que quieras usar.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
     }
   };
-  if (!loginVisible) {
-    return (
-      <div className="authgate">
-        <button className="auth-admin-fab" type="button" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel">
-          <span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} />
-        </button>
-        <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
-        <section className={`dronegate taps-${Math.min(droneTaps, 4)}`}>
-          <button type="button" className="dronegate-icon" onClick={tapDrone} aria-label="Open CAST login">
-            <span dangerouslySetInnerHTML={{__html: DRONE_GATE_ICON}} />
-          </button>
-          <span>HASHCOD DYNAMIC ENTRY</span>
-          <h1>Hashcod</h1>
-          <p>Toca el icono dinamico 4 veces para abrir el CAST-128 login.</p>
-          <div className="dronegate-meter" aria-hidden="true">
-            {[0, 1, 2, 3].map(i => <i key={i} className={i < droneTaps ? 'on' : ''} />)}
-          </div>
-        </section>
-      </div>
-    );
-  }
   return (
     <div className="authgate">
       <button className="auth-admin-fab" type="button" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel">
         <span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} />
       </button>
       <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
-      <form className="authbox" onSubmit={submit}>
-        <div className="authmark"><span dangerouslySetInnerHTML={{__html: DRONE_GATE_ICON}} /></div>
-        <span>HASHCOD SECURE ACCESS</span>
-        <h1>{mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'CAST-128 Login'}</h1>
-        <p>{mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y plan.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contraseña.' : 'Sesion segura con cookie HTTP-only, CSRF y roles.'}</p>
-        {mode === 'login' && <p className="auth-cast-note">Acceso directo con CAST-128 Key. Cualquier usuario con el code puede entrar a la plataforma.</p>}
+      <form className="authbox authbox-modern" onSubmit={submit}>
+        <div className="authmark"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></div>
+        <span>HASHCOD IDENTITY PLATFORM</span>
+        <h1>{mode === 'setup' ? 'Create Admin' : mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
+        <p>{mode === 'setup' ? 'Crea el primer administrador con password hasheada por scrypt y sesion segura.' : mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y permisos.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contrasena.' : 'Sesion segura con cookie HttpOnly, CSRF, rate limiting, OAuth 2.0 y roles.'}</p>
+        {mode === 'login' && !!providers.length && (
+          <div className="oauth-row">
+            {providers.map(provider => (
+              <button
+                key={provider.id}
+                type="button"
+                className="ghost"
+                onClick={() => provider.configured ? (window.location.href = provider.startUrl) : setNotice(provider.label + ' OAuth no configurado en Render.')}
+              >
+                Continue with {provider.label}
+              </button>
+            ))}
+          </div>
+        )}
         {requestInfo && <div className="auth-generated"><b>{requestInfo.blowfishId}</b><span>{requestInfo.serial}</span><em>{requestInfo.status}</em></div>}
-        {mode !== 'login' && <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />}
+        {mode === 'setup' && <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Name" />}
+        <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email" />
         {mode === 'check' && <input value={form.serial} onChange={e => setForm({ ...form, serial: e.target.value })} placeholder="Access request serial" />}
         {mode === 'recover' && <input value={form.recoveryCode} onChange={e => setForm({ ...form, recoveryCode: e.target.value })} placeholder="Recovery code" />}
-        <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={mode === 'login' ? 'CAST-128 Key' : 'Password'} />
+        <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password" />
         {error && <em>{error}</em>}
         {notice && <em className="ok">{notice}</em>}
-        <button>{mode === 'request' ? 'Join waitlist' : mode === 'check' ? 'Verify access' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
+        <button>{mode === 'setup' ? 'Create secure admin' : mode === 'request' ? 'Join waitlist' : mode === 'check' ? 'Verify access' : mode === 'recover' ? 'Recover password' : 'Unlock platform'}</button>
+        <div className="auth-mode-row">
+          {!auth.setupRequired && <button type="button" className="ghost" onClick={() => setMode('login')}>Login</button>}
+          <button type="button" className="ghost" onClick={() => setMode('request')}>Request access</button>
+          <button type="button" className="ghost" onClick={() => setMode('check')}>Check status</button>
+          <button type="button" className="ghost" onClick={() => setMode('recover')}>Recover</button>
+        </div>
+        <div className="auth-stack-list">
+          <b>scrypt password hash</b>
+          <b>OAuth 2.0 / OIDC ready</b>
+          <b>HttpOnly SameSite cookies</b>
+          <b>CSRF + rate limit</b>
+          <b>Active sessions</b>
+        </div>
       </form>
     </div>
   );
 };
-
 const SharedCliConsoleDialog = ({ open, onClose, notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const [entries, setEntries] = useState([]);

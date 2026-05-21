@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="app/styles.css?v=sample-tool-1" />
+  <link rel="stylesheet" href="app/styles.css?v=identity-platform-1" />
   <link rel="stylesheet" href="app/vault.css?v=v12-siphash-2" />
   <link rel="stylesheet" href="app/tour.css?v=enterprise-tour-1" />
 </head>
@@ -52,21 +52,13 @@
   <script type="text/babel" src="app/tech-info.jsx?v=right-info-v2"></script>
   <script type="text/babel" src="app/vault.jsx?v=v12-siphash-2"></script>
   <script type="text/babel" src="app/tour.jsx?v=enterprise-tour-1"></script>
-  <script type="text/babel" src="app/app.jsx?v=sample-tool-1"></script>
+  <script type="text/babel" src="app/app.jsx?v=identity-platform-1"></script>
 
   <script type="text/babel">
     const Root = () => {
       React.useEffect(() => { document.getElementById('root')?.setAttribute('data-mounted','1'); }, []);
-      const [sipHashReady, setSipHashReady] = React.useState(() => sessionStorage.getItem('ocg_v12_siphash_gate') === '1');
-      const [unlocked, setUnlocked] = React.useState(false);
       const [tourOpen, setTourOpen] = React.useState(false);
       const [enterprise, setEnterprise] = React.useState({ ready: false, status: null });
-      const handleUnlock = () => {
-        setUnlocked(true);
-        setTimeout(() => {
-          if (window.AppTour && !window.hasSeenTour?.()) setTourOpen(true);
-        }, 420);
-      };
       React.useEffect(() => {
         let alive = true;
         (async () => {
@@ -86,6 +78,11 @@
         };
         return () => { delete window.__startTour; };
       }, []);
+      React.useEffect(() => {
+        if (enterprise.ready && enterprise.status?.ok && window.AppTour && !window.hasSeenTour?.()) {
+          setTimeout(() => setTourOpen(true), 420);
+        }
+      }, [enterprise.ready, enterprise.status?.ok]);
 
       if (!enterprise.ready) {
         return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Ejecutando self-tests enterprise de criptografía...</div></div></div>;
@@ -94,10 +91,6 @@
         return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate bloqueó el arranque. Revisa los self-tests fallidos.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
       }
 
-      if (!sipHashReady && window.SipHashGate) {
-        return <SipHashGate onUnlock={() => { sessionStorage.setItem('ocg_v12_siphash_gate', '1'); setSipHashReady(true); }} />;
-      }
-      if (!unlocked) return <VaultLock onUnlock={handleUnlock} />;
       const PlatformApp = window.App;
       return <>
         <PlatformApp />

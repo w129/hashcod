@@ -23,13 +23,47 @@ const rateBuckets = new Map();
 const userBuckets = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
-const CAST128_ACCESS_KEY_HASH = process.env.HASHCOD_CAST128_ACCESS_KEY_HASH || '3faaeec1d952b48018b33f6d6ce3d81e76522438a7735823bf465a5914ebc5e3';
+const oauthStates = new Map();
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
 const SMS_PROVIDER = String(process.env.SMS_PROVIDER || (SMS_ACCOUNT_SID && SMS_AUTH_TOKEN && SMS_FROM_NUMBER ? 'twilio' : 'hashcod')).toLowerCase();
 const SMS_GATEWAY_PAIRING_KEY_HASH = process.env.HASHCOD_GATEWAY_PAIRING_KEY_HASH || ADMIN_PANEL_KEY_HASH;
+
+const OAUTH_PROVIDERS = {
+  google: {
+    id: 'google',
+    label: 'Google',
+    clientId: process.env.HASHCOD_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.HASHCOD_GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || '',
+    authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
+    userInfoUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
+    scope: 'openid email profile',
+  },
+  microsoft: {
+    id: 'microsoft',
+    label: 'Microsoft',
+    clientId: process.env.HASHCOD_MICROSOFT_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID || '',
+    clientSecret: process.env.HASHCOD_MICROSOFT_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET || '',
+    authorizeUrl: `https://login.microsoftonline.com/${process.env.HASHCOD_MICROSOFT_TENANT || 'common'}/oauth2/v2.0/authorize`,
+    tokenUrl: `https://login.microsoftonline.com/${process.env.HASHCOD_MICROSOFT_TENANT || 'common'}/oauth2/v2.0/token`,
+    userInfoUrl: 'https://graph.microsoft.com/oidc/userinfo',
+    scope: 'openid email profile',
+  },
+  github: {
+    id: 'github',
+    label: 'GitHub',
+    clientId: process.env.HASHCOD_GITHUB_CLIENT_ID || process.env.GITHUB_CLIENT_ID || '',
+    clientSecret: process.env.HASHCOD_GITHUB_CLIENT_SECRET || process.env.GITHUB_CLIENT_SECRET || '',
+    authorizeUrl: 'https://github.com/login/oauth/authorize',
+    tokenUrl: 'https://github.com/login/oauth/access_token',
+    userInfoUrl: 'https://api.github.com/user',
+    emailUrl: 'https://api.github.com/user/emails',
+    scope: 'read:user user:email',
+  },
+};
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -48,6 +82,8 @@ const MIME = {
 const SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
   'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Referrer-Policy': 'no-referrer',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
@@ -259,6 +295,60 @@ function postTwilioSms({ to, body }) {
   });
 }
 
+function requestJson(urlString, { method = 'GET', headers = {}, body = '' } = {}) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlString);
+    const req = https.request({
+      hostname: url.hostname,
+      path: `${url.pathname}${url.search}`,
+      method,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Hashcod-OIDC/1.0',
+        ...headers,
+        ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}),
+      },
+      timeout: 15000,
+    }, (r) => {
+      let raw = '';
+      r.setEncoding('utf8');
+      r.on('data', chunk => { raw += chunk; });
+      r.on('end', () => {
+        let json = null;
+        try { json = JSON.parse(raw || '{}'); } catch {}
+        if (r.statusCode >= 200 && r.statusCode < 300) {
+          resolve(json || {});
+          return;
+        }
+        const err = new Error(json?.error_description || json?.message || `oauth_http_${r.statusCode}`);
+        err.statusCode = r.statusCode;
+        err.details = json || raw;
+        reject(err);
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('oauth_timeout')));
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+function publicOAuthProviders(req) {
+  const origin = requestOrigin(req);
+  return Object.values(OAUTH_PROVIDERS).map(p => ({
+    id: p.id,
+    label: p.label,
+    configured: !!(p.clientId && p.clientSecret),
+    startUrl: `${origin}/api/auth/oauth/${p.id}/start`,
+  }));
+}
+
+function requestOrigin(req) {
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0] || (process.env.NODE_ENV === 'production' ? 'https' : 'http');
+  const host = req.headers['x-forwarded-host'] || req.headers.host || `localhost:${PORT}`;
+  return `${proto}://${host}`;
+}
+
 function httpsJsonRequest({ hostname, path: requestPath, method = 'POST', headers = {}, body = {}, timeout = 30000 }) {
   const payload = typeof body === 'string' ? body : JSON.stringify(body || {});
   return new Promise((resolve, reject) => {
@@ -430,8 +520,8 @@ function mergedAccessRequests(db) {
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(18);
-  const hash = crypto.pbkdf2Sync(String(password), salt, 210000, 32, 'sha256');
-  return `pbkdf2-sha256$210000$${b64url(salt)}$${b64url(hash)}`;
+  const hash = crypto.scryptSync(String(password), salt, 32, { N: 16384, r: 8, p: 1 });
+  return `scrypt$N16384r8p1$${b64url(salt)}$${b64url(hash)}`;
 }
 
 function makeRecoveryCode() {
@@ -448,17 +538,24 @@ function makeAccessSerial() {
 
 function verifyPassword(password, stored) {
   const parts = String(stored || '').split('$');
-  if (parts.length !== 4 || parts[0] !== 'pbkdf2-sha256') return false;
-  const iter = Number(parts[1]);
+  if (parts.length !== 4) return false;
   const salt = Buffer.from(parts[2], 'base64url');
   const expected = Buffer.from(parts[3], 'base64url');
-  const actual = crypto.pbkdf2Sync(String(password), salt, iter, expected.length, 'sha256');
+  let actual = null;
+  if (parts[0] === 'scrypt') {
+    actual = crypto.scryptSync(String(password), salt, expected.length, { N: 16384, r: 8, p: 1 });
+  } else if (parts[0] === 'pbkdf2-sha256') {
+    const iter = Number(parts[1]);
+    actual = crypto.pbkdf2Sync(String(password), salt, iter, expected.length, 'sha256');
+  } else {
+    return false;
+  }
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }
 
 function strongPassword(password) {
   const p = String(password || '');
-  return p.length >= 12 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p) && /[^A-Za-z0-9]/.test(p);
+  return p.length >= 8;
 }
 
 function publicUser(user) {
@@ -481,7 +578,15 @@ function cookieOptions(req, maxAge = 60 * 60 * 12) {
 function makeSession(req, user) {
   const sid = b64url(crypto.randomBytes(32));
   const csrf = b64url(crypto.randomBytes(24));
-  sessions.set(sid, { userId: user.id, csrf, expiresAt: Date.now() + 1000 * 60 * 60 * 12 });
+  sessions.set(sid, {
+    userId: user.id,
+    csrf,
+    createdAt: Date.now(),
+    lastSeenAt: Date.now(),
+    ip: clientIp(req),
+    userAgent: safeText(req.headers['user-agent'], 180),
+    expiresAt: Date.now() + 1000 * 60 * 60 * 12,
+  });
   return { sid, csrf };
 }
 
@@ -501,7 +606,20 @@ function getSession(req) {
   }
   const db = readAuthDb();
   const user = db.users.find(u => u.id === session.userId && u.status !== 'DISABLED');
+  if (user) session.lastSeenAt = Date.now();
   return user ? { sid, session, user } : null;
+}
+
+function publicSessionRow(sid, session, currentSid) {
+  return {
+    id: sid.slice(0, 10),
+    current: sid === currentSid,
+    createdAt: new Date(session.createdAt || Date.now()).toISOString(),
+    lastSeenAt: new Date(session.lastSeenAt || Date.now()).toISOString(),
+    expiresAt: new Date(session.expiresAt || Date.now()).toISOString(),
+    ip: session.ip || 'unknown',
+    userAgent: session.userAgent || '',
+  };
 }
 
 function hasAdminPanel(req) {
@@ -568,7 +686,87 @@ async function handleAuth(req, res) {
   if (route === '/api/auth/me' && req.method === 'GET') {
     const auth = getSession(req);
     const panel = getAdminPanelSession(req);
-    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req) }));
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req), providers: publicOAuthProviders(req), auth: { passwordHash: 'scrypt', legacyPasswordHash: 'pbkdf2-sha256', sessionCookie: 'HttpOnly Secure SameSite=Lax', csrf: true, rateLimit: true } }));
+    return;
+  }
+  if (route === '/api/auth/providers' && req.method === 'GET') {
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, providers: publicOAuthProviders(req) }));
+    return;
+  }
+  const oauthStart = route.match(/^\/api\/auth\/oauth\/([a-z]+)\/start$/);
+  if (oauthStart && req.method === 'GET') {
+    const provider = OAUTH_PROVIDERS[oauthStart[1]];
+    if (!provider || !provider.clientId || !provider.clientSecret) {
+      send(res, 501, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'oauth_provider_not_configured' }));
+      return;
+    }
+    const state = b64url(crypto.randomBytes(24));
+    const nonce = b64url(crypto.randomBytes(18));
+    const redirectUri = `${requestOrigin(req)}/api/auth/oauth/${provider.id}/callback`;
+    oauthStates.set(state, { provider: provider.id, nonce, redirectUri, createdAt: Date.now() });
+    const u = new URL(provider.authorizeUrl);
+    u.searchParams.set('client_id', provider.clientId);
+    u.searchParams.set('redirect_uri', redirectUri);
+    u.searchParams.set('response_type', 'code');
+    u.searchParams.set('scope', provider.scope);
+    u.searchParams.set('state', state);
+    if (provider.id !== 'github') u.searchParams.set('nonce', nonce);
+    send(res, 302, { Location: u.toString(), 'Cache-Control': 'no-store' }, '');
+    return;
+  }
+  const oauthCallback = route.match(/^\/api\/auth\/oauth\/([a-z]+)\/callback$/);
+  if (oauthCallback && req.method === 'GET') {
+    const provider = OAUTH_PROVIDERS[oauthCallback[1]];
+    const url = new URL(req.url, requestOrigin(req));
+    const code = url.searchParams.get('code') || '';
+    const state = url.searchParams.get('state') || '';
+    const stateRow = oauthStates.get(state);
+    oauthStates.delete(state);
+    if (!provider || !stateRow || stateRow.provider !== provider.id || !code) {
+      audit('oauth.invalid_callback', { ip: clientIp(req), provider: oauthCallback[1] });
+      send(res, 400, { 'Content-Type': 'text/html; charset=utf-8' }, '<h1>OAuth callback invalid</h1>');
+      return;
+    }
+    try {
+      const tokenBody = new URLSearchParams({
+        client_id: provider.clientId,
+        client_secret: provider.clientSecret,
+        code,
+        redirect_uri: stateRow.redirectUri,
+        grant_type: 'authorization_code',
+      }).toString();
+      const token = await requestJson(provider.tokenUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' }, body: tokenBody });
+      const accessToken = token.access_token;
+      if (!accessToken) throw new Error('missing_access_token');
+      let profile = await requestJson(provider.userInfoUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (provider.id === 'github') {
+        let email = profile.email;
+        if (!email) {
+          const emails = await requestJson(provider.emailUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const primary = Array.isArray(emails) ? emails.find(e => e.primary && e.verified) || emails.find(e => e.verified) : null;
+          email = primary?.email || '';
+        }
+        profile = { sub: String(profile.id || ''), email, name: profile.name || profile.login || email };
+      }
+      const sub = safeText(profile.sub || profile.id, 160);
+      const email = safeText(profile.email, 180).toLowerCase();
+      if (!sub || !validEmail(email)) throw new Error('invalid_profile');
+      const freshDb = readAuthDb();
+      let user = freshDb.users.find(u => u.oauth?.[provider.id]?.sub === sub) || freshDb.users.find(u => u.email === email);
+      if (!user) {
+        user = { id: `usr_${Date.now().toString(36)}`, email, name: safeText(profile.name, 80) || email, role: freshDb.users.length ? 'viewer' : 'admin', plan: 'enterprise', passwordHash: hashPassword(b64url(crypto.randomBytes(24))), recoveryHash: hashPassword(makeRecoveryCode()), oauth: {}, createdAt: new Date().toISOString(), status: 'ACTIVE' };
+        freshDb.users.push(user);
+      }
+      user.oauth = { ...(user.oauth || {}), [provider.id]: { sub, email, linkedAt: new Date().toISOString() } };
+      user.lastOAuthLoginAt = new Date().toISOString();
+      writeAuthDb(freshDb);
+      const session = makeSession(req, user);
+      audit('oauth.login', { ip: clientIp(req), provider: provider.id, userId: user.id });
+      send(res, 302, { Location: '/', 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, '');
+    } catch (err) {
+      audit('oauth.login_failed', { ip: clientIp(req), provider: provider?.id, error: safeText(err.message, 120) });
+      send(res, 500, { 'Content-Type': 'text/html; charset=utf-8' }, '<h1>OAuth login failed</h1><p>Revisa la configuracion del proveedor.</p>');
+    }
     return;
   }
   if (route === '/api/admin/audit' && req.method === 'GET') {
@@ -757,47 +955,32 @@ async function handleAuth(req, res) {
     }
     return;
   }
-  if (route === '/api/auth/cast-login' && req.method === 'POST') {
-    try {
-      const body = await readJsonBody(req);
-      const keyHash = crypto.createHash('sha256').update(String(body.castKey || '')).digest('hex');
-      const expectedHash = String(CAST128_ACCESS_KEY_HASH || '').trim();
-      if (expectedHash.length !== 64 || !crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedHash))) {
-        audit('auth.cast_login_failed', { ip: clientIp(req) });
-        send(res, 401, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_cast_key' }));
-        return;
-      }
-      const dbNow = readAuthDb();
-      let user = dbNow.users.find(u => u.id === 'usr_cast_public');
-      if (!user) {
-        user = {
-          id: 'usr_cast_public',
-          email: 'cast-public@hashcod.local',
-          name: 'CAST-128 Public Access',
-          role: 'viewer',
-          plan: 'free',
-          passwordHash: hashPassword(b64url(crypto.randomBytes(18))),
-          recoveryHash: hashPassword(makeRecoveryCode()),
-          createdAt: new Date().toISOString(),
-          status: 'ACTIVE',
-        };
-        dbNow.users.push(user);
-        writeAuthDb(dbNow);
-      }
-      const session = makeSession(req, user);
-      audit('auth.cast_login', { ip: clientIp(req), userId: user.id });
-      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf }));
-    } catch {
-      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
-    }
-    return;
-  }
   if (route === '/api/auth/logout' && req.method === 'POST') {
     const auth = getSession(req);
     if (auth) sessions.delete(auth.sid);
     const panel = getAdminPanelSession(req);
     if (panel) adminPanelSessions.delete(panel.sid);
     send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': [`hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`, `hashcod_admin_panel=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`] }, JSON.stringify({ ok: true }));
+    return;
+  }
+  if (route === '/api/auth/sessions' && req.method === 'GET') {
+    const auth = requireAuth(req, res, 'viewer');
+    if (!auth) return;
+    const rows = Array.from(sessions.entries())
+      .filter(([, session]) => session.userId === auth.user.id && session.expiresAt > Date.now())
+      .map(([sid, session]) => publicSessionRow(sid, session, auth.sid))
+      .sort((a, b) => String(b.lastSeenAt).localeCompare(String(a.lastSeenAt)));
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, sessions: rows }));
+    return;
+  }
+  if (route === '/api/auth/logout-all' && req.method === 'POST') {
+    const auth = requireAuth(req, res, 'viewer');
+    if (!auth) return;
+    for (const [sid, session] of sessions.entries()) {
+      if (session.userId === auth.user.id) sessions.delete(sid);
+    }
+    audit('auth.logout_all', { ip: clientIp(req), userId: auth.user.id });
+    send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
     return;
   }
   if (route === '/api/admin/unlock' && req.method === 'POST') {
