@@ -4086,14 +4086,60 @@ const UniversalFileViewerDialog = ({ open, onClose, notify, language }) => {
 const GraphLabDialog = ({ open, onClose, notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const canvasRef = useRef(null);
+  const exprRef = useRef(null);
   const [expressions, setExpressions] = useState('sin(x)\ncos(x)\nx^2 / 8');
   const [xMin, setXMin] = useState(-10);
   const [xMax, setXMax] = useState(10);
   const [yMin, setYMin] = useState(-6);
   const [yMax, setYMax] = useState(6);
   const [samples, setSamples] = useState(900);
+  const [noteText, setNoteText] = useState('');
+  const [noteX, setNoteX] = useState(0);
+  const [noteY, setNoteY] = useState(0);
+  const [notes, setNotes] = useState([]);
   const [status, setStatus] = useState('');
   const palette = ['#111111', '#177c43', '#7a4cff', '#be4b00', '#006f9f', '#9b111e'];
+  const symbolGroups = [
+    { label: L('Basicos', 'Basics'), items: [['+', '+'], ['-', '-'], ['x', 'x'], ['=', '='], ['^', '^'], ['(', '('], [')', ')'], ['.', '.'], [',', ',']] },
+    { label: L('Operadores', 'Operators'), items: [['±', '+/-'], ['×', '*'], ['÷', '/'], ['√', 'sqrt('], ['|x|', 'abs('], ['π', 'PI'], ['e', 'E'], ['∞', '1/0'], ['%', '%']] },
+    { label: L('Funciones', 'Functions'), items: [['sin', 'sin(x)'], ['cos', 'cos(x)'], ['tan', 'tan(x)'], ['asin', 'asin(x)'], ['acos', 'acos(x)'], ['atan', 'atan(x)'], ['log', 'log(x)'], ['log10', 'log10(x)'], ['exp', 'exp(x)'], ['pow', 'pow(x,2)'], ['min', 'min(x,1)'], ['max', 'max(x,1)']] },
+    { label: L('Calculo', 'Calculus'), items: [['∑', 'x+x'], ['∏', 'x*x'], ['∫', 'x^2/2'], ['∂', 'x'], ['∇', 'sqrt(x^2)'], ['lim', 'x'], ['Δ', '(x+1)-x'], ['≈', '+'], ['≠', '-'], ['≤', 'min(x,1)'], ['≥', 'max(x,1)']] },
+    { label: L('Conjuntos', 'Sets'), items: [['∈', 'x'], ['∉', '-x'], ['⊂', 'min(x,1)'], ['⊆', 'max(x,1)'], ['∪', 'max('], ['∩', 'min('], ['∅', '0'], ['ℕ', 'round(x)'], ['ℤ', 'floor(x)'], ['ℚ', 'x/2'], ['ℝ', 'x'], ['ℂ', 'sqrt(x^2)']] },
+    { label: L('Griegas', 'Greek'), items: [['α', '1.618'], ['β', '0.5'], ['γ', '0.577'], ['δ', '0.001'], ['θ', 'x'], ['λ', '2'], ['μ', '1'], ['σ', 'sqrt(x^2)'], ['φ', '1.618'], ['ω', '2*PI'], ['Ω', '1000']] },
+  ];
+
+  const insertExpression = (value) => {
+    const node = exprRef.current;
+    const text = String(value || '');
+    if (!node) {
+      setExpressions(prev => `${prev}${text}`);
+      return;
+    }
+    const start = node.selectionStart ?? expressions.length;
+    const end = node.selectionEnd ?? expressions.length;
+    const next = `${expressions.slice(0, start)}${text}${expressions.slice(end)}`;
+    setExpressions(next);
+    requestAnimationFrame(() => {
+      node.focus();
+      node.selectionStart = node.selectionEnd = start + text.length;
+    });
+  };
+
+  const addNote = () => {
+    const text = noteText.trim();
+    if (!text) {
+      setStatus(L('Escribe un texto para agregarlo al grafico.', 'Write text before adding it to the graph.'));
+      return;
+    }
+    setNotes(prev => [...prev, { id: `note-${Date.now()}-${Math.random().toString(16).slice(2)}`, text, x: Number(noteX) || 0, y: Number(noteY) || 0 }]);
+    setNoteText('');
+    setTimeout(drawGraph, 40);
+  };
+
+  const removeNote = (id) => {
+    setNotes(prev => prev.filter(note => note.id !== id));
+    setTimeout(drawGraph, 40);
+  };
 
   const compileExpression = (raw) => {
     const names = ['sin','cos','tan','asin','acos','atan','sqrt','abs','log','log10','exp','pow','min','max','floor','ceil','round','PI','E'];
@@ -4164,13 +4210,26 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
         ctx.fillStyle = palette[idx % palette.length];
         ctx.fillText(`y = ${expr}`, 16, 24 + idx * 18);
       });
+      notes.forEach((note) => {
+        const ax = px(Number(note.x) || 0);
+        const ay = py(Number(note.y) || 0);
+        ctx.font = '18px IBM Plex Mono, Courier New, monospace';
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'rgba(255,255,255,.92)';
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeText(note.text, ax + 10, ay - 10);
+        ctx.fillText(note.text, ax + 10, ay - 10);
+      });
       setStatus(L(`${plotted} operacion(es) graficadas.`, `${plotted} operation(s) graphed.`));
     } catch (err) {
       console.error(err);
       setStatus(err.message || L('Operacion invalida.', 'Invalid operation.'));
     }
   };
-  useEffect(() => { if (open) setTimeout(drawGraph, 40); }, [open]);
+  useEffect(() => { if (open) setTimeout(drawGraph, 40); }, [open, notes.length]);
   if (!open) return null;
 
   const downloadPng = () => {
@@ -4235,12 +4294,48 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
         </div>
         <div className="graph-shell">
           <aside className="graph-side">
-            <label><span>{L('Operaciones', 'Operations')}</span><textarea value={expressions} onChange={e => setExpressions(e.target.value)} spellCheck="false" /></label>
+            <label><span>{L('Operaciones', 'Operations')}</span><textarea ref={exprRef} value={expressions} onChange={e => setExpressions(e.target.value)} spellCheck="false" /></label>
+            <div className="graph-symbols">
+              <header>
+                <span>{L('Tablilla de simbolos matematicos', 'Mathematical symbol tablet')}</span>
+                <button onClick={() => setExpressions('')}>{L('Limpiar', 'Clear')}</button>
+              </header>
+              <div className="graph-symbol-scroll">
+                {symbolGroups.map(group => (
+                  <section key={group.label}>
+                    <b>{group.label}</b>
+                    <div className="graph-symbol-grid">
+                      {group.items.map(([label, value]) => (
+                        <button key={`${group.label}-${label}`} title={value} onClick={() => insertExpression(value)}>{label}</button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </div>
             <div className="graph-ranges">
               <label><span>X min</span><input type="number" value={xMin} onChange={e => setXMin(e.target.value)} /></label>
               <label><span>X max</span><input type="number" value={xMax} onChange={e => setXMax(e.target.value)} /></label>
               <label><span>Y min</span><input type="number" value={yMin} onChange={e => setYMin(e.target.value)} /></label>
               <label><span>Y max</span><input type="number" value={yMax} onChange={e => setYMax(e.target.value)} /></label>
+            </div>
+            <div className="graph-textboard">
+              <span>{L('Tablilla de agregacion de texto', 'Text annotation tablet')}</span>
+              <input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder={L('Texto sobre el grafico', 'Text on graph')} />
+              <div className="graph-ranges">
+                <label><span>X</span><input type="number" value={noteX} onChange={e => setNoteX(e.target.value)} /></label>
+                <label><span>Y</span><input type="number" value={noteY} onChange={e => setNoteY(e.target.value)} /></label>
+              </div>
+              <button onClick={addNote}>{L('Agregar texto', 'Add text')}</button>
+              {notes.length > 0 && (
+                <div className="graph-note-list">
+                  {notes.map(note => (
+                    <button key={note.id} onClick={() => removeNote(note.id)} title={L('Quitar texto', 'Remove text')}>
+                      <b>{note.text}</b><small>{note.x}, {note.y}</small>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <label><span>{L('Muestras', 'Samples')}</span><input type="number" min="80" max="5000" value={samples} onChange={e => setSamples(e.target.value)} /></label>
             <div className="graph-actions">
