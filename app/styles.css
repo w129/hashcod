@@ -813,6 +813,8 @@ kbd {
 .oc-act-assist:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-codedesk { color: #646464; }
 .oc-act-codedesk:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
+.oc-act-codegui { color: #646464; }
+.oc-act-codegui:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-sms { color: #646464; }
 .oc-act-sms:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
 .oc-act-phoneos { color: #646464; }
@@ -1483,6 +1485,40 @@ kbd {
 .codedesk-slot:hover span, .codedesk-slot:hover em { color:rgba(255,255,255,.72); }
 @media (max-width: 860px) {
   .codedesk-hero, .codedesk-grid { grid-template-columns:1fr; }
+}
+.codeguidlg { width:min(1220px, calc(100vw - 30px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; }
+.codegui-head { flex:0 0 auto; }
+.codegui-title { display:flex; align-items:center; gap:14px; min-width:0; }
+.codegui-mark { width:42px; height:42px; display:grid; place-items:center; color:#fff; background:#111; border:1px solid #111; flex:0 0 auto; }
+.codegui-mark svg { width:24px; height:24px; }
+.codegui-shell { min-height:0; display:grid; grid-template-columns:320px minmax(0,1fr); border-top:1px solid var(--line); background:#fff; }
+.codegui-side { border-right:1px solid var(--line); background:#f7f7f4; padding:14px; overflow:auto; display:grid; gap:12px; align-content:start; }
+.codegui-id, .codegui-metrics div, .codegui-report div { border:1px solid var(--line); background:#fff; padding:11px; display:grid; gap:6px; min-width:0; }
+.codegui-id span, .codegui-metrics span, .codegui-report span { color:var(--ink-4); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; }
+.codegui-id b, .codegui-metrics b, .codegui-report b, .codegui-report code { font-family:var(--mono); font-size:11px; overflow-wrap:anywhere; }
+.codegui-id em { font-style:normal; color:var(--ink-3); font-size:11px; line-height:1.4; }
+.codegui-metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.codegui-fast { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.codegui-fast button, .codegui-command button { min-height:34px; border:1px solid #111; background:#111; color:#fff; padding:0 10px; font-size:9px; letter-spacing:1.4px; text-transform:uppercase; }
+.codegui-fast button:hover, .codegui-command button:hover { background:#fff; color:#111; }
+.codegui-main { min-width:0; min-height:620px; max-height:calc(100vh - 180px); display:grid; grid-template-rows:minmax(180px, 1fr) auto auto minmax(160px, .8fr); overflow:auto; }
+.codegui-editor { border:0; border-bottom:1px solid var(--line); background:#fff; color:#111; padding:16px; resize:vertical; min-height:210px; font-family:var(--mono); font-size:13px; line-height:1.55; outline:none; }
+.codegui-command { display:grid; grid-template-columns:minmax(0,1fr) 88px auto; gap:8px; padding:12px; border-bottom:1px solid var(--line); background:#f7f7f4; }
+.codegui-command input { border:1px solid var(--line-2); background:#fff; color:#111; padding:0 11px; font-family:var(--mono); font-size:12px; min-width:0; min-height:38px; }
+.codegui-report { display:grid; grid-template-columns:1.4fr .8fr .9fr .9fr; gap:1px; background:var(--line); border-bottom:1px solid var(--line); }
+.codegui-report code { color:var(--ink-3); }
+.codegui-log { background:#080808; color:#fff; overflow:auto; padding:12px; display:grid; gap:6px; align-content:start; }
+.codegui-log pre { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-family:var(--mono); font-size:11px; line-height:1.5; }
+.codegui-log pre.sys { color:#b7b7b7; }
+.codegui-log pre.in { color:#fff; }
+.codegui-log pre.ok { color:#8effbf; }
+.codegui-log pre.err { color:#ff9b9b; }
+@media (max-width: 860px) {
+  .codeguidlg { width:calc(100vw - 16px); }
+  .codegui-shell { grid-template-columns:1fr; }
+  .codegui-side { border-right:0; border-bottom:1px solid var(--line); }
+  .codegui-main { min-height:520px; max-height:none; }
+  .codegui-command, .codegui-report { grid-template-columns:1fr; }
 }
 .cfg-plan-limit { margin-top: 5px; color: var(--ink-4); font-size: 9px; letter-spacing: .8px; text-transform: uppercase; }
 .plandlg { width: min(980px, calc(100vw - 48px)); }

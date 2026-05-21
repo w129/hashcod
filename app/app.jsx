@@ -1906,7 +1906,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, density, t, language }) => {
+const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -1981,6 +1981,10 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
   const openDesktop = (e) => {
     e.stopPropagation();
     onCodeDesktop?.(row);
+  };
+  const openCodeGui = (e) => {
+    e.stopPropagation();
+    onCodeGui?.(row);
   };
   const openSms = (e) => {
     e.stopPropagation();
@@ -2059,6 +2063,9 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
         </button>
         <button className="oc-act oc-act-codedesk" onClick={openDesktop} title={language === 'es' ? 'Abrir desktop de herramientas del code' : 'Open code tool desktop'}>
           <span dangerouslySetInnerHTML={{__html: CODE_DESKTOP_SIM_ICON}} />
+        </button>
+        <button className="oc-act oc-act-codegui" onClick={openCodeGui} title={language === 'es' ? 'Abrir GUI CMD especializada del code' : 'Open specialized code GUI CMD'}>
+          <span dangerouslySetInnerHTML={{__html: CODE_GUI_PANEL_ICON}} />
         </button>
         <button className="oc-act oc-act-sms" onClick={openSms} title={language === 'es' ? 'Enviar code por SMS' : 'Send code by SMS'}>
           <span dangerouslySetInnerHTML={{__html: SMS_TABLE_SPLIT_ICON}} />
@@ -4145,6 +4152,157 @@ const CodeDesktopDialog = ({ open, onClose, row, notify, language }) => {
               <em>{L('Disponible para proxima herramienta', 'Ready for next tool')}</em>
             </button>
           ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CodeGuiCmdDialog = ({ open, onClose, row, notify, language, onApply }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [value, setValue] = useState('');
+  const [cmd, setCmd] = useState('analyze');
+  const [log, setLog] = useState([]);
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setValue(String(row?.value || ''));
+    setCmd('analyze');
+    setLog([{ kind: 'sys', text: 'Hashcod Code GUI CMD ready. Commands: analyze, sha256, entropy, charset, split, base64, hex, fromhex, reverse, upper, lower, restore, export, copy.' }]);
+    setMetrics(null);
+  }, [open, row?.id]);
+
+  if (!open) return null;
+
+  const { cat, type } = findTypeMeta(row?.type);
+  const byteLength = new TextEncoder().encode(value).length;
+  const uniqueChars = new Set(value.split('')).size;
+  const charsetProfile = () => {
+    const parts = [];
+    if (/[A-Z]/.test(value)) parts.push('A-Z');
+    if (/[a-z]/.test(value)) parts.push('a-z');
+    if (/[0-9]/.test(value)) parts.push('0-9');
+    if (/[^A-Za-z0-9\s]/.test(value)) parts.push('symbols');
+    if (/\s/.test(value)) parts.push('space');
+    return parts.join(' + ') || 'empty';
+  };
+  const entropyBits = () => {
+    if (!value) return 0;
+    const counts = {};
+    for (const ch of value) counts[ch] = (counts[ch] || 0) + 1;
+    return Object.values(counts).reduce((sum, count) => {
+      const p = count / value.length;
+      return sum - p * Math.log2(p);
+    }, 0) * value.length;
+  };
+  const toHex = (text) => Array.from(new TextEncoder().encode(text), b => b.toString(16).padStart(2, '0')).join('');
+  const fromHex = (hex) => {
+    const clean = String(hex || '').replace(/[^0-9a-f]/gi, '');
+    const bytes = new Uint8Array(Math.floor(clean.length / 2));
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
+    return new TextDecoder().decode(bytes);
+  };
+  const b64Encode = (text) => btoa(Array.from(new TextEncoder().encode(text), b => String.fromCharCode(b)).join(''));
+  const push = (text, kind = 'out') => setLog(prev => [...prev.slice(-80), { text, kind }]);
+  const analyze = async () => {
+    const sha256 = value ? (await digestHex(value)).toUpperCase() : '';
+    const next = {
+      primitive: type?.label || row?.type || 'code',
+      category: cat ? getCategoryLabel(cat, language) : '---',
+      chars: value.length,
+      bytes: byteLength,
+      uniqueChars,
+      charset: charsetProfile(),
+      entropy: entropyBits(),
+      sha256,
+    };
+    setMetrics(next);
+    push(`ANALYZE OK | chars=${next.chars} bytes=${next.bytes} entropy≈${next.entropy.toFixed(2)} bits charset=${next.charset}`, 'ok');
+  };
+  const run = async (override = '') => {
+    const action = String(override || cmd || '').trim().toLowerCase();
+    if (!action) return;
+    push(`cmd$ ${action}`, 'in');
+    if (action === 'analyze' || action === 'study') return analyze();
+    if (action === 'sha256' || action === 'hash') { push((await digestHex(value)).toUpperCase(), 'ok'); return; }
+    if (action === 'entropy') { push(`entropy≈${entropyBits().toFixed(4)} bits | per-char≈${value ? (entropyBits() / value.length).toFixed(4) : '0.0000'}`, 'ok'); return; }
+    if (action === 'charset') { push(`charset=${charsetProfile()} | unique=${uniqueChars}`, 'ok'); return; }
+    if (action === 'split') { push(value.match(/.{1,32}/g)?.join('\n') || '', 'out'); return; }
+    if (action === 'base64') { setValue(b64Encode(value)); push('Editor transformed to Base64.', 'ok'); return; }
+    if (action === 'hex') { setValue(toHex(value)); push('Editor transformed to UTF-8 hex.', 'ok'); return; }
+    if (action === 'fromhex') { setValue(fromHex(value)); push('Editor decoded from hex.', 'ok'); return; }
+    if (action === 'reverse') { setValue(value.split('').reverse().join('')); push('Editor reversed.', 'ok'); return; }
+    if (action === 'upper') { setValue(value.toUpperCase()); push('Editor uppercased.', 'ok'); return; }
+    if (action === 'lower') { setValue(value.toLowerCase()); push('Editor lowercased.', 'ok'); return; }
+    if (action === 'restore') { setValue(String(row?.value || '')); push('Original code restored in editor.', 'ok'); return; }
+    if (action === 'copy') { navigator.clipboard?.writeText(value); push('Editor value copied.', 'ok'); return; }
+    if (action === 'export') {
+      const payload = { tool: 'Hashcod Code GUI CMD', row: { id: row?.id, idx: row?.idx, type: row?.type }, metrics: metrics || null, value, exportedAt: new Date().toISOString() };
+      triggerDownload(`Hashcod-CodeGUI-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+      push('GUI CMD export downloaded.', 'ok');
+      return;
+    }
+    push(`Unknown command: ${action}`, 'err');
+  };
+  const applyEdit = () => {
+    if (!row) return;
+    onApply?.(row.id, value);
+    notify?.(L('Code actualizado en el output.', 'Code updated in output.'));
+    push('Applied editor value to generated output.', 'ok');
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg codeguidlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h codegui-head">
+          <div className="codegui-title">
+            <span className="codegui-mark" dangerouslySetInnerHTML={{__html: CODE_GUI_PANEL_ICON}} />
+            <div>
+              <h2>{L('GUI CMD del Code', 'Code GUI CMD')}</h2>
+              <p>{L('Edita, estudia y ejecuta comandos locales sobre este code generado.', 'Edit, study, and run local commands against this generated code.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="codegui-shell">
+          <aside className="codegui-side">
+            <div className="codegui-id">
+              <span>{L('Code activo', 'Active code')}</span>
+              <b>{row ? `${String(row.idx).padStart(3, '0')} | ${type?.label || row.type}` : '---'}</b>
+              <em>{cat ? getCategoryLabel(cat, language) : 'Hashcod'}</em>
+            </div>
+            <div className="codegui-metrics">
+              <div><span>Chars</span><b>{value.length}</b></div>
+              <div><span>Bytes</span><b>{byteLength}</b></div>
+              <div><span>Unique</span><b>{uniqueChars}</b></div>
+              <div><span>Entropy</span><b>{entropyBits().toFixed(1)}</b></div>
+            </div>
+            <div className="codegui-fast">
+              {['analyze','sha256','entropy','charset','split','base64','hex','reverse','restore','copy','export'].map(item => (
+                <button key={item} onClick={() => run(item)}>{item}</button>
+              ))}
+            </div>
+          </aside>
+          <main className="codegui-main">
+            <textarea className="codegui-editor" value={value} onChange={e => setValue(e.target.value)} spellCheck="false" />
+            <div className="codegui-command">
+              <input value={cmd} onChange={e => setCmd(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') run(); }} placeholder="analyze | sha256 | entropy | base64 | hex | export" />
+              <button onClick={() => run()}>RUN</button>
+              <button onClick={applyEdit}>{L('Aplicar al output', 'Apply to output')}</button>
+            </div>
+            {metrics && (
+              <div className="codegui-report">
+                <div><span>SHA-256</span><code>{metrics.sha256}</code></div>
+                <div><span>{L('Perfil', 'Profile')}</span><b>{metrics.charset}</b></div>
+                <div><span>{L('Primitiva', 'Primitive')}</span><b>{metrics.primitive}</b></div>
+                <div><span>{L('Categoria', 'Category')}</span><b>{metrics.category}</b></div>
+              </div>
+            )}
+            <div className="codegui-log">
+              {log.map((line, i) => <pre key={i} className={line.kind}>{line.text}</pre>)}
+            </div>
+          </main>
         </div>
       </section>
     </div>
@@ -9551,6 +9709,7 @@ const App = () => {
   const [ocgUnitsOpen, setOcgUnitsOpen] = useState(false);
   const [assistRow, setAssistRow] = useState(null);
   const [codeDesktopRow, setCodeDesktopRow] = useState(null);
+  const [codeGuiRow, setCodeGuiRow] = useState(null);
   const [smsRow, setSmsRow] = useState(null);
   const [pixelNoteRow, setPixelNoteRow] = useState(null);
   const [dbQuery, setDbQuery] = useState('');
@@ -10352,6 +10511,7 @@ const App = () => {
   }, [notify]);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
+  const openCodeGui = (row) => setCodeGuiRow(row);
   const openSmsSender = (row) => setSmsRow(row);
   const openPixelNote = (row) => setPixelNoteRow(row);
   const openMountainTool = (key) => {
@@ -10360,6 +10520,11 @@ const App = () => {
   };
   const clearDatabase = () => { COPY_DB.clear(); syncCopyDb(); notify(t('databaseCleared')); };
   const deleteDatabaseRow = (id) => { COPY_DB.remove(id); syncCopyDb(); };
+  const applyCodeGuiEdit = (id, value) => {
+    setOutput(prev => prev.map(row => row.id === id ? { ...row, value: String(value || ''), editedAt: Date.now() } : row));
+    setCodeGuiRow(prev => prev?.id === id ? { ...prev, value: String(value || ''), editedAt: Date.now() } : prev);
+    setStats(prev => ({ ...prev, unique: new Set(output.map(row => row.id === id ? String(value || '') : row.value)).size }));
+  };
   const exportDatabase = () => {
     if (!planAllows('databaseExport', language === 'es' ? 'Exportar base de datos requiere Starter o superior.' : 'Database export requires Starter or higher.')) return;
     const payload = JSON.stringify(copyDb, null, 2);
@@ -10912,6 +11077,7 @@ const App = () => {
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
       <CodeDesktopDialog open={!!codeDesktopRow} onClose={() => setCodeDesktopRow(null)} row={codeDesktopRow} notify={notify} language={language} />
+      <CodeGuiCmdDialog open={!!codeGuiRow} onClose={() => setCodeGuiRow(null)} row={codeGuiRow} notify={notify} language={language} onApply={applyCodeGuiEdit} />
       <SmsSendDialog open={!!smsRow} onClose={() => setSmsRow(null)} row={smsRow} notify={notify} language={language} />
       <PixelNoteDialog open={!!pixelNoteRow} onClose={() => setPixelNoteRow(null)} row={pixelNoteRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
@@ -11035,7 +11201,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -11117,6 +11283,7 @@ const OCG_PACK_STONE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" 
 const CODE_CARD_TAPE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M2 8h20"/><circle cx="8" cy="14" r="2"/><path d="M8 12h8"/><circle cx="16" cy="14" r="2"/></svg>`;
 const ASSIST_VAN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 6v5a1 1 0 0 0 1 1h6.102a1 1 0 0 1 .712.298l.898.91a1 1 0 0 1 .288.702V17a1 1 0 0 1-1 1h-3"/><path d="M5 18H3a1 1 0 0 1-1-1V8a2 2 0 0 1 2-2h12c1.1 0 2.1.8 2.4 1.8l1.176 4.2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>`;
 const CODE_DESKTOP_SIM_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 14v4"/><path d="M14.172 2a2 2 0 0 1 1.414.586l3.828 3.828A2 2 0 0 1 20 7.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M8 14h8"/><rect x="8" y="10" width="8" height="8" rx="1"/></svg>`;
+const CODE_GUI_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>`;
 const SMS_TABLE_SPLIT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10h2"/><path d="M15 22v-8"/><path d="M15 2v4"/><path d="M2 10h2"/><path d="M20 10h2"/><path d="M3 19h18"/><path d="M3 22v-6a2 2 135 0 1 2-2h14a2 2 45 0 1 2 2v6"/><path d="M3 2v2a2 2 45 0 0 2 2h14a2 2 135 0 0 2-2V2"/><path d="M8 10h2"/><path d="M9 22v-8"/><path d="M9 2v4"/></svg>`;
 const PHONE_OS_BOOK_UP_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 13V7"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="m9 10 3-3 3 3"/></svg>`;
 const PIXEL_NOTEBOOK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M16 2v20"/></svg>`;
