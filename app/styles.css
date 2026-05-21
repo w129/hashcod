@@ -659,7 +659,7 @@ kbd {
   color: var(--ink-4);
 }
 .out-empty-mark { color: var(--ink-5); margin-bottom: 18px; min-height: 82px; display:flex; align-items:center; justify-content:center; }
-.out-empty-mark .ocg-brand-icon { width: 92px; height: 92px; opacity: .92; filter: drop-shadow(0 18px 28px rgba(0,0,0,.16)); }
+.out-empty-mark .ocg-brand-icon { width: 92px; height: 92px; opacity: .92; filter: invert(1) brightness(1.35) drop-shadow(0 18px 28px rgba(255,255,255,.10)); }
 .out-empty-t { font-family: var(--serif); font-size: 16px; color: var(--ink-2); margin-bottom: 6px; }
 .out-empty-d { font-size: 11px; max-width: 360px; line-height: 1.6; color: var(--ink-3); }
 .out-empty-d kbd { margin: 0 2px; }
