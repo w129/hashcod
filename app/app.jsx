@@ -2139,6 +2139,7 @@ const TOP_MENU_ICONS = {
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
+  latticeLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8.5 14 7-4"/><path d="m8.5 10 7 4"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -2764,6 +2765,134 @@ const TicketForgeDialog = ({ open, onClose, rows, notify, language }) => {
               <button onClick={downloadYaml}>YAML</button>
               <button onClick={() => downloadImage('png')}>PNG</button>
               <button onClick={() => downloadImage('jpg')}>JPG</button>
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const LatticeLweLabDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [cfg, setCfg] = useState({ m: 8, n: 4, q: 3329, error: 2, seedLabel: 'hashcod-lwe-session' });
+  const [result, setResult] = useState(null);
+  if (!open) return null;
+  const randInt = (max) => {
+    const bytes = new Uint32Array(1);
+    crypto.getRandomValues(bytes);
+    return bytes[0] % Math.max(1, max);
+  };
+  const mod = (value, q) => ((value % q) + q) % q;
+  const makeVector = (length, q) => Array.from({ length }, () => randInt(q));
+  const makeNoise = (length, radius) => Array.from({ length }, () => randInt(radius * 2 + 1) - radius);
+  const makeMatrix = (m, n, q) => Array.from({ length: m }, () => makeVector(n, q));
+  const computeB = (A, s, e, q) => A.map((row, i) => mod(row.reduce((sum, value, j) => sum + value * s[j], 0) + e[i], q));
+  const generateLwe = async () => {
+    const m = Math.max(2, Math.min(32, Number(cfg.m) || 8));
+    const n = Math.max(2, Math.min(16, Number(cfg.n) || 4));
+    const q = Math.max(17, Math.min(65537, Number(cfg.q) || 3329));
+    const error = Math.max(0, Math.min(64, Number(cfg.error) || 2));
+    const A = makeMatrix(m, n, q);
+    const s = makeVector(n, q);
+    const e = makeNoise(m, error);
+    const b = computeB(A, s, e, q);
+    const issuedAt = new Date().toISOString();
+    const fingerprint = await digestHex(JSON.stringify({ A, b, q, m, n, error, issuedAt, seedLabel: cfg.seedLabel }));
+    const next = {
+      platform: 'Hashcod',
+      tool: 'LWE Lattice Lab',
+      formula: 'b = A*s + e mod q',
+      issuedAt,
+      parameters: { m, n, q, errorRadius: error, seedLabel: cfg.seedLabel },
+      publicKey: { A, b },
+      secret: { s, e },
+      securityNote: L('El atacante ve A y b; el ruido e rompe la linealidad perfecta.', 'An attacker sees A and b; noise e breaks perfect linearity.'),
+      applications: ['post-quantum key exchange', 'post-quantum encryption', 'digital signatures', 'zero-knowledge style authentication'],
+      fingerprint,
+    };
+    setResult(next);
+    notify?.(L('Instancia LWE generada.', 'LWE instance generated.'));
+  };
+  const resultYaml = (r) => [
+    'hashcod_lwe_lattice:',
+    `  platform: ${yamlScalar(r.platform)}`,
+    `  tool: ${yamlScalar(r.tool)}`,
+    `  formula: ${yamlScalar(r.formula)}`,
+    `  issued_at: ${yamlScalar(r.issuedAt)}`,
+    '  parameters:',
+    `    m: ${r.parameters.m}`,
+    `    n: ${r.parameters.n}`,
+    `    q: ${r.parameters.q}`,
+    `    error_radius: ${r.parameters.errorRadius}`,
+    `    seed_label: ${yamlScalar(r.parameters.seedLabel)}`,
+    '  public_key:',
+    `    A: ${JSON.stringify(r.publicKey.A)}`,
+    `    b: ${JSON.stringify(r.publicKey.b)}`,
+    '  secret_material:',
+    `    s: ${JSON.stringify(r.secret.s)}`,
+    `    e: ${JSON.stringify(r.secret.e)}`,
+    `  security_note: ${yamlScalar(r.securityNote)}`,
+    `  fingerprint: ${yamlScalar(r.fingerprint)}`,
+  ].join('\n');
+  const exportJson = () => {
+    if (!result) return;
+    triggerDownload(`Hashcod-LWE-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportYaml = () => {
+    if (!result) return;
+    triggerDownload(`Hashcod-LWE-${tsStamp()}.yaml`, resultYaml(result), 'application/x-yaml;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg latticedlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="lattice-head">
+            <span className="lattice-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.latticeLab}} />
+            <div>
+              <h2>LWE Lattice Lab</h2>
+              <p>{L('Genera una instancia post-cuantica conceptual con b = A*s + e mod q.', 'Generate a conceptual post-quantum instance with b = A*s + e mod q.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="lattice-shell">
+          <aside className="lattice-form">
+            <label><span>m rows</span><input type="number" min="2" max="32" value={cfg.m} onChange={e => setCfg({ ...cfg, m: e.target.value })} /></label>
+            <label><span>n columns</span><input type="number" min="2" max="16" value={cfg.n} onChange={e => setCfg({ ...cfg, n: e.target.value })} /></label>
+            <label><span>modulus q</span><input type="number" min="17" max="65537" value={cfg.q} onChange={e => setCfg({ ...cfg, q: e.target.value })} /></label>
+            <label><span>error radius</span><input type="number" min="0" max="64" value={cfg.error} onChange={e => setCfg({ ...cfg, error: e.target.value })} /></label>
+            <label><span>seed label</span><input value={cfg.seedLabel} onChange={e => setCfg({ ...cfg, seedLabel: e.target.value })} /></label>
+            <button onClick={generateLwe}>{L('Generar LWE', 'Generate LWE')}</button>
+            <div className="lattice-note">A in Zq^(m x n), s in Zq^n, e small, b public.</div>
+          </aside>
+          <main className="lattice-output">
+            {!result ? (
+              <div className="lattice-empty">{L('Genera una instancia para ver A, s, e y b.', 'Generate an instance to see A, s, e and b.')}</div>
+            ) : (
+              <>
+                <article className="lattice-card">
+                  <h3>{result.formula}</h3>
+                  <p>{result.securityNote}</p>
+                  <div className="lattice-metrics">
+                    <span><b>{result.parameters.m}</b>m</span>
+                    <span><b>{result.parameters.n}</b>n</span>
+                    <span><b>{result.parameters.q}</b>q</span>
+                    <span><b>±{result.parameters.errorRadius}</b>e</span>
+                  </div>
+                </article>
+                <div className="lattice-grid">
+                  <section><b>A public matrix</b><pre>{JSON.stringify(result.publicKey.A, null, 2)}</pre></section>
+                  <section><b>s secret</b><pre>{JSON.stringify(result.secret.s)}</pre></section>
+                  <section><b>e noise</b><pre>{JSON.stringify(result.secret.e)}</pre></section>
+                  <section><b>b public vector</b><pre>{JSON.stringify(result.publicKey.b)}</pre></section>
+                </div>
+                <code className="lattice-fingerprint">{result.fingerprint}</code>
+              </>
+            )}
+            <div className="lattice-actions">
+              <button onClick={exportJson} disabled={!result}>JSON</button>
+              <button onClick={exportYaml} disabled={!result}>YAML</button>
             </div>
           </main>
         </div>
@@ -10338,6 +10467,7 @@ const App = () => {
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
+  const [latticeLabOpen, setLatticeLabOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -11144,6 +11274,7 @@ const App = () => {
   const openGraphLab = () => setGraphLabOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
+  const openLatticeLab = () => setLatticeLabOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -11381,6 +11512,11 @@ const App = () => {
     { label: language === 'es' ? 'Abrir Ticket Forge' : 'Open Ticket Forge', onClick: openTicketForge },
     { label: language === 'es' ? 'Funcion + parametros + code' : 'Function + parameters + code', onClick: openTicketForge },
     { label: language === 'es' ? 'Descargar YAML / PNG / JPG' : 'Download YAML / PNG / JPG', onClick: openTicketForge },
+  ];
+  const latticeLabItems = [
+    { label: language === 'es' ? 'Abrir LWE Lattice Lab' : 'Open LWE Lattice Lab', onClick: openLatticeLab },
+    { label: 'b = A*s + e mod q', onClick: openLatticeLab },
+    { label: language === 'es' ? 'Exportar instancia JSON/YAML' : 'Export JSON/YAML instance', onClick: openLatticeLab },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -11771,6 +11907,7 @@ const App = () => {
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
+      <LatticeLweLabDialog open={latticeLabOpen} onClose={() => setLatticeLabOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -11823,6 +11960,7 @@ const App = () => {
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
+            <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>

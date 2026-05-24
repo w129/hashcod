@@ -683,6 +683,140 @@ kbd {
   .ticketforge-form { border-right:0; border-bottom:1px solid var(--line); }
   .ticketforge-preview div { grid-template-columns:1fr; }
 }
+.latticedlg { width:min(1120px, calc(100vw - 42px)); }
+.lattice-head { display:flex; align-items:center; gap:14px; }
+.lattice-mark {
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+}
+.lattice-mark svg { width:24px; height:24px; }
+.lattice-shell {
+  display:grid;
+  grid-template-columns:320px minmax(0,1fr);
+  min-height:560px;
+  border-top:1px solid var(--line);
+}
+.lattice-form,
+.lattice-output {
+  display:grid;
+  gap:12px;
+  align-content:start;
+  padding:18px;
+}
+.lattice-form { border-right:1px solid var(--line); }
+.lattice-form label { display:grid; gap:7px; }
+.lattice-form span {
+  color:var(--ink-4);
+  font:10px var(--mono);
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+.lattice-form input {
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--line-2);
+  background:#fff;
+  padding:0 12px;
+  font-family:var(--mono);
+}
+.lattice-form button,
+.lattice-actions button {
+  min-height:42px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  padding:0 14px;
+  font:11px var(--mono);
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.lattice-note,
+.lattice-empty {
+  border:1px dashed var(--line-2);
+  color:var(--ink-4);
+  padding:12px;
+  font:11px var(--mono);
+}
+.lattice-empty {
+  min-height:280px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+}
+.lattice-card {
+  display:grid;
+  gap:10px;
+  border:1px solid var(--line);
+  background:#f7f7f4;
+  padding:18px;
+}
+.lattice-card h3 {
+  margin:0;
+  font:700 24px var(--mono);
+}
+.lattice-card p {
+  margin:0;
+  color:var(--ink-4);
+  font:12px var(--mono);
+}
+.lattice-metrics {
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:1px;
+  background:var(--line);
+}
+.lattice-metrics span {
+  display:grid;
+  gap:3px;
+  background:#fff;
+  padding:10px;
+  color:var(--ink-4);
+  font:10px var(--mono);
+  text-transform:uppercase;
+}
+.lattice-metrics b { color:#111; font-size:18px; }
+.lattice-grid {
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.lattice-grid section {
+  display:grid;
+  gap:8px;
+  min-width:0;
+  border:1px solid var(--line);
+  background:#fff;
+  padding:12px;
+}
+.lattice-grid b {
+  font:11px var(--mono);
+  text-transform:uppercase;
+  letter-spacing:2px;
+}
+.lattice-grid pre,
+.lattice-fingerprint {
+  max-height:220px;
+  overflow:auto;
+  margin:0;
+  border:1px solid var(--line);
+  background:#f7f7f4;
+  color:#111;
+  padding:10px;
+  font:11px var(--mono);
+}
+.lattice-fingerprint { display:block; max-height:none; overflow-wrap:anywhere; }
+.lattice-actions { display:flex; flex-wrap:wrap; gap:10px; }
+@media (max-width: 900px) {
+  .lattice-shell,
+  .lattice-grid,
+  .lattice-metrics { grid-template-columns:1fr; }
+  .lattice-form { border-right:0; border-bottom:1px solid var(--line); }
+}
 .tb-cli {
   width: 26px;
   height: 24px;
@@ -4171,6 +4305,16 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .ticketforge-preview article,
 .ticketforge-preview code,
 .ticketforge-empty,
+.lattice-shell,
+.lattice-form,
+.lattice-output,
+.lattice-note,
+.lattice-empty,
+.lattice-card,
+.lattice-metrics span,
+.lattice-grid section,
+.lattice-grid pre,
+.lattice-fingerprint,
 .assist-form,
 .assist-current,
 .assist-row,
@@ -4353,6 +4497,13 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .ticketforge-preview small,
 .ticketforge-preview div span,
 .ticketforge-empty,
+.lattice-form span,
+.lattice-note,
+.lattice-empty,
+.lattice-card p,
+.lattice-metrics span,
+.lattice-grid pre,
+.lattice-fingerprint,
 .hashsyt-card span,
 .hnsb-card span,
 .cryptoai-note,
@@ -4382,6 +4533,7 @@ select,
 .ticketforge-form input,
 .ticketforge-form select,
 .ticketforge-form textarea,
+.lattice-form input,
 .assist-form input,
 .assist-form textarea,
 .sms-form input,
@@ -4485,6 +4637,8 @@ button:hover,
 .securityking-toolbar button,
 .ticketforge-form button,
 .ticketforge-actions button,
+.lattice-form button,
+.lattice-actions button,
 .sms-actions button:first-child,
 .pixelnote-actions button,
 .hashsyt-form button,
