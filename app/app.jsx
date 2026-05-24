@@ -2140,6 +2140,7 @@ const TOP_MENU_ICONS = {
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
   latticeLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8.5 14 7-4"/><path d="m8.5 10 7 4"/></svg>`,
+  userLounge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -2894,6 +2895,204 @@ const LatticeLweLabDialog = ({ open, onClose, notify, language }) => {
               <button onClick={exportJson} disabled={!result}>JSON</button>
               <button onClick={exportYaml} disabled={!result}>YAML</button>
             </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const UserLoungeDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const games = [
+    { id: 'matrix', title: 'Matrix Trap', goal: L('Toca la casilla viva antes de que mute 8 veces.', 'Tap the live tile before it mutates 8 times.') },
+    { id: 'sequence', title: 'Cipher Memory', goal: L('Repite 12 simbolos sin fallar.', 'Repeat 12 symbols without failing.') },
+    { id: 'maze', title: 'Needle Maze', goal: L('Cruza el laberinto con solo 26 movimientos.', 'Cross the maze in only 26 moves.') },
+    { id: 'lock', title: 'Prime Lock', goal: L('Encuentra el PIN de 4 digitos con pistas duras.', 'Find the 4-digit PIN with hard clues.') },
+  ];
+  const [active, setActive] = useState('matrix');
+  const [message, setMessage] = useState(L('Elige un juego. Ninguno perdona.', 'Pick a game. None forgives.'));
+  const [matrix, setMatrix] = useState({ live: 0, score: 0, misses: 0, tick: 900 });
+  const [sequence, setSequence] = useState({ target: [], input: [], round: 1, flash: -1, locked: false });
+  const [maze, setMaze] = useState({ pos: 0, moves: 0, won: false, dead: false });
+  const [lock, setLock] = useState({ guess: '', attempts: [], secret: '7391' });
+  const symbols = ['#', 'A', '7', 'X', 'Q', '0', 'M', 'Z', '5'];
+  const mazeWalls = new Set([1, 3, 4, 9, 11, 12, 17, 18, 20, 25, 27, 28, 33, 35, 36, 37, 43, 44, 46, 51, 52, 57, 59, 60]);
+  const mazeExit = 63;
+  const resetMatrix = () => {
+    setMatrix({ live: Math.floor(Math.random() * 25), score: 0, misses: 0, tick: 900 });
+    setMessage(L('Matrix Trap reiniciado.', 'Matrix Trap reset.'));
+  };
+  const resetSequence = () => {
+    const next = Array.from({ length: 12 }, () => symbols[Math.floor(Math.random() * symbols.length)]);
+    setSequence({ target: next, input: [], round: 1, flash: -1, locked: false });
+    setMessage(L('Memoriza la ruta, solo ves el prefijo activo.', 'Memorize the route; only the active prefix is visible.'));
+  };
+  const resetMaze = () => {
+    setMaze({ pos: 0, moves: 0, won: false, dead: false });
+    setMessage(L('Needle Maze reiniciado.', 'Needle Maze reset.'));
+  };
+  const resetLock = () => {
+    const nums = new Uint8Array(4);
+    crypto.getRandomValues(nums);
+    const unique = [];
+    nums.forEach(n => { const d = String(n % 10); if (!unique.includes(d)) unique.push(d); });
+    while (unique.length < 4) unique.push(String((unique.length * 3 + 1) % 10));
+    setLock({ guess: '', attempts: [], secret: unique.join('') });
+    setMessage(L('Prime Lock listo. 8 intentos.', 'Prime Lock ready. 8 attempts.'));
+  };
+  useEffect(() => {
+    if (!open) return;
+    resetMatrix();
+    resetSequence();
+    resetMaze();
+    resetLock();
+  }, [open]);
+  useEffect(() => {
+    if (!open || active !== 'matrix' || matrix.score >= 8 || matrix.misses >= 4) return undefined;
+    const id = setInterval(() => {
+      setMatrix(prev => ({
+        ...prev,
+        live: (prev.live + 7 + prev.score) % 25,
+        misses: prev.misses + 1,
+        tick: Math.max(360, prev.tick - 45),
+      }));
+    }, matrix.tick);
+    return () => clearInterval(id);
+  }, [open, active, matrix.tick, matrix.score, matrix.misses]);
+  if (!open) return null;
+  const matrixTap = (i) => {
+    setMatrix(prev => {
+      if (prev.score >= 8 || prev.misses >= 4) return prev;
+      if (i !== prev.live) {
+        const misses = prev.misses + 1;
+        if (misses >= 4) setMessage(L('Matrix Trap fallo: perdiste por ruido.', 'Matrix Trap failed: too much noise.'));
+        return { ...prev, misses };
+      }
+      const score = prev.score + 1;
+      if (score >= 8) {
+        setMessage(L('Victoria rara: atrapaste las 8 mutaciones.', 'Rare win: you trapped all 8 mutations.'));
+        notify?.(L('Lounge: Matrix Trap completado.', 'Lounge: Matrix Trap completed.'));
+      }
+      return { ...prev, score, misses: 0, live: (prev.live * 3 + 11) % 25, tick: Math.max(320, prev.tick - 70) };
+    });
+  };
+  const sequenceTap = (sym) => {
+    setSequence(prev => {
+      if (prev.locked) return prev;
+      const expected = prev.target[prev.input.length];
+      if (sym !== expected) {
+        setMessage(L('Cipher Memory fallo. Un simbolo incorrecto borra todo.', 'Cipher Memory failed. One wrong symbol wipes it.'));
+        return { ...prev, input: [], round: 1 };
+      }
+      const input = [...prev.input, sym];
+      if (input.length >= 12) {
+        setMessage(L('Victoria: 12 simbolos limpios.', 'Win: 12 clean symbols.'));
+        notify?.(L('Lounge: Cipher Memory completado.', 'Lounge: Cipher Memory completed.'));
+        return { ...prev, input, locked: true };
+      }
+      return { ...prev, input, round: input.length + 1 };
+    });
+  };
+  const moveMaze = (delta) => {
+    setMaze(prev => {
+      if (prev.won || prev.dead) return prev;
+      const col = prev.pos % 8;
+      const next = prev.pos + delta;
+      if (next < 0 || next > 63 || (delta === -1 && col === 0) || (delta === 1 && col === 7) || mazeWalls.has(next)) {
+        setMessage(L('Pared. El laberinto no da segunda oportunidad.', 'Wall. The maze gives no second chance.'));
+        return { ...prev, dead: true };
+      }
+      const moves = prev.moves + 1;
+      if (moves > 26) {
+        setMessage(L('Demasiados movimientos. Reinicia.', 'Too many moves. Reset.'));
+        return { ...prev, pos: next, moves, dead: true };
+      }
+      if (next === mazeExit) {
+        setMessage(L('Victoria: salida exacta del Needle Maze.', 'Win: exact Needle Maze exit.'));
+        notify?.(L('Lounge: Needle Maze completado.', 'Lounge: Needle Maze completed.'));
+        return { ...prev, pos: next, moves, won: true };
+      }
+      return { ...prev, pos: next, moves };
+    });
+  };
+  const lockSubmit = () => {
+    if (!/^\d{4}$/.test(lock.guess) || lock.attempts.length >= 8) return;
+    const exact = lock.guess.split('').filter((d, i) => d === lock.secret[i]).length;
+    const present = lock.guess.split('').filter(d => lock.secret.includes(d)).length - exact;
+    const sumDelta = Math.abs(lock.guess.split('').reduce((a, d) => a + Number(d), 0) - lock.secret.split('').reduce((a, d) => a + Number(d), 0));
+    const entry = { guess: lock.guess, exact, present, sumDelta };
+    const attempts = [entry, ...lock.attempts].slice(0, 8);
+    if (lock.guess === lock.secret) {
+      setMessage(L('Victoria: Prime Lock abierto.', 'Win: Prime Lock opened.'));
+      notify?.(L('Lounge: Prime Lock completado.', 'Lounge: Prime Lock completed.'));
+    } else if (attempts.length >= 8) {
+      setMessage(L(`Bloqueado. PIN era ${lock.secret}.`, `Locked. PIN was ${lock.secret}.`));
+    }
+    setLock({ ...lock, guess: '', attempts });
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg loungedlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="lounge-head">
+            <span className="lounge-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.userLounge}} />
+            <div>
+              <h2>{L('Sala de estar Hashcod', 'Hashcod User Lounge')}</h2>
+              <p>{L('Cuatro juegos pixelados, dificiles y locales para descansar sin salir de la plataforma.', 'Four hard local pixel games for resting without leaving the platform.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="lounge-shell">
+          <aside className="lounge-tabs">
+            {games.map(game => (
+              <button key={game.id} className={active === game.id ? 'on' : ''} onClick={() => setActive(game.id)}>
+                <b>{game.title}</b><span>{game.goal}</span>
+              </button>
+            ))}
+          </aside>
+          <main className="lounge-stage">
+            <div className="lounge-msg">{message}</div>
+            {active === 'matrix' && (
+              <section className="pixel-game">
+                <div className="game-hud"><b>{matrix.score}/8</b><span>miss {matrix.misses}/4</span><button onClick={resetMatrix}>reset</button></div>
+                <div className="matrix-grid">
+                  {Array.from({ length: 25 }).map((_, i) => <button key={i} className={i === matrix.live ? 'live' : ''} onClick={() => matrixTap(i)}>{i === matrix.live ? 'X' : '.'}</button>)}
+                </div>
+              </section>
+            )}
+            {active === 'sequence' && (
+              <section className="pixel-game">
+                <div className="game-hud"><b>{sequence.input.length}/12</b><span>{sequence.target.slice(0, Math.max(1, sequence.input.length + 1)).join(' ')}</span><button onClick={resetSequence}>reset</button></div>
+                <div className="seq-grid">
+                  {symbols.map(sym => <button key={sym} onClick={() => sequenceTap(sym)}>{sym}</button>)}
+                </div>
+              </section>
+            )}
+            {active === 'maze' && (
+              <section className="pixel-game">
+                <div className="game-hud"><b>{maze.moves}/26</b><span>{maze.won ? 'exit' : maze.dead ? 'dead' : 'alive'}</span><button onClick={resetMaze}>reset</button></div>
+                <div className="maze-grid">
+                  {Array.from({ length: 64 }).map((_, i) => <span key={i} className={`${mazeWalls.has(i) ? 'wall' : ''} ${i === maze.pos ? 'me' : ''} ${i === mazeExit ? 'exit' : ''}`}>{i === maze.pos ? '@' : i === mazeExit ? 'E' : mazeWalls.has(i) ? '#' : ''}</span>)}
+                </div>
+                <div className="maze-controls">
+                  <button onClick={() => moveMaze(-8)}>up</button><button onClick={() => moveMaze(-1)}>left</button><button onClick={() => moveMaze(1)}>right</button><button onClick={() => moveMaze(8)}>down</button>
+                </div>
+              </section>
+            )}
+            {active === 'lock' && (
+              <section className="pixel-game">
+                <div className="game-hud"><b>{lock.attempts.length}/8</b><span>exact / present / sum delta</span><button onClick={resetLock}>reset</button></div>
+                <div className="lock-row">
+                  <input value={lock.guess} maxLength="4" inputMode="numeric" placeholder="0000" onChange={e => setLock({ ...lock, guess: e.target.value.replace(/\D/g, '').slice(0, 4) })} onKeyDown={e => { if (e.key === 'Enter') lockSubmit(); }} />
+                  <button onClick={lockSubmit}>try</button>
+                </div>
+                <div className="lock-log">
+                  {lock.attempts.map((a, i) => <code key={`${a.guess}-${i}`}>{a.guess} | E:{a.exact} P:{a.present} S:{a.sumDelta}</code>)}
+                </div>
+              </section>
+            )}
           </main>
         </div>
       </section>
@@ -10551,6 +10750,7 @@ const App = () => {
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
   const [latticeLabOpen, setLatticeLabOpen] = useState(false);
+  const [userLoungeOpen, setUserLoungeOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -11991,6 +12191,7 @@ const App = () => {
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
       <LatticeLweLabDialog open={latticeLabOpen} onClose={() => setLatticeLabOpen(false)} notify={notify} language={language} />
+      <UserLoungeDialog open={userLoungeOpen} onClose={() => setUserLoungeOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -12148,7 +12349,10 @@ const App = () => {
               <span>{language === 'es' ? 'espacio desplegable preparado' : 'expandable space ready'}</span>
             </div>
             <div className="bottom-tools-slots">
-              <button disabled>{language === 'es' ? 'Próxima herramienta' : 'Next tool'}</button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setUserLoungeOpen(true)} title={language === 'es' ? 'Sala de estar' : 'User lounge'} aria-label={language === 'es' ? 'Sala de estar' : 'User lounge'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.userLounge}} />
+                <b>Lounge</b>
+              </button>
               <button disabled>{language === 'es' ? 'Módulo reservado' : 'Reserved module'}</button>
               <button disabled>{language === 'es' ? 'Acción futura' : 'Future action'}</button>
             </div>
