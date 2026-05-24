@@ -11968,10 +11968,6 @@ const App = () => {
             <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
               <span dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
             </button>
-            <div className="tb-enterprise" title="Enterprise mode">
-              <span>Enterprise</span>
-              <b>{activePlan.maxBatch.toLocaleString()}</b>
-            </div>
             <div className="tb-clk">{clock}</div>
           </div>
         </header>
