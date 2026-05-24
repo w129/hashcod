@@ -2142,6 +2142,7 @@ const TOP_MENU_ICONS = {
   latticeLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8.5 14 7-4"/><path d="m8.5 10 7 4"/></svg>`,
   userLounge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
   codeLibrary: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 11h8"/><path d="M8 7h6"/></svg>`,
+  cryptoIde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="M19 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="m7 15 3 3"/><path d="m7 21 3-3H5a2 2 0 0 1-2-2v-2"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3230,6 +3231,153 @@ docs: generated from catalog schema`}</pre>
                 </section>
               </>
             )}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CRYPTO_IDE_STORAGE_KEY = 'hashcod_crypto_ide_files_v1';
+const CRYPTO_IDE_STARTER = `// Hashcod Crypto IDE
+// Ejecuta JavaScript local con helpers criptograficos.
+
+const key = randomHex(32);
+print("AES-256 key:", key);
+
+const digest = await sha256("hashcod://" + key);
+print("SHA-256:", digest);
+
+const token = base64url(randomBytes(24));
+print("token:", token);
+`;
+
+const CryptoIdeDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const defaultFiles = [{ id: `file_${Date.now()}`, name: 'crypto-lab.js', code: CRYPTO_IDE_STARTER, updatedAt: new Date().toISOString() }];
+  const readFiles = () => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(CRYPTO_IDE_STORAGE_KEY) || '[]');
+      return Array.isArray(parsed) && parsed.length ? parsed : defaultFiles;
+    } catch { return defaultFiles; }
+  };
+  const [files, setFiles] = useState(readFiles);
+  const [activeId, setActiveId] = useState(() => files[0]?.id);
+  const [log, setLog] = useState([{ kind: 'sys', text: 'Hashcod Crypto IDE ready. Helpers: print, sha256, randomBytes, randomHex, base64url, digestCode.' }]);
+  const [running, setRunning] = useState(false);
+  const active = files.find(f => f.id === activeId) || files[0];
+  useEffect(() => {
+    if (open) localStorage.setItem(CRYPTO_IDE_STORAGE_KEY, JSON.stringify(files));
+  }, [files, open]);
+  if (!open) return null;
+  const setCode = (code) => setFiles(prev => prev.map(f => f.id === active.id ? { ...f, code, updatedAt: new Date().toISOString() } : f));
+  const push = (text, kind = 'out') => setLog(prev => [...prev.slice(-120), { kind, text: String(text) }]);
+  const newFile = () => {
+    const next = { id: `file_${Date.now()}`, name: `crypto-${files.length + 1}.js`, code: CRYPTO_IDE_STARTER, updatedAt: new Date().toISOString() };
+    setFiles(prev => [next, ...prev]);
+    setActiveId(next.id);
+  };
+  const renameFile = () => {
+    const name = prompt(L('Nombre del archivo', 'File name'), active?.name || 'crypto-lab.js');
+    if (!name) return;
+    setFiles(prev => prev.map(f => f.id === active.id ? { ...f, name: sanitizeFilename(name).replace(/_/g, '-') || 'crypto-lab.js' } : f));
+  };
+  const deleteFile = () => {
+    if (files.length <= 1) return;
+    const rest = files.filter(f => f.id !== active.id);
+    setFiles(rest);
+    setActiveId(rest[0]?.id);
+  };
+  const insertSnippet = (snippet) => {
+    const snippets = {
+      sha256: `\nconst digest = await sha256("message");\nprint("sha256", digest);\n`,
+      key: `\nconst aes256 = randomHex(32);\nprint("AES-256", aes256);\n`,
+      token: `\nconst token = base64url(randomBytes(32));\nprint("token", token);\n`,
+      hmac: `\nconst secret = randomHex(32);\nconst payload = "hashcod payload";\nprint("HMAC-like demo input", secret, payload);\n`,
+    };
+    setCode(`${active.code || ''}${snippets[snippet] || ''}`);
+  };
+  const analyze = async () => {
+    const code = active?.code || '';
+    const warnings = [];
+    if (/password\s*=\s*["'`]/i.test(code)) warnings.push('hardcoded password literal');
+    if (/api[_-]?key\s*=\s*["'`]/i.test(code)) warnings.push('hardcoded API key literal');
+    if (/Math\.random\s*\(/.test(code)) warnings.push('Math.random is not cryptographic');
+    if (!/crypto|getRandomValues|randomBytes|sha256/.test(code)) warnings.push('no crypto helper detected');
+    const digest = await digestHex(code);
+    push(`analysis: ${warnings.length ? warnings.join(', ') : 'clean basic scan'} | sha256=${digest.slice(0, 24)}`, warnings.length ? 'warn' : 'ok');
+  };
+  const runCode = async () => {
+    setRunning(true);
+    push(`run ${active.name}`, 'sys');
+    try {
+      const helpers = {
+        print: (...args) => push(args.map(v => typeof v === 'string' ? v : JSON.stringify(v)).join(' '), 'out'),
+        randomBytes: (n = 32) => {
+          const bytes = new Uint8Array(Math.max(1, Math.min(4096, Number(n) || 32)));
+          crypto.getRandomValues(bytes);
+          return bytes;
+        },
+        randomHex: (n = 32) => Array.from(helpers.randomBytes(n), b => b.toString(16).padStart(2, '0')).join(''),
+        base64url: (bytes) => btoa(String.fromCharCode(...Array.from(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
+        sha256: async (value) => digestHex(String(value)),
+        digestCode: async () => digestHex(active.code || ''),
+      };
+      const fn = new Function(...Object.keys(helpers), `"use strict"; return (async()=>{\n${active.code || ''}\n})();`);
+      await fn(...Object.values(helpers));
+      push('process finished with exit code 0', 'ok');
+    } catch (err) {
+      push(err?.stack || err?.message || err, 'err');
+    } finally {
+      setRunning(false);
+    }
+  };
+  const exportFile = () => triggerDownload(`Hashcod-IDE-${sanitizeFilename(active.name || 'crypto-lab.js')}`, active.code || '', 'text/javascript;charset=utf-8');
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg cryptoidedlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="cryptoide-head">
+            <span className="cryptoide-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoIde}} />
+            <div>
+              <h2>{L('Hashcod Crypto IDE', 'Hashcod Crypto IDE')}</h2>
+              <p>{L('IDE local inspirado en Thonny: archivos, editor, consola, analisis y snippets criptograficos.', 'Local IDE inspired by Thonny: files, editor, console, analysis, and cryptographic snippets.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="cryptoide-shell">
+          <aside className="cryptoide-files">
+            <div className="cryptoide-actions">
+              <button onClick={newFile}>new</button>
+              <button onClick={renameFile}>rename</button>
+              <button onClick={deleteFile}>delete</button>
+            </div>
+            {files.map(file => (
+              <button key={file.id} className={file.id === active?.id ? 'on' : ''} onClick={() => setActiveId(file.id)}>
+                <b>{file.name}</b><span>{new Date(file.updatedAt).toLocaleString()}</span>
+              </button>
+            ))}
+            <div className="cryptoide-snips">
+              <span>snippets</span>
+              <button onClick={() => insertSnippet('sha256')}>sha256</button>
+              <button onClick={() => insertSnippet('key')}>aes key</button>
+              <button onClick={() => insertSnippet('token')}>token</button>
+              <button onClick={() => insertSnippet('hmac')}>hmac</button>
+            </div>
+          </aside>
+          <main className="cryptoide-main">
+            <div className="cryptoide-toolbar">
+              <b>{active?.name}</b>
+              <button onClick={runCode} disabled={running}>{running ? 'running' : 'run'}</button>
+              <button onClick={analyze}>analyze</button>
+              <button onClick={exportFile}>export</button>
+              <button onClick={() => setLog([])}>clear</button>
+            </div>
+            <textarea className="cryptoide-editor" value={active?.code || ''} spellCheck="false" onChange={e => setCode(e.target.value)} />
+            <div className="cryptoide-console">
+              {log.map((row, i) => <pre key={i} className={row.kind}>[{row.kind}] {row.text}</pre>)}
+            </div>
           </main>
         </div>
       </section>
@@ -10910,6 +11058,7 @@ const App = () => {
   const [latticeLabOpen, setLatticeLabOpen] = useState(false);
   const [userLoungeOpen, setUserLoungeOpen] = useState(false);
   const [codeLibraryOpen, setCodeLibraryOpen] = useState(false);
+  const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -12352,6 +12501,7 @@ const App = () => {
       <LatticeLweLabDialog open={latticeLabOpen} onClose={() => setLatticeLabOpen(false)} notify={notify} language={language} />
       <UserLoungeDialog open={userLoungeOpen} onClose={() => setUserLoungeOpen(false)} notify={notify} language={language} />
       <CodeLibraryDialog open={codeLibraryOpen} onClose={() => setCodeLibraryOpen(false)} catalog={catalog} language={language} />
+      <CryptoIdeDialog open={cryptoIdeOpen} onClose={() => setCryptoIdeOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -12517,7 +12667,10 @@ const App = () => {
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeLibrary}} />
                 <b>{language === 'es' ? 'Biblioteca' : 'Library'}</b>
               </button>
-              <button disabled>{language === 'es' ? 'Acción futura' : 'Future action'}</button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setCryptoIdeOpen(true)} title={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'} aria-label={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoIde}} />
+                <b>Crypto IDE</b>
+              </button>
             </div>
           </div>
         </section>

@@ -1498,6 +1498,151 @@ kbd {
   padding:12px;
   font:12px/1.55 var(--mono);
 }
+.cryptoidedlg { width:min(1220px, calc(100vw - 24px)); }
+.cryptoide-head { display:flex; align-items:center; gap:14px; min-width:0; }
+.cryptoide-mark {
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  background:#0F0F0F;
+  color:#F5F5F5;
+  border:1px solid #2A2A2A;
+  box-shadow:6px 6px 0 #000;
+}
+.cryptoide-mark svg { width:25px; height:25px; display:block; }
+.cryptoide-shell {
+  display:grid;
+  grid-template-columns:280px minmax(0,1fr);
+  min-height:680px;
+  background:#2A2A2A;
+  gap:1px;
+}
+.cryptoide-files {
+  background:#0F0F0F;
+  padding:12px;
+  overflow:auto;
+  max-height:74vh;
+  display:grid;
+  gap:8px;
+  align-content:start;
+}
+.cryptoide-actions {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-bottom:6px;
+}
+.cryptoide-actions button,
+.cryptoide-snips button,
+.cryptoide-toolbar button {
+  border:1px solid #2A2A2A;
+  background:#1A1A1A;
+  color:#F5F5F5;
+  min-height:34px;
+  padding:0 10px;
+  font:700 9px var(--mono);
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+.cryptoide-actions button:hover,
+.cryptoide-snips button:hover,
+.cryptoide-toolbar button:hover:not(:disabled) {
+  background:#F5F5F5;
+  color:#0F0F0F;
+  border-color:#F5F5F5;
+}
+.cryptoide-files > button {
+  width:100%;
+  border:1px solid #242424;
+  background:#1A1A1A;
+  color:#F5F5F5;
+  padding:10px;
+  text-align:left;
+  display:grid;
+  gap:5px;
+}
+.cryptoide-files > button.on {
+  background:#F5F5F5;
+  color:#0F0F0F;
+  border-color:#F5F5F5;
+}
+.cryptoide-files b { font:700 12px var(--mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cryptoide-files span { color:inherit; opacity:.7; font:10px var(--mono); }
+.cryptoide-snips {
+  border:1px solid #2A2A2A;
+  background:#111;
+  padding:10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px;
+}
+.cryptoide-snips span {
+  grid-column:1 / -1;
+  color:#A3A3A3;
+  font:9px var(--mono);
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.cryptoide-main {
+  min-width:0;
+  background:#0F0F0F;
+  display:grid;
+  grid-template-rows:auto minmax(320px, 1fr) 220px;
+  max-height:74vh;
+}
+.cryptoide-toolbar {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) repeat(4,auto);
+  gap:8px;
+  align-items:center;
+  padding:10px;
+  border-bottom:1px solid #2A2A2A;
+  background:#111;
+}
+.cryptoide-toolbar b {
+  color:#F5F5F5;
+  font:700 12px var(--mono);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.cryptoide-toolbar button:disabled { opacity:.45; cursor:not-allowed; }
+.cryptoide-editor {
+  width:100%;
+  min-width:0;
+  min-height:0;
+  resize:none;
+  border:0;
+  border-bottom:1px solid #2A2A2A;
+  background:#0B0B0B;
+  color:#F5F5F5;
+  padding:18px;
+  outline:none;
+  font:13px/1.65 "JetBrains Mono", var(--mono);
+  tab-size:2;
+}
+.cryptoide-console {
+  overflow:auto;
+  background:#050505;
+  color:#F5F5F5;
+  padding:12px;
+  display:grid;
+  align-content:start;
+  gap:5px;
+}
+.cryptoide-console pre {
+  margin:0;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  font:11px/1.45 var(--mono);
+  color:#D4D4D4;
+}
+.cryptoide-console .ok { color:#9ee6bd; }
+.cryptoide-console .err { color:#ff9aa2; }
+.cryptoide-console .warn { color:#ffd36e; }
+.cryptoide-console .sys { color:#A3A3A3; }
 @media (max-width: 820px) {
   .lounge-shell { grid-template-columns:1fr; }
   .lounge-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -1513,6 +1658,12 @@ kbd {
   .codelib-usage { grid-template-columns:1fr; }
   .codelib-list,
   .codelib-detail { max-height:none; }
+  .cryptoide-shell { grid-template-columns:1fr; }
+  .cryptoide-files,
+  .cryptoide-main { max-height:none; }
+  .cryptoide-main { grid-template-rows:auto 420px 220px; }
+  .cryptoide-toolbar { grid-template-columns:1fr 1fr; }
+  .cryptoide-toolbar b { grid-column:1 / -1; }
 }
 .tb-cli {
   width: 26px;
