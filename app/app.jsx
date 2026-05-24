@@ -2141,6 +2141,7 @@ const TOP_MENU_ICONS = {
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
   latticeLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8.5 14 7-4"/><path d="m8.5 10 7 4"/></svg>`,
   userLounge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
+  codeLibrary: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 11h8"/><path d="M8 7h6"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3092,6 +3093,142 @@ const UserLoungeDialog = ({ open, onClose, notify, language }) => {
                   {lock.attempts.map((a, i) => <code key={`${a.guess}-${i}`}>{a.guess} | E:{a.exact} P:{a.present} S:{a.sumDelta}</code>)}
                 </div>
               </section>
+            )}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CodeLibraryDialog = ({ open, onClose, catalog, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const rows = useMemo(() => (catalog || []).flatMap((cat, catIndex) => (cat.types || []).map((type, index) => {
+    const globalIndex = (catalog || []).slice(0, catIndex).reduce((sum, c) => sum + (c.types || []).length, 0) + index + 1;
+    const profile = (TICKET_PROFILE[language] || TICKET_PROFILE.en)[cat.id] || (TICKET_PROFILE[language] || TICKET_PROFILE.en).default;
+    return { cat, type, globalIndex, profile };
+  })), [catalog, language]);
+  const [query, setQuery] = useState('');
+  const [catFilter, setCatFilter] = useState('all');
+  const [selectedId, setSelectedId] = useState('');
+  useEffect(() => {
+    if (open && rows.length && !selectedId) setSelectedId(rows[0].type.id);
+  }, [open, rows.length, selectedId]);
+  if (!open) return null;
+  const lower = query.trim().toLowerCase();
+  const filtered = rows.filter(row => {
+    if (catFilter !== 'all' && row.cat.id !== catFilter) return false;
+    if (!lower) return true;
+    return [row.type.id, row.type.label, row.type.std, row.type.badge, row.type.about, row.cat.label].some(v => String(v || '').toLowerCase().includes(lower));
+  });
+  const current = rows.find(row => row.type.id === selectedId) || filtered[0] || rows[0];
+  const buildExample = (row) => {
+    const id = row?.type?.id || 'aes256';
+    const label = row?.type?.label || id;
+    return [
+      `hashcod generate --type ${id} --qty 1`,
+      `hashcod db save --type ${id}`,
+      `hashcod export --format yaml --type ${id}`,
+      `hashcod apply --primitive "${label}" --policy enterprise`,
+    ].join('\n');
+  };
+  const downloadCurrent = () => {
+    if (!current) return;
+    const body = [
+      '# Hashcod Crypto Code Library',
+      '',
+      `- Index: ${current.globalIndex} / ${rows.length}`,
+      `- ID: ${current.type.id}`,
+      `- Name: ${current.type.label}`,
+      `- Category: ${getCategoryLabel(current.cat, language)}`,
+      `- Standard: ${current.type.std || current.type.badge || 'N/A'}`,
+      `- Engine: ${current.type.engine || 'Generated secure material'}`,
+      `- Entropy: ${current.type.entropy || 'N/A'}`,
+      `- Search space: ${current.type.space || 'N/A'}`,
+      '',
+      '## Purpose',
+      current.type.about || current.cat.desc || '',
+      '',
+      '## Use',
+      current.profile.useFor,
+      '',
+      '## Avoid',
+      current.profile.avoid,
+      '',
+      '## Example',
+      '```bash',
+      buildExample(current),
+      '```',
+    ].join('\n');
+    triggerDownload(`Hashcod-library-${sanitizeFilename(current.type.id)}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg codelibdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="codelib-head">
+            <span className="codelib-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeLibrary}} />
+            <div>
+              <h2>{L('Biblioteca de codes criptograficos', 'Cryptographic Code Library')}</h2>
+              <p>{L('Catalogo generado desde el schema real de Hashcod: que son, para que sirven y como aplicarlos.', 'Catalog generated from the real Hashcod schema: what each code is for and how to apply it.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="codelib-toolbar">
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('Buscar entre los 1718 codes...', 'Search all 1718 codes...')} />
+          <select value={catFilter} onChange={e => setCatFilter(e.target.value)}>
+            <option value="all">{L('Todas las categorias', 'All categories')}</option>
+            {(catalog || []).map(cat => <option key={cat.id} value={cat.id}>{getCategoryLabel(cat, language)}</option>)}
+          </select>
+          <button onClick={downloadCurrent}>{L('Descargar ficha', 'Download sheet')}</button>
+        </div>
+        <div className="codelib-shell">
+          <aside className="codelib-list">
+            <div className="codelib-count">{filtered.length.toLocaleString()} / {rows.length.toLocaleString()}</div>
+            {filtered.map(row => (
+              <button key={row.type.id} className={current?.type?.id === row.type.id ? 'on' : ''} onClick={() => setSelectedId(row.type.id)}>
+                <code>{String(row.globalIndex).padStart(4, '0')}</code>
+                <span>{row.type.label}</span>
+                <b>{row.type.badge || row.type.std || row.type.id}</b>
+              </button>
+            ))}
+          </aside>
+          <main className="codelib-detail">
+            {current && (
+              <>
+                <section className="codelib-hero">
+                  <div>
+                    <span>{getCategoryLabel(current.cat, language)}</span>
+                    <h3>{current.type.label}</h3>
+                    <p>{current.type.about || current.cat.desc}</p>
+                  </div>
+                  <div className="codelib-index"><b>{String(current.globalIndex).padStart(4, '0')}</b><span>{current.type.id}</span></div>
+                </section>
+                <section className="codelib-grid">
+                  <article><span>{L('Motor', 'Engine')}</span><b>{current.type.engine || 'CSPRNG + formatter'}</b></article>
+                  <article><span>{L('Entropia', 'Entropy')}</span><b>{current.type.entropy || 'Variable'}</b></article>
+                  <article><span>{L('Espacio', 'Space')}</span><b>{current.type.space || 'Variable'}</b></article>
+                  <article><span>{L('Estandar', 'Standard')}</span><b>{current.type.std || current.type.badge || 'Internal profile'}</b></article>
+                </section>
+                <section className="codelib-usage">
+                  <article><span>{L('Para que sirve', 'What it is for')}</span><p>{current.profile.useFor}</p></article>
+                  <article><span>{L('Como aplicarlo', 'How to apply it')}</span><p>{L('Generalo, guardalo en la base, exportalo en YAML/JSON/LOG y usalo solo en el backend, vault o canal seguro que corresponda.', 'Generate it, save it to the database, export as YAML/JSON/LOG, and use it only in the backend, vault, or proper secure channel.')}</p></article>
+                  <article><span>{L('Evita', 'Avoid')}</span><p>{current.profile.avoid}</p></article>
+                </section>
+                <section className="codelib-codegen">
+                  <span>{L('Modelo tipo codegen', 'Codegen-style model')}</span>
+                  <pre>{`TraceNode(${current.cat.id}) -> ${current.type.id}
+validator: ${current.type.std || current.type.badge || 'hashcod-profile'}
+datatype: ${current.type.label}
+output: ${current.type.engine || 'secure generated material'}
+docs: generated from catalog schema`}</pre>
+                </section>
+                <section className="codelib-example">
+                  <span>{L('Ejemplo de uso', 'Usage example')}</span>
+                  <pre>{buildExample(current)}</pre>
+                </section>
+              </>
             )}
           </main>
         </div>
@@ -10751,6 +10888,7 @@ const App = () => {
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
   const [latticeLabOpen, setLatticeLabOpen] = useState(false);
   const [userLoungeOpen, setUserLoungeOpen] = useState(false);
+  const [codeLibraryOpen, setCodeLibraryOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -12192,6 +12330,7 @@ const App = () => {
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
       <LatticeLweLabDialog open={latticeLabOpen} onClose={() => setLatticeLabOpen(false)} notify={notify} language={language} />
       <UserLoungeDialog open={userLoungeOpen} onClose={() => setUserLoungeOpen(false)} notify={notify} language={language} />
+      <CodeLibraryDialog open={codeLibraryOpen} onClose={() => setCodeLibraryOpen(false)} catalog={catalog} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -12353,7 +12492,10 @@ const App = () => {
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.userLounge}} />
                 <b>Lounge</b>
               </button>
-              <button disabled>{language === 'es' ? 'Módulo reservado' : 'Reserved module'}</button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setCodeLibraryOpen(true)} title={language === 'es' ? 'Biblioteca de codes' : 'Code library'} aria-label={language === 'es' ? 'Biblioteca de codes' : 'Code library'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeLibrary}} />
+                <b>{language === 'es' ? 'Biblioteca' : 'Library'}</b>
+              </button>
               <button disabled>{language === 'es' ? 'Acción futura' : 'Future action'}</button>
             </div>
           </div>
