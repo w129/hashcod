@@ -2138,6 +2138,7 @@ const TOP_MENU_ICONS = {
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
+  ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -2576,6 +2577,196 @@ const SecurityKingDialog = ({ open, onClose, notify, language }) => {
             </div>
           </div>
         )}
+      </section>
+    </div>
+  );
+};
+
+const TicketForgeDialog = ({ open, onClose, rows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [form, setForm] = useState({
+    title: 'Hashcod Function Ticket',
+    functionName: 'issue_token',
+    codeId: '',
+    params: 'scope=enterprise\nexpires=2026-12-31\nformat=ocg.pack',
+    note: '',
+  });
+  const [ticket, setTicket] = useState(null);
+  const selectedRow = useMemo(() => {
+    const list = Array.isArray(rows) ? rows : [];
+    return list.find(row => String(row.id) === String(form.codeId)) || list[0] || null;
+  }, [rows, form.codeId]);
+  useEffect(() => {
+    if (open && !form.codeId && rows?.[0]?.id) setForm(prev => ({ ...prev, codeId: rows[0].id }));
+  }, [open, rows, form.codeId]);
+  if (!open) return null;
+  const parseParams = () => String(form.params || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map((line, index) => {
+    const eq = line.indexOf('=');
+    if (eq === -1) return { key: `param_${index + 1}`, value: line };
+    return { key: line.slice(0, eq).trim() || `param_${index + 1}`, value: line.slice(eq + 1).trim() };
+  });
+  const buildTicket = async () => {
+    if (!selectedRow?.value) {
+      notify?.(L('Primero guarda o copia un code en la base de datos.', 'Save or copy a code to the database first.'));
+      return null;
+    }
+    const params = parseParams();
+    const issuedAt = new Date().toISOString();
+    const codeHash = await digestHex(selectedRow.value);
+    const seed = `${form.title}|${form.functionName}|${selectedRow.id}|${codeHash}|${issuedAt}|${JSON.stringify(params)}`;
+    const ticketHash = await digestHex(seed);
+    const next = {
+      id: `HTK-${ticketHash.slice(0, 8).toUpperCase()}-${ticketHash.slice(8, 14).toUpperCase()}`,
+      title: form.title || 'Hashcod Function Ticket',
+      functionName: form.functionName || 'custom_function',
+      issuedAt,
+      status: 'ACTIVE',
+      code: {
+        id: selectedRow.id,
+        index: selectedRow.idx || '',
+        type: selectedRow.type || '',
+        label: selectedRow.primitiveLabel || selectedRow.type || 'code',
+        sha256: codeHash,
+        preview: window.OCG_GEN.display(selectedRow.value, 96),
+      },
+      params,
+      note: form.note || '',
+      fingerprint: ticketHash,
+      platform: 'Hashcod',
+      version: 'ticket-forge-v1',
+    };
+    setTicket(next);
+    notify?.(L('Ticket creado.', 'Ticket created.'));
+    return next;
+  };
+  const ticketYaml = (t) => [
+    'hashcod_ticket:',
+    `  id: ${yamlScalar(t.id)}`,
+    `  title: ${yamlScalar(t.title)}`,
+    `  function: ${yamlScalar(t.functionName)}`,
+    `  status: ${yamlScalar(t.status)}`,
+    `  issued_at: ${yamlScalar(t.issuedAt)}`,
+    `  platform: ${yamlScalar(t.platform)}`,
+    `  version: ${yamlScalar(t.version)}`,
+    '  code:',
+    `    id: ${yamlScalar(t.code.id)}`,
+    `    index: ${yamlScalar(t.code.index)}`,
+    `    type: ${yamlScalar(t.code.type)}`,
+    `    label: ${yamlScalar(t.code.label)}`,
+    `    sha256: ${yamlScalar(t.code.sha256)}`,
+    `    preview: ${yamlScalar(t.code.preview)}`,
+    '  parameters:',
+    ...(t.params.length ? t.params.map(item => `    ${String(item.key || 'param').replace(/[^A-Za-z0-9_-]/g, '_')}: ${yamlScalar(item.value)}`) : ['    {}']),
+    `  note: ${yamlScalar(t.note)}`,
+    `  fingerprint: ${yamlScalar(t.fingerprint)}`,
+  ].join('\n');
+  const drawTicketCanvas = (t, mime = 'image/png') => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#F5F5F5';
+    ctx.setLineDash([18, 10]);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(44, 44, canvas.width - 88, canvas.height - 88);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(76, 92, canvas.width - 152, 536);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '700 52px Georgia, serif';
+    ctx.fillText(t.title.slice(0, 34), 106, 158);
+    ctx.font = '700 18px "IBM Plex Mono", monospace';
+    ctx.fillText(t.id, 106, 204);
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '600 15px "IBM Plex Mono", monospace';
+    ctx.fillText('FUNCTION', 106, 260);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '700 30px "IBM Plex Mono", monospace';
+    ctx.fillText(t.functionName.slice(0, 38), 106, 298);
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '600 15px "IBM Plex Mono", monospace';
+    ctx.fillText('CODE SHA-256', 106, 354);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '600 20px "IBM Plex Mono", monospace';
+    ctx.fillText(t.code.sha256.slice(0, 48), 106, 390);
+    ctx.fillText(t.code.sha256.slice(48), 106, 420);
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '600 15px "IBM Plex Mono", monospace';
+    ctx.fillText('PARAMETERS', 720, 260);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '600 20px "IBM Plex Mono", monospace';
+    t.params.slice(0, 8).forEach((item, index) => {
+      ctx.fillText(`${item.key}: ${String(item.value).slice(0, 26)}`, 720, 298 + index * 31);
+    });
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '600 14px "IBM Plex Mono", monospace';
+    ctx.fillText(`ISSUED ${t.issuedAt}`, 106, 552);
+    ctx.fillText(`FINGERPRINT ${t.fingerprint.slice(0, 32)}`, 106, 586);
+    ctx.fillText('HASHCOD TICKET FORGE', 720, 586);
+    return canvas;
+  };
+  const downloadYaml = async () => {
+    const t = ticket || await buildTicket();
+    if (!t) return;
+    triggerDownload(`Hashcod-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.yaml`, ticketYaml(t), 'application/x-yaml;charset=utf-8');
+  };
+  const downloadImage = async (type) => {
+    const t = ticket || await buildTicket();
+    if (!t) return;
+    const mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
+    const canvas = drawTicketCanvas(t, mime);
+    canvas.toBlob(blob => {
+      if (blob) triggerBlobDownload(`Hashcod-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.${type}`, blob);
+    }, mime, 0.94);
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg ticketforge" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="ticketforge-head">
+            <span className="ticketforge-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.ticketForge}} />
+            <div>
+              <h2>Ticket Forge</h2>
+              <p>{L('Crea tickets para funciones, parametros libres y codes guardados en la base.', 'Create tickets for functions, custom parameters and saved database codes.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="ticketforge-shell">
+          <aside className="ticketforge-form">
+            <label><span>{L('Titulo', 'Title')}</span><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></label>
+            <label><span>{L('Funcion', 'Function')}</span><input value={form.functionName} onChange={e => setForm({ ...form, functionName: e.target.value })} /></label>
+            <label><span>{L('Code de la base', 'Database code')}</span>
+              <select value={form.codeId || selectedRow?.id || ''} onChange={e => setForm({ ...form, codeId: e.target.value })}>
+                {(rows || []).map(row => <option key={row.id} value={row.id}>{String(row.idx || '').padStart(3, '0')} | {row.primitiveLabel || row.type}</option>)}
+              </select>
+            </label>
+            <label><span>{L('Parametros', 'Parameters')}</span><textarea value={form.params} onChange={e => setForm({ ...form, params: e.target.value })} /></label>
+            <label><span>{L('Nota', 'Note')}</span><textarea value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} /></label>
+            <button onClick={buildTicket}>{L('Crear ticket', 'Create ticket')}</button>
+          </aside>
+          <main className="ticketforge-preview">
+            {!ticket ? (
+              <div className="ticketforge-empty">{L('Crea un ticket para ver la vista previa.', 'Create a ticket to see the preview.')}</div>
+            ) : (
+              <article>
+                <header><b>{ticket.id}</b><span>{ticket.status}</span></header>
+                <h3>{ticket.title}</h3>
+                <p>{ticket.functionName}</p>
+                <code>{ticket.code.sha256}</code>
+                <div>{ticket.params.map(item => <span key={item.key}>{item.key}: {item.value}</span>)}</div>
+                <small>{ticket.fingerprint}</small>
+              </article>
+            )}
+            <div className="ticketforge-actions">
+              <button onClick={downloadYaml}>YAML</button>
+              <button onClick={() => downloadImage('png')}>PNG</button>
+              <button onClick={() => downloadImage('jpg')}>JPG</button>
+            </div>
+          </main>
+        </div>
       </section>
     </div>
   );
@@ -10146,6 +10337,7 @@ const App = () => {
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
+  const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -10951,6 +11143,7 @@ const App = () => {
   const openFileViewer = () => setFileViewerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
+  const openTicketForge = () => setTicketForgeOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -11183,6 +11376,11 @@ const App = () => {
     { label: language === 'es' ? 'Abrir Security King' : 'Open Security King', onClick: openSecurityKing },
     { label: language === 'es' ? 'Usuarios, entradas y eventos' : 'Users, logins and events', onClick: openSecurityKing },
     { label: language === 'es' ? 'Exportar auditoria protegida' : 'Export protected audit', onClick: openSecurityKing },
+  ];
+  const ticketForgeItems = [
+    { label: language === 'es' ? 'Abrir Ticket Forge' : 'Open Ticket Forge', onClick: openTicketForge },
+    { label: language === 'es' ? 'Funcion + parametros + code' : 'Function + parameters + code', onClick: openTicketForge },
+    { label: language === 'es' ? 'Descargar YAML / PNG / JPG' : 'Download YAML / PNG / JPG', onClick: openTicketForge },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -11572,6 +11770,7 @@ const App = () => {
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
+      <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -11623,6 +11822,7 @@ const App = () => {
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
+            <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>

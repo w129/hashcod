@@ -572,6 +572,117 @@ kbd {
   .securityking-table article { grid-template-columns:1fr; }
   .securityking-audit header { display:grid; }
 }
+.ticketforge { width:min(1040px, calc(100vw - 42px)); }
+.ticketforge-head { display:flex; align-items:center; gap:14px; }
+.ticketforge-mark {
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+}
+.ticketforge-mark svg { width:24px; height:24px; }
+.ticketforge-shell {
+  display:grid;
+  grid-template-columns:360px minmax(0,1fr);
+  min-height:560px;
+  border-top:1px solid var(--line);
+}
+.ticketforge-form,
+.ticketforge-preview {
+  display:grid;
+  gap:12px;
+  align-content:start;
+  padding:18px;
+}
+.ticketforge-form { border-right:1px solid var(--line); }
+.ticketforge-form label { display:grid; gap:7px; }
+.ticketforge-form span {
+  color:var(--ink-4);
+  font:10px var(--mono);
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+.ticketforge-form input,
+.ticketforge-form select,
+.ticketforge-form textarea {
+  width:100%;
+  min-height:42px;
+  border:1px solid var(--line-2);
+  background:#fff;
+  padding:10px 12px;
+  font-family:var(--mono);
+}
+.ticketforge-form textarea { min-height:116px; resize:vertical; }
+.ticketforge-form button,
+.ticketforge-actions button {
+  min-height:42px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  padding:0 14px;
+  font:11px var(--mono);
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.ticketforge-preview article {
+  display:grid;
+  gap:14px;
+  padding:26px;
+  border:1px dashed #111;
+  background:#f7f7f4;
+  box-shadow:8px 8px 0 rgba(0,0,0,.08);
+}
+.ticketforge-preview header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-family:var(--mono);
+}
+.ticketforge-preview h3 {
+  margin:0;
+  font-family:var(--serif);
+  font-size:34px;
+  font-weight:500;
+}
+.ticketforge-preview p,
+.ticketforge-preview code,
+.ticketforge-preview small,
+.ticketforge-preview div span {
+  color:var(--ink-4);
+  font:12px var(--mono);
+  overflow-wrap:anywhere;
+}
+.ticketforge-preview code {
+  display:block;
+  color:#111;
+  background:#fff;
+  border:1px solid var(--line);
+  padding:10px;
+}
+.ticketforge-preview div {
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:8px;
+}
+.ticketforge-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.ticketforge-empty {
+  min-height:280px;
+  display:grid;
+  place-items:center;
+  border:1px dashed var(--line-2);
+  color:var(--ink-4);
+  font:12px var(--mono);
+  text-align:center;
+}
+@media (max-width: 860px) {
+  .ticketforge-shell { grid-template-columns:1fr; }
+  .ticketforge-form { border-right:0; border-bottom:1px solid var(--line); }
+  .ticketforge-preview div { grid-template-columns:1fr; }
+}
 .tb-cli {
   width: 26px;
   height: 24px;
@@ -4054,6 +4165,12 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .securityking-audit article,
 .securityking-audit code,
 .securityking-empty,
+.ticketforge-shell,
+.ticketforge-form,
+.ticketforge-preview,
+.ticketforge-preview article,
+.ticketforge-preview code,
+.ticketforge-empty,
 .assist-form,
 .assist-current,
 .assist-row,
@@ -4230,6 +4347,12 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .securityking-audit span,
 .securityking-audit p,
 .securityking-audit code,
+.ticketforge-form span,
+.ticketforge-preview p,
+.ticketforge-preview code,
+.ticketforge-preview small,
+.ticketforge-preview div span,
+.ticketforge-empty,
 .hashsyt-card span,
 .hnsb-card span,
 .cryptoai-note,
@@ -4256,6 +4379,9 @@ select,
 .authusers-row select,
 .securityking-form input,
 .securityking-toolbar input,
+.ticketforge-form input,
+.ticketforge-form select,
+.ticketforge-form textarea,
 .assist-form input,
 .assist-form textarea,
 .sms-form input,
@@ -4357,6 +4483,8 @@ button:hover,
 .authusers-enterprise-pill,
 .securityking-form button,
 .securityking-toolbar button,
+.ticketforge-form button,
+.ticketforge-actions button,
 .sms-actions button:first-child,
 .pixelnote-actions button,
 .hashsyt-form button,
