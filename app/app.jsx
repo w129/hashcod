@@ -10439,6 +10439,7 @@ const App = () => {
   const searchRef = useRef(null);
   const topNavRef = useRef(null);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [bottomToolsOpen, setBottomToolsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sharedCliOpen, setSharedCliOpen] = useState(false);
   const [dbOpen, setDbOpen] = useState(false);
@@ -12047,6 +12048,30 @@ const App = () => {
             <TechInfo type={selectedType} category={selectedCat} density={density} language={language} t={t} />
           </aside>
         </div>
+
+        <section className={`bottom-tools ${bottomToolsOpen ? 'open' : ''}`} aria-label={language === 'es' ? 'Herramientas inferiores' : 'Bottom tools'}>
+          <button
+            className="bottom-tools-toggle"
+            type="button"
+            onClick={() => setBottomToolsOpen(prev => !prev)}
+            title={bottomToolsOpen ? (language === 'es' ? 'Ocultar barra inferior' : 'Hide bottom bar') : (language === 'es' ? 'Mostrar barra inferior' : 'Show bottom bar')}
+            aria-label={bottomToolsOpen ? (language === 'es' ? 'Ocultar barra inferior' : 'Hide bottom bar') : (language === 'es' ? 'Mostrar barra inferior' : 'Show bottom bar')}
+            aria-expanded={bottomToolsOpen}
+          >
+            <span dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>`}} />
+          </button>
+          <div className="bottom-tools-rail">
+            <div className="bottom-tools-title">
+              <b>{language === 'es' ? 'Herramientas inferiores' : 'Bottom tools'}</b>
+              <span>{language === 'es' ? 'espacio desplegable preparado' : 'expandable space ready'}</span>
+            </div>
+            <div className="bottom-tools-slots">
+              <button disabled>{language === 'es' ? 'Próxima herramienta' : 'Next tool'}</button>
+              <button disabled>{language === 'es' ? 'Módulo reservado' : 'Reserved module'}</button>
+              <button disabled>{language === 'es' ? 'Acción futura' : 'Future action'}</button>
+            </div>
+          </div>
+        </section>
 
         {/* Status bar */}
         <footer className="sf">
