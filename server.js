@@ -25,8 +25,11 @@ const rateBuckets = new Map();
 const userBuckets = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
+const securityKingSessions = new Map();
 const oauthStates = new Map();
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
+const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
+const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
@@ -160,8 +163,9 @@ function authenticatedRateLimit(auth, req, res) {
 function audit(event, data = {}) {
   try {
     ensureDataDir();
-    const row = JSON.stringify({ at: new Date().toISOString(), event, ...data });
-    fs.appendFileSync(AUDIT_FILE, `${row}\n`);
+    const row = { at: new Date().toISOString(), event, ...data };
+    fs.appendFileSync(AUDIT_FILE, `${JSON.stringify(row)}\n`);
+    appendRenderAudit(row).catch(() => {});
   } catch {
     // Audit failures must not break the app.
   }
@@ -217,6 +221,55 @@ function readAuditRows(limit = 120) {
   } catch {
     return [];
   }
+}
+
+async function readSecurityAuditRows(limit = 240) {
+  const max = Math.min(Math.max(Number(limit) || 240, 1), 1000);
+  const localRows = readAuditRows(max).slice().reverse();
+  const remoteRows = await loadRenderAuditRows();
+  const merged = [...remoteRows, ...localRows];
+  const seen = new Set();
+  const deduped = [];
+  for (let i = merged.length - 1; i >= 0; i -= 1) {
+    const row = merged[i] || {};
+    const id = `${row.at || ''}|${row.event || ''}|${row.actor || row.userId || ''}|${row.requestId || ''}|${row.ip || ''}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    deduped.unshift(row);
+  }
+  return deduped.slice(-max).reverse();
+}
+
+function securityUserRows(db) {
+  return (db.users || []).map(user => ({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    plan: user.plan || 'enterprise',
+    status: user.status || 'ACTIVE',
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt || null,
+    lastOAuthLoginAt: user.lastOAuthLoginAt || null,
+    credential: {
+      stored: !!user.passwordHash,
+      algorithm: String(user.passwordHash || '').startsWith('scrypt:') ? 'scrypt' : 'legacy/protected',
+      visiblePassword: false,
+    },
+  }));
+}
+
+function decorateAuditRows(rows, db) {
+  const userMap = new Map((db.users || []).map(user => [user.id, user]));
+  return rows.map(row => {
+    const actorId = row.actor || row.userId || row.approvedUserId || '';
+    const user = userMap.get(actorId);
+    return {
+      ...row,
+      actorEmail: user?.email || (row.email ? safeText(row.email, 180) : ''),
+      credentialPolicy: 'passwords never stored or returned in plain text',
+    };
+  });
 }
 
 function readJsonBody(req, maxBytes = 1024 * 1024) {
@@ -510,6 +563,37 @@ async function saveRenderAuthDb(db) {
   return true;
 }
 
+async function loadRenderAuditRows() {
+  if (!pgReady || !pgPool) return [];
+  const result = await pgPool.query('select value from hashcod_kv where key = $1 limit 1', ['security-audit']);
+  const rows = result.rows[0]?.value?.rows;
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function saveRenderAuditRows(rows) {
+  if (!pgReady || !pgPool) return false;
+  const cleanRows = Array.isArray(rows) ? rows.slice(-2000) : [];
+  await pgPool.query(
+    `insert into hashcod_kv(key, value, updated_at)
+     values($1, $2::jsonb, now())
+     on conflict(key) do update set value = excluded.value, updated_at = now()`,
+    ['security-audit', JSON.stringify({ rows: cleanRows })]
+  );
+  return true;
+}
+
+async function appendRenderAudit(row) {
+  if (!pgReady || !pgPool || !row) return false;
+  try {
+    const rows = await loadRenderAuditRows();
+    rows.push(row);
+    await saveRenderAuditRows(rows);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function bootstrapAuthDbFromRender() {
   try {
     if (!pgReady) return;
@@ -670,6 +754,36 @@ function makeAdminPanelSession() {
   return { sid, csrf };
 }
 
+function makeSecurityKingSession() {
+  const sid = b64url(crypto.randomBytes(32));
+  securityKingSessions.set(sid, {
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 1000 * 60 * 45,
+  });
+  return { sid };
+}
+
+function getSecurityKingSession(req) {
+  const sid = parseCookies(req).hashcod_security_king;
+  const session = sid && securityKingSessions.get(sid);
+  if (!session || session.expiresAt < Date.now()) {
+    if (sid) securityKingSessions.delete(sid);
+    return null;
+  }
+  session.lastSeenAt = Date.now();
+  return { sid, session };
+}
+
+function verifySecurityKingPair(key, nonce) {
+  const keyHash = crypto.createHash('sha256').update(String(key || '')).digest('hex');
+  const nonceHash = crypto.createHash('sha256').update(String(nonce || '')).digest('hex');
+  const expectedKey = String(SECURITY_KING_KEY_HASH || '').trim();
+  const expectedNonce = String(SECURITY_KING_NONCE_HASH || '').trim();
+  if (expectedKey.length !== 64 || expectedNonce.length !== 64) return false;
+  return crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedKey))
+    && crypto.timingSafeEqual(Buffer.from(nonceHash), Buffer.from(expectedNonce));
+}
+
 function getSession(req) {
   const sid = parseCookies(req).hashcod_session;
   const session = sid && sessions.get(sid);
@@ -753,6 +867,67 @@ function requireAuth(req, res, minRole = 'viewer') {
   return auth;
 }
 
+async function handleSecurityKing(req, res) {
+  const route = (req.url || '').split('?')[0];
+  if (route === '/api/security-king/unlock' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      if (!verifySecurityKingPair(body.key, body.nonce)) {
+        audit('security_king.unlock_failed', { ip: clientIp(req) });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_key_or_nonce' }));
+        return;
+      }
+      const session = makeSecurityKingSession();
+      audit('security_king.unlock', { ip: clientIp(req) });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_security_king=${encodeURIComponent(session.sid)}; ${cookieOptions(req, 60 * 45)}` }, JSON.stringify({ ok: true }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+
+  const king = getSecurityKingSession(req);
+  if (!king) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'security_king_locked' }));
+    return;
+  }
+
+  if (route === '/api/security-king/logs' && req.method === 'GET') {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const db = readAuthDb();
+    const auditRows = decorateAuditRows(await readSecurityAuditRows(url.searchParams.get('limit') || 300), db);
+    const requests = mergedAccessRequests(db).map(publicAccessRequest);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({
+      ok: true,
+      storage: pgReady ? 'render-postgres+encrypted-file-cache' : 'encrypted-file-cache',
+      users: securityUserRows(db),
+      accessRequests: requests,
+      audit: auditRows,
+      policy: 'Hashcod does not reveal user passwords. It stores protected password hashes and audit evidence only.',
+    }));
+    return;
+  }
+
+  if (route === '/api/security-king/export' && req.method === 'GET') {
+    const db = readAuthDb();
+    const auditRows = decorateAuditRows(await readSecurityAuditRows(1000), db);
+    const payload = {
+      app: 'Hashcod',
+      exportedAt: new Date().toISOString(),
+      storage: pgReady ? 'render-postgres+encrypted-file-cache' : 'encrypted-file-cache',
+      users: securityUserRows(db),
+      accessRequests: mergedAccessRequests(db).map(publicAccessRequest),
+      audit: auditRows,
+      policy: 'Passwords are never exported in plain text.',
+    };
+    audit('security_king.export', { ip: clientIp(req), rows: auditRows.length });
+    send(res, 200, { 'Content-Type': MIME['.json'], 'Content-Disposition': `attachment; filename="hashcod-security-king-${dailyStamp()}.json"` }, JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'security_king_route_not_found' }));
+}
+
 async function handleAuth(req, res) {
   const route = (req.url || '').split('?')[0];
   const db = readAuthDb();
@@ -834,7 +1009,7 @@ async function handleAuth(req, res) {
       user.lastOAuthLoginAt = new Date().toISOString();
       writeAuthDb(freshDb);
       const session = makeSession(req, user);
-      audit('oauth.login', { ip: clientIp(req), provider: provider.id, userId: user.id });
+      audit('oauth.login', { ip: clientIp(req), provider: provider.id, userId: user.id, email: user.email });
       send(res, 302, { Location: '/', 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, '');
     } catch (err) {
       audit('oauth.login_failed', { ip: clientIp(req), provider: provider?.id, error: safeText(err.message, 120) });
@@ -911,7 +1086,7 @@ async function handleAuth(req, res) {
         return;
       }
       const session = makeSession(req, user);
-      audit('access.check_login', { ip: clientIp(req), userId: user.id, requestId: reqRow.id });
+      audit('access.check_login', { ip: clientIp(req), userId: user.id, email: user.email, requestId: reqRow.id });
       send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, status: reqRow.status, user: publicUser(user), csrf: session.csrf }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -1003,7 +1178,7 @@ async function handleAuth(req, res) {
       const user = { id: `usr_${Date.now().toString(36)}`, email, name, role: 'admin', plan: 'enterprise', passwordHash: hashPassword(body.password), recoveryHash: hashPassword(recoveryCode), createdAt: new Date().toISOString(), status: 'ACTIVE' };
       writeAuthDb({ users: [user] });
       const session = makeSession(req, user);
-      audit('auth.register_admin', { ip: clientIp(req), userId: user.id });
+      audit('auth.register_admin', { ip: clientIp(req), userId: user.id, email: user.email });
       send(res, 201, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf, recoveryCode }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -1021,7 +1196,7 @@ async function handleAuth(req, res) {
         return;
       }
       const session = makeSession(req, user);
-      audit('auth.login', { ip: clientIp(req), userId: user.id });
+      audit('auth.login', { ip: clientIp(req), userId: user.id, email: user.email });
       send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=${encodeURIComponent(session.sid)}; ${cookieOptions(req)}` }, JSON.stringify({ ok: true, user: publicUser(user), csrf: session.csrf }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
@@ -1052,7 +1227,7 @@ async function handleAuth(req, res) {
     for (const [sid, session] of sessions.entries()) {
       if (session.userId === auth.user.id) sessions.delete(sid);
     }
-    audit('auth.logout_all', { ip: clientIp(req), userId: auth.user.id });
+    audit('auth.logout_all', { ip: clientIp(req), userId: auth.user.id, email: auth.user.email });
     send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
     return;
   }
@@ -1841,6 +2016,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/') || (req.url || '').split('?')[0].startsWith('/api/access/')) {
     handleAuth(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0].startsWith('/api/security-king/')) {
+    handleSecurityKing(req, res);
     return;
   }
 

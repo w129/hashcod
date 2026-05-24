@@ -2137,6 +2137,7 @@ const TOP_MENU_ICONS = {
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
+  securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -2439,6 +2440,141 @@ const AuthUsersDialog = ({ open, onClose }) => {
               ))}
             </div>
           </>
+        )}
+      </section>
+    </div>
+  );
+};
+
+const SecurityKingDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [unlocked, setUnlocked] = useState(false);
+  const [form, setForm] = useState({ key: '', nonce: '' });
+  const [status, setStatus] = useState('');
+  const [users, setUsers] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [auditRows, setAuditRows] = useState([]);
+  const [storage, setStorage] = useState('');
+  const [filter, setFilter] = useState('');
+  const loadLogs = async () => {
+    const res = await authFetch('/api/security-king/logs?limit=420');
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'security_locked');
+    setUsers(data.users || []);
+    setRequests(data.accessRequests || []);
+    setAuditRows(data.audit || []);
+    setStorage(data.storage || '');
+    setStatus(data.policy || L('Auditoria cargada.', 'Audit loaded.'));
+  };
+  useEffect(() => {
+    if (!open) return;
+    if (unlocked) loadLogs().catch(() => setUnlocked(false));
+  }, [open, unlocked]);
+  if (!open) return null;
+  const unlock = async (e) => {
+    e.preventDefault();
+    setStatus('');
+    try {
+      const res = await authFetch('/api/security-king/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'locked');
+      setUnlocked(true);
+      setForm({ key: '', nonce: '' });
+      await loadLogs();
+      notify?.(L('Security King desbloqueado.', 'Security King unlocked.'));
+    } catch {
+      setStatus(L('Key o nonce incorrectas.', 'Invalid key or nonce.'));
+    }
+  };
+  const exportLogs = async () => {
+    const res = await authFetch('/api/security-king/export');
+    if (!res.ok) {
+      setStatus(L('No se pudo exportar.', 'Could not export.'));
+      return;
+    }
+    const text = await res.text();
+    triggerDownload(`hashcod-security-king-${new Date().toISOString().slice(0, 10)}.json`, text, 'application/json;charset=utf-8');
+  };
+  const needle = filter.trim().toLowerCase();
+  const visibleAudit = needle
+    ? auditRows.filter(row => JSON.stringify(row).toLowerCase().includes(needle))
+    : auditRows;
+  const visibleUsers = needle
+    ? users.filter(row => JSON.stringify(row).toLowerCase().includes(needle))
+    : users;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg securitykingdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="securityking-head">
+            <span className="securityking-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.securityKing}} />
+            <div>
+              <h2>Security King</h2>
+              <p>{L('Registro protegido de usuarios, entradas y actividad real de la plataforma.', 'Protected register of users, logins and real platform activity.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        {!unlocked ? (
+          <form className="securityking-form" onSubmit={unlock}>
+            <label><span>Security key</span><input type="password" value={form.key} onChange={e => setForm({ ...form, key: e.target.value })} placeholder="Paste protected key" /></label>
+            <label><span>Nonce</span><input type="password" value={form.nonce} onChange={e => setForm({ ...form, nonce: e.target.value })} placeholder="Paste nonce" /></label>
+            <button>Unlock Security King</button>
+            <em>{status || L('Requiere key y nonce correctas. Las contrasenas de usuarios no se muestran en claro.', 'Requires the correct key and nonce. User passwords are never shown in plain text.')}</em>
+          </form>
+        ) : (
+          <div className="securityking-body">
+            <div className="securityking-toolbar">
+              <input value={filter} onChange={e => setFilter(e.target.value)} placeholder={L('Buscar email, evento, rol o IP...', 'Search email, event, role or IP...')} />
+              <button onClick={() => loadLogs().catch(() => setStatus(L('No se pudo recargar.', 'Could not refresh.')))}>Refresh</button>
+              <button onClick={exportLogs}>Export</button>
+            </div>
+            <article className="securityking-summary">
+              <span><b>{users.length}</b>{L('usuarios', 'users')}</span>
+              <span><b>{requests.length}</b>{L('solicitudes', 'requests')}</span>
+              <span><b>{auditRows.length}</b>{L('eventos', 'events')}</span>
+              <span><b>{storage || 'cache'}</b>{L('almacenamiento', 'storage')}</span>
+            </article>
+            {status && <div className="securityking-status">{status}</div>}
+            <h3>{L('Personas que entran', 'People with access')}</h3>
+            <div className="securityking-table">
+              {visibleUsers.map(user => (
+                <article key={user.id}>
+                  <div><b>{user.email}</b><span>{user.name || user.id}</span></div>
+                  <span>{user.role} / {user.status}</span>
+                  <span>{user.credential?.algorithm || 'protected'}</span>
+                  <small>{user.createdAt || ''}</small>
+                </article>
+              ))}
+              {!visibleUsers.length && <div className="securityking-empty">{L('No hay usuarios para este filtro.', 'No users for this filter.')}</div>}
+            </div>
+            <h3>{L('Solicitudes guardadas', 'Saved requests')}</h3>
+            <div className="securityking-table">
+              {requests.slice(0, 80).map(req => (
+                <article key={req.id}>
+                  <div><b>{req.email}</b><span>{req.blowfishId} | {req.serial}</span></div>
+                  <span>{req.status}</span>
+                  <span>{req.role || 'pending'}</span>
+                  <small>{req.createdAt || req.reviewedAt || ''}</small>
+                </article>
+              ))}
+            </div>
+            <h3>{L('Que hicieron en la plataforma', 'What they did in the platform')}</h3>
+            <div className="securityking-audit">
+              {visibleAudit.map((row, idx) => (
+                <article key={`${row.at || 'row'}-${idx}`}>
+                  <header><b>{row.event || 'event'}</b><span>{row.at || ''}</span></header>
+                  <p>{row.actorEmail || row.email || row.actor || row.userId || 'system'} {row.ip ? `| ${row.ip}` : ''}</p>
+                  <code>{JSON.stringify(row)}</code>
+                </article>
+              ))}
+              {!visibleAudit.length && <div className="securityking-empty">{L('No hay eventos para este filtro.', 'No events for this filter.')}</div>}
+            </div>
+          </div>
         )}
       </section>
     </div>
@@ -10009,6 +10145,7 @@ const App = () => {
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
+  const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -10813,6 +10950,7 @@ const App = () => {
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
+  const openSecurityKing = () => setSecurityKingOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -11040,6 +11178,11 @@ const App = () => {
     { label: language === 'es' ? 'Operaciones por linea' : 'Line-based operations', onClick: openGraphLab },
     { label: language === 'es' ? 'Funciones trigonométricas y potencias' : 'Trig functions and powers', onClick: openGraphLab },
     { label: language === 'es' ? 'Descargar PDF / PNG' : 'Download PDF / PNG', onClick: openGraphLab },
+  ];
+  const securityKingItems = [
+    { label: language === 'es' ? 'Abrir Security King' : 'Open Security King', onClick: openSecurityKing },
+    { label: language === 'es' ? 'Usuarios, entradas y eventos' : 'Users, logins and events', onClick: openSecurityKing },
+    { label: language === 'es' ? 'Exportar auditoria protegida' : 'Export protected audit', onClick: openSecurityKing },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -11428,6 +11571,7 @@ const App = () => {
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
+      <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -11478,6 +11622,7 @@ const App = () => {
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
+            <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>

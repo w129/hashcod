@@ -445,6 +445,133 @@ kbd {
 .authusers-audit-row span { color:var(--ink-4); font-size:10px; }
 .authusers-audit-row code { display:block; max-height:54px; overflow:auto; font:10px var(--mono); color:#333; background:#f7f7f4; border:1px solid var(--line); padding:6px; }
 @media (max-width: 780px) { .authusers-row, .authusers-history { grid-template-columns:1fr; } }
+.securitykingdlg { width:min(980px, calc(100vw - 42px)); }
+.securityking-head { display:flex; align-items:center; gap:14px; }
+.securityking-mark {
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+}
+.securityking-mark svg { width:24px; height:24px; }
+.securityking-form,
+.securityking-body { display:grid; gap:12px; padding:18px; }
+.securityking-form label { display:grid; gap:7px; }
+.securityking-form span,
+.securityking-body h3 {
+  color:var(--ink-4);
+  font:10px var(--mono);
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+.securityking-form input,
+.securityking-toolbar input {
+  min-height:44px;
+  border:1px solid var(--line-2);
+  background:#fff;
+  padding:0 12px;
+  font-family:var(--mono);
+}
+.securityking-form button,
+.securityking-toolbar button {
+  min-height:42px;
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+  padding:0 14px;
+  font:11px var(--mono);
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.securityking-form em,
+.securityking-status {
+  border-left:4px solid #16803a;
+  background:#f7f7f4;
+  color:#333;
+  padding:12px;
+  font:12px var(--mono);
+  font-style:normal;
+}
+.securityking-toolbar {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:10px;
+}
+.securityking-summary {
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  border:1px solid var(--line);
+}
+.securityking-summary span {
+  display:grid;
+  gap:4px;
+  padding:12px;
+  border-right:1px solid var(--line);
+  color:var(--ink-4);
+  font:10px var(--mono);
+  text-transform:uppercase;
+}
+.securityking-summary span:last-child { border-right:0; }
+.securityking-summary b { color:#111; font-size:16px; overflow-wrap:anywhere; }
+.securityking-table,
+.securityking-audit { display:grid; gap:1px; background:var(--line); }
+.securityking-table article {
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) 130px 130px minmax(0,.8fr);
+  gap:10px;
+  align-items:center;
+  background:#fff;
+  padding:10px;
+}
+.securityking-table article div,
+.securityking-audit article { min-width:0; }
+.securityking-table b,
+.securityking-audit b { font:12px var(--mono); overflow-wrap:anywhere; }
+.securityking-table span,
+.securityking-table small,
+.securityking-audit span,
+.securityking-audit p {
+  margin:0;
+  color:var(--ink-4);
+  font:10px var(--mono);
+  overflow-wrap:anywhere;
+}
+.securityking-audit article {
+  display:grid;
+  gap:6px;
+  background:#fff;
+  padding:10px;
+}
+.securityking-audit header {
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+}
+.securityking-audit code {
+  display:block;
+  max-height:64px;
+  overflow:auto;
+  border:1px solid var(--line);
+  background:#f7f7f4;
+  color:#333;
+  padding:7px;
+  font:10px var(--mono);
+}
+.securityking-empty {
+  background:#fff;
+  color:var(--ink-4);
+  padding:12px;
+  font:11px var(--mono);
+}
+@media (max-width: 780px) {
+  .securityking-toolbar,
+  .securityking-summary,
+  .securityking-table article { grid-template-columns:1fr; }
+  .securityking-audit header { display:grid; }
+}
 .tb-cli {
   width: 26px;
   height: 24px;
@@ -3918,6 +4045,15 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .authusers-history,
 .authusers-audit-row,
 .authusers-empty,
+.securityking-form,
+.securityking-body,
+.securityking-status,
+.securityking-summary,
+.securityking-summary span,
+.securityking-table article,
+.securityking-audit article,
+.securityking-audit code,
+.securityking-empty,
 .assist-form,
 .assist-current,
 .assist-row,
@@ -4086,6 +4222,14 @@ body ::selection { background: #F5F5F5; color: #0F0F0F; }
 .graph-help,
 .fileview-note,
 .authusers-audit-row code,
+.securityking-form em,
+.securityking-status,
+.securityking-summary span,
+.securityking-table span,
+.securityking-table small,
+.securityking-audit span,
+.securityking-audit p,
+.securityking-audit code,
 .hashsyt-card span,
 .hnsb-card span,
 .cryptoai-note,
@@ -4110,6 +4254,8 @@ select,
 .authusers-form input,
 .authusers-form select,
 .authusers-row select,
+.securityking-form input,
+.securityking-toolbar input,
 .assist-form input,
 .assist-form textarea,
 .sms-form input,
@@ -4209,6 +4355,8 @@ button:hover,
 .authbox button,
 .authusers-form button,
 .authusers-enterprise-pill,
+.securityking-form button,
+.securityking-toolbar button,
 .sms-actions button:first-child,
 .pixelnote-actions button,
 .hashsyt-form button,
