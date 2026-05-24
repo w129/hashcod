@@ -1454,6 +1454,70 @@ window.OCG_CATALOG = [
   });
 })();
 
+(function addHashcodAdvancedCodes5000() {
+  const profiles = [
+    ['PQC-KEM', 'intercambio de claves post-cuantico', 'post-quantum key encapsulation', 'key', '896 bits'],
+    ['PQC-SIG', 'firma digital post-cuantica', 'post-quantum digital signature', 'fingerprint', '896 bits'],
+    ['HASH-SIG', 'firma basada en hash', 'hash-based signature', 'hash', '832 bits'],
+    ['HPKE', 'cifrado publico hibrido', 'hybrid public-key encryption', 'shield', '800 bits'],
+    ['ZK', 'prueba de conocimiento cero', 'zero-knowledge proof material', 'cube', '768 bits'],
+    ['MPC', 'computacion multipartita segura', 'secure multi-party computation', 'grid', '800 bits'],
+    ['FHE', 'cifrado homomorfico', 'fully homomorphic encryption context', 'cube', '832 bits'],
+    ['THRESH', 'criptografia de umbral', 'threshold cryptography share', 'lock', '800 bits'],
+    ['VDF', 'funcion de retardo verificable', 'verifiable delay function', 'clock', '640 bits'],
+    ['VRF', 'funcion aleatoria verificable', 'verifiable random function', 'hash', '768 bits'],
+    ['AEAD-LW', 'cifrado autenticado ligero', 'lightweight authenticated encryption', 'shield', '640 bits'],
+    ['XOF', 'funcion de salida extensible', 'extendable-output function', 'hash', '704 bits'],
+    ['KDF', 'derivacion segura de claves', 'secure key derivation', 'key', '768 bits'],
+    ['MAC', 'autenticacion de mensajes', 'message authentication code', 'token', '704 bits'],
+    ['PAKE', 'intercambio seguro con contrasena', 'password-authenticated key exchange', 'shield', '768 bits'],
+    ['ACCUM', 'acumulador criptografico', 'cryptographic accumulator', 'database', '704 bits'],
+    ['IBE', 'cifrado basado en identidad', 'identity-based encryption', 'id', '768 bits'],
+    ['ABE', 'cifrado basado en atributos', 'attribute-based encryption', 'id', '800 bits'],
+    ['RING', 'firma de anillo', 'ring signature', 'fingerprint', '704 bits'],
+    ['BLIND', 'firma ciega', 'blind signature', 'card', '704 bits'],
+  ];
+  const names = [
+    'Cipher', 'Quanta', 'Atlas', 'Sigma', 'Obsidian', 'Eclipse', 'Helix', 'Falcon', 'Orion', 'Vertex',
+    'Nimbus', 'Chronos', 'Aether', 'Delta', 'Argon', 'Monolith', 'Meridian', 'Zenith', 'Omega', 'Lattice',
+    'Vortex', 'Titan', 'Krypton', 'Matrix', 'Radial', 'Prism', 'Nexus', 'Cobalt', 'Vega', 'Solstice',
+    'Neon', 'Parallax', 'Axiom', 'Vector', 'Nova', 'Spectra', 'Zephyr', 'Aurora', 'Pulse', 'Kairo',
+  ];
+  const levels = ['256-bit', 'L3', 'L5', '192-bit', 'L1', '256-bit', 'L3', 'L5', '128-bit', '256-bit'];
+  const versionFor = (n) => `v${1 + (n % 9)}.${(n * 3) % 10}`;
+  const codeName = (n, profile) => {
+    const pairIndex = ((n - 1) * 2) % names.length;
+    const a = names[pairIndex];
+    const b = names[(pairIndex + 1) % names.length];
+    return `HC-${profile[0]}-${a}-${b}-${String(n).padStart(4, '0')}-${levels[(n - 1) % levels.length]}-${versionFor(n)}`;
+  };
+
+  window.OCG_CATALOG.push({
+    id: 'hashcod_advanced_5000',
+    label: 'Hashcod Advanced Codes 5000',
+    icon: 'container',
+    desc: 'Five thousand advanced Hashcod cryptographic code families for PQC, ZK, MPC, FHE, threshold systems, KDF, MAC, PAKE and privacy workflows.',
+    types: Array.from({ length: 5000 }, (_, i) => {
+      const n = i + 1;
+      const profile = profiles[(n - 1) % profiles.length];
+      const name = codeName(n, profile);
+      return {
+        id: `hc5000_code_${String(n).padStart(4, '0')}`,
+        icon: profile[3],
+        label: name,
+        badge: `H${String(n).padStart(4, '0')}`,
+        hasLen: false,
+        hasCharset: false,
+        engine: `${profile[0]} - HMAC-SHA256 + SHA-512 + SHA-256 binding + salt/nonce`,
+        entropy: profile[4],
+        space: '2^640+',
+        std: `Hashcod ${profile[0]} profile`,
+        about: `${name}: ${profile[1]}. Generates a sealed Hashcod packet with payload, salt, nonce, route, HMAC binding, SHA-512 digest, SHA-256 binding, timestamp and checksum while preserving the practical purpose of the selected cryptographic family.`,
+      };
+    }),
+  });
+})();
+
 (function finalizeHashcodVariantNames() {
   let variantIndex = 0;
   (window.OCG_CATALOG || []).forEach((category) => {

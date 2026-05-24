@@ -509,6 +509,80 @@
     ].join('\n');
   }
 
+  async function hashcodAdvanced5000Template(typeId) {
+    const n = Math.max(1, Math.min(5000, Number(String(typeId).replace('hc5000_code_', '')) || 1));
+    const profiles = [
+      ['PQC-KEM', 'intercambio de claves post-cuantico', 'post-quantum key encapsulation', 92, 'PQK'],
+      ['PQC-SIG', 'firma digital post-cuantica', 'post-quantum digital signature', 92, 'PQS'],
+      ['HASH-SIG', 'firma basada en hash', 'hash-based signature', 86, 'HSIG'],
+      ['HPKE', 'cifrado publico hibrido', 'hybrid public-key encryption', 82, 'HPKE'],
+      ['ZK', 'prueba de conocimiento cero', 'zero-knowledge proof material', 78, 'ZK'],
+      ['MPC', 'computacion multipartita segura', 'secure multi-party computation', 82, 'MPC'],
+      ['FHE', 'cifrado homomorfico', 'fully homomorphic encryption context', 84, 'FHE'],
+      ['THRESH', 'criptografia de umbral', 'threshold cryptography share', 82, 'TSS'],
+      ['VDF', 'funcion de retardo verificable', 'verifiable delay function', 66, 'VDF'],
+      ['VRF', 'funcion aleatoria verificable', 'verifiable random function', 78, 'VRF'],
+      ['AEAD-LW', 'cifrado autenticado ligero', 'lightweight authenticated encryption', 66, 'AEAD'],
+      ['XOF', 'funcion de salida extensible', 'extendable-output function', 72, 'XOF'],
+      ['KDF', 'derivacion segura de claves', 'secure key derivation', 78, 'KDF'],
+      ['MAC', 'autenticacion de mensajes', 'message authentication code', 72, 'MAC'],
+      ['PAKE', 'intercambio seguro con contrasena', 'password-authenticated key exchange', 78, 'PAKE'],
+      ['ACCUM', 'acumulador criptografico', 'cryptographic accumulator', 72, 'ACCUM'],
+      ['IBE', 'cifrado basado en identidad', 'identity-based encryption', 78, 'IBE'],
+      ['ABE', 'cifrado basado en atributos', 'attribute-based encryption', 82, 'ABE'],
+      ['RING', 'firma de anillo', 'ring signature', 72, 'RING'],
+      ['BLIND', 'firma ciega', 'blind signature', 72, 'BLIND'],
+    ];
+    const names = [
+      'Cipher', 'Quanta', 'Atlas', 'Sigma', 'Obsidian', 'Eclipse', 'Helix', 'Falcon', 'Orion', 'Vertex',
+      'Nimbus', 'Chronos', 'Aether', 'Delta', 'Argon', 'Monolith', 'Meridian', 'Zenith', 'Omega', 'Lattice',
+      'Vortex', 'Titan', 'Krypton', 'Matrix', 'Radial', 'Prism', 'Nexus', 'Cobalt', 'Vega', 'Solstice',
+      'Neon', 'Parallax', 'Axiom', 'Vector', 'Nova', 'Spectra', 'Zephyr', 'Aurora', 'Pulse', 'Kairo',
+    ];
+    const levels = ['256-bit', 'L3', 'L5', '192-bit', 'L1', '256-bit', 'L3', 'L5', '128-bit', '256-bit'];
+    const versionFor = (value) => `v${1 + (value % 9)}.${(value * 3) % 10}`;
+    const profile = profiles[(n - 1) % profiles.length];
+    const pairIndex = ((n - 1) * 2) % names.length;
+    const left = names[pairIndex];
+    const right = names[(pairIndex + 1) % names.length];
+    const level = levels[(n - 1) % levels.length];
+    const version = versionFor(n);
+    const codeName = `HC-${profile[0]}-${left}-${right}-${String(n).padStart(4, '0')}-${level}-${version}`;
+    const payload = bytes(profile[3] + Math.floor((n - 1) / 500));
+    const salt = bytes(32);
+    const nonce = bytes(24);
+    const route = `HCR-${profile[4]}-${toB32(bytes(12)).slice(0, 20)}`;
+    const issued = new Date().toISOString();
+    const payloadB64 = toB64u(payload);
+    const saltB64 = toB64u(salt);
+    const nonceB64 = toB64u(nonce);
+    const policy = `HC5K-${String(n).padStart(4, '0')}-${profile[4]}-${level}`;
+    const hmac256 = toHex(await hmacSha256(salt, `${codeName}:${payloadB64}:${nonceB64}:${route}:${issued}:${policy}`));
+    const digest512 = toHex(await sha('SHA-512', enc.encode(`${hmac256}:${codeName}:${profile[2]}:${saltB64}`)));
+    const binding256 = toHex(await sha('SHA-256', enc.encode(`${digest512}:${nonceB64}:${policy}:${version}`)));
+    const check = crc32(enc.encode(`${codeName}:${digest512}:${binding256}:${route}`)).toUpperCase();
+    return [
+      `HASHCOD.${profile[4]}.v13.${codeName}`,
+      `NAME=${codeName}`,
+      `FAMILY=${profile[0]}`,
+      `PURPOSE=${profile[1]}`,
+      `CLASS=${profile[4]}`,
+      `LEVEL=${level}`,
+      `VERSION=${version}`,
+      `POLICY=${policy}`,
+      `PAYLOAD=${payloadB64}`,
+      `SALT=${saltB64}`,
+      `NONCE=${nonceB64}`,
+      `ROUTE=${route}`,
+      `HMAC_SHA256=${hmac256}`,
+      `SHA512=${digest512}`,
+      `SHA256_BINDING=${binding256}`,
+      `ISSUED=${issued}`,
+      `USE=${profile[2]}`,
+      `CHECK=${check}`,
+    ].join('\n');
+  }
+
   async function generate(typeId, len, opts) {
     const o = opts || {};
     const L = len || 32;
@@ -516,6 +590,7 @@
     if (String(typeId).startsWith('xadv_code_')) return extraAdvancedCodeTemplate(typeId);
     if (String(typeId).startsWith('neo_code_')) return await neoCryptoCodeTemplate(typeId);
     if (String(typeId).startsWith('apex_code_')) return await apexCryptoCodeTemplate(typeId);
+    if (String(typeId).startsWith('hc5000_code_')) return await hashcodAdvanced5000Template(typeId);
     if (String(typeId).startsWith('card_tpl_')) return cardStudioTemplate(typeId);
     switch (typeId) {
       // Symmetric

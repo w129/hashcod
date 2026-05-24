@@ -82,11 +82,17 @@ function assert(ok, id, detail = '') {
   const apex = catalog.find(cat => cat.id === 'apex_crypto_300');
   assert(apex && apex.types && apex.types.length === 300, 'apex-300-complete', `${apex ? apex.types.length : 0}/300`);
 
+  const hc5000 = catalog.find(cat => cat.id === 'hashcod_advanced_5000');
+  assert(hc5000 && hc5000.types && hc5000.types.length === 5000, 'hashcod-5000-complete', `${hc5000 ? hc5000.types.length : 0}/5000`);
+
   const out = await ctx.window.OCG_GEN.generate('neo_code_200', 32, {});
   assert(/^OCG-NEO\./.test(out) && /^CHECK=/m.test(out), 'neo-generator-health', out.split('\n')[0]);
 
   const apexOut = await ctx.window.OCG_GEN.generate('apex_code_300', 32, {});
   assert(/^OCG-APEX\./.test(apexOut) && /^CHECK=/m.test(apexOut), 'apex-generator-health', apexOut.split('\n')[0]);
+
+  const hc5000Out = await ctx.window.OCG_GEN.generate('hc5000_code_5000', 32, {});
+  assert(/^HASHCOD\./.test(hc5000Out) && /^CHECK=/m.test(hc5000Out), 'hashcod-5000-generator-health', hc5000Out.split('\n')[0]);
 
   const jwt = await ctx.window.OCG_GEN.generate('jwt_hs256_real', 32, {});
   assert(jwt.split('.').length === 3, 'jwt-real-shape');
