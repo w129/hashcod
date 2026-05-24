@@ -353,12 +353,15 @@ kbd {
   min-height: 100vh;
   display: grid;
   place-items: center;
+  align-items: start;
   background:
     linear-gradient(#e8e8e5 1px, transparent 1px),
     linear-gradient(90deg, #e8e8e5 1px, transparent 1px),
     #f4f4f1;
   background-size: 32px 32px;
   color: #111;
+  padding: 28px 16px;
+  overflow: auto;
 }
 .authbox {
   width: min(720px, calc(100vw - 42px));
@@ -403,7 +406,8 @@ kbd {
   max-width: 1040px;
   padding: 0;
   gap: 0;
-  overflow: hidden;
+  overflow: auto;
+  max-height: calc(100dvh - 56px);
   border-color: #2A2A2A;
   background:
     radial-gradient(circle at 14% 18%, rgba(245,245,245,.08), transparent 28%),
@@ -448,7 +452,7 @@ kbd {
   display: grid;
   grid-template-columns: minmax(0,1fr) 290px;
   gap: 34px;
-  padding: 42px 42px 28px;
+  padding: 32px 42px 22px;
   border-bottom: 1px solid #2A2A2A;
 }
 .auth-hero > div:first-child {
@@ -471,14 +475,14 @@ kbd {
 }
 .authbox-pro h1 {
   color: #F5F5F5;
-  font-size: clamp(56px, 8vw, 96px);
+  font-size: clamp(46px, 7vw, 76px);
   letter-spacing: -1px;
   text-shadow: 4px 4px 0 #000;
 }
 .authbox-pro p {
   max-width: 720px;
   color: #A3A3A3;
-  font-size: 15px;
+  font-size: 14px;
 }
 .auth-handshake {
   border: 1px solid #2A2A2A;
@@ -4577,6 +4581,7 @@ kbd {
   .authbox-pro {
     padding: 0;
     width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
   }
   .auth-hero {
     grid-template-columns: 1fr;

@@ -3252,8 +3252,10 @@ const AuthGate = ({ children }) => {
     writePlanLicense({ plan: 'enterprise', activatedAt: new Date().toISOString(), fingerprint: 'ENTERPRISE-' + (user?.role || 'user') });
   };
   const refresh = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1400);
     try {
-      const res = await fetch('/api/auth/me');
+      const res = await fetch('/api/auth/me', { signal: controller.signal });
       const data = await res.json();
       window.HASHCOD_CSRF = data.csrf || '';
       setProviders(data.providers || []);
@@ -3263,7 +3265,9 @@ const AuthGate = ({ children }) => {
       if (!data.user) setMode(data.setupRequired ? 'setup' : 'login');
     } catch {
       setAuth({ loading: false, setupRequired: false, user: null });
-      setError('No se pudo conectar con autenticacion.');
+      setNotice('Login listo. Si Render esta despertando, el servidor terminara de sincronizar en segundo plano.');
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
   useEffect(() => { refresh(); }, []);
