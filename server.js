@@ -5,6 +5,8 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+let PgPool = null;
+try { PgPool = require('pg').Pool; } catch {}
 
 const PORT = Number(process.env.PORT || 2340);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -30,6 +32,9 @@ const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
 const SMS_PROVIDER = String(process.env.SMS_PROVIDER || (SMS_ACCOUNT_SID && SMS_AUTH_TOKEN && SMS_FROM_NUMBER ? 'twilio' : 'hashcod')).toLowerCase();
 const SMS_GATEWAY_PAIRING_KEY_HASH = process.env.HASHCOD_GATEWAY_PAIRING_KEY_HASH || ADMIN_PANEL_KEY_HASH;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.HASHCOD_DATABASE_URL || '';
+let pgPool = null;
+let pgReady = false;
 
 const OAUTH_PROVIDERS = {
   google: {
@@ -214,12 +219,12 @@ function readAuditRows(limit = 120) {
   }
 }
 
-function readJsonBody(req) {
+function readJsonBody(req, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
-      if (body.length > 1024 * 1024) {
+      if (body.length > maxBytes) {
         req.destroy();
         reject(new Error('Payload too large'));
       }
@@ -460,17 +465,85 @@ function decryptJson(raw, fallback) {
   }
 }
 
+const emptyAuthDb = () => ({ users: [], accessRequests: [], meta: {} });
+
+function normalizeAuthDb(db) {
+  return {
+    users: Array.isArray(db?.users) ? db.users : [],
+    accessRequests: Array.isArray(db?.accessRequests) ? db.accessRequests : [],
+    meta: db?.meta && typeof db.meta === 'object' ? db.meta : {},
+  };
+}
+
+async function initRenderDatabase() {
+  if (!DATABASE_URL || !PgPool) return;
+  pgPool = new PgPool({
+    connectionString: DATABASE_URL,
+    ssl: process.env.HASHCOD_PG_SSL === '0' ? false : { rejectUnauthorized: false },
+  });
+  await pgPool.query(`
+    create table if not exists hashcod_kv (
+      key text primary key,
+      value jsonb not null,
+      updated_at timestamptz not null default now()
+    )
+  `);
+  pgReady = true;
+  audit('db.render.ready', { provider: 'postgres' });
+}
+
+async function loadRenderAuthDb() {
+  if (!pgReady || !pgPool) return null;
+  const result = await pgPool.query('select value from hashcod_kv where key = $1 limit 1', ['auth-db']);
+  if (!result.rows.length) return null;
+  return normalizeAuthDb(result.rows[0].value);
+}
+
+async function saveRenderAuthDb(db) {
+  if (!pgReady || !pgPool) return false;
+  await pgPool.query(
+    `insert into hashcod_kv(key, value, updated_at)
+     values($1, $2::jsonb, now())
+     on conflict(key) do update set value = excluded.value, updated_at = now()`,
+    ['auth-db', JSON.stringify(normalizeAuthDb(db))]
+  );
+  return true;
+}
+
+async function bootstrapAuthDbFromRender() {
+  try {
+    if (!pgReady) return;
+    const remote = await loadRenderAuthDb();
+    const local = readAuthDb();
+    if (remote && (remote.users.length || remote.accessRequests.length)) {
+      fs.writeFileSync(AUTH_DB_FILE, encryptJson(remote));
+      audit('db.render.auth_loaded', { users: remote.users.length, requests: remote.accessRequests.length });
+      return;
+    }
+    if (local.users.length || local.accessRequests.length) {
+      await saveRenderAuthDb(local);
+      audit('db.render.auth_seeded', { users: local.users.length, requests: local.accessRequests.length });
+    }
+  } catch (err) {
+    audit('db.render.auth_bootstrap_failed', { error: safeText(err.message, 160) });
+  }
+}
+
 function readAuthDb() {
   ensureDataDir();
-  if (!fs.existsSync(AUTH_DB_FILE)) return { users: [], accessRequests: [] };
-  const db = decryptJson(fs.readFileSync(AUTH_DB_FILE, 'utf8'), { users: [], accessRequests: [] });
-  return { users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] };
+  if (!fs.existsSync(AUTH_DB_FILE)) return emptyAuthDb();
+  return normalizeAuthDb(decryptJson(fs.readFileSync(AUTH_DB_FILE, 'utf8'), emptyAuthDb()));
 }
 
 function writeAuthDb(db) {
   ensureDataDir();
-  fs.writeFileSync(AUTH_DB_FILE, encryptJson({ users: Array.isArray(db.users) ? db.users : [], accessRequests: Array.isArray(db.accessRequests) ? db.accessRequests : [] }));
+  const clean = normalizeAuthDb(db);
+  clean.meta = { ...(clean.meta || {}), storage: pgReady ? 'render-postgres+encrypted-file-cache' : 'encrypted-file', updatedAt: new Date().toISOString() };
+  fs.writeFileSync(AUTH_DB_FILE, encryptJson(clean));
   ensureAutomaticBackup('auth-db-write');
+  if (pgReady) {
+    saveRenderAuthDb(clean).catch(err => audit('db.render.auth_write_failed', { error: safeText(err.message, 160) }));
+  }
 }
 
 function publicAccessRequest(row) {
@@ -686,7 +759,7 @@ async function handleAuth(req, res) {
   if (route === '/api/auth/me' && req.method === 'GET') {
     const auth = getSession(req);
     const panel = getAdminPanelSession(req);
-    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req), providers: publicOAuthProviders(req), auth: { passwordHash: 'scrypt', legacyPasswordHash: 'pbkdf2-sha256', sessionCookie: 'HttpOnly Secure SameSite=Lax', csrf: true, rateLimit: true } }));
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, setupRequired: db.users.length === 0, user: publicUser(auth?.user), csrf: auth?.session?.csrf || panel?.session?.csrf || null, adminPanel: hasAdminPanel(req), providers: publicOAuthProviders(req), auth: { passwordHash: 'scrypt', legacyPasswordHash: 'pbkdf2-sha256', sessionCookie: 'HttpOnly Secure SameSite=Lax', csrf: true, rateLimit: true, database: pgReady ? 'render-postgres' : 'encrypted-file-cache' } }));
     return;
   }
   if (route === '/api/auth/providers' && req.method === 'GET') {
@@ -1829,10 +1902,22 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, HOST, () => {
-  console.log('────────────────────────────────────────');
-  console.log(' Hashcod servidor local iniciado');
-  console.log(` URL: http://${HOST}:${PORT}`);
-  console.log(' Para cerrar: Ctrl + C');
-  console.log('────────────────────────────────────────');
-});
+async function startServer() {
+  try {
+    await initRenderDatabase();
+    await bootstrapAuthDbFromRender();
+  } catch (err) {
+    audit('db.render.start_failed', { error: safeText(err.message, 160) });
+    console.warn('[Hashcod] Render database unavailable, using encrypted file cache:', err.message);
+  }
+  server.listen(PORT, HOST, () => {
+    console.log('----------------------------------------');
+    console.log(' Hashcod servidor iniciado');
+    console.log(` URL: http://${HOST}:${PORT}`);
+    console.log(` Auth storage: ${pgReady ? 'Render PostgreSQL + encrypted cache' : 'encrypted file cache'}`);
+    console.log(' Para cerrar: Ctrl + C');
+    console.log('----------------------------------------');
+  });
+}
+
+startServer();

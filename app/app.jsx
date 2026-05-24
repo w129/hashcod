@@ -2454,6 +2454,7 @@ const AuthGate = ({ children }) => {
   const [requestInfo, setRequestInfo] = useState(null);
   const [usersOpen, setUsersOpen] = useState(false);
   const [providers, setProviders] = useState([]);
+  const [authMeta, setAuthMeta] = useState(null);
   const [sessionsList, setSessionsList] = useState([]);
   const applyServerPlan = (user) => {
     writePlanLicense({ plan: 'enterprise', activatedAt: new Date().toISOString(), fingerprint: 'ENTERPRISE-' + (user?.role || 'user') });
@@ -2464,6 +2465,7 @@ const AuthGate = ({ children }) => {
       const data = await res.json();
       window.HASHCOD_CSRF = data.csrf || '';
       setProviders(data.providers || []);
+      setAuthMeta(data.auth || null);
       applyServerPlan(data.user);
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
       if (!data.user) setMode(data.setupRequired ? 'setup' : 'login');
@@ -2595,7 +2597,7 @@ const AuthGate = ({ children }) => {
           <b>OAuth 2.0 / OIDC ready</b>
           <b>HttpOnly SameSite cookies</b>
           <b>CSRF + rate limit</b>
-          <b>Active sessions</b>
+          <b>{authMeta?.database === 'render-postgres' ? 'Render PostgreSQL persistence' : 'Encrypted local cache'}</b>
         </div>
       </form>
     </div>

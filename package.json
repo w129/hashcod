@@ -9,5 +9,7 @@
     "start:5600": "PORT=5600 node server.js",
     "test:enterprise": "node scripts/enterprise-selftest.js"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pg": "^8.12.0"
+  }
 }
