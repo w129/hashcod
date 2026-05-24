@@ -1806,7 +1806,40 @@ kbd {
 .sb-item-ic { display: flex; opacity: 1; flex-shrink: 0; align-items: center; justify-content: center; }
 .sb-item-ic svg, .sb-cat-ic svg { display: block; }
 .sb-item.on .sb-item-ic svg { filter: drop-shadow(0 0 8px rgba(255,255,255,.10)); }
-.sb-item-l { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-item-l { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.sb-item.marked .sb-item-l {
+  color: var(--ink);
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+}
+.sb-item.on.marked .sb-item-l { color: #fff; }
+.sb-mark-tool {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ink-4);
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.sb-mark-tool:hover,
+.sb-mark-tool.on {
+  color: var(--ink);
+  border-color: var(--line-2);
+  background: var(--card);
+}
+.sb-item.on .sb-mark-tool { color: rgba(255,255,255,.65); }
+.sb-item.on .sb-mark-tool:hover,
+.sb-item.on .sb-mark-tool.on {
+  color: #fff;
+  border-color: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.12);
+}
+.sb-mark-tool svg { display: block; }
 .sb-item-b {
   font-size: 8.5px; letter-spacing: 1px;
   color: var(--ink-4);

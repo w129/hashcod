@@ -412,7 +412,12 @@ window.translateApprox = translateApprox;
 // ── Sidebar ──
 const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searchRef, language, t }) => {
   const [collapsed, setCollapsed] = useState({});
+  const [underlined, setUnderlined] = useState({});
   const toggle = id => setCollapsed(p => ({ ...p, [id]: !p[id] }));
+  const toggleUnderline = (event, id) => {
+    event.stopPropagation();
+    setUnderlined(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const filtered = useMemo(() => {
     if (!query.trim()) return catalog;
@@ -460,11 +465,21 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
                   {cat.types.map(t => (
                     <li
                       key={t.id}
-                      className={`sb-item ${selectedId === t.id ? 'on' : ''}`}
+                      className={`sb-item ${selectedId === t.id ? 'on' : ''} ${underlined[t.id] ? 'marked' : ''}`}
                       onClick={() => onSelect(t.id, cat.id)}
                     >
                       <span className="sb-item-ic" dangerouslySetInnerHTML={{__html: (window.OCG_ICONS.code ? window.OCG_ICONS.code(t, 16) : window.OCG_ICONS[t.icon](13))}} />
                       <span className="sb-item-l">{t.label}</span>
+                      <button
+                        className={`sb-mark-tool ${underlined[t.id] ? 'on' : ''}`}
+                        type="button"
+                        title={language === 'es' ? 'Subrayar code' : 'Underline code'}
+                        aria-label={language === 'es' ? 'Subrayar code criptografico' : 'Underline cryptographic code'}
+                        aria-pressed={!!underlined[t.id]}
+                        onClick={(event) => toggleUnderline(event, t.id)}
+                      >
+                        <span dangerouslySetInnerHTML={{__html: CONTRAST_UNDERLINE_ICON}} />
+                      </button>
                       <span className="sb-item-b">{t.badge}</span>
                     </li>
                   ))}
@@ -12723,6 +12738,7 @@ const Tweaks = ({ tweaks, setTweak }) => {
 
 // ── Inline UI icons (chevrons, search, etc) ──
 const SEARCH_ICON = `<svg width="13" height="13" viewBox="0 0 16 16"><path fill="currentColor" d="M11.5 10h-.8l-.3-.3a4.5 4.5 0 1 0-.8.8l.3.3v.8L13.4 15l1.6-1.6Zm-4.5 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>`;
+const CONTRAST_UNDERLINE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z"/></svg>`;
 const CHEV = `<svg width="9" height="9" viewBox="0 0 16 16"><path fill="currentColor" d="M3 5h10L8 11Z"/></svg>`;
 const CHEV_R = `<svg width="9" height="9" viewBox="0 0 16 16"><path fill="currentColor" d="M5 3v10l6-5Z"/></svg>`;
 const COPY_ICON = `<svg width="12" height="12" viewBox="0 0 16 16"><path fill="currentColor" d="M5 1h8v10h-2V3H5Zm-2 3h8v11H3Z"/></svg>`;
