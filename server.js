@@ -518,12 +518,13 @@ function decryptJson(raw, fallback) {
   }
 }
 
-const emptyAuthDb = () => ({ users: [], accessRequests: [], meta: {} });
+const emptyAuthDb = () => ({ users: [], accessRequests: [], billingContracts: [], meta: {} });
 
 function normalizeAuthDb(db) {
   return {
     users: Array.isArray(db?.users) ? db.users : [],
     accessRequests: Array.isArray(db?.accessRequests) ? db.accessRequests : [],
+    billingContracts: Array.isArray(db?.billingContracts) ? db.billingContracts : [],
     meta: db?.meta && typeof db.meta === 'object' ? db.meta : {},
   };
 }
@@ -633,6 +634,44 @@ function writeAuthDb(db) {
 function publicAccessRequest(row) {
   const { desiredPasswordHash, ...publicRow } = row || {};
   return publicRow;
+}
+
+function publicBillingContract(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.userId,
+    fullName: row.fullName,
+    cedula: row.cedula,
+    address: row.address,
+    phone: row.phone,
+    budget: row.budget,
+    currency: row.currency,
+    signature: row.signature,
+    acceptedTerms: !!row.acceptedTerms,
+    status: row.status || 'ACTIVE',
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt || null,
+    fingerprint: row.fingerprint,
+  };
+}
+
+function validateBillingContract(body) {
+  const fullName = safeText(body.fullName, 120);
+  const cedula = safeText(body.cedula, 40);
+  const address = safeText(body.address, 240);
+  const phone = safeText(body.phone, 60);
+  const budget = Number(body.budget);
+  const currency = ['DOP', 'USD', 'EUR'].includes(body.currency) ? body.currency : 'DOP';
+  const signature = safeText(body.signature, 120);
+  if (fullName.length < 3) return { ok: false, error: 'invalid_full_name' };
+  if (!/^[A-Za-z0-9\s.-]{5,40}$/.test(cedula)) return { ok: false, error: 'invalid_cedula' };
+  if (address.length < 8) return { ok: false, error: 'invalid_address' };
+  if (!validWhatsapp(phone)) return { ok: false, error: 'invalid_phone' };
+  if (!Number.isFinite(budget) || budget < 0 || budget > 100000000) return { ok: false, error: 'invalid_budget' };
+  if (signature.length < 2) return { ok: false, error: 'invalid_signature' };
+  if (!body.acceptedTerms) return { ok: false, error: 'terms_required' };
+  return { ok: true, row: { fullName, cedula, address, phone, budget, currency, signature, acceptedTerms: true } };
 }
 
 function readAccessHistory() {
@@ -926,6 +965,55 @@ async function handleSecurityKing(req, res) {
   }
 
   send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'security_king_route_not_found' }));
+}
+
+async function handleBillingContract(req, res) {
+  const route = (req.url || '').split('?')[0];
+  const auth = requireAuth(req, res, 'viewer');
+  if (!auth) return;
+  const db = readAuthDb();
+
+  if (route === '/api/billing-contract/me' && req.method === 'GET') {
+    const contract = db.billingContracts.find(row => row.userId === auth.user.id && row.status !== 'VOID');
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, required: !contract, contract: publicBillingContract(contract) }));
+    return;
+  }
+
+  if (route === '/api/billing-contract/me' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const validation = validateBillingContract(body);
+      if (!validation.ok) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: validation.error }));
+        return;
+      }
+      const now = new Date().toISOString();
+      const existing = db.billingContracts.find(row => row.userId === auth.user.id && row.status !== 'VOID');
+      const base = {
+        ...(existing || {}),
+        ...validation.row,
+        id: existing?.id || `contract_${Date.now().toString(36)}_${b64url(crypto.randomBytes(8))}`,
+        userId: auth.user.id,
+        email: auth.user.email,
+        status: 'ACTIVE',
+        createdAt: existing?.createdAt || now,
+        updatedAt: existing ? now : null,
+        signedIp: clientIp(req),
+        userAgent: safeText(req.headers['user-agent'], 180),
+      };
+      base.fingerprint = crypto.createHash('sha256').update(JSON.stringify({ userId: base.userId, email: base.email, fullName: base.fullName, cedula: base.cedula, address: base.address, phone: base.phone, budget: base.budget, currency: base.currency, signature: base.signature, createdAt: base.createdAt })).digest('hex');
+      if (existing) Object.assign(existing, base);
+      else db.billingContracts.unshift(base);
+      writeAuthDb(db);
+      audit('billing.contract_signed', { ip: clientIp(req), actor: auth.user.id, email: auth.user.email, contractId: base.id, budget: base.budget, currency: base.currency });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, contract: publicBillingContract(base) }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+
+  send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'billing_contract_route_not_found' }));
 }
 
 async function handleAuth(req, res) {
@@ -2021,6 +2109,11 @@ const server = http.createServer((req, res) => {
 
   if ((req.url || '').split('?')[0].startsWith('/api/security-king/')) {
     handleSecurityKing(req, res);
+    return;
+  }
+
+  if ((req.url || '').split('?')[0].startsWith('/api/billing-contract/')) {
+    handleBillingContract(req, res);
     return;
   }
 

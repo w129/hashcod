@@ -2964,7 +2964,7 @@ const AuthGate = ({ children }) => {
           </div>
         )}
         <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
-        {children}
+        <BillingContractGate user={auth.user}>{children}</BillingContractGate>
       </>
     );
   }
@@ -3055,6 +3055,88 @@ const AuthGate = ({ children }) => {
           <b>CSRF + rate limit</b>
           <b>{authMeta?.database === 'render-postgres' ? 'Render PostgreSQL persistence' : 'Encrypted local cache'}</b>
         </div>
+      </form>
+    </div>
+  );
+};
+
+const BillingContractGate = ({ user, children }) => {
+  const [loading, setLoading] = useState(true);
+  const [required, setRequired] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [form, setForm] = useState({
+    fullName: user?.name || '',
+    cedula: '',
+    address: '',
+    phone: '',
+    budget: '',
+    currency: 'DOP',
+    signature: '',
+    acceptedTerms: false,
+  });
+  const loadContract = async () => {
+    try {
+      const res = await authFetch('/api/billing-contract/me');
+      const data = await res.json();
+      setRequired(!!data.required);
+      setLoading(false);
+    } catch {
+      setError('No se pudo verificar el contrato de entrada.');
+      setLoading(false);
+    }
+  };
+  useEffect(() => { loadContract(); }, []);
+  if (loading) return <div className="authgate pixel-auth"><div className="authbox pixel-authbox"><h1>Hashcod</h1><p>Loading contract gate...</p></div></div>;
+  if (!required) return children;
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+    try {
+      const res = await authFetch('/api/billing-contract/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'contract_failed');
+      setNotice('Contrato interno firmado. Fingerprint: ' + data.contract.fingerprint.slice(0, 24));
+      setRequired(false);
+    } catch {
+      setError('Completa nombre, cedula, direccion, telefono, presupuesto y firma.');
+    }
+  };
+  return (
+    <div className="authgate pixel-auth">
+      <form className="authbox contractbox pixel-authbox" onSubmit={submit}>
+        <div className="authmark"><span dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(34)}} /></div>
+        <span>HASHCOD CONTRACT BILLING GATE</span>
+        <h1>Contrato de acceso</h1>
+        <p>Antes de entrar, registra tus datos de contrato interno y presupuesto autorizado. Esto no procesa pagos automaticamente.</p>
+        <div className="contractgrid">
+          <input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value, signature: form.signature || e.target.value })} placeholder="Nombre completo" />
+          <input value={form.cedula} onChange={e => setForm({ ...form, cedula: e.target.value })} placeholder="Cedula o documento" />
+          <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Telefono" />
+          <div className="contract-budget">
+            <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}>
+              <option value="DOP">DOP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+            <input type="number" min="0" value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })} placeholder="Cuanto dinero puede gastar" />
+          </div>
+          <textarea value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Direccion completa" />
+          <input value={form.signature} onChange={e => setForm({ ...form, signature: e.target.value })} placeholder="Firma digital: escribe tu nombre" />
+        </div>
+        <label className="contract-accept">
+          <input type="checkbox" checked={form.acceptedTerms} onChange={e => setForm({ ...form, acceptedTerms: e.target.checked })} />
+          <span>Acepto registrar estos datos para contrato interno, cobro futuro y control de acceso de Hashcod.</span>
+        </label>
+        {error && <em>{error}</em>}
+        {notice && <em className="ok">{notice}</em>}
+        <button>Firmar contrato y entrar</button>
+        <small className="contract-legal">Aviso: este flujo crea evidencia interna de aceptacion y presupuesto; para validez legal completa usa contrato formal revisado por un profesional.</small>
       </form>
     </div>
   );
