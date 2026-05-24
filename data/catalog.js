@@ -1453,3 +1453,18 @@ window.OCG_CATALOG = [
     }),
   });
 })();
+
+(function finalizeHashcodVariantNames() {
+  let variantIndex = 0;
+  (window.OCG_CATALOG || []).forEach((category) => {
+    (category.types || []).forEach((type) => {
+      variantIndex += 1;
+      const variantNumber = String(variantIndex).padStart(4, '0');
+      const originalLabel = type.originalLabel || type.label || type.id;
+
+      type.originalLabel = originalLabel;
+      type.hashcodVariant = `HCV-${variantNumber}`;
+      type.label = `Hashcod Variant ${variantNumber} - ${originalLabel}`;
+    });
+  });
+})();
