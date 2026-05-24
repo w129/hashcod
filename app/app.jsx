@@ -3350,11 +3350,28 @@ const AuthGate = ({ children }) => {
         <span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} />
       </button>
       <AuthUsersDialog open={usersOpen} onClose={() => setUsersOpen(false)} />
-      <form className="authbox authbox-modern" onSubmit={submit}>
-        <div className="authmark"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></div>
-        <span>HASHCOD IDENTITY PLATFORM</span>
-        <h1>{mode === 'setup' ? 'Create Admin' : mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
-        <p>{mode === 'setup' ? 'Crea el primer administrador con password hasheada por scrypt y sesion segura.' : mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y permisos.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contrasena.' : 'Sesion segura con cookie HttpOnly, CSRF, rate limiting, OAuth 2.0 y roles.'}</p>
+      <form className="authbox authbox-modern authbox-pro" onSubmit={submit}>
+        <div className="auth-hero">
+          <div>
+            <div className="authmark"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></div>
+            <span>HASHCOD IDENTITY PLATFORM</span>
+            <h1>{mode === 'setup' ? 'Create Admin' : mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'}</h1>
+            <p>{mode === 'setup' ? 'Crea el primer administrador con password hasheada por scrypt y sesion segura.' : mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y permisos.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contrasena.' : 'Sesion segura con cookie HttpOnly, CSRF, rate limiting, OAuth 2.0 y roles.'}</p>
+          </div>
+          <aside className="auth-handshake" aria-label="Login security handshake">
+            <b>SESSION HANDSHAKE</b>
+            <span><i /> HTTP-only cookie</span>
+            <span><i /> CSRF token ready</span>
+            <span><i /> Rate limit guard</span>
+            <span><i /> Server identity check</span>
+          </aside>
+        </div>
+        <div className="auth-flow">
+          <span>01 csrf</span>
+          <span>02 credentials</span>
+          <span>03 secure session</span>
+          <span>04 contract gate</span>
+        </div>
         {mode === 'login' && !!providers.length && (
           <div className="oauth-row">
             {providers.map(provider => (
