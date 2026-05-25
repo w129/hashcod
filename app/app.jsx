@@ -6852,16 +6852,44 @@ const CryptoTranslatorDialog = ({ open, onClose, rows, outputRows, notify, langu
   const sourceRows = useMemo(() => [...(outputRows || []), ...(rows || [])].filter(row => row?.value).slice(0, 600), [rows, outputRows]);
   const [input, setInput] = useState('Genera una clave AES-256 para proteger el archivo y guarda el code criptografico en la base de datos.');
   const [output, setOutput] = useState('');
-  const [stats, setStats] = useState({ protectedCount: 0, terms: [], confidence: 0 });
+  const [stats, setStats] = useState({ protectedCount: 0, terms: [], confidence: 0, engine: 'HC-ESEN' });
   const [selectedId, setSelectedId] = useState('');
+  const [translating, setTranslating] = useState(false);
   if (!open) return null;
   const selectedRow = sourceRows.find((row, idx) => String(row.id || row.idx || idx) === selectedId) || sourceRows[0] || null;
-  const runTranslate = () => {
-    const result = translateSpanishCryptoText(input);
-    setOutput(result.translated);
-    setStats(result);
-    hashcodLawRecord(hashcodLawAssessPayload({ action: 'translator:es-en', text: result.translated, meta: { protectedSegments: result.protectedCount, glossaryTerms: result.terms.length } }));
-    notify?.(L('Traductor ES -> EN ejecutado', 'ES -> EN translator executed'));
+  const runTranslate = async () => {
+    const source = input.trim();
+    if (!source) return;
+    setTranslating(true);
+    const protectedText = protectCryptoTranslatorSegments(source);
+    const localResult = translateSpanishCryptoText(source);
+    try {
+      const res = await authFetch('/api/translate/es-en', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: protectedText.text }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok || !data.translatedText) throw new Error(data.detail || data.error || 'translation_failed');
+      const translatedText = restoreCryptoTranslatorSegments(data.translatedText, protectedText.tokens);
+      const nextStats = {
+        protectedCount: protectedText.tokens.length,
+        terms: localResult.terms,
+        confidence: 99,
+        engine: `REAL-${String(data.engine || 'provider').toUpperCase()}`,
+      };
+      setOutput(translatedText);
+      setStats(nextStats);
+      hashcodLawRecord(hashcodLawAssessPayload({ action: 'translator:es-en', text: translatedText, meta: { protectedSegments: nextStats.protectedCount, engine: nextStats.engine } }));
+      notify?.(L('Traduccion real ES -> EN completada', 'Real ES -> EN translation completed'));
+    } catch (err) {
+      const fallback = { ...localResult, engine: 'HC-ESEN FALLBACK' };
+      setOutput(localResult.translated);
+      setStats(fallback);
+      notify?.(L('Proveedor de traduccion no disponible; se uso respaldo local.', 'Translation provider unavailable; local fallback was used.'));
+    } finally {
+      setTranslating(false);
+    }
   };
   const loadSelectedCode = () => {
     if (!selectedRow) return;
@@ -6923,7 +6951,7 @@ const CryptoTranslatorDialog = ({ open, onClose, rows, outputRows, notify, langu
               <div><span>{L('Segmentos protegidos', 'Protected segments')}</span><b>{stats.protectedCount}</b></div>
               <div><span>{L('Glosario aplicado', 'Glossary applied')}</span><b>{stats.terms.length}</b></div>
               <div><span>{L('Confianza local', 'Local confidence')}</span><b>{stats.confidence || 0}%</b></div>
-              <div><span>{L('Motor', 'Engine')}</span><b>HC-ESEN</b></div>
+              <div><span>{L('Motor', 'Engine')}</span><b>{stats.engine || 'HC-ESEN'}</b></div>
             </div>
             <div className="trans-note">
               {L('Inspirado en Argos Translate: flujo local/offline, paquetes de idioma y proteccion de HTML/texto. Esta version usa un glosario crypto local para no enviar secretos a terceros.', 'Inspired by Argos Translate: local/offline flow, language packages, and HTML/text protection. This version uses a local crypto glossary so secrets are not sent to third parties.')}
@@ -6939,11 +6967,11 @@ const CryptoTranslatorDialog = ({ open, onClose, rows, outputRows, notify, langu
               <label><span>{L('Salida en ingles', 'English output')}</span><textarea value={output} onChange={e => setOutput(e.target.value)} spellCheck="false" /></label>
             </div>
             <div className="trans-actions">
-              <button onClick={runTranslate}>{L('Traducir', 'Translate')}</button>
+              <button onClick={runTranslate} disabled={translating}>{translating ? L('Traduciendo', 'Translating') : L('Traducir', 'Translate')}</button>
               <button onClick={copyOutput} disabled={!output.trim()}>{L('Copiar', 'Copy')}</button>
               <button onClick={exportTxt} disabled={!output.trim()}>TXT</button>
               <button onClick={exportJson} disabled={!output.trim()}>JSON</button>
-              <button onClick={() => { setInput(''); setOutput(''); setStats({ protectedCount: 0, terms: [], confidence: 0 }); }}>{L('Limpiar', 'Clear')}</button>
+              <button onClick={() => { setInput(''); setOutput(''); setStats({ protectedCount: 0, terms: [], confidence: 0, engine: 'HC-ESEN' }); }}>{L('Limpiar', 'Clear')}</button>
             </div>
           </main>
         </div>

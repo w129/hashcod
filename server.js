@@ -2139,6 +2139,74 @@ async function handleCryptoAiChat(req, res) {
   }
 }
 
+function splitTranslationChunks(text, max = 440) {
+  const lines = String(text || '').split(/\r?\n/);
+  const chunks = [];
+  let current = '';
+  for (const line of lines) {
+    const next = current ? `${current}\n${line}` : line;
+    if (Buffer.byteLength(next, 'utf8') > max && current) {
+      chunks.push(current);
+      current = line;
+    } else {
+      current = next;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.flatMap(chunk => {
+    if (Buffer.byteLength(chunk, 'utf8') <= max) return [chunk];
+    const parts = [];
+    for (let i = 0; i < chunk.length; i += max) parts.push(chunk.slice(i, i + max));
+    return parts;
+  });
+}
+
+async function translateChunkEsEn(chunk) {
+  const apiUrl = process.env.HASHCOD_TRANSLATE_URL || '';
+  if (apiUrl) {
+    const target = new URL(apiUrl);
+    const result = await httpsJsonRequest({
+      hostname: target.hostname,
+      path: `${target.pathname}${target.search}`,
+      body: { q: chunk, source: 'es', target: 'en', format: 'text' },
+      timeout: 18000,
+    });
+    return result.body?.translatedText || result.body?.translation || result.body?.text || '';
+  }
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=es%7Cen`;
+  const result = await requestJson(url, { headers: { 'User-Agent': 'Hashcod-Translator/1.0' } });
+  return result?.responseData?.translatedText || '';
+}
+
+async function handleTranslateEsEn(req, res) {
+  const auth = requireAuth(req, res, 'viewer');
+  if (!auth) return;
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req, 64 * 1024);
+    const text = String(body.text || '').slice(0, 12000);
+    if (!text.trim()) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'empty_text' }));
+      return;
+    }
+    const chunks = splitTranslationChunks(text);
+    const translated = [];
+    for (const chunk of chunks) {
+      translated.push(await translateChunkEsEn(chunk));
+    }
+    const translatedText = translated.join('\n').trim();
+    if (!translatedText) throw new Error('empty_translation');
+    audit('translator.es_en', { ip: clientIp(req), actor: auth.user.id, chars: text.length, chunks: chunks.length, engine: process.env.HASHCOD_TRANSLATE_URL ? 'custom' : 'mymemory' });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, translatedText, engine: process.env.HASHCOD_TRANSLATE_URL ? 'custom' : 'mymemory', chunks: chunks.length }));
+  } catch (err) {
+    audit('translator.error', { ip: clientIp(req), actor: auth.user?.id, error: safeText(err.message, 160) });
+    send(res, 502, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'translation_provider_error', detail: safeText(err.message, 220) }));
+  }
+}
+
 function enterpriseManifest() {
   const catalogPath = path.join(ROOT, 'data', 'catalog.js');
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
@@ -2251,6 +2319,11 @@ const server = http.createServer((req, res) => {
 
   if (routePath === '/api/crypto-ai/chat') {
     handleCryptoAiChat(req, res);
+    return;
+  }
+
+  if (routePath === '/api/translate/es-en') {
+    handleTranslateEsEn(req, res);
     return;
   }
 
