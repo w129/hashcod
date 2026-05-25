@@ -4513,12 +4513,87 @@ const kernelAverage = (matrix, x, y, radius, shape) => {
   return count ? total / count : 0;
 };
 
+const rescaleScore = (value, low, high) => {
+  if (high === low) return 0;
+  return Math.max(0, Math.min(1, (value - low) / (high - low)));
+};
+
+const localVariance = (matrix, x, y, radius) => {
+  const values = [];
+  const size = matrix.length;
+  for (let yy = Math.max(0, y - radius); yy <= Math.min(size - 1, y + radius); yy++) {
+    for (let xx = Math.max(0, x - radius); xx <= Math.min(size - 1, x + radius); xx++) {
+      values.push(matrix[yy][xx] || 0);
+    }
+  }
+  if (!values.length) return 0;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
+};
+
+const buildCloudAndRadarLayers = (matrix, radius) => {
+  const size = matrix.length;
+  const cloud = [];
+  const mask = [];
+  const radar = [];
+  let cloudSum = 0;
+  let maskedCount = 0;
+  let ascTotal = 0;
+  let descTotal = 0;
+  for (let y = 0; y < size; y++) {
+    const cloudRow = [];
+    const maskRow = [];
+    const radarRow = [];
+    for (let x = 0; x < size; x++) {
+      const v = matrix[y][x] || 0;
+      const north = matrix[Math.max(0, y - 1)]?.[x] ?? v;
+      const south = matrix[Math.min(size - 1, y + 1)]?.[x] ?? v;
+      const west = matrix[y]?.[Math.max(0, x - 1)] ?? v;
+      const east = matrix[y]?.[Math.min(size - 1, x + 1)] ?? v;
+      const brightness = rescaleScore(v, 168, 255);
+      const smoothness = 1 - rescaleScore(Math.abs(east - west) + Math.abs(south - north), 0, 160);
+      const lowEntropyPatch = 1 - rescaleScore(localVariance(matrix, x, y, Math.max(1, Math.floor(radius / 2))), 180, 2800);
+      const score = Math.round(100 * Math.max(0, Math.min(1, brightness * 0.42 + smoothness * 0.24 + lowEntropyPatch * 0.34)));
+      const clear = score <= 20;
+      cloudRow.push(score);
+      maskRow.push(clear ? 1 : 0);
+      if (clear) maskedCount += 1;
+      cloudSum += score;
+      const vvAsc = Math.abs(east - west);
+      const vhAsc = Math.abs(v - north);
+      const vvDesc = Math.abs(south - north);
+      const vhDesc = Math.abs(v - west);
+      const radarPixel = [
+        Math.round(Math.min(255, vhAsc * 2.1)),
+        Math.round(Math.min(255, ((vvAsc + vvDesc) / 2) * 1.8)),
+        Math.round(Math.min(255, vhDesc * 2.1)),
+      ];
+      ascTotal += vvAsc + vhAsc;
+      descTotal += vvDesc + vhDesc;
+      radarRow.push(radarPixel);
+    }
+    cloud.push(cloudRow);
+    mask.push(maskRow);
+    radar.push(radarRow);
+  }
+  const total = size * size;
+  return {
+    cloud,
+    mask,
+    radar,
+    cloudMean: Number((cloudSum / total).toFixed(4)),
+    clearRatio: Number((maskedCount / total).toFixed(5)),
+    ascDescBalance: Number((ascTotal / Math.max(1, descTotal)).toFixed(5)),
+  };
+};
+
 const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   const source = String(text || '');
   const bytes = Array.from(new TextEncoder().encode(source || 'hashcod-empty'));
   const size = Math.max(12, Math.min(96, Number(sizeValue) || Math.ceil(Math.sqrt(bytes.length || 1))));
   const radius = Math.max(2, Math.min(Math.floor(size / 3), Number(radiusValue) || 5));
   const matrix = buildPivotMatrix(bytes, size);
+  const spectral = buildCloudAndRadarLayers(matrix, radius);
   const peaks = [];
   let diffTotal = 0;
   let ringTotal = 0;
@@ -4544,7 +4619,9 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   const diagonalB = matrix.reduce((sum, row, i) => sum + row[size - 1 - i], 0) / size;
   const symmetry = Math.max(0, 100 - Math.abs(diagonalA - diagonalB) / 255 * 100);
   const peakScore = top[0]?.score || 0;
-  const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 65 + (8 - entropy) * 8 + (symmetry / 100) * 20)));
+  const cloudPenalty = Math.max(0, spectral.cloudMean - 20) * 0.45;
+  const balancePenalty = Math.min(24, Math.abs(1 - spectral.ascDescBalance) * 16);
+  const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloudPenalty + balancePenalty)));
   return {
     id: `HPK-${digest.slice(0, 10).toUpperCase()}`,
     createdAt: new Date().toISOString(),
@@ -4557,10 +4634,16 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
     avgCircleSquareDelta: Number(avgDiff.toFixed(5)),
     avgRingDelta: Number(avgRing.toFixed(5)),
     diagonalSymmetry: Number(symmetry.toFixed(3)),
+    cloudScoreMean: spectral.cloudMean,
+    clearByteRatio: spectral.clearRatio,
+    radarAscDescBalance: spectral.ascDescBalance,
     pivotRisk: risk,
     verdict: risk > 72 ? 'STRUCTURED / REVIEW' : risk > 42 ? 'WATCHLIST' : 'UNIFORM-LIKE',
     digest,
     matrix,
+    cloud: spectral.cloud,
+    cloudMask: spectral.mask,
+    radarComposite: spectral.radar,
     peaks: top,
   };
 };
@@ -4573,6 +4656,7 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
   const [manual, setManual] = useState('');
   const [radius, setRadius] = useState(5);
   const [size, setSize] = useState(32);
+  const [viewMode, setViewMode] = useState('matrix');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const selectedText = sourceMode === 'manual' ? manual : String(sourceRows[0]?.value || manual || '');
@@ -4588,8 +4672,17 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
-        const v = payload.matrix[y][x] || 0;
-        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        if (viewMode === 'cloud') {
+          const score = payload.cloud?.[y]?.[x] || 0;
+          const clear = payload.cloudMask?.[y]?.[x] === 1;
+          ctx.fillStyle = clear ? `rgb(${Math.round(score * 1.4)},${Math.round(160 + score * .7)},${Math.round(80 + score)})` : `rgb(${Math.round(180 + score * .6)},${Math.round(40 + score * .3)},${Math.round(35 + score * .2)})`;
+        } else if (viewMode === 'radar') {
+          const px = payload.radarComposite?.[y]?.[x] || [0, 0, 0];
+          ctx.fillStyle = `rgb(${px[0]},${px[1]},${px[2]})`;
+        } else {
+          const v = payload.matrix[y][x] || 0;
+          ctx.fillStyle = `rgb(${v},${v},${v})`;
+        }
         ctx.fillRect(x * cell, y * cell, cell, cell);
       }
     }
@@ -4600,13 +4693,13 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       ctx.arc((peak.x + .5) * cell, (peak.y + .5) * cell, Math.max(cell * payload.radius, 6), 0, Math.PI * 2);
       ctx.stroke();
     });
-  }, []);
+  }, [viewMode]);
   useEffect(() => {
     if (open && !result && selectedText) {
       setManual(String(sourceRows[0]?.value || '').slice(0, 2048));
     }
   }, [open, result, selectedText, sourceRows]);
-  useEffect(() => { if (result) drawResult(result); }, [result, drawResult]);
+  useEffect(() => { if (result) drawResult(result); }, [result, drawResult, viewMode]);
   if (!open) return null;
   const run = async () => {
     setBusy(true);
@@ -4632,6 +4725,9 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       `Circle-square delta: ${result.avgCircleSquareDelta}`,
       `Ring delta: ${result.avgRingDelta}`,
       `Diagonal symmetry: ${result.diagonalSymmetry}%`,
+      `Cloud score mean: ${result.cloudScoreMean}`,
+      `Clear byte ratio: ${result.clearByteRatio}`,
+      `Radar ASC/DESC balance: ${result.radarAscDescBalance}`,
       `Digest: ${result.digest}`,
       '',
       '## Top kernel peaks',
@@ -4639,6 +4735,12 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       '',
       '## Method',
       'Inspired by circular center-pivot detection: bytes are mapped into a matrix, then circle, square and ring kernels are compared to detect structured centers inside a cryptographic code.',
+      '',
+      '## Cloud score layer',
+      'Inspired by simpleCloudScore: bright, overly smooth and low-variance byte zones are scored as clouded/suspicious. Values <=20 are treated as clear bytes.',
+      '',
+      '## Sentinel-style radar layer',
+      'Inspired by Sentinel-1 filtering: adjacent byte gradients are separated into VV/VH ascending and descending composites to expose directional imbalance.',
     ].join('\n');
     triggerDownload(`Hashcod-PivotKernel-report-${result.id}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
   };
@@ -4666,6 +4768,7 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
             <label><span>{L('Code / payload', 'Code / payload')}</span><textarea value={sourceMode === 'manual' ? manual : selectedText} onChange={e => { setSourceMode('manual'); setManual(e.target.value); }} placeholder="Pega un code o genera uno primero..." /></label>
             <label><span>{L('Radio kernel', 'Kernel radius')}</span><input type="number" min="2" max="32" value={radius} onChange={e => setRadius(e.target.value)} /></label>
             <label><span>{L('Matriz', 'Matrix')}</span><input type="number" min="12" max="96" value={size} onChange={e => setSize(e.target.value)} /></label>
+            <label><span>{L('Vista', 'View')}</span><select value={viewMode} onChange={e => setViewMode(e.target.value)}><option value="matrix">{L('Matriz bytes', 'Byte matrix')}</option><option value="cloud">{L('Cloud score mask', 'Cloud score mask')}</option><option value="radar">{L('Radar VV/VH composite', 'Radar VV/VH composite')}</option></select></label>
             <button onClick={run} disabled={busy || !selectedText}>{busy ? L('Analizando...', 'Analyzing...') : L('Analizar kernels', 'Analyze kernels')}</button>
             <button onClick={downloadJson} disabled={!result}>JSON</button>
             <button onClick={downloadReport} disabled={!result}>{L('Reporte MD', 'MD report')}</button>
@@ -4677,6 +4780,15 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
               <article><span>{L('Riesgo pivot', 'Pivot risk')}</span><b>{result ? `${result.pivotRisk}/100` : '--'}</b></article>
               <article><span>{L('Entropia', 'Entropy')}</span><b>{result ? result.entropy : '--'}</b></article>
               <article><span>{L('Picos', 'Peaks')}</span><b>{result ? result.peaks.length : '--'}</b></article>
+              <article><span>{L('Cloud score', 'Cloud score')}</span><b>{result ? result.cloudScoreMean : '--'}</b></article>
+              <article><span>{L('Clear ratio', 'Clear ratio')}</span><b>{result ? `${Math.round(result.clearByteRatio * 100)}%` : '--'}</b></article>
+              <article><span>{L('Radar balance', 'Radar balance')}</span><b>{result ? result.radarAscDescBalance : '--'}</b></article>
+              <article><span>{L('Capa activa', 'Active layer')}</span><b>{viewMode.toUpperCase()}</b></article>
+            </section>
+            <section className="pivot-layers">
+              <button className={viewMode === 'matrix' ? 'active' : ''} onClick={() => setViewMode('matrix')}>{L('Bytes', 'Bytes')}</button>
+              <button className={viewMode === 'cloud' ? 'active' : ''} onClick={() => setViewMode('cloud')}>{L('Cloud mask', 'Cloud mask')}</button>
+              <button className={viewMode === 'radar' ? 'active' : ''} onClick={() => setViewMode('radar')}>{L('Radar composite', 'Radar composite')}</button>
             </section>
             <div className="pivot-canvas-wrap"><canvas ref={canvasRef} /></div>
             <section className="pivot-peaks">

@@ -469,8 +469,21 @@ kbd {
 .pivot-main { min-width:0; max-height:calc(100vh - 148px); overflow:auto; padding:16px; display:grid; gap:14px; align-content:start; }
 .pivot-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); }
 .pivot-stats article { padding:13px; border-right:1px solid var(--line); display:grid; gap:7px; min-width:0; }
-.pivot-stats article:last-child { border-right:0; }
+.pivot-stats article:nth-child(4n) { border-right:0; }
+.pivot-stats article:nth-child(n+5) { border-top:1px solid var(--line); }
 .pivot-stats b { font-family:var(--mono); font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pivot-layers { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.pivot-layers button {
+  min-height:36px;
+  border:1px solid var(--line-2);
+  background:var(--card);
+  color:var(--ink);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+}
+.pivot-layers button.active { background:var(--ink); color:var(--bg); border-color:var(--ink); }
 .pivot-canvas-wrap { border:1px solid var(--line); background:#0F0F0F; min-height:360px; display:grid; place-items:center; overflow:auto; padding:14px; }
 .pivot-canvas-wrap canvas { image-rendering:pixelated; max-width:100%; height:auto; box-shadow:0 0 0 1px #2A2A2A; }
 .pivot-peaks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
@@ -493,8 +506,9 @@ kbd {
   .pivot-shell { grid-template-columns:1fr; }
   .pivot-side { border-right:0; border-bottom:1px solid var(--line); }
   .pivot-main { max-height:none; }
-  .pivot-stats, .pivot-peaks { grid-template-columns:1fr; }
+  .pivot-stats, .pivot-peaks, .pivot-layers { grid-template-columns:1fr; }
   .pivot-stats article { border-right:0; border-bottom:1px solid var(--line); }
+  .pivot-stats article:nth-child(n+5) { border-top:0; }
   .pivot-stats article:last-child { border-bottom:0; }
 }
 .hclicdlg { width:min(1240px, calc(100vw - 32px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; overflow:hidden; }
