@@ -13578,12 +13578,37 @@ const quoteCodePriceFor = ({ category, type, globalIndex }) => {
   return { family, per10, each: Number((per10 / 10).toFixed(2)) };
 };
 const quoteMoney = (amount) => `${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+const HASHCOD_INVOICES_STORAGE = 'hashcod_billing_invoices_v1';
+const readHashcodInvoices = () => safeJsonParse(localStorage.getItem(HASHCOD_INVOICES_STORAGE) || '[]', []);
+const writeHashcodInvoices = (rows) => localStorage.setItem(HASHCOD_INVOICES_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
+const makeHashcodDocId = (prefix) => {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const tail = Math.random().toString(36).slice(2, 7).toUpperCase();
+  return `HC-${prefix}-${date}-${tail}`;
+};
+const quoteDueDate = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + Math.max(0, Number(days) || 0));
+  return date.toISOString();
+};
 
 const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notify }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const [mode, setMode] = useState('codes');
+  const [docType, setDocType] = useState('quote');
   const [query, setQuery] = useState('');
   const [customer, setCustomer] = useState('');
+  const [customerTaxId, setCustomerTaxId] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [invoiceStatus, setInvoiceStatus] = useState('draft');
+  const [invoiceDueDays, setInvoiceDueDays] = useState(15);
+  const [paymentMethod, setPaymentMethod] = useState('Bank transfer / cash / card');
+  const [invoiceNotes, setInvoiceNotes] = useState('');
+  const [quoteId, setQuoteId] = useState(() => makeHashcodDocId('QTE'));
+  const [invoiceId, setInvoiceId] = useState(() => makeHashcodDocId('INV'));
+  const [invoices, setInvoices] = useState(() => readHashcodInvoices());
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [items, setItems] = useState([]);
@@ -13658,19 +13683,76 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
   const taxable = Math.max(0, subtotal - discountValue);
   const taxValue = taxable * Math.max(0, Number(tax) || 0) / 100;
   const total = taxable + taxValue;
+  const activeDocId = docType === 'invoice' ? invoiceId : quoteId;
+  const dueAt = quoteDueDate(invoiceDueDays);
   const quote = {
-    id: `HC-QTE-${Date.now().toString(36).toUpperCase()}`,
+    id: activeDocId,
+    type: docType,
+    status: docType === 'invoice' ? invoiceStatus : 'proposal',
     customer: customer.trim() || 'Hashcod customer',
+    customerTaxId: customerTaxId.trim(),
+    customerEmail: customerEmail.trim(),
+    customerPhone: customerPhone.trim(),
+    customerAddress: customerAddress.trim(),
+    paymentMethod: paymentMethod.trim(),
+    notes: invoiceNotes.trim(),
     createdAt: new Date().toISOString(),
+    dueAt: docType === 'invoice' ? dueAt : null,
     sourcePdfs: ['Hashcod-10000-code-pricing.pdf', 'Hashcod-tools-pricing-and-code-differences.pdf'],
     items,
     totals: { subtotal, discountPercent: Number(discount) || 0, discountValue, taxPercent: Number(tax) || 0, taxValue, total },
   };
-  const exportJson = () => triggerDownload(`Hashcod-Quote-${quote.id}.json`, JSON.stringify(quote, null, 2), 'application/json;charset=utf-8');
+  const docLabel = docType === 'invoice' ? L('Factura', 'Invoice') : L('Cotizacion', 'Quote');
+  const exportJson = () => triggerDownload(`Hashcod-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.json`, JSON.stringify(quote, null, 2), 'application/json;charset=utf-8');
   const exportCsv = () => {
     const rows = [['type','name','reference','unit_price_usd','quantity','line_total_usd','note'], ...items.map(item => [item.kind, item.name, item.ref, item.unit, item.qty, (item.unit * item.qty).toFixed(2), item.note])];
     const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-    triggerDownload(`Hashcod-Quote-${quote.id}.csv`, csv, 'text/csv;charset=utf-8');
+    triggerDownload(`Hashcod-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.csv`, csv, 'text/csv;charset=utf-8');
+  };
+  const saveInvoice = (statusOverride) => {
+    if (!items.length) {
+      notify?.(L('Agrega al menos un item antes de emitir la factura.', 'Add at least one item before issuing the invoice.'));
+      return;
+    }
+    const saved = {
+      ...quote,
+      id: invoiceId,
+      type: 'invoice',
+      status: statusOverride || invoiceStatus,
+      createdAt: new Date().toISOString(),
+      dueAt: quoteDueDate(invoiceDueDays),
+    };
+    const next = [saved, ...invoices.filter(row => row.id !== saved.id)];
+    setDocType('invoice');
+    setInvoiceStatus(saved.status);
+    setInvoices(next);
+    writeHashcodInvoices(next);
+    notify?.(L('Factura guardada en Hashcod Billing.', 'Invoice saved in Hashcod Billing.'));
+  };
+  const loadInvoice = (row) => {
+    setDocType('invoice');
+    setInvoiceId(row.id || makeHashcodDocId('INV'));
+    setCustomer(row.customer || '');
+    setCustomerTaxId(row.customerTaxId || '');
+    setCustomerEmail(row.customerEmail || '');
+    setCustomerPhone(row.customerPhone || '');
+    setCustomerAddress(row.customerAddress || '');
+    setPaymentMethod(row.paymentMethod || 'Bank transfer / cash / card');
+    setInvoiceNotes(row.notes || '');
+    setInvoiceStatus(row.status || 'draft');
+    setItems(Array.isArray(row.items) ? row.items : []);
+    setDiscount(row.totals?.discountPercent || 0);
+    setTax(row.totals?.taxPercent || 0);
+    notify?.(L('Factura cargada.', 'Invoice loaded.'));
+  };
+  const newInvoice = () => {
+    setDocType('invoice');
+    setInvoiceId(makeHashcodDocId('INV'));
+    setInvoiceStatus('draft');
+  };
+  const newQuote = () => {
+    setDocType('quote');
+    setQuoteId(makeHashcodDocId('QTE'));
   };
   const printQuote = () => {
     const logo = window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(46) : '';
@@ -13679,8 +13761,12 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
       body{margin:0;background:#f4f4f4;color:#111;font-family:"Segoe UI",Arial,sans-serif;padding:32px}.sheet{max-width:980px;margin:0 auto;background:#fff;border:1px solid #111;box-shadow:10px 10px 0 #ccc}.head{display:flex;gap:16px;align-items:center;padding:24px;border-bottom:4px solid #111}.logo{width:54px;height:54px;display:grid;place-items:center}.logo svg{width:54px;height:54px}h1{margin:0;font-size:32px}.k{font:11px monospace;letter-spacing:3px;text-transform:uppercase;color:#555}.meta,.totals{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ccc}.meta div,.totals div{padding:14px;border-right:1px solid #ddd}.meta span,.totals span{display:block;font:10px monospace;letter-spacing:2px;color:#777;text-transform:uppercase}.meta b,.totals b{display:block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left;font-size:12px}th{font:10px monospace;letter-spacing:2px;text-transform:uppercase;background:#111;color:#fff}small{display:block;color:#777;margin-top:4px}.foot{padding:18px;font:11px monospace;color:#555;line-height:1.55}.print{margin:0 0 16px;padding:12px 18px;background:#111;color:#fff;border:0;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.print{display:none}.sheet{box-shadow:none;max-width:none}}</style></head><body><button class="print" onclick="window.print()">Guardar como PDF</button><section class="sheet"><div class="head"><div class="logo">${logo}</div><div><div class="k">Hashcod quotation system</div><h1>${quote.id}</h1></div></div><div class="meta"><div><span>Cliente</span><b>${escapeHtmlStrict(quote.customer)}</b></div><div><span>Fecha</span><b>${new Date(quote.createdAt).toLocaleString()}</b></div><div><span>Items</span><b>${items.length}</b></div><div><span>Moneda</span><b>USD</b></div></div><table><thead><tr><th>Tipo</th><th>Producto</th><th>Nota</th><th>Unidad</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${lineRows || '<tr><td colspan="6">Sin items</td></tr>'}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${quoteMoney(subtotal)}</b></div><div><span>Descuento</span><b>${Number(discount) || 0}% / ${quoteMoney(discountValue)}</b></div><div><span>Impuesto</span><b>${Number(tax) || 0}% / ${quoteMoney(taxValue)}</b></div><div><span>Total</span><b>${quoteMoney(total)}</b></div></div><div class="foot">Base: Hashcod-10000-code-pricing.pdf y Hashcod-tools-pricing-and-code-differences.pdf. Estos precios son modelo comercial sugerido de Hashcod; no son asesoría financiera ni valoración legal.</div></section></body></html>`;
     const win = window.open('', '_blank', 'width=1060,height=900');
     if (!win) return;
+    const printableHtml = html
+      .replace('Hashcod quotation system', `Hashcod ${docLabel} system`)
+      .replace('<div><span>Items</span><b>', `<div><span>Estado</span><b>${escapeHtmlStrict(quote.status)}</b><small>${docType === 'invoice' ? `Vence: ${new Date(quote.dueAt).toLocaleDateString()}` : ''}</small></div><div><span>Items</span><b>`)
+      .replace('<div><span>Moneda</span><b>USD</b></div></div><table>', `<div><span>Moneda</span><b>USD</b></div></div><div class="foot">Cliente fiscal: ${escapeHtmlStrict(quote.customerTaxId || '-')} | Email: ${escapeHtmlStrict(quote.customerEmail || '-')} | Telefono: ${escapeHtmlStrict(quote.customerPhone || '-')} | Direccion: ${escapeHtmlStrict(quote.customerAddress || '-')} | Pago: ${escapeHtmlStrict(quote.paymentMethod || '-')}</div><table>`);
     win.document.open();
-    win.document.write(html);
+    win.document.write(printableHtml);
     win.document.close();
     setTimeout(() => { try { win.focus(); win.print(); } catch {} }, 280);
     notify?.(L('Cotizacion abierta para imprimir o guardar en PDF.', 'Quote opened for printing or saving as PDF.'));
@@ -13693,17 +13779,37 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
           <div className="quote-title">
             <span className="quote-logo" dangerouslySetInnerHTML={{__html: window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(42) : TOP_MENU_ICONS.quoteSystem}} />
             <div>
-              <h2>{L('Sistema de Cotizaciones Hashcod', 'Hashcod Quote System')}</h2>
-              <p>{L('Calcula precios usando el catalogo de 10,000 codes y la tabla de herramientas anteriores.', 'Calculate prices using the 10,000-code catalog and previous tools pricing table.')}</p>
+              <h2>{L('Cotizaciones y Facturacion Hashcod', 'Hashcod Quotes and Billing')}</h2>
+              <p>{L('Calcula precios, emite facturas, guarda registros y descarga documentos con logo Hashcod.', 'Calculate prices, issue invoices, save records and download Hashcod-branded documents.')}</p>
             </div>
           </div>
           <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="quote-docbar">
+          <button className={docType === 'quote' ? 'on' : ''} onClick={newQuote}>{L('Cotizacion', 'Quote')}</button>
+          <button className={docType === 'invoice' ? 'on' : ''} onClick={newInvoice}>{L('Factura', 'Invoice')}</button>
+          <code>{docLabel}: {activeDocId}</code>
+          <select value={invoiceStatus} onChange={e => setInvoiceStatus(e.target.value)} disabled={docType !== 'invoice'}>
+            <option value="draft">{L('Borrador', 'Draft')}</option>
+            <option value="issued">{L('Emitida', 'Issued')}</option>
+            <option value="paid">{L('Pagada', 'Paid')}</option>
+            <option value="overdue">{L('Vencida', 'Overdue')}</option>
+          </select>
         </div>
         <div className="quote-top">
           <label><span>{L('Cliente', 'Customer')}</span><input value={customer} onChange={e => setCustomer(e.target.value)} placeholder={L('Nombre del cliente', 'Customer name')} /></label>
           <label><span>{L('Buscar', 'Search')}</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('AES, PQC, QR, Vault...', 'AES, PQC, QR, Vault...')} /></label>
           <label><span>{L('Descuento %', 'Discount %')}</span><input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)} /></label>
           <label><span>{L('Impuesto %', 'Tax %')}</span><input type="number" min="0" value={tax} onChange={e => setTax(e.target.value)} /></label>
+        </div>
+        <div className="quote-billing">
+          <label><span>{L('RNC / Cedula', 'Tax ID')}</span><input value={customerTaxId} onChange={e => setCustomerTaxId(e.target.value)} placeholder="000-0000000-0" /></label>
+          <label><span>Email</span><input value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="cliente@empresa.com" /></label>
+          <label><span>{L('Telefono', 'Phone')}</span><input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+1 829 000 0000" /></label>
+          <label><span>{L('Vence en dias', 'Due in days')}</span><input type="number" min="0" value={invoiceDueDays} onChange={e => setInvoiceDueDays(e.target.value)} /></label>
+          <label className="wide"><span>{L('Direccion', 'Address')}</span><input value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} placeholder={L('Direccion fiscal o comercial', 'Billing or business address')} /></label>
+          <label><span>{L('Metodo de pago', 'Payment method')}</span><input value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} /></label>
+          <label className="wide"><span>{L('Notas de factura', 'Invoice notes')}</span><input value={invoiceNotes} onChange={e => setInvoiceNotes(e.target.value)} placeholder={L('Terminos, concepto o condiciones.', 'Terms, concept or conditions.')} /></label>
         </div>
         <div className="quote-tabs">
           <button className={mode === 'codes' ? 'on' : ''} onClick={() => setMode('codes')}>{L('Codes 10,000', '10,000 Codes')}</button>
@@ -13749,7 +13855,19 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
               <button onClick={printQuote}>{L('PDF', 'PDF')}</button>
               <button onClick={exportJson}>JSON</button>
               <button onClick={exportCsv}>CSV</button>
+              <button onClick={() => saveInvoice('issued')}>{L('Emitir', 'Issue')}</button>
+              <button onClick={() => saveInvoice('paid')}>{L('Marcar pagada', 'Mark paid')}</button>
               <button onClick={() => setItems([])}>{L('Limpiar', 'Clear')}</button>
+            </div>
+            <div className="quote-invoices">
+              <h4>{L('Facturas guardadas', 'Saved invoices')}</h4>
+              {invoices.slice(0, 8).map(row => (
+                <button key={row.id} onClick={() => loadInvoice(row)}>
+                  <b>{row.id}</b>
+                  <span>{row.customer} - {row.status} - {quoteMoney(row.totals?.total)}</span>
+                </button>
+              ))}
+              {!invoices.length && <p>{L('Aun no hay facturas emitidas.', 'No invoices issued yet.')}</p>}
             </div>
           </aside>
         </div>
@@ -15151,10 +15269,10 @@ const App = () => {
     { label: language === 'es' ? 'Emitir JSON / YAML / TXT / PNG' : 'Issue JSON / YAML / TXT / PNG', onClick: openHashcodLicenses },
   ];
   const quoteSystemItems = [
-    { label: language === 'es' ? 'Abrir cotizador Hashcod' : 'Open Hashcod quote system', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Abrir facturacion y cotizador Hashcod' : 'Open Hashcod billing and quote system', onClick: openQuoteSystem },
     { label: language === 'es' ? 'Tabla de 10,000 codes con precios' : '10,000-code pricing table', onClick: openQuoteSystem },
-    { label: language === 'es' ? 'Herramientas, descuento, impuesto y total' : 'Tools, discount, tax and total', onClick: openQuoteSystem },
-    { label: language === 'es' ? 'Exportar PDF / JSON / CSV' : 'Export PDF / JSON / CSV', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Facturas, descuento, impuesto y total' : 'Invoices, discount, tax and total', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Emitir PDF / JSON / CSV' : 'Issue PDF / JSON / CSV', onClick: openQuoteSystem },
   ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
@@ -15361,7 +15479,7 @@ const App = () => {
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
-        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem,
+        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
@@ -15527,8 +15645,9 @@ const App = () => {
       complexmap: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','bytes','plane','risk','png','json'] },
       licenses: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
       licencias: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['emitir','catalogo','json','yaml','png','txt','copyright','plantilla','help'] },
-      quote: { open: openQuoteSystem, label: 'Hashcod Quote System', verbs: ['price','codes','tools','discount','tax','pdf','json','csv','customer'] },
-      cotizacion: { open: openQuoteSystem, label: 'Hashcod Quote System', verbs: ['precio','codes','herramientas','descuento','impuesto','pdf','json','csv','cliente'] },
+      quote: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['price','codes','tools','invoice','billing','discount','tax','pdf','json','csv','customer'] },
+      cotizacion: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['precio','codes','herramientas','factura','facturacion','descuento','impuesto','pdf','json','csv','cliente'] },
+      factura: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['emitir','guardar','cliente','impuesto','vencimiento','pdf','json','csv'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
