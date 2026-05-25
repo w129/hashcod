@@ -2436,6 +2436,22 @@ const TOP_MENU_ICONS = {
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
+  tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
+  licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
+  evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
+  secureTab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="13" x="3" y="3" rx="1"/><path d="m9 22 3-3 3 3"/><rect width="7" height="13" x="14" y="3" rx="1"/></svg>`,
+  secretScanner: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 12v4a1 1 0 0 1-1 1h-4"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M17 8V7"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M7 17h.01"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="5" height="5" rx="1"/></svg>`,
+  qrVerifier: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 19 2 2 4-4"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M21 13V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6.5"/></svg>`,
+  ticketGuard: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5a2 2 0 0 0-2 2v11"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M7 13h10"/><path d="M7 9h10"/><path d="M9 5a2 2 0 0 0-2 2v11"/></svg>`,
+  codeFingerprint: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2"/></svg>`,
+  cryptoBenchmark: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>`,
+  passwordEntropy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20H2"/><path d="M11 4.562v16.157a1 1 0 0 0 1.242.97L19 20V5.562a2 2 0 0 0-1.515-1.94l-4-1A2 2 0 0 0 11 4.561z"/><path d="M11 4H8a2 2 0 0 0-2 2v14"/><path d="M14 12h.01"/><path d="M22 20h-3"/></svg>`,
+  fileIntegrity: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 13a3 3 0 1 1 2.83-4H14a2 2 0 0 1 0 4z"/><path d="M12 17v4"/><path d="M8 21h8"/><rect x="2" y="3" width="20" height="14" rx="2"/></svg>`,
+  apiTrust: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16"/><path d="M9 4v16"/><path d="M14 4v16"/><path d="M19 4v16"/><path d="M22 6 2 18"/></svg>`,
+  reportVerifier: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14h6"/><path d="M12 17v-6"/></svg>`,
+  developerVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>`,
+  cryptoLearning: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 22-1-4"/><path d="M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1"/><path d="M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z"/><path d="m8 22 1-4"/></svg>`,
+  riskEngine: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -12763,6 +12779,243 @@ open <module>`}</pre>
 };
 
 
+const HASHCOD_SECURITY_SUITE_TOOLS = [
+  ['tokenInspector', 'Hashcod Token Inspector', 'Analiza JWT, API keys, licencias, seriales, QR payloads y tokens de sesion.'],
+  ['licenseShield', 'Hashcod License Shield', 'Crea y verifica licencias firmadas por usuario, dispositivo y expiracion.'],
+  ['evidenceVault', 'Hashcod Evidence Vault', 'Deposita evidencia digital con SHA-256, timestamp, autor, firma y QR payload.'],
+  ['secureTab', 'Hashcod Secure Tab', 'Reemplaza secretos encontrados en codigo por referencias de vault seguro.'],
+  ['secretScanner', 'Hashcod Secret Scanner', 'Encuentra API keys, JWT, private keys, passwords, .env y URLs sensibles.'],
+  ['qrVerifier', 'Hashcod QR Verifier', 'Crea y valida paquetes QR con digest, estado, timestamp e historial local.'],
+  ['ticketGuard', 'Hashcod TicketGuard', 'Emite tickets verificables con QR payload, estado, firma y registro de uso.'],
+  ['codeFingerprint', 'Hashcod Code Fingerprint', 'Genera huella digital de proyectos por archivos, hashes y posibles secretos.'],
+  ['cryptoBenchmark', 'Hashcod Crypto Benchmark Lab', 'Compara salidas SHA, JWT, CSPRNG, UUID, texto y datos repetitivos.'],
+  ['passwordEntropy', 'Hashcod Password Entropy Lab', 'Analiza contrasenas localmente sin guardarlas y da recomendaciones.'],
+  ['fileIntegrity', 'Hashcod File Integrity Monitor', 'Crea snapshots de archivos y detecta cambios por SHA-256.'],
+  ['apiTrust', 'Hashcod API Trust Score', 'Evalua HTTPS, CORS visible, headers y forma de URL de una API.'],
+  ['reportVerifier', 'Hashcod Report Verifier', 'Verifica reportes, digest, QR payloads y evidencias guardadas en la plataforma.'],
+  ['developerVault', 'Hashcod Developer Vault', 'Guarda secretos cifrados con AES-GCM derivado de passphrase local.'],
+  ['cryptoLearning', 'Hashcod Crypto Learning Lab', 'Modulos educativos con demos rapidas de entropia, hash, firma y tokens.'],
+  ['riskEngine', 'Hashcod Risk Engine', 'Motor comun de risk score, entropy, pattern, cloud, band y veredicto.'],
+].map(([key, title, desc]) => ({ key, title, desc, icon: TOP_MENU_ICONS[key] }));
+
+const SECURITY_SUITE_STORAGE = 'hashcod_security_suite_records_v1';
+const SECURITY_SUITE_VAULT = 'hashcod_developer_vault_v1';
+const SECURITY_SUITE_INTEGRITY = 'hashcod_file_integrity_v1';
+const readSecuritySuiteRecords = () => safeJsonParse(localStorage.getItem(SECURITY_SUITE_STORAGE) || '[]', []);
+const writeSecuritySuiteRecords = (rows) => localStorage.setItem(SECURITY_SUITE_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
+const readDeveloperVault = () => safeJsonParse(localStorage.getItem(SECURITY_SUITE_VAULT) || '[]', []);
+const writeDeveloperVault = (rows) => localStorage.setItem(SECURITY_SUITE_VAULT, JSON.stringify((rows || []).slice(0, 400)));
+const readIntegritySnapshots = () => safeJsonParse(localStorage.getItem(SECURITY_SUITE_INTEGRITY) || '[]', []);
+const writeIntegritySnapshots = (rows) => localStorage.setItem(SECURITY_SUITE_INTEGRITY, JSON.stringify((rows || []).slice(0, 120)));
+const securityTextEntropy = (value) => byteEntropy(Array.from(new TextEncoder().encode(String(value || ''))));
+const securityB64UrlDecode = (value) => {
+  try {
+    const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+    return decodeURIComponent(escape(atob(padded)));
+  } catch { return ''; }
+};
+const securitySecretFindings = (text) => {
+  const source = String(text || '');
+  const patterns = [
+    ['API_KEY', /\b(?:sk|pk|hsc|xoxb|ghp|AIza|AKIA)[A-Za-z0-9_\-]{12,}\b/g],
+    ['JWT', /\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\b/g],
+    ['PRIVATE_KEY', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]+?-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
+    ['PASSWORD_ASSIGNMENT', /\b(?:password|passwd|pwd|secret|token|api[_-]?key)\s*[:=]\s*["'][^"']{6,}["']/gi],
+    ['DATABASE_URL', /\b(?:postgres|mysql|mongodb|redis):\/\/[^\s"'<>]+/gi],
+    ['ENV_SECRET', /^\s*[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD)[A-Z0-9_]*\s*=\s*.+$/gmi],
+  ];
+  const findings = [];
+  patterns.forEach(([kind, regex]) => {
+    const matches = source.match(regex) || [];
+    matches.slice(0, 60).forEach(match => findings.push({ kind, sample: String(match).slice(0, 90), risk: /PRIVATE|PASSWORD|DATABASE|SECRET/.test(kind) ? 'HIGH' : 'WATCHLIST', recommendation: 'Move to Hashcod Developer Vault or environment variables; rotate if public.' }));
+  });
+  return findings;
+};
+const securityRiskVerdict = (score) => score >= 85 ? 'CRITICAL' : score >= 70 ? 'HIGH RISK' : score >= 45 ? 'WATCHLIST' : 'CLEAR';
+const hmacSecurityText = async (keyText, message) => {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(keyText || 'hashcod')), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(String(message || '')));
+  return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
+};
+const fileDigestRows = async (files) => {
+  const rows = [];
+  for (const file of Array.from(files || [])) {
+    const hex = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer())), b => b.toString(16).padStart(2, '0')).join('');
+    rows.push({ name: file.webkitRelativePath || file.name, size: file.size, type: file.type || 'application/octet-stream', sha256: hex });
+  }
+  return rows;
+};
+const estimatePasswordReport = (password) => {
+  const value = String(password || '');
+  const pool = Math.max(1, (/[a-z]/.test(value) ? 26 : 0) + (/[A-Z]/.test(value) ? 26 : 0) + (/\d/.test(value) ? 10 : 0) + (/[^A-Za-z0-9]/.test(value) ? 33 : 0));
+  let bits = value.length * Math.log2(pool);
+  if (/(.)\1{2,}/.test(value)) bits -= 18;
+  if (/1234|abcd|qwerty|password|admin|letmein|emil/i.test(value)) bits -= 24;
+  if (value.length < 10) bits -= 18;
+  bits = Math.max(0, Math.round(bits));
+  return { length: value.length, estimatedBits: bits, repeated: /(.)\1{2,}/.test(value), sequence: /1234|abcd|qwerty|password|admin|letmein/i.test(value), verdict: bits >= 100 ? 'CLEAR' : bits >= 70 ? 'WATCHLIST' : bits >= 40 ? 'HIGH RISK' : 'CRITICAL', recommendations: [value.length < 16 ? 'Use at least 16 characters.' : 'Length is acceptable.', bits < 80 ? 'Prefer a passphrase with random words and symbols.' : 'Entropy estimate is strong.', 'Do not store this password; this lab processes it locally only.'] };
+};
+
+const HashcodSecuritySuiteDialog = ({ open, activeTool, onSelectTool, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const currentTool = HASHCOD_SECURITY_SUITE_TOOLS.find(tool => tool.key === activeTool) || HASHCOD_SECURITY_SUITE_TOOLS[0];
+  const [text, setText] = useState('');
+  const [aux, setAux] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+  const [files, setFiles] = useState([]);
+  const [result, setResult] = useState(null);
+  const [records, setRecords] = useState(() => readSecuritySuiteRecords());
+  const latestCode = outputRows?.[0]?.value || rows?.[0]?.value || '';
+
+  useEffect(() => { if (open && !text && latestCode) setText(String(latestCode)); }, [open, latestCode, text]);
+  if (!open) return null;
+
+  const saveRecord = (payload) => {
+    const record = { id: `HST-${Date.now().toString(36).toUpperCase()}`, tool: currentTool.key, title: currentTool.title, at: new Date().toISOString(), payload };
+    const next = [record, ...readSecuritySuiteRecords()];
+    writeSecuritySuiteRecords(next);
+    setRecords(next);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: `security-suite:${currentTool.key}`, text: JSON.stringify(payload), meta: { tool: currentTool.key } }));
+    notify?.(L('Registro guardado en la suite Hashcod', 'Record saved in Hashcod suite'));
+    return record;
+  };
+
+  const run = async () => {
+    const value = String(text || latestCode || '');
+    const entropy = Number(securityTextEntropy(value).toFixed(4));
+    let payload = { tool: currentTool.key, createdAt: new Date().toISOString(), inputLength: value.length, entropy };
+    if (currentTool.key === 'tokenInspector') {
+      const sections = value.split(/[.\-_:|]/).filter(Boolean);
+      const jwtParts = value.split('.');
+      payload = { ...payload, structureDetected: sections.length > 1 || jwtParts.length === 3, tokenType: jwtParts.length === 3 && securityB64UrlDecode(jwtParts[0]).startsWith('{') ? 'JWT' : 'GENERIC TOKEN', sections: sections.map((part, index) => ({ index, length: part.length, entropy: Number(securityTextEntropy(part).toFixed(4)), preview: part.slice(0, 42) })), jwtHeader: jwtParts.length === 3 ? securityB64UrlDecode(jwtParts[0]) : '', jwtPayload: jwtParts.length === 3 ? securityB64UrlDecode(jwtParts[1]) : '' };
+      const low = payload.sections.filter(s => s.entropy < 3.2).length;
+      payload.riskScore = Math.min(100, low * 18 + (payload.structureDetected ? 18 : 8) + (entropy < 4 ? 28 : 8));
+      payload.verdict = securityRiskVerdict(payload.riskScore);
+    } else if (currentTool.key === 'licenseShield') {
+      const body = { user: aux || 'user@example.com', device: navigator.userAgent.slice(0, 70), expires: new Date(Date.now() + 31536000000).toISOString(), payload: value || 'HASHCOD-LICENSE' };
+      const signature = await hmacSecurityText(passphrase || 'hashcod-license-shield', JSON.stringify(body));
+      payload = { ...payload, license: `HASHCOD-LIC-2026-${signature.slice(0, 4).toUpperCase()}-${signature.slice(4, 8).toUpperCase()}-SIGNED`, body, signature, verdict: 'SIGNED' };
+    } else if (currentTool.key === 'evidenceVault') {
+      const fileRows = await fileDigestRows(files);
+      const packageHash = await digestHex(`${value}:${JSON.stringify(fileRows)}:${aux}`);
+      payload = { ...payload, author: aux || 'Hashcod user', evidenceId: `HCE-${packageHash.slice(0, 12).toUpperCase()}`, files: fileRows, textSha256: await digestHex(value), packageHash, qrPayload: `hashcod://verify/${packageHash}`, verdict: 'EVIDENCE SEALED' };
+    } else if (currentTool.key === 'secureTab') {
+      const findings = securitySecretFindings(value);
+      let rewritten = value;
+      findings.forEach((finding, index) => { rewritten = rewritten.replace(finding.sample, `HashcodVault.get("${finding.kind}_${String(index + 1).padStart(2, '0')}")`); });
+      payload = { ...payload, findings, rewritten, vaultMap: findings.map((finding, index) => ({ key: `${finding.kind}_${String(index + 1).padStart(2, '0')}`, risk: finding.risk })), verdict: findings.length ? 'REWRITTEN' : 'NO SECRET FOUND' };
+    } else if (currentTool.key === 'secretScanner') {
+      const findings = securitySecretFindings(value);
+      payload = { ...payload, findings, riskScore: Math.min(100, findings.length * 22 + (findings.length ? 35 : 0)), verdict: findings.length ? securityRiskVerdict(Math.min(100, findings.length * 22 + 35)) : 'CLEAR' };
+    } else if (currentTool.key === 'qrVerifier') {
+      const digest = await digestHex(value);
+      payload = { ...payload, qrPacket: JSON.stringify({ hqrv: 1, id: `HQR-${digest.slice(0, 10).toUpperCase()}`, digest, value: value.slice(0, 900), issuedAt: new Date().toISOString() }), digest, verdict: aux && aux.includes(digest) ? 'VALID QR PACKET' : 'QR PACKET READY' };
+    } else if (currentTool.key === 'ticketGuard') {
+      const id = `HCT-${(await digestHex(`${aux}:${value}:${Date.now()}`)).slice(0, 12).toUpperCase()}`;
+      const body = { id, holder: aux || 'Hashcod Holder', code: value.slice(0, 500), issuedAt: new Date().toISOString(), status: 'ACTIVE' };
+      payload = { ...payload, ticket: body, signature: await hmacSecurityText(passphrase || 'ticketguard', JSON.stringify(body)), qrPayload: `hashcod-ticket://${id}`, verdict: 'ACTIVE' };
+    } else if (currentTool.key === 'codeFingerprint') {
+      const fileRows = await fileDigestRows(files);
+      const secrets = securitySecretFindings(value);
+      const fingerprint = await digestHex(`${JSON.stringify(fileRows)}:${value}`);
+      payload = { ...payload, fingerprint: `HCF-${fingerprint.slice(0, 10).toUpperCase()}`, filesAnalyzed: fileRows.length, files: fileRows, secretsFound: secrets.length, secrets, verdict: secrets.length ? 'WATCHLIST' : 'CLEAR' };
+    } else if (currentTool.key === 'cryptoBenchmark') {
+      const results = [];
+      for (const sample of buildHashcodBenchmarkSamples().slice(0, 24)) {
+        const analysis = await analyzePivotKernel(sample.value, 4, 24);
+        results.push({ name: sample.name, type: sample.type, entropy: analysis.entropy, risk: analysis.pivotRisk, verdict: analysis.verdict });
+      }
+      payload = { ...payload, results, verdict: 'BENCHMARK READY' };
+    } else if (currentTool.key === 'passwordEntropy') {
+      payload = { ...payload, password: estimatePasswordReport(value), entropyStored: false };
+      payload.verdict = payload.password.verdict;
+    } else if (currentTool.key === 'fileIntegrity') {
+      const fileRows = await fileDigestRows(files);
+      const snapshots = readIntegritySnapshots();
+      const snapshotId = `HFI-${(await digestHex(JSON.stringify(fileRows))).slice(0, 10).toUpperCase()}`;
+      const previous = snapshots.find(s => s.snapshotId === (aux || snapshotId));
+      const changes = previous ? fileRows.filter(row => !previous.files.some(old => old.name === row.name && old.sha256 === row.sha256)) : [];
+      writeIntegritySnapshots([{ snapshotId, at: new Date().toISOString(), files: fileRows }, ...snapshots]);
+      payload = { ...payload, snapshotId, files: fileRows, previousSnapshot: previous?.snapshotId || '', changes, verdict: previous ? (changes.length ? 'MODIFIED' : 'MATCH') : 'SNAPSHOT SAVED' };
+    } else if (currentTool.key === 'apiTrust') {
+      const url = value || aux;
+      const checks = { https: /^https:\/\//i.test(url), localhost: /localhost|127\.0\.0\.1/.test(url), querySecrets: /(token|key|secret|password)=/i.test(url), versioned: /\/v\d+\//i.test(url) };
+      let reachable = false;
+      try { await fetch(url, { method: 'HEAD', mode: 'no-cors' }); reachable = true; } catch {}
+      const trustScore = Math.max(0, Math.min(100, 40 + (checks.https ? 30 : -25) + (checks.versioned ? 10 : 0) + (reachable ? 10 : 0) - (checks.querySecrets ? 35 : 0) - (checks.localhost ? 10 : 0)));
+      payload = { ...payload, url, checks, reachable, trustScore, verdict: securityRiskVerdict(100 - trustScore), recommendations: ['Use HTTPS only.', 'Avoid secrets in query strings.', 'Add strict CORS and rate limiting.', 'Return generic errors.'] };
+    } else if (currentTool.key === 'reportVerifier') {
+      const digest = await digestHex(value);
+      const match = readSecuritySuiteRecords().find(row => JSON.stringify(row).includes(value) || JSON.stringify(row).includes(digest) || row.id === value.trim());
+      payload = { ...payload, digest, match: match || null, verdict: match ? 'VALID REPORT' : 'NO MATCH' };
+    } else if (currentTool.key === 'developerVault') {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase || 'hashcod-vault'), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 120000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+      const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(value));
+      const item = { id: `HDV-${Date.now().toString(36).toUpperCase()}`, name: aux || 'SECRET', salt: toB64u(salt), iv: toB64u(iv), ciphertext: toB64u(new Uint8Array(encrypted)), at: new Date().toISOString() };
+      const next = [item, ...readDeveloperVault()];
+      writeDeveloperVault(next);
+      payload = { ...payload, stored: item, vaultCount: next.length, verdict: 'ENCRYPTED' };
+    } else if (currentTool.key === 'cryptoLearning') {
+      payload = { ...payload, modules: ['Entropy: unpredictability in bits.', 'Hash: one-way digest with collision-resistance goals.', 'AES: symmetric cipher; prefer GCM/CTR with nonce discipline.', 'Signature: private key signs, public key verifies.', 'Token: structured credential with claims and signature.'], demoEntropy: entropy, verdict: 'LEARNING READY' };
+    } else {
+      const pivot = await analyzePivotKernel(value, 5, 32);
+      const secrets = securitySecretFindings(value);
+      const riskScore = Math.max(pivot.pivotRisk, Math.min(100, secrets.length * 24 + (entropy < 4 ? 35 : 0)));
+      payload = { ...payload, entropyScore: entropy, patternScore: pivot.pivotRisk, cloudScore: pivot.cloudScoreMean, bandConcentration: Math.max(pivot.horizontalBandConcentration || 0, pivot.verticalBandConcentration || 0), secretsFound: secrets.length, riskScore, verdict: securityRiskVerdict(riskScore), recommendations: secrets.length ? ['Remove exposed secrets.', 'Rotate leaked keys.', 'Store secrets in Developer Vault.'] : ['Run benchmark comparison.', 'Keep external review for crypto claims.'] };
+    }
+    setResult(payload);
+    saveRecord(payload);
+  };
+
+  const exportResult = () => result && triggerDownload(`Hashcod-${currentTool.key}-${tsStamp()}.json`, JSON.stringify({ hashcod_security_suite: result }, null, 2), 'application/json;charset=utf-8');
+  const exportYaml = () => result && triggerDownload(`Hashcod-${currentTool.key}-${tsStamp()}.yaml`, Object.entries(result).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join('\n'), 'text/yaml;charset=utf-8');
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hsec" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h hsec-head">
+          <div className="hsec-title">
+            <span className="hsec-mark" dangerouslySetInnerHTML={{__html: currentTool.icon}} />
+            <div><h2>{currentTool.title}</h2><p>{currentTool.desc}</p></div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hsec-shell">
+          <aside className="hsec-nav">
+            {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
+              <button key={tool.key} className={tool.key === currentTool.key ? 'on' : ''} onClick={() => { onSelectTool(tool.key); setResult(null); }}>
+                <span dangerouslySetInnerHTML={{__html: tool.icon}} /><b>{tool.title.replace('Hashcod ', '')}</b>
+              </button>
+            ))}
+          </aside>
+          <main className="hsec-main">
+            <section className="hsec-form">
+              <label><span>{L('Entrada / code / URL / reporte', 'Input / code / URL / report')}</span><textarea value={text} onChange={e => setText(e.target.value)} placeholder={L('Pega token, codigo, secreto, URL, reporte o texto aqui...', 'Paste token, code, secret, URL, report or text here...')} /></label>
+              <div className="hsec-row">
+                <label><span>{L('Autor / usuario / nombre / snapshot', 'Author / user / name / snapshot')}</span><input value={aux} onChange={e => setAux(e.target.value)} placeholder="Hashcod user" /></label>
+                <label><span>{L('Clave local opcional', 'Optional local key')}</span><input value={passphrase} onChange={e => setPassphrase(e.target.value)} type="password" placeholder="passphrase" /></label>
+              </div>
+              <label><span>{L('Archivos opcionales', 'Optional files')}</span><input type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))} /></label>
+              <div className="hsec-actions"><button onClick={run}>{L('Ejecutar herramienta', 'Run tool')}</button><button onClick={exportResult} disabled={!result}>JSON</button><button onClick={exportYaml} disabled={!result}>YAML</button></div>
+            </section>
+            <section className="hsec-output">
+              {result ? <><div className="hsec-verdict"><span>{L('Veredicto', 'Verdict')}</span><b>{result.verdict || 'READY'}</b><em>{result.riskScore != null ? `Risk ${result.riskScore}/100` : `Entropy ${result.entropy}`}</em></div><pre>{JSON.stringify(result, null, 2)}</pre></> : <div className="hsec-empty">{L('Selecciona una herramienta, pega datos o sube archivos y ejecuta el analisis.', 'Select a tool, paste data or upload files, then run analysis.')}</div>}
+            </section>
+            <section className="hsec-records">
+              <b>{L('Ultimos registros de la suite', 'Latest suite records')}</b>
+              {records.slice(0, 8).map(row => <article key={row.id}><span>{row.id}</span><em>{row.title}</em><strong>{row.payload?.verdict || row.payload?.riskScore || 'OK'}</strong></article>)}
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const App = () => {
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(window.OCG_DEFAULTS) : [{}, () => {}];
   const density = tweaks.density || 'comfortable';
@@ -12822,6 +13075,8 @@ const App = () => {
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
+  const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
+  const [securitySuiteTool, setSecuritySuiteTool] = useState('tokenInspector');
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -13654,6 +13909,10 @@ const App = () => {
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
+  const openSecuritySuite = (toolKey = 'tokenInspector') => {
+    setSecuritySuiteTool(toolKey);
+    setSecuritySuiteOpen(true);
+  };
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -14119,6 +14378,22 @@ const App = () => {
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
+        tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
+        licenseshield: () => openSecuritySuite('licenseShield'), shield: () => openSecuritySuite('licenseShield'),
+        evidencevault: () => openSecuritySuite('evidenceVault'), evidence: () => openSecuritySuite('evidenceVault'),
+        securetab: () => openSecuritySuite('secureTab'), securetabs: () => openSecuritySuite('secureTab'),
+        secretscanner: () => openSecuritySuite('secretScanner'), secretscan: () => openSecuritySuite('secretScanner'), scanner: () => openSecuritySuite('secretScanner'),
+        qrverifier: () => openSecuritySuite('qrVerifier'), qrauth: () => openSecuritySuite('qrVerifier'),
+        ticketguard: () => openSecuritySuite('ticketGuard'),
+        codefingerprint: () => openSecuritySuite('codeFingerprint'), fingerprint: () => openSecuritySuite('codeFingerprint'),
+        cryptobenchmark: () => openSecuritySuite('cryptoBenchmark'), benchmark: () => openSecuritySuite('cryptoBenchmark'),
+        passwordentropy: () => openSecuritySuite('passwordEntropy'), passwordlab: () => openSecuritySuite('passwordEntropy'),
+        fileintegrity: () => openSecuritySuite('fileIntegrity'), integrity: () => openSecuritySuite('fileIntegrity'),
+        apitrust: () => openSecuritySuite('apiTrust'), trustscore: () => openSecuritySuite('apiTrust'),
+        reportverifier: () => openSecuritySuite('reportVerifier'), verifyreport: () => openSecuritySuite('reportVerifier'),
+        developervault: () => openSecuritySuite('developerVault'), devvault: () => openSecuritySuite('developerVault'),
+        cryptolearning: () => openSecuritySuite('cryptoLearning'), learning: () => openSecuritySuite('cryptoLearning'),
+        riskengine: () => openSecuritySuite('riskEngine'), risk: () => openSecuritySuite('riskEngine'),
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -14267,6 +14542,23 @@ const App = () => {
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
       pivot: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
       kernel: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
+      securitysuite: { open: () => openSecuritySuite('riskEngine'), label: 'Hashcod Security Suite', verbs: ['token','license','evidence','scanner','qr','ticket','fingerprint','benchmark','password','integrity','api','report','vault','learning','risk'] },
+      tokeninspector: { open: () => openSecuritySuite('tokenInspector'), label: 'Hashcod Token Inspector', verbs: ['jwt','api-key','license','entropy','risk','report'] },
+      licenseshield: { open: () => openSecuritySuite('licenseShield'), label: 'Hashcod License Shield', verbs: ['issue','sign','verify','offline','device','qr'] },
+      evidencevault: { open: () => openSecuritySuite('evidenceVault'), label: 'Hashcod Evidence Vault', verbs: ['seal','sha256','timestamp','qr','certificate'] },
+      securetab: { open: () => openSecuritySuite('secureTab'), label: 'Hashcod Secure Tab', verbs: ['rewrite','vault','env','secrets'] },
+      secretscanner: { open: () => openSecuritySuite('secretScanner'), label: 'Hashcod Secret Scanner', verbs: ['scan','api-key','jwt','private-key','env'] },
+      qrverifier: { open: () => openSecuritySuite('qrVerifier'), label: 'Hashcod QR Verifier', verbs: ['create','verify','digest','history'] },
+      ticketguard: { open: () => openSecuritySuite('ticketGuard'), label: 'Hashcod TicketGuard', verbs: ['ticket','qr','activate','history'] },
+      codefingerprint: { open: () => openSecuritySuite('codeFingerprint'), label: 'Hashcod Code Fingerprint', verbs: ['project','hashes','changes','secrets'] },
+      cryptobenchmark: { open: () => openSecuritySuite('cryptoBenchmark'), label: 'Hashcod Crypto Benchmark Lab', verbs: ['sha','aes','chacha','csprng','compare'] },
+      passwordentropy: { open: () => openSecuritySuite('passwordEntropy'), label: 'Hashcod Password Entropy Lab', verbs: ['entropy','pattern','bruteforce','recommend'] },
+      fileintegrity: { open: () => openSecuritySuite('fileIntegrity'), label: 'Hashcod File Integrity Monitor', verbs: ['snapshot','compare','alert','report'] },
+      apitrust: { open: () => openSecuritySuite('apiTrust'), label: 'Hashcod API Trust Score', verbs: ['https','cors','headers','rate-limit'] },
+      reportverifier: { open: () => openSecuritySuite('reportVerifier'), label: 'Hashcod Report Verifier', verbs: ['id','digest','qr','authentic'] },
+      developervault: { open: () => openSecuritySuite('developerVault'), label: 'Hashcod Developer Vault', verbs: ['encrypt','secrets','aes-gcm','pbkdf2'] },
+      cryptolearning: { open: () => openSecuritySuite('cryptoLearning'), label: 'Hashcod Crypto Learning Lab', verbs: ['entropy','hash','aes','signature','token'] },
+      riskengine: { open: () => openSecuritySuite('riskEngine'), label: 'Hashcod Risk Engine', verbs: ['score','entropy','pattern','cloud','verdict'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -14292,7 +14584,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -14331,6 +14623,7 @@ const App = () => {
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
+      <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -14519,6 +14812,12 @@ const App = () => {
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pivotKernel}} />
                 <b>Pivot</b>
               </button>
+              {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
+                <button type="button" className="bottom-tool-icon" key={tool.key} onClick={() => openSecuritySuite(tool.key)} title={tool.title} aria-label={tool.title}>
+                  <span dangerouslySetInnerHTML={{__html: tool.icon}} />
+                  <b>{tool.title.replace('Hashcod ', '').replace(' Lab', '')}</b>
+                </button>
+              ))}
             </div>
           </div>
         </section>
