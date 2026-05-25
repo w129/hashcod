@@ -2437,6 +2437,7 @@ const TOP_MENU_ICONS = {
   hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
   quoteSystem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
+  billingTimer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l-2 4"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
@@ -13592,6 +13593,119 @@ const quoteDueDate = (days) => {
   date.setDate(date.getDate() + Math.max(0, Number(days) || 0));
   return date.toISOString();
 };
+const BILLING_TIMER_RATE_USD = 0.05;
+const formatBillingTimer = (ms) => {
+  const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
+};
+const billingTimerMoney = (elapsedMs) => {
+  const minutes = Math.floor(Math.max(0, Number(elapsedMs) || 0) / 60000);
+  return { minutes, amount: Number((minutes * BILLING_TIMER_RATE_USD).toFixed(2)) };
+};
+
+const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [active, setActive] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [startedAt, setStartedAt] = useState(0);
+  const [accumulatedMs, setAccumulatedMs] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!running) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [running]);
+  const elapsedMs = running ? accumulatedMs + Math.max(0, now - startedAt) : accumulatedMs;
+  const billing = billingTimerMoney(elapsedMs);
+  const status = running ? L('Activo', 'Active') : active ? L('Pausado', 'Paused') : elapsedMs ? L('Parado', 'Stopped') : L('Desactivado', 'Disabled');
+  const start = () => {
+    setActive(true);
+    setRunning(true);
+    setStartedAt(Date.now());
+    setNow(Date.now());
+    notify?.(L('Cronometro de facturacion activado.', 'Billing timer activated.'));
+  };
+  const pause = () => {
+    if (!running) return;
+    setAccumulatedMs(elapsedMs);
+    setRunning(false);
+    setActive(true);
+    notify?.(L('Cronometro pausado.', 'Timer paused.'));
+  };
+  const resume = () => {
+    setActive(true);
+    setRunning(true);
+    setStartedAt(Date.now());
+    setNow(Date.now());
+  };
+  const stop = () => {
+    setAccumulatedMs(elapsedMs);
+    setRunning(false);
+    setActive(false);
+    notify?.(L('Cronometro parado. El total queda listo para facturar.', 'Timer stopped. Total is ready for billing.'));
+  };
+  const reset = () => {
+    setActive(false);
+    setRunning(false);
+    setStartedAt(0);
+    setAccumulatedMs(0);
+    setNow(Date.now());
+  };
+  const exportTimer = () => {
+    const payload = {
+      hashcod_billing_timer: {
+        status,
+        elapsed: formatBillingTimer(elapsedMs),
+        elapsed_ms: Math.floor(elapsedMs),
+        billable_minutes: billing.minutes,
+        rate_usd_per_minute: BILLING_TIMER_RATE_USD,
+        amount_usd: billing.amount,
+        exported_at: new Date().toISOString(),
+      },
+    };
+    triggerDownload(`Hashcod-billing-timer-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+  };
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg timerdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h timer-head">
+          <div className="timer-title">
+            <span className="timer-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.billingTimer}} />
+            <div>
+              <h2>{L('Cronometro de Facturacion', 'Billing Timer')}</h2>
+              <p>{L('Cada minuto completo suma 0.05 USD hasta pausar o parar.', 'Every full minute adds 0.05 USD until paused or stopped.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="timer-body">
+          <div className="timer-display">
+            <span>{status}</span>
+            <strong>{formatBillingTimer(elapsedMs)}</strong>
+            <em>{billing.minutes} min x {quoteMoney(BILLING_TIMER_RATE_USD)} = {quoteMoney(billing.amount)}</em>
+          </div>
+          <div className="timer-stats">
+            <div><span>{L('Tarifa', 'Rate')}</span><b>{quoteMoney(BILLING_TIMER_RATE_USD)} / min</b></div>
+            <div><span>{L('Minutos facturables', 'Billable minutes')}</span><b>{billing.minutes}</b></div>
+            <div><span>{L('Total acumulado', 'Accumulated total')}</span><b>{quoteMoney(billing.amount)}</b></div>
+          </div>
+          <div className="timer-actions">
+            <button onClick={start} disabled={running}>{active ? L('Reiniciar activo', 'Restart active') : L('Activar', 'Activate')}</button>
+            <button onClick={pause} disabled={!running}>{L('Pausar', 'Pause')}</button>
+            <button onClick={resume} disabled={running || (!active && !elapsedMs)}>{L('Continuar', 'Resume')}</button>
+            <button onClick={stop} disabled={!active && !running}>{L('Parar', 'Stop')}</button>
+            <button onClick={reset}>{L('Desactivar / Reset', 'Disable / Reset')}</button>
+            <button onClick={exportTimer}>{L('Descargar JSON', 'Download JSON')}</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
 
 const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notify }) => {
   const L = (es, en) => (language === 'es' ? es : en);
@@ -14175,6 +14289,7 @@ const App = () => {
   const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
   const [quoteSystemOpen, setQuoteSystemOpen] = useState(false);
+  const [billingTimerOpen, setBillingTimerOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
@@ -15012,6 +15127,7 @@ const App = () => {
   const openLatticeLab = () => setLatticeLabOpen(true);
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
   const openQuoteSystem = () => setQuoteSystemOpen(true);
+  const openBillingTimer = () => setBillingTimerOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
@@ -15295,6 +15411,11 @@ const App = () => {
     { label: language === 'es' ? 'Facturas, descuento, impuesto y total' : 'Invoices, discount, tax and total', onClick: openQuoteSystem },
     { label: language === 'es' ? 'Emitir PDF / JSON / CSV' : 'Issue PDF / JSON / CSV', onClick: openQuoteSystem },
   ];
+  const billingTimerItems = [
+    { label: language === 'es' ? 'Abrir cronometro de facturacion' : 'Open billing timer', onClick: openBillingTimer },
+    { label: language === 'es' ? '0.05 USD por minuto completo' : '0.05 USD per full minute', onClick: openBillingTimer },
+    { label: language === 'es' ? 'Activar, pausar, continuar y parar' : 'Activate, pause, resume and stop', onClick: openBillingTimer },
+  ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
     { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
@@ -15500,7 +15621,7 @@ const App = () => {
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
-        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem,
+        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
@@ -15669,6 +15790,8 @@ const App = () => {
       quote: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['price','codes','tools','invoice','billing','discount','tax','pdf','json','csv','customer'] },
       cotizacion: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['precio','codes','herramientas','factura','facturacion','descuento','impuesto','pdf','json','csv','cliente'] },
       factura: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['emitir','guardar','cliente','impuesto','vencimiento','pdf','json','csv'] },
+      timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','minute','json'] },
+      cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','minuto','json'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
@@ -15716,7 +15839,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -15756,6 +15879,7 @@ const App = () => {
       <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
       <HashcodQuoteSystemDialog open={quoteSystemOpen} onClose={() => setQuoteSystemOpen(false)} catalog={catalog} notify={notify} language={language} />
+      <HashcodBillingTimerDialog open={billingTimerOpen} onClose={() => setBillingTimerOpen(false)} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -15816,6 +15940,7 @@ const App = () => {
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
             <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
             <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
+            <MenuButton label="BILLING TIMER" icon={TOP_MENU_ICONS.billingTimer} iconOnly items={billingTimerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBillingTimer} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
