@@ -2436,6 +2436,7 @@ const TOP_MENU_ICONS = {
   cryptoIde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="M19 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="m7 15 3 3"/><path d="m7 21 3-3H5a2 2 0 0 1-2-2v-2"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/></svg>`,
   hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
+  quoteSystem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
@@ -13512,6 +13513,251 @@ const HASHCOD_SECURITY_SUITE_TOOLS = [
   ['riskEngine', 'Hashcod Risk Engine', 'Motor comun de risk score, entropy, pattern, cloud, band y veredicto.'],
 ].map(([key, title, desc]) => ({ key, title, desc, icon: TOP_MENU_ICONS[key] }));
 
+const QUOTE_FAMILY_BASE = {
+  'PQC-KEM': 34, 'PQC-SIG': 36, 'HASH-SIG': 31, HPKE: 29, ZK: 42, MPC: 44, FHE: 58, THRESH: 38, VDF: 33, VRF: 35,
+  'AEAD-LW': 24, XOF: 19, KDF: 18, MAC: 17, PAKE: 30, ACCUM: 32, IBE: 37, ABE: 41, RING: 34, BLIND: 35,
+};
+const QUOTE_CATEGORY_BASE = {
+  symmetric: 10, hashes: 8, mac: 12, kdf: 14, passwords: 10, asymmetric: 28, signatures: 30, tokens: 12, ids: 7, pqc: 46,
+  advanced_codes_100: 25, advanced_codes_200: 32, neo_crypto_200: 52, apex_crypto_300: 58, hashcod_advanced_8282: 26,
+};
+const quoteAscii = (value) => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+const quoteEntropyBits = (entropy = '') => {
+  const match = String(entropy).match(/(\d+(?:\.\d+)?)\s*bits/i);
+  return match ? Number(match[1]) : 128;
+};
+const quoteFamilyFromType = (type) => {
+  const label = `${type.originalLabel || type.label || ''} ${type.id || ''} ${type.engine || ''}`;
+  const hc = label.match(/\bHC-([A-Z0-9-]+)-/);
+  if (hc) return hc[1];
+  if (/AES|ChaCha|Salsa|Serpent|Twofish|SM4|GOST|Kuznyechik|Magma|Blowfish/i.test(label)) return 'SYMMETRIC';
+  if (/SHA|BLAKE|Keccak|RIPEMD|Whirlpool|Hash/i.test(label)) return 'HASH';
+  if (/JWT|Token|License|QR|TOTP|UUID|ULID|Nonce/i.test(label)) return 'TOKEN';
+  if (/RSA|ECDSA|EdDSA|Dilithium|Kyber|Falcon|SPHINCS|ML-/i.test(label)) return 'ASYMMETRIC';
+  return 'GENERAL';
+};
+const quoteLevelPremium = (type) => {
+  const text = `${type.label || ''} ${type.originalLabel || ''} ${type.entropy || ''} ${type.space || ''}`;
+  if (/L5|512|896|832/i.test(text)) return 1.95;
+  if (/L3|384|800|768/i.test(text)) return 1.55;
+  if (/256|704|640/i.test(text)) return 1.25;
+  if (/192/i.test(text)) return 1.12;
+  if (/128|L1/i.test(text)) return 1.0;
+  return 1.08;
+};
+const quoteStandardPremium = (type) => {
+  const text = `${type.std || ''} ${type.engine || ''} ${type.about || ''}`;
+  if (/deprecated|broken|legacy interop only/i.test(text)) return 0.62;
+  if (/NIST|FIPS|RFC|ISO|SP 800|IETF|W3C|IEEE/i.test(text)) return 1.22;
+  if (/post-quantum|zero-knowledge|homomorphic|threshold|identity-based|attribute-based/i.test(text)) return 1.38;
+  if (/Hashcod/i.test(text)) return 1.16;
+  return 1.0;
+};
+const quoteRarityPremium = (index, categoryId) => {
+  if (categoryId === 'hashcod_advanced_8282') return 1 + ((index % 37) / 100);
+  if (/neo|apex|advanced/i.test(categoryId)) return 1.28 + ((index % 19) / 100);
+  return 1 + ((index % 11) / 100);
+};
+const quoteComplexityUnits = (type) => {
+  const text = `${type.engine || ''} ${type.about || ''} ${type.std || ''}`;
+  let score = 1;
+  if (/HMAC|signature|firma|signed|binding/i.test(text)) score += 0.35;
+  if (/nonce|salt|payload|route|checksum/i.test(text)) score += 0.3;
+  if (/SHA-512|SHA3|SHA-3|BLAKE3/i.test(text)) score += 0.2;
+  if (/post-quantum|zero-knowledge|homomorphic|multipartita|threshold/i.test(text)) score += 0.8;
+  return score;
+};
+const quoteCodePriceFor = ({ category, type, globalIndex }) => {
+  const family = quoteFamilyFromType(type);
+  const catBase = QUOTE_CATEGORY_BASE[category.id] || 14;
+  const familyBase = QUOTE_FAMILY_BASE[family] || catBase;
+  const bits = quoteEntropyBits(type.entropy);
+  const entropyFactor = Math.max(0.85, Math.min(2.4, Math.log2(Math.max(bits, 64)) / 8));
+  const tenPack = familyBase * quoteLevelPremium(type) * quoteStandardPremium(type) * quoteRarityPremium(globalIndex, category.id) * quoteComplexityUnits(type) * entropyFactor;
+  const per10 = Math.max(1, Math.round(tenPack));
+  return { family, per10, each: Number((per10 / 10).toFixed(2)) };
+};
+const quoteMoney = (amount) => `${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+
+const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notify }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [mode, setMode] = useState('codes');
+  const [query, setQuery] = useState('');
+  const [customer, setCustomer] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [tax, setTax] = useState(0);
+  const [items, setItems] = useState([]);
+  const codeRows = useMemo(() => {
+    let n = 0;
+    return catalog.flatMap((category) => (category.types || []).map((type) => {
+      n += 1;
+      const price = quoteCodePriceFor({ category, type, globalIndex: n });
+      return {
+        id: `code-${n}`,
+        index: n,
+        category: quoteAscii(category.label || category.id),
+        categoryId: category.id,
+        name: quoteAscii(type.label || type.id),
+        family: price.family,
+        entropy: quoteAscii(type.entropy || '-'),
+        standard: quoteAscii(type.std || '-'),
+        each: price.each,
+        per10: price.per10,
+        description: quoteAscii(type.about || type.engine || ''),
+      };
+    }));
+  }, [catalog]);
+  const toolRows = useMemo(() => {
+    const baseTools = [
+      ['Generator Engine', 'Genera lotes de codes criptograficos con metadatos.', 149, 899],
+      ['Database Vault', 'Guarda, busca y reutiliza codes copiados.', 79, 499],
+      ['QR Vault', 'QR verificables, paquetes y payloads.', 69, 399],
+      ['Export Suite', 'TXT, JSON, CSV, YAML, ISO, ZIP, OCG.PACK, PNG.', 49, 299],
+      ['Code GUI / CMD', 'Editor y consola especializada por code.', 129, 799],
+      ['Certificates', 'Certificados con ID, hash, QR y titular.', 119, 699],
+      ['BASEMAT', 'Entropia, colisiones, Shamir, Merkle, lattice y primos.', 159, 999],
+      ['Container Port', 'Cajas de 10 codes y contenedores de 100 cajas.', 189, 1200],
+      ['Crypto AI', 'Chat IA criptografico por API del usuario.', 199, 1299],
+      ['HNS Browser', 'Browser CLI/GUI para hns:// y Phone OS.', 159, 999],
+      ['Complex Entropy Map', 'Mapa complejo, entropia, cuadrantes y riesgo.', 129, 799],
+      ['Quote System', 'Cotizaciones Hashcod con tabla y calculadora.', 99, 499],
+    ];
+    const securityTools = HASHCOD_SECURITY_SUITE_TOOLS.map((tool, i) => [tool.title, tool.desc, 179 + (i % 4) * 15, 1200 + (i % 5) * 90]);
+    return [...baseTools, ...securityTools].map(([name, purpose, monthly, setup], index) => ({
+      id: `tool-${index + 1}`,
+      index: index + 1,
+      name,
+      purpose,
+      monthly,
+      setup,
+      suggested: Math.round((monthly + setup / 6 + (index % 9) * 7) * 1.03),
+      unit: 'service',
+    }));
+  }, []);
+  const filteredCodes = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const rows = q ? codeRows.filter(row => `${row.index} ${row.name} ${row.family} ${row.category} ${row.standard}`.toLowerCase().includes(q)) : codeRows;
+    return rows.slice(0, 240);
+  }, [codeRows, query]);
+  const filteredTools = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const rows = q ? toolRows.filter(row => `${row.name} ${row.purpose}`.toLowerCase().includes(q)) : toolRows;
+    return rows.slice(0, 180);
+  }, [toolRows, query]);
+  const addCodeItem = (row, pack = 10) => {
+    const id = `${row.id}-${pack}-${Date.now()}`;
+    setItems(prev => [{ id, kind: 'code', name: row.name, ref: `${String(row.index).padStart(4, '0')} | ${row.family}`, unit: pack === 10 ? row.per10 : row.each, qty: 1, pack, note: pack === 10 ? '10-code pack' : 'single code' }, ...prev]);
+  };
+  const addToolItem = (row) => {
+    setItems(prev => [{ id: `${row.id}-${Date.now()}`, kind: 'tool', name: row.name, ref: 'Hashcod tool/service', unit: row.suggested, qty: 1, pack: 1, note: row.purpose }, ...prev]);
+  };
+  const updateItem = (id, patch) => setItems(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
+  const removeItem = (id) => setItems(prev => prev.filter(item => item.id !== id));
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.unit) || 0) * (Number(item.qty) || 0), 0);
+  const discountValue = subtotal * Math.max(0, Number(discount) || 0) / 100;
+  const taxable = Math.max(0, subtotal - discountValue);
+  const taxValue = taxable * Math.max(0, Number(tax) || 0) / 100;
+  const total = taxable + taxValue;
+  const quote = {
+    id: `HC-QTE-${Date.now().toString(36).toUpperCase()}`,
+    customer: customer.trim() || 'Hashcod customer',
+    createdAt: new Date().toISOString(),
+    sourcePdfs: ['Hashcod-10000-code-pricing.pdf', 'Hashcod-tools-pricing-and-code-differences.pdf'],
+    items,
+    totals: { subtotal, discountPercent: Number(discount) || 0, discountValue, taxPercent: Number(tax) || 0, taxValue, total },
+  };
+  const exportJson = () => triggerDownload(`Hashcod-Quote-${quote.id}.json`, JSON.stringify(quote, null, 2), 'application/json;charset=utf-8');
+  const exportCsv = () => {
+    const rows = [['type','name','reference','unit_price_usd','quantity','line_total_usd','note'], ...items.map(item => [item.kind, item.name, item.ref, item.unit, item.qty, (item.unit * item.qty).toFixed(2), item.note])];
+    const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    triggerDownload(`Hashcod-Quote-${quote.id}.csv`, csv, 'text/csv;charset=utf-8');
+  };
+  const printQuote = () => {
+    const logo = window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(46) : '';
+    const lineRows = items.map(item => `<tr><td>${escapeHtmlStrict(item.kind)}</td><td>${escapeHtmlStrict(item.name)}<small>${escapeHtmlStrict(item.ref)}</small></td><td>${escapeHtmlStrict(item.note)}</td><td>${quoteMoney(item.unit)}</td><td>${item.qty}</td><td>${quoteMoney(item.unit * item.qty)}</td></tr>`).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${quote.id}</title><style>
+      body{margin:0;background:#f4f4f4;color:#111;font-family:"Segoe UI",Arial,sans-serif;padding:32px}.sheet{max-width:980px;margin:0 auto;background:#fff;border:1px solid #111;box-shadow:10px 10px 0 #ccc}.head{display:flex;gap:16px;align-items:center;padding:24px;border-bottom:4px solid #111}.logo{width:54px;height:54px;display:grid;place-items:center}.logo svg{width:54px;height:54px}h1{margin:0;font-size:32px}.k{font:11px monospace;letter-spacing:3px;text-transform:uppercase;color:#555}.meta,.totals{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ccc}.meta div,.totals div{padding:14px;border-right:1px solid #ddd}.meta span,.totals span{display:block;font:10px monospace;letter-spacing:2px;color:#777;text-transform:uppercase}.meta b,.totals b{display:block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left;font-size:12px}th{font:10px monospace;letter-spacing:2px;text-transform:uppercase;background:#111;color:#fff}small{display:block;color:#777;margin-top:4px}.foot{padding:18px;font:11px monospace;color:#555;line-height:1.55}.print{margin:0 0 16px;padding:12px 18px;background:#111;color:#fff;border:0;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.print{display:none}.sheet{box-shadow:none;max-width:none}}</style></head><body><button class="print" onclick="window.print()">Guardar como PDF</button><section class="sheet"><div class="head"><div class="logo">${logo}</div><div><div class="k">Hashcod quotation system</div><h1>${quote.id}</h1></div></div><div class="meta"><div><span>Cliente</span><b>${escapeHtmlStrict(quote.customer)}</b></div><div><span>Fecha</span><b>${new Date(quote.createdAt).toLocaleString()}</b></div><div><span>Items</span><b>${items.length}</b></div><div><span>Moneda</span><b>USD</b></div></div><table><thead><tr><th>Tipo</th><th>Producto</th><th>Nota</th><th>Unidad</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${lineRows || '<tr><td colspan="6">Sin items</td></tr>'}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${quoteMoney(subtotal)}</b></div><div><span>Descuento</span><b>${Number(discount) || 0}% / ${quoteMoney(discountValue)}</b></div><div><span>Impuesto</span><b>${Number(tax) || 0}% / ${quoteMoney(taxValue)}</b></div><div><span>Total</span><b>${quoteMoney(total)}</b></div></div><div class="foot">Base: Hashcod-10000-code-pricing.pdf y Hashcod-tools-pricing-and-code-differences.pdf. Estos precios son modelo comercial sugerido de Hashcod; no son asesoría financiera ni valoración legal.</div></section></body></html>`;
+    const win = window.open('', '_blank', 'width=1060,height=900');
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => { try { win.focus(); win.print(); } catch {} }, 280);
+    notify?.(L('Cotizacion abierta para imprimir o guardar en PDF.', 'Quote opened for printing or saving as PDF.'));
+  };
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg quotedlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h quote-head">
+          <div className="quote-title">
+            <span className="quote-logo" dangerouslySetInnerHTML={{__html: window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(42) : TOP_MENU_ICONS.quoteSystem}} />
+            <div>
+              <h2>{L('Sistema de Cotizaciones Hashcod', 'Hashcod Quote System')}</h2>
+              <p>{L('Calcula precios usando el catalogo de 10,000 codes y la tabla de herramientas anteriores.', 'Calculate prices using the 10,000-code catalog and previous tools pricing table.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="quote-top">
+          <label><span>{L('Cliente', 'Customer')}</span><input value={customer} onChange={e => setCustomer(e.target.value)} placeholder={L('Nombre del cliente', 'Customer name')} /></label>
+          <label><span>{L('Buscar', 'Search')}</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('AES, PQC, QR, Vault...', 'AES, PQC, QR, Vault...')} /></label>
+          <label><span>{L('Descuento %', 'Discount %')}</span><input type="number" min="0" value={discount} onChange={e => setDiscount(e.target.value)} /></label>
+          <label><span>{L('Impuesto %', 'Tax %')}</span><input type="number" min="0" value={tax} onChange={e => setTax(e.target.value)} /></label>
+        </div>
+        <div className="quote-tabs">
+          <button className={mode === 'codes' ? 'on' : ''} onClick={() => setMode('codes')}>{L('Codes 10,000', '10,000 Codes')}</button>
+          <button className={mode === 'tools' ? 'on' : ''} onClick={() => setMode('tools')}>{L('Herramientas', 'Tools')}</button>
+          <a href="/exports/Hashcod-10000-code-pricing.pdf" download>PDF codes</a>
+          <a href="/exports/Hashcod-tools-pricing-and-code-differences.pdf" download>PDF tools</a>
+        </div>
+        <div className="quote-shell">
+          <main className="quote-catalog">
+            {mode === 'codes' ? (
+              <table><thead><tr><th>#</th><th>Code</th><th>Familia</th><th>1 code</th><th>10 codes</th><th></th></tr></thead><tbody>
+                {filteredCodes.map(row => <tr key={row.id}><td>{String(row.index).padStart(4, '0')}</td><td><b>{row.name}</b><small>{row.category} · {row.standard} · {row.entropy}</small></td><td>{row.family}</td><td>{quoteMoney(row.each)}</td><td>{quoteMoney(row.per10)}</td><td><button onClick={() => addCodeItem(row, 10)}>+10</button><button onClick={() => addCodeItem(row, 1)}>+1</button></td></tr>)}
+              </tbody></table>
+            ) : (
+              <table><thead><tr><th>#</th><th>Herramienta</th><th>Mensual</th><th>Setup</th><th>Sugerido</th><th></th></tr></thead><tbody>
+                {filteredTools.map(row => <tr key={row.id}><td>{String(row.index).padStart(2, '0')}</td><td><b>{row.name}</b><small>{row.purpose}</small></td><td>{quoteMoney(row.monthly)}</td><td>{quoteMoney(row.setup)}</td><td>{quoteMoney(row.suggested)}</td><td><button onClick={() => addToolItem(row)}>+</button></td></tr>)}
+              </tbody></table>
+            )}
+          </main>
+          <aside className="quote-cart">
+            <h3>{L('Cotizacion activa', 'Active quote')}</h3>
+            <div className="quote-lines">
+              {items.map(item => (
+                <div className="quote-line" key={item.id}>
+                  <b>{item.name}</b>
+                  <span>{item.ref} · {item.note}</span>
+                  <div>
+                    <input type="number" min="1" value={item.qty} onChange={e => updateItem(item.id, { qty: Math.max(1, Number(e.target.value) || 1) })} />
+                    <code>{quoteMoney(item.unit * item.qty)}</code>
+                    <button onClick={() => removeItem(item.id)}>x</button>
+                  </div>
+                </div>
+              ))}
+              {!items.length && <p>{L('Agrega codes o herramientas desde la tabla.', 'Add codes or tools from the table.')}</p>}
+            </div>
+            <div className="quote-total">
+              <div><span>Subtotal</span><b>{quoteMoney(subtotal)}</b></div>
+              <div><span>{L('Descuento', 'Discount')}</span><b>{quoteMoney(discountValue)}</b></div>
+              <div><span>{L('Impuesto', 'Tax')}</span><b>{quoteMoney(taxValue)}</b></div>
+              <div className="grand"><span>Total</span><b>{quoteMoney(total)}</b></div>
+            </div>
+            <div className="quote-actions">
+              <button onClick={printQuote}>{L('PDF', 'PDF')}</button>
+              <button onClick={exportJson}>JSON</button>
+              <button onClick={exportCsv}>CSV</button>
+              <button onClick={() => setItems([])}>{L('Limpiar', 'Clear')}</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const SECURITY_SUITE_STORAGE = 'hashcod_security_suite_records_v1';
 const SECURITY_SUITE_VAULT = 'hashcod_developer_vault_v1';
 const SECURITY_SUITE_INTEGRITY = 'hashcod_file_integrity_v1';
@@ -13789,6 +14035,7 @@ const App = () => {
   const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
   const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
+  const [quoteSystemOpen, setQuoteSystemOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
@@ -14625,6 +14872,7 @@ const App = () => {
   const openTicketForge = () => setTicketForgeOpen(true);
   const openLatticeLab = () => setLatticeLabOpen(true);
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
+  const openQuoteSystem = () => setQuoteSystemOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
@@ -14902,6 +15150,12 @@ const App = () => {
     { label: language === 'es' ? '400 plantillas Hashcod' : '400 Hashcod templates', onClick: openHashcodLicenses },
     { label: language === 'es' ? 'Emitir JSON / YAML / TXT / PNG' : 'Issue JSON / YAML / TXT / PNG', onClick: openHashcodLicenses },
   ];
+  const quoteSystemItems = [
+    { label: language === 'es' ? 'Abrir cotizador Hashcod' : 'Open Hashcod quote system', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Tabla de 10,000 codes con precios' : '10,000-code pricing table', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Herramientas, descuento, impuesto y total' : 'Tools, discount, tax and total', onClick: openQuoteSystem },
+    { label: language === 'es' ? 'Exportar PDF / JSON / CSV' : 'Export PDF / JSON / CSV', onClick: openQuoteSystem },
+  ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
     { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
@@ -15107,6 +15361,7 @@ const App = () => {
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
+        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
@@ -15272,6 +15527,8 @@ const App = () => {
       complexmap: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','bytes','plane','risk','png','json'] },
       licenses: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
       licencias: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['emitir','catalogo','json','yaml','png','txt','copyright','plantilla','help'] },
+      quote: { open: openQuoteSystem, label: 'Hashcod Quote System', verbs: ['price','codes','tools','discount','tax','pdf','json','csv','customer'] },
+      cotizacion: { open: openQuoteSystem, label: 'Hashcod Quote System', verbs: ['precio','codes','herramientas','descuento','impuesto','pdf','json','csv','cliente'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
@@ -15319,7 +15576,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -15358,6 +15615,7 @@ const App = () => {
       <CryptoIdeDialog open={cryptoIdeOpen} onClose={() => setCryptoIdeOpen(false)} notify={notify} language={language} />
       <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
+      <HashcodQuoteSystemDialog open={quoteSystemOpen} onClose={() => setQuoteSystemOpen(false)} catalog={catalog} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -15417,6 +15675,7 @@ const App = () => {
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
             <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
+            <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
