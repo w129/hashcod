@@ -32,6 +32,7 @@ const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e
 const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
 const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
 const PLATFORM_GATE_TOKEN_HASH = process.env.HASHCOD_PLATFORM_GATE_TOKEN_HASH || '64e1d72998d2090a3ed522aebbb00557a81a635e6e5f1167935a8a6bf831e0f0';
+const PLATFORM_GATE_KEY_HASH = process.env.HASHCOD_PLATFORM_GATE_KEY_HASH || '0a8b089d57a477e2eb6393aa22592665b1d9406b22086ef147cbb1a2b446e82c';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
@@ -815,12 +816,16 @@ function platformGateExpiryFromToken(token) {
   }
 }
 
-function verifyPlatformGateToken(token) {
+function verifyPlatformGateToken(token, key) {
   const raw = String(token || '').trim();
+  const rawKey = String(key || '').trim();
   const expected = String(PLATFORM_GATE_TOKEN_HASH || '').trim();
-  if (expected.length !== 64 || !raw) return { ok: false, error: 'invalid_gate_token' };
+  const expectedKey = String(PLATFORM_GATE_KEY_HASH || '').trim();
+  if (expected.length !== 64 || expectedKey.length !== 64 || !raw || !rawKey) return { ok: false, error: 'invalid_gate_credentials' };
   const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
   if (!crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected))) return { ok: false, error: 'invalid_gate_token' };
+  if (!crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedKey))) return { ok: false, error: 'invalid_gate_key' };
   const expiresAt = platformGateExpiryFromToken(raw);
   if (!expiresAt || expiresAt <= Date.now()) return { ok: false, error: 'gate_token_expired' };
   return { ok: true, expiresAt };
@@ -1030,7 +1035,8 @@ async function handlePlatformGate(req, res) {
     try {
       const body = await readJsonBody(req, 32 * 1024);
       const token = body.token || body.sas || body.signature || body.value || '';
-      const verified = verifyPlatformGateToken(token);
+      const key = body.key || body.accessKey || body.gateKey || '';
+      const verified = verifyPlatformGateToken(token, key);
       if (!verified.ok) {
         audit('platform_gate.unlock_failed', { ip: clientIp(req), error: verified.error });
         send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: verified.error }));

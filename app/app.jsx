@@ -4256,7 +4256,7 @@ const HashcodLicenseFactoryDialog = ({ open, onClose, notify, language, rows = [
 
 const AuthGate = ({ children }) => {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
-  const [platformGate, setPlatformGate] = useState({ loading: true, unlocked: false, token: '', expiresAt: null });
+  const [platformGate, setPlatformGate] = useState({ loading: true, unlocked: false, token: '', key: '', expiresAt: null });
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '', recoveryCode: '', serial: '' });
   const [error, setError] = useState('');
@@ -4327,16 +4327,16 @@ const AuthGate = ({ children }) => {
       const res = await fetch('/api/platform-gate/unlock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: platformGate.token }),
+        body: JSON.stringify({ token: platformGate.token, key: platformGate.key }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || 'gate_failed');
       hashcodLawRecord(hashcodLawAssessPayload({ action: 'platform-gate:unlock', meta: { expiresAt: data.expiresAt } }));
-      setPlatformGate(prev => ({ ...prev, unlocked: true, loading: false, token: '', expiresAt: data.expiresAt || null }));
+      setPlatformGate(prev => ({ ...prev, unlocked: true, loading: false, token: '', key: '', expiresAt: data.expiresAt || null }));
       await refresh();
     } catch (err) {
       const msg = String(err.message || '');
-      setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : 'Gate invalido. Pega el token completo sv/sig/se.');
+      setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : msg === 'invalid_gate_key' ? 'Clave de entrada invalida.' : 'Gate invalido. Pega el token completo sv/sig/se y la clave correcta.');
     }
   };
   if (platformGate.loading || auth.loading) return <div className="authgate"><div className="authbox"><h1>Hashcod</h1><p>Loading secure session...</p></div></div>;
@@ -4349,11 +4349,12 @@ const AuthGate = ({ children }) => {
               <div className="authmark"><span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} /></div>
               <span>HASHCOD PLATFORM GATE</span>
               <h1>Access Token</h1>
-              <p>La unica entrada activa requiere el token completo con sv, sig y se. Luego se abre el login normal de Hashcod.</p>
+              <p>La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de Hashcod.</p>
             </div>
             <aside className="auth-handshake" aria-label="Platform gate checks">
               <b>GATE CHECK</b>
               <span><i /> SHA-256 server compare</span>
+              <span><i /> Access key required</span>
               <span><i /> Expiration check</span>
               <span><i /> HttpOnly gate cookie</span>
               <span><i /> API routes locked</span>
@@ -4364,6 +4365,13 @@ const AuthGate = ({ children }) => {
             onChange={e => setPlatformGate(prev => ({ ...prev, token: e.target.value }))}
             placeholder="sv=2024-01-01&sig=...&se=..."
             autoFocus
+          />
+          <input
+            type="password"
+            value={platformGate.key}
+            onChange={e => setPlatformGate(prev => ({ ...prev, key: e.target.value }))}
+            placeholder="Access key"
+            autoComplete="off"
           />
           {error && <em>{error}</em>}
           {notice && <em className="ok">{notice}</em>}
