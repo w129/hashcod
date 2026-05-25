@@ -2435,6 +2435,7 @@ const TOP_MENU_ICONS = {
   hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
+  pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -4457,6 +4458,236 @@ const HashcodLaunchCenterDialog = ({ open, onClose, notify, language }) => {
                   ))}
                 </div>
               ))}
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const byteEntropy = (bytes) => {
+  if (!bytes.length) return 0;
+  const counts = new Array(256).fill(0);
+  bytes.forEach(b => { counts[b] += 1; });
+  return counts.reduce((sum, count) => {
+    if (!count) return sum;
+    const p = count / bytes.length;
+    return sum - p * Math.log2(p);
+  }, 0);
+};
+
+const buildPivotMatrix = (bytes, size) => {
+  const total = size * size;
+  const matrix = [];
+  for (let y = 0; y < size; y++) {
+    const row = [];
+    for (let x = 0; x < size; x++) {
+      const i = y * size + x;
+      row.push(bytes[i % Math.max(1, bytes.length)] || 0);
+    }
+    matrix.push(row);
+  }
+  return matrix;
+};
+
+const kernelAverage = (matrix, x, y, radius, shape) => {
+  const size = matrix.length;
+  let total = 0;
+  let count = 0;
+  for (let yy = Math.max(0, y - radius); yy <= Math.min(size - 1, y + radius); yy++) {
+    for (let xx = Math.max(0, x - radius); xx <= Math.min(size - 1, x + radius); xx++) {
+      const dx = xx - x;
+      const dy = yy - y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const inside = shape === 'square'
+        ? true
+        : shape === 'ring'
+          ? dist >= radius - 1 && dist <= radius + 1
+          : dist <= radius;
+      if (!inside) continue;
+      total += matrix[yy][xx];
+      count += 1;
+    }
+  }
+  return count ? total / count : 0;
+};
+
+const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
+  const source = String(text || '');
+  const bytes = Array.from(new TextEncoder().encode(source || 'hashcod-empty'));
+  const size = Math.max(12, Math.min(96, Number(sizeValue) || Math.ceil(Math.sqrt(bytes.length || 1))));
+  const radius = Math.max(2, Math.min(Math.floor(size / 3), Number(radiusValue) || 5));
+  const matrix = buildPivotMatrix(bytes, size);
+  const peaks = [];
+  let diffTotal = 0;
+  let ringTotal = 0;
+  for (let y = radius; y < size - radius; y++) {
+    for (let x = radius; x < size - radius; x++) {
+      const circle = kernelAverage(matrix, x, y, radius, 'circle');
+      const square = kernelAverage(matrix, x, y, radius, 'square');
+      const ring = kernelAverage(matrix, x, y, radius, 'ring');
+      const diff = Math.abs(circle - square);
+      const edge = Math.abs(ring - circle);
+      diffTotal += diff;
+      ringTotal += edge;
+      peaks.push({ x, y, diff: Number(diff.toFixed(4)), ring: Number(edge.toFixed(4)), score: Number((diff * 0.62 + edge * 0.38).toFixed(4)) });
+    }
+  }
+  peaks.sort((a, b) => b.score - a.score);
+  const top = peaks.slice(0, 24);
+  const entropy = byteEntropy(bytes);
+  const digest = await digestHex(source);
+  const avgDiff = peaks.length ? diffTotal / peaks.length : 0;
+  const avgRing = peaks.length ? ringTotal / peaks.length : 0;
+  const diagonalA = matrix.reduce((sum, row, i) => sum + row[i], 0) / size;
+  const diagonalB = matrix.reduce((sum, row, i) => sum + row[size - 1 - i], 0) / size;
+  const symmetry = Math.max(0, 100 - Math.abs(diagonalA - diagonalB) / 255 * 100);
+  const peakScore = top[0]?.score || 0;
+  const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 65 + (8 - entropy) * 8 + (symmetry / 100) * 20)));
+  return {
+    id: `HPK-${digest.slice(0, 10).toUpperCase()}`,
+    createdAt: new Date().toISOString(),
+    algorithm: 'Hashcod Pivot Kernel Crypto Lab',
+    sourceLength: source.length,
+    byteLength: bytes.length,
+    size,
+    radius,
+    entropy: Number(entropy.toFixed(5)),
+    avgCircleSquareDelta: Number(avgDiff.toFixed(5)),
+    avgRingDelta: Number(avgRing.toFixed(5)),
+    diagonalSymmetry: Number(symmetry.toFixed(3)),
+    pivotRisk: risk,
+    verdict: risk > 72 ? 'STRUCTURED / REVIEW' : risk > 42 ? 'WATCHLIST' : 'UNIFORM-LIKE',
+    digest,
+    matrix,
+    peaks: top,
+  };
+};
+
+const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const canvasRef = useRef(null);
+  const sourceRows = useMemo(() => [...(outputRows || []), ...(rows || [])].filter(row => row?.value), [rows, outputRows]);
+  const [sourceMode, setSourceMode] = useState('latest');
+  const [manual, setManual] = useState('');
+  const [radius, setRadius] = useState(5);
+  const [size, setSize] = useState(32);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const selectedText = sourceMode === 'manual' ? manual : String(sourceRows[0]?.value || manual || '');
+  const drawResult = useCallback((payload) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !payload?.matrix) return;
+    const ctx = canvas.getContext('2d');
+    const n = payload.size;
+    const cell = Math.max(4, Math.floor(520 / n));
+    canvas.width = n * cell;
+    canvas.height = n * cell;
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const v = payload.matrix[y][x] || 0;
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      }
+    }
+    payload.peaks.slice(0, 10).forEach((peak, i) => {
+      ctx.strokeStyle = i < 3 ? '#ff3737' : '#4285ff';
+      ctx.lineWidth = Math.max(1, Math.floor(cell / 2));
+      ctx.beginPath();
+      ctx.arc((peak.x + .5) * cell, (peak.y + .5) * cell, Math.max(cell * payload.radius, 6), 0, Math.PI * 2);
+      ctx.stroke();
+    });
+  }, []);
+  useEffect(() => {
+    if (open && !result && selectedText) {
+      setManual(String(sourceRows[0]?.value || '').slice(0, 2048));
+    }
+  }, [open, result, selectedText, sourceRows]);
+  useEffect(() => { if (result) drawResult(result); }, [result, drawResult]);
+  if (!open) return null;
+  const run = async () => {
+    setBusy(true);
+    try {
+      const payload = await analyzePivotKernel(selectedText, radius, size);
+      setResult(payload);
+      hashcodLawRecord(hashcodLawAssessPayload({ action: 'pivot-kernel:analyze', text: selectedText, meta: { id: payload.id, risk: payload.pivotRisk, verdict: payload.verdict } }));
+      notify?.(L('Analisis Pivot Kernel completado', 'Pivot Kernel analysis complete'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const downloadJson = () => result && triggerDownload(`Hashcod-PivotKernel-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  const downloadReport = () => {
+    if (!result) return;
+    const body = [
+      '# Hashcod Pivot Kernel Crypto Lab',
+      '',
+      `ID: ${result.id}`,
+      `Verdict: ${result.verdict}`,
+      `Pivot risk: ${result.pivotRisk}/100`,
+      `Entropy: ${result.entropy} bits/byte`,
+      `Circle-square delta: ${result.avgCircleSquareDelta}`,
+      `Ring delta: ${result.avgRingDelta}`,
+      `Diagonal symmetry: ${result.diagonalSymmetry}%`,
+      `Digest: ${result.digest}`,
+      '',
+      '## Top kernel peaks',
+      ...result.peaks.map((p, i) => `${i + 1}. x=${p.x} y=${p.y} score=${p.score} diff=${p.diff} ring=${p.ring}`),
+      '',
+      '## Method',
+      'Inspired by circular center-pivot detection: bytes are mapped into a matrix, then circle, square and ring kernels are compared to detect structured centers inside a cryptographic code.',
+    ].join('\n');
+    triggerDownload(`Hashcod-PivotKernel-report-${result.id}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+  };
+  const downloadPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !result) return;
+    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-PivotKernel-map-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg pivotdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h pivot-head">
+          <div className="pivot-title">
+            <span className="pivot-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pivotKernel}} />
+            <div>
+              <h2>{L('Pivot Kernel Crypto Lab', 'Pivot Kernel Crypto Lab')}</h2>
+              <p>{L('Detector raro de patrones: compara kernels circular, cuadrado y anillo sobre bytes del code para encontrar centros estructurados.', 'Rare pattern detector: compares circle, square and ring kernels over code bytes to find structured centers.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="pivot-shell">
+          <aside className="pivot-side">
+            <label><span>{L('Fuente', 'Source')}</span><select value={sourceMode} onChange={e => setSourceMode(e.target.value)}><option value="latest">{L('Ultimo code generado/base', 'Latest generated/database code')}</option><option value="manual">{L('Texto manual', 'Manual text')}</option></select></label>
+            <label><span>{L('Code / payload', 'Code / payload')}</span><textarea value={sourceMode === 'manual' ? manual : selectedText} onChange={e => { setSourceMode('manual'); setManual(e.target.value); }} placeholder="Pega un code o genera uno primero..." /></label>
+            <label><span>{L('Radio kernel', 'Kernel radius')}</span><input type="number" min="2" max="32" value={radius} onChange={e => setRadius(e.target.value)} /></label>
+            <label><span>{L('Matriz', 'Matrix')}</span><input type="number" min="12" max="96" value={size} onChange={e => setSize(e.target.value)} /></label>
+            <button onClick={run} disabled={busy || !selectedText}>{busy ? L('Analizando...', 'Analyzing...') : L('Analizar kernels', 'Analyze kernels')}</button>
+            <button onClick={downloadJson} disabled={!result}>JSON</button>
+            <button onClick={downloadReport} disabled={!result}>{L('Reporte MD', 'MD report')}</button>
+            <button onClick={downloadPng} disabled={!result}>PNG</button>
+          </aside>
+          <main className="pivot-main">
+            <section className="pivot-stats">
+              <article><span>{L('Veredicto', 'Verdict')}</span><b>{result?.verdict || 'READY'}</b></article>
+              <article><span>{L('Riesgo pivot', 'Pivot risk')}</span><b>{result ? `${result.pivotRisk}/100` : '--'}</b></article>
+              <article><span>{L('Entropia', 'Entropy')}</span><b>{result ? result.entropy : '--'}</b></article>
+              <article><span>{L('Picos', 'Peaks')}</span><b>{result ? result.peaks.length : '--'}</b></article>
+            </section>
+            <div className="pivot-canvas-wrap"><canvas ref={canvasRef} /></div>
+            <section className="pivot-peaks">
+              {(result?.peaks || []).slice(0, 12).map((peak, i) => (
+                <article key={`${peak.x}-${peak.y}-${i}`}>
+                  <b>#{String(i + 1).padStart(2, '0')}</b>
+                  <span>x={peak.x} y={peak.y}</span>
+                  <em>score {peak.score} | ring {peak.ring}</em>
+                </article>
+              ))}
+              {!result && <div>{L('Ejecuta el analisis para ver el mapa de picos criptograficos.', 'Run analysis to see the cryptographic peak map.')}</div>}
             </section>
           </main>
         </div>
@@ -12226,6 +12457,7 @@ const App = () => {
   const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
+  const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -13057,6 +13289,7 @@ const App = () => {
   const openLatticeLab = () => setLatticeLabOpen(true);
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
+  const openPivotKernel = () => setPivotKernelOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -13322,6 +13555,11 @@ const App = () => {
     { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
     { label: language === 'es' ? 'Legal, seguridad, pitch y readiness' : 'Legal, security, pitch and readiness', onClick: openLaunchCenter },
   ];
+  const pivotKernelItems = [
+    { label: language === 'es' ? 'Abrir Pivot Kernel Crypto Lab' : 'Open Pivot Kernel Crypto Lab', onClick: openPivotKernel },
+    { label: language === 'es' ? 'Kernels circular / cuadrado / anillo' : 'Circle / square / ring kernels', onClick: openPivotKernel },
+    { label: language === 'es' ? 'Detectar centros de patron en codes' : 'Detect pattern centers in codes', onClick: openPivotKernel },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -13516,6 +13754,7 @@ const App = () => {
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
+        pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -13662,6 +13901,8 @@ const App = () => {
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
+      pivot: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
+      kernel: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -13687,7 +13928,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -13725,6 +13966,7 @@ const App = () => {
       <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
+      <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -13780,6 +14022,7 @@ const App = () => {
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
             <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
+            <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -13907,6 +14150,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setLaunchCenterOpen(true)} title={language === 'es' ? 'Launch Center de mercado' : 'Market launch center'} aria-label={language === 'es' ? 'Launch Center de mercado' : 'Market launch center'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.launchCenter}} />
                 <b>Launch</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setPivotKernelOpen(true)} title={language === 'es' ? 'Pivot Kernel Crypto Lab' : 'Pivot Kernel Crypto Lab'} aria-label={language === 'es' ? 'Pivot Kernel Crypto Lab' : 'Pivot Kernel Crypto Lab'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pivotKernel}} />
+                <b>Pivot</b>
               </button>
             </div>
           </div>

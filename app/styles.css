@@ -434,6 +434,49 @@ kbd {
 .launch-group button span { min-width:0; display:grid; gap:4px; }
 .launch-group button b { font-family:var(--mono); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .launch-group button em { color:var(--ink-3); font-family:var(--mono); font-size:10px; line-height:1.35; font-style:normal; }
+.pivotdlg { width:min(1240px, calc(100vw - 32px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; overflow:hidden; }
+.pivot-title { display:flex; align-items:center; gap:14px; min-width:0; }
+.pivot-mark { width:46px; height:46px; display:grid; place-items:center; flex:0 0 auto; background:#0F0F0F; color:#F5F5F5; border:1px solid var(--line-2); }
+.pivot-mark svg { width:26px; height:26px; }
+.pivot-head h2 { margin:0; font-size:29px; }
+.pivot-head p { margin:5px 0 0; color:var(--ink-3); font-family:var(--mono); font-size:12px; line-height:1.45; }
+.pivot-shell { min-height:0; display:grid; grid-template-columns:330px minmax(0,1fr); border-top:1px solid var(--line); background:var(--bg); }
+.pivot-side { border-right:1px solid var(--line); background:var(--card); padding:16px; display:grid; gap:11px; align-content:start; overflow:auto; }
+.pivot-side label { display:grid; gap:7px; min-width:0; }
+.pivot-side label span, .pivot-stats span { color:var(--ink-4); font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.pivot-side textarea, .pivot-side input, .pivot-side select {
+  width:100%;
+  min-width:0;
+  border:1px solid var(--line-2);
+  background:var(--bg);
+  color:var(--ink);
+  padding:10px;
+  font-family:var(--mono);
+  font-size:12px;
+}
+.pivot-side textarea { min-height:170px; resize:vertical; line-height:1.45; word-break:break-all; }
+.pivot-side button {
+  min-height:39px;
+  border:1px solid var(--line-2);
+  background:var(--ink);
+  color:var(--bg);
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+}
+.pivot-side button:disabled { opacity:.45; cursor:not-allowed; }
+.pivot-main { min-width:0; max-height:calc(100vh - 148px); overflow:auto; padding:16px; display:grid; gap:14px; align-content:start; }
+.pivot-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); }
+.pivot-stats article { padding:13px; border-right:1px solid var(--line); display:grid; gap:7px; min-width:0; }
+.pivot-stats article:last-child { border-right:0; }
+.pivot-stats b { font-family:var(--mono); font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pivot-canvas-wrap { border:1px solid var(--line); background:#0F0F0F; min-height:360px; display:grid; place-items:center; overflow:auto; padding:14px; }
+.pivot-canvas-wrap canvas { image-rendering:pixelated; max-width:100%; height:auto; box-shadow:0 0 0 1px #2A2A2A; }
+.pivot-peaks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.pivot-peaks article, .pivot-peaks div { border:1px solid var(--line); background:var(--card); padding:10px; display:grid; gap:5px; min-width:0; }
+.pivot-peaks b, .pivot-peaks span, .pivot-peaks em { font-family:var(--mono); font-size:11px; font-style:normal; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pivot-peaks em { color:var(--ink-3); }
 @media (max-width: 900px) {
   .lawdlg-grid { grid-template-columns:1fr; min-height:auto; }
   .lawdlg-side { border-right:0; border-bottom:1px solid var(--line); }
@@ -447,6 +490,12 @@ kbd {
   .launch-brief, .launch-checks { grid-template-columns:1fr; }
   .launch-brief article { border-right:0; border-bottom:1px solid var(--line); }
   .launch-brief article:last-child { border-bottom:0; }
+  .pivot-shell { grid-template-columns:1fr; }
+  .pivot-side { border-right:0; border-bottom:1px solid var(--line); }
+  .pivot-main { max-height:none; }
+  .pivot-stats, .pivot-peaks { grid-template-columns:1fr; }
+  .pivot-stats article { border-right:0; border-bottom:1px solid var(--line); }
+  .pivot-stats article:last-child { border-bottom:0; }
 }
 .hclicdlg { width:min(1240px, calc(100vw - 32px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; overflow:hidden; }
 .hclic-title { display:flex; align-items:center; gap:14px; min-width:0; }
