@@ -13656,18 +13656,60 @@ const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
     setNow(Date.now());
   };
   const exportTimer = () => {
-    const payload = {
-      hashcod_billing_timer: {
-        status,
-        elapsed: formatBillingTimer(elapsedMs),
-        elapsed_ms: Math.floor(elapsedMs),
-        billable_blocks_10s: billing.blocks,
-        rate_usd_per_10_seconds: BILLING_TIMER_RATE_USD,
-        amount_usd: billing.amount,
-        exported_at: new Date().toISOString(),
-      },
-    };
-    triggerDownload(`Hashcod-billing-timer-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.lineWidth = 2;
+    for (let x = 0; x < canvas.width; x += 40) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#1A1A1A';
+    ctx.fillRect(72, 70, 1056, 580);
+    ctx.strokeStyle = '#F5F5F5';
+    ctx.strokeRect(72, 70, 1056, 580);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '900 42px Segoe UI, Arial, sans-serif';
+    ctx.fillText('Hashcod Billing Timer', 126, 142);
+    ctx.font = '600 18px Cascadia Mono, Consolas, monospace';
+    ctx.fillStyle = '#A3A3A3';
+    ctx.fillText('0.05 USD PER 10 SECONDS | PNG RECEIPT', 128, 178);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '700 92px Cascadia Mono, Consolas, monospace';
+    ctx.fillText(formatBillingTimer(elapsedMs), 126, 300);
+    const rows = [
+      ['STATUS', status],
+      ['BILLABLE 10S BLOCKS', String(billing.blocks)],
+      ['RATE', `${quoteMoney(BILLING_TIMER_RATE_USD)} / 10s`],
+      ['TOTAL', quoteMoney(billing.amount)],
+      ['EXPORTED', new Date().toISOString()],
+    ];
+    ctx.font = '700 20px Cascadia Mono, Consolas, monospace';
+    rows.forEach((row, index) => {
+      const y = 380 + index * 44;
+      ctx.fillStyle = '#A3A3A3';
+      ctx.fillText(row[0], 128, y);
+      ctx.fillStyle = '#F5F5F5';
+      ctx.fillText(row[1], 420, y);
+    });
+    ctx.fillStyle = '#F5F5F5';
+    ctx.fillRect(128, 590, 280, 2);
+    ctx.font = '600 16px Cascadia Mono, Consolas, monospace';
+    ctx.fillText('HASHCOD CRYPTOGRAPHIC PLATFORM', 128, 622);
+    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-billing-timer-${tsStamp()}.png`, blob), 'image/png');
   };
   if (!open) return null;
   return (
@@ -13700,7 +13742,7 @@ const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
             <button onClick={resume} disabled={running || (!active && !elapsedMs)}>{L('Continuar', 'Resume')}</button>
             <button onClick={stop} disabled={!active && !running}>{L('Parar', 'Stop')}</button>
             <button onClick={reset}>{L('Desactivar / Reset', 'Disable / Reset')}</button>
-            <button onClick={exportTimer}>{L('Descargar JSON', 'Download JSON')}</button>
+            <button onClick={exportTimer}>{L('Descargar PNG', 'Download PNG')}</button>
           </div>
         </div>
       </section>
@@ -15791,8 +15833,8 @@ const App = () => {
       quote: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['price','codes','tools','invoice','billing','discount','tax','pdf','json','csv','customer'] },
       cotizacion: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['precio','codes','herramientas','factura','facturacion','descuento','impuesto','pdf','json','csv','cliente'] },
       factura: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['emitir','guardar','cliente','impuesto','vencimiento','pdf','json','csv'] },
-      timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','10s','seconds','json'] },
-      cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','10s','segundos','json'] },
+      timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','10s','seconds','png'] },
+      cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','10s','segundos','png'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
