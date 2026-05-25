@@ -14908,6 +14908,55 @@ const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" heig
 const ADMIN_PANEL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 12h8"/><path d="M10 11v2"/><path d="M8 17h8"/><path d="M14 16v2"/></svg>`;
 const DRONE_GATE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10 7 7"/><path d="m10 14-3 3"/><path d="m14 10 3-3"/><path d="m14 14 3 3"/><path d="M14.205 4.139a4 4 0 1 1 5.439 5.863"/><path d="M19.637 14a4 4 0 1 1-5.432 5.868"/><path d="M4.367 10a4 4 0 1 1 5.438-5.862"/><path d="M9.795 19.862a4 4 0 1 1-5.429-5.873"/><rect x="10" y="8" width="4" height="8" rx="1"/></svg>`;
 
+const HASHCOD_ENTRY_KEY_HASH = '0a8b089d57a477e2eb6393aa22592665b1d9406b22086ef147cbb1a2b446e82c';
+const HASHCOD_ENTRY_SESSION_KEY = 'hashcod_single_entry_unlocked_v1';
+const HashcodSingleKeyGate = ({ children }) => {
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(HASHCOD_ENTRY_SESSION_KEY) === '1');
+  const [keyText, setKeyText] = useState('');
+  const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setChecking(true);
+    try {
+      const hash = await digestHex(keyText.trim());
+      if (hash !== HASHCOD_ENTRY_KEY_HASH) {
+        setError('Clave incorrecta.');
+        setChecking(false);
+        return;
+      }
+      sessionStorage.setItem(HASHCOD_ENTRY_SESSION_KEY, '1');
+      hashcodLawRecord(hashcodLawAssessPayload({ action: 'entry-key:unlock', meta: { gate: 'single-key' } }));
+      setUnlocked(true);
+    } catch {
+      setError('No se pudo verificar la clave.');
+      setChecking(false);
+    }
+  };
+  if (unlocked) return children;
+  return (
+    <div className="singlekey-gate">
+      <form className="singlekey-card" onSubmit={submit}>
+        <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
+        <span>HASHCOD ACCESS</span>
+        <h1>Clave de Entrada</h1>
+        <p>Introduce la clave autorizada para abrir la plataforma.</p>
+        <input
+          type="password"
+          value={keyText}
+          onChange={e => setKeyText(e.target.value)}
+          placeholder="Clave de acceso"
+          autoComplete="off"
+          autoFocus
+        />
+        {error && <em>{error}</em>}
+        <button disabled={checking || !keyText.trim()}>{checking ? 'Verificando...' : 'Entrar a Hashcod'}</button>
+      </form>
+    </div>
+  );
+};
+
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
 const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c3.3 0 6 2.7 6 6 0 2.9-2.1 5.4-4.9 5.9l-.5 1.1H7.4l-.5-1.1C4.1 12.9 2 10.4 2 7.5c0-3.3 2.7-6 6-6Zm0 1.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 3.1 2 3.9a9.9 9.9 0 0 1 6.1-5.6A4.5 4.5 0 0 0 8 3Zm4.2 4.1a8.4 8.4 0 0 0-5.3 5 4.5 4.5 0 0 0 5.3-5Z"/></svg>`;
@@ -14917,5 +14966,5 @@ const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidd
 window.HashcodApp = App;
 window.App = () => {
   const Platform = window.HashcodApp;
-  return <Platform />;
+  return <HashcodSingleKeyGate><Platform /></HashcodSingleKeyGate>;
 };
