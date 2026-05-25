@@ -160,24 +160,28 @@ const line = (x, y, text, size = 8, font = 'F2') =>
 
 const drawHashcodLogo = (x, y, size = 28) => {
   const s = size;
-  const monitorX = x + s * 0.1;
-  const monitorY = y + s * 0.38;
-  const monitorW = s * 0.8;
-  const monitorH = s * 0.42;
+  const stroke = Math.max(1.6, s * 0.095);
+  const left = x + s * 0.04;
+  const right = x + s * 0.96;
+  const top = y + s * 0.88;
+  const bottom = y + s * 0.34;
+  const radius = s * 0.12;
   const triTop = y + s * 0.5;
   return [
     'q',
     '0 0 0 RG 0 0 0 rg',
-    `${Math.max(1, s * 0.07).toFixed(2)} w`,
-    `${monitorX.toFixed(2)} ${monitorY.toFixed(2)} m`,
-    `${(monitorX + monitorW).toFixed(2)} ${monitorY.toFixed(2)} l`,
-    `${(monitorX + monitorW).toFixed(2)} ${(monitorY + monitorH).toFixed(2)} l`,
-    `${monitorX.toFixed(2)} ${(monitorY + monitorH).toFixed(2)} l`,
-    `${monitorX.toFixed(2)} ${(monitorY + s * 0.1).toFixed(2)} l`,
+    '1 J',
+    `${stroke.toFixed(2)} w`,
+    `${left.toFixed(2)} ${bottom.toFixed(2)} m`,
+    `${left.toFixed(2)} ${(top - radius).toFixed(2)} l`,
+    `${left.toFixed(2)} ${top.toFixed(2)} ${(left + radius).toFixed(2)} ${top.toFixed(2)} ${(left + radius).toFixed(2)} ${top.toFixed(2)} c`,
+    `${(right - radius).toFixed(2)} ${top.toFixed(2)} l`,
+    `${right.toFixed(2)} ${top.toFixed(2)} ${right.toFixed(2)} ${(top - radius).toFixed(2)} ${right.toFixed(2)} ${(top - radius).toFixed(2)} c`,
+    `${right.toFixed(2)} ${bottom.toFixed(2)} l`,
     'S',
     `${(x + s * 0.5).toFixed(2)} ${triTop.toFixed(2)} m`,
-    `${(x + s * 0.23).toFixed(2)} ${(y + s * 0.05).toFixed(2)} l`,
-    `${(x + s * 0.77).toFixed(2)} ${(y + s * 0.05).toFixed(2)} l`,
+    `${(x + s * 0.25).toFixed(2)} ${(y + s * 0.02).toFixed(2)} l`,
+    `${(x + s * 0.75).toFixed(2)} ${(y + s * 0.02).toFixed(2)} l`,
     'h f',
     'Q',
     '',
