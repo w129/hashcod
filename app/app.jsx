@@ -918,12 +918,158 @@ const AdaptiveToolCard = ({ toolKey, title, language, compact = false }) => {
   );
 };
 
+const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z"/><path fill="currentColor" d="M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z"/></svg>';
+
+const hashcodDownloadBrand = () => ({
+  name: 'Hashcod',
+  platform: 'Hashcod - Cryptographic Platform',
+  logo_svg: HASHCOD_DOWNLOAD_LOGO_SVG,
+  generated_at: new Date().toISOString(),
+});
+
+const brandDownloadText = (filename, text, mime = '') => {
+  const raw = String(text ?? '');
+  if (raw.includes('HASHCOD_DOWNLOAD_BRAND')) return raw;
+  const lowerName = String(filename || '').toLowerCase();
+  const lowerMime = String(mime || '').toLowerCase();
+  const brand = hashcodDownloadBrand();
+
+  if (lowerName.endsWith('.ocg.pack') || raw.startsWith('HASHCOD-OCG-PACK/1')) {
+    if (/^brand_logo_svg=/m.test(raw)) return raw;
+    return raw.replace(
+      /^(HASHCOD-OCG-PACK\/1\s*)/m,
+      `$1brand_name=Hashcod\nbrand_platform=Hashcod - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`
+    );
+  }
+
+  if (lowerMime.includes('json') || lowerName.endsWith('.json') || raw.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return JSON.stringify({ hashcod_brand: brand, ...parsed }, null, 2);
+      }
+      return JSON.stringify({ hashcod_brand: brand, data: parsed }, null, 2);
+    } catch {
+      return raw;
+    }
+  }
+
+  if (lowerName.endsWith('.js') || lowerMime.includes('javascript')) {
+    return [
+      '/* HASHCOD_DOWNLOAD_BRAND',
+      ' * Name: Hashcod',
+      ' * Platform: Hashcod - Cryptographic Platform',
+      ` * Generated: ${brand.generated_at}`,
+      ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`,
+      ' */',
+      raw,
+    ].join('\n');
+  }
+
+  if (lowerMime.includes('html') || lowerName.endsWith('.html')) {
+    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>Hashcod</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
+    if (/<body[^>]*>/i.test(raw)) return raw.replace(/<body([^>]*)>/i, `<body$1>${badge}`);
+    return `${badge}\n${raw}`;
+  }
+
+  if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || lowerMime.includes('yaml')) {
+    return [
+      'hashcod_brand:',
+      '  name: Hashcod',
+      '  platform: Hashcod - Cryptographic Platform',
+      `  generated_at: ${brand.generated_at}`,
+      `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`,
+      '---',
+      raw,
+    ].join('\n');
+  }
+
+  if (lowerName.endsWith('.csv') || lowerMime.includes('csv')) {
+    return [
+      '# HASHCOD_DOWNLOAD_BRAND',
+      '# name,Hashcod',
+      '# platform,Hashcod - Cryptographic Platform',
+      `# generated_at,${brand.generated_at}`,
+      `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`,
+      raw,
+    ].join('\n');
+  }
+
+  const textLike = lowerMime.includes('text')
+    || lowerMime.includes('markdown')
+    || lowerName.endsWith('.md')
+    || lowerName.endsWith('.txt')
+    || lowerName.endsWith('.log')
+    || lowerName.endsWith('.pack')
+    || lowerName.endsWith('.license')
+    || lowerName.endsWith('.pem');
+  if (!textLike) return raw;
+
+  return [
+    'HASHCOD_DOWNLOAD_BRAND',
+    'Name: Hashcod',
+    'Platform: Hashcod - Cryptographic Platform',
+    `Generated: ${brand.generated_at}`,
+    `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`,
+    '',
+    raw,
+  ].join('\n');
+};
+
 const triggerDownload = (filename, text, mime = 'text/markdown;charset=utf-8') => {
-  const blob = new Blob([text], { type: mime });
+  const brandedText = brandDownloadText(filename, text, mime);
+  const blob = new Blob([brandedText], { type: mime });
   triggerBlobDownload(filename, blob);
 };
 
-const triggerBlobDownload = (filename, blob) => {
+const brandPngBlob = async (blob) => {
+  const sourceUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = sourceUrl;
+    });
+    const footer = Math.max(42, Math.round(image.height * 0.08));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height + footer;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, image.height, canvas.width, footer);
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.beginPath();
+    ctx.moveTo(0, image.height + 0.5);
+    ctx.lineTo(canvas.width, image.height + 0.5);
+    ctx.stroke();
+    const iconSize = Math.max(20, Math.min(34, Math.round(footer * 0.55)));
+    const icon = await new Promise((resolve) => {
+      const svg = HASHCOD_DOWNLOAD_LOGO_SVG.replace(/currentColor/g, '#F5F5F5');
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+    const left = Math.max(14, Math.round(canvas.width * 0.025));
+    const top = image.height + Math.round((footer - iconSize) / 2);
+    if (icon) ctx.drawImage(icon, left, top, iconSize, iconSize);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = `700 ${Math.max(13, Math.round(footer * 0.28))}px Arial, Helvetica, sans-serif`;
+    ctx.fillText('Hashcod', left + iconSize + 10, image.height + Math.round(footer * 0.45));
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = `500 ${Math.max(9, Math.round(footer * 0.2))}px Arial, Helvetica, sans-serif`;
+    ctx.fillText('Cryptographic Platform', left + iconSize + 10, image.height + Math.round(footer * 0.72));
+    return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+};
+
+const triggerRawBlobDownload = (filename, blob) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -932,6 +1078,17 @@ const triggerBlobDownload = (filename, blob) => {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const triggerBlobDownload = (filename, blob) => {
+  const lowerName = String(filename || '').toLowerCase();
+  if ((blob?.type || '').includes('image/png') || lowerName.endsWith('.png')) {
+    brandPngBlob(blob)
+      .then(branded => triggerRawBlobDownload(filename, branded || blob))
+      .catch(() => triggerRawBlobDownload(filename, blob));
+    return;
+  }
+  triggerRawBlobDownload(filename, blob);
 };
 
 const CLI_OWNER_KEY = 'hashcod_cli_console_owner_v1';
@@ -1298,7 +1455,10 @@ const makeZipBlob = (files = []) => {
   const push32 = (arr, value) => { arr.push(value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255); };
   files.forEach((file) => {
     const nameBytes = enc.encode(file.name);
-    const dataBytes = typeof file.content === 'string' ? enc.encode(file.content) : new Uint8Array(file.content || []);
+    const content = typeof file.content === 'string'
+      ? brandDownloadText(file.name, file.content, file.mime || 'text/plain;charset=utf-8')
+      : file.content;
+    const dataBytes = typeof content === 'string' ? enc.encode(content) : new Uint8Array(content || []);
     const crc = zipCrc32(dataBytes);
     const dt = dosDateTime(file.date || new Date());
     const local = [];
@@ -1784,7 +1944,7 @@ const makeIsoDirectoryRecord = (extent, size, flags, name, date = new Date()) =>
 const rowToIsoImage = (row, language = 'en') => {
   const SECTOR = 2048;
   const now = new Date();
-  const readme = rowToTxt(row, language) + '\n\nISO_EXPORT=Hashcod generated-code image\n';
+  const readme = brandDownloadText('README.txt', rowToTxt(row, language) + '\n\nISO_EXPORT=Hashcod generated-code image\n', 'text/plain;charset=utf-8');
   const fileBytes = new TextEncoder().encode(readme);
   const rootSector = 20;
   const fileSector = 21;
