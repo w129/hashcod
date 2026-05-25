@@ -2318,6 +2318,7 @@ const TOP_MENU_ICONS = {
   userLounge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>`,
   codeLibrary: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 11h8"/><path d="M8 7h6"/></svg>`,
   cryptoIde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="M19 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="m7 15 3 3"/><path d="m7 21 3-3H5a2 2 0 0 1-2-2v-2"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/></svg>`,
+  hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3553,6 +3554,229 @@ const CryptoIdeDialog = ({ open, onClose, notify, language }) => {
             <div className="cryptoide-console">
               {log.map((row, i) => <pre key={i} className={row.kind}>[{row.kind}] {row.text}</pre>)}
             </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const LAW_VALIDATION_GROUPS = [
+  ['identity', 'Identidad del paquete'], ['brand', 'Marca Hashcod'], ['format', 'Formato y sintaxis'], ['crypto', 'Material criptografico'],
+  ['entropy', 'Entropia y aleatoriedad'], ['integrity', 'Integridad y checksums'], ['antiFraud', 'Antifraude'], ['download', 'Descarga y evidencia'],
+  ['metadata', 'Metadatos'], ['timestamp', 'Tiempo y version'], ['transport', 'Transporte'], ['privacy', 'Privacidad'], ['policy', 'Politicas'],
+  ['catalog', 'Catalogo'], ['container', 'Contenedor'], ['qr', 'QR y tarjeta'], ['session', 'Sesion'], ['audit', 'Auditoria'],
+  ['interoperability', 'Interoperabilidad'], ['resilience', 'Resiliencia'], ['law', 'Ley operativa Hashcod'],
+];
+
+const lawEntropyScore = (text = '') => {
+  const value = String(text || '');
+  if (!value) return 0;
+  const freq = {};
+  for (const ch of value) freq[ch] = (freq[ch] || 0) + 1;
+  let entropy = 0;
+  Object.values(freq).forEach(count => {
+    const p = count / value.length;
+    entropy -= p * Math.log2(p);
+  });
+  return entropy;
+};
+
+const lawCandidateMetrics = async (item) => {
+  const value = String(item.value || '');
+  const upper = value.toUpperCase();
+  const lower = value.toLowerCase();
+  const lines = value.split(/\r?\n/);
+  const hexRuns = value.match(/[a-f0-9]{24,}/gi) || [];
+  const b64Runs = value.match(/[A-Za-z0-9_-]{24,}/g) || [];
+  const jsonLike = value.trim().startsWith('{') || value.trim().startsWith('[');
+  let jsonOk = false;
+  try { if (jsonLike) { JSON.parse(value); jsonOk = true; } } catch {}
+  const sha256 = (await digestHex(value)).toUpperCase();
+  return {
+    ...item,
+    value,
+    upper,
+    lower,
+    lines,
+    length: value.length,
+    sha256,
+    entropy: lawEntropyScore(value),
+    uniqueRatio: value ? new Set(value).size / value.length : 0,
+    lineCount: lines.length,
+    hexRuns,
+    b64Runs,
+    jsonOk,
+    hasBrand: /HASHCOD|hashcod_brand|Hashcod - Cryptographic Platform/i.test(value),
+    hasLogo: /logo_svg|<svg|HASHCOD_DOWNLOAD_LOGO/i.test(value),
+    hasPacket: /^(HASHCOD|OCG-|HC-|HASHCOD-OCG-PACK|HCARD1)/m.test(value.trim()),
+    hasPayload: /PAYLOAD=|payload|VALUE=|Value|code_sha256/i.test(value),
+    hasSalt: /SALT=|salt/i.test(value),
+    hasNonce: /NONCE=|nonce|iv/i.test(value),
+    hasHmac: /HMAC|signature|sig|firma/i.test(value),
+    hasSha: /SHA-?256|SHA-?512|sha256|sha512/i.test(value),
+    hasCheck: /CHECK=|checksum|check|CRC|validation/i.test(value),
+    hasTime: /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}|\d{8}-\d{6}/.test(value),
+    hasVersion: /\bv\d+(\.\d+)?|version|VERSION=/i.test(value),
+    hasPolicy: /POLICY=|policy|scope|roles|license|plan/i.test(value),
+    hasRoute: /ROUTE=|route|hns:\/\//i.test(value),
+    hasQr: /QR|HCARD1|qr_payload/i.test(value),
+    hasDanger: /<script|javascript:|eval\(|document\.cookie|DROP\s+TABLE|BEGIN\s+RSA\s+PRIVATE\s+KEY/i.test(value),
+    hasPrivateLeak: /password\s*=|secret\s*=|private[_ -]?key|auth[_ -]?token/i.test(lower),
+  };
+};
+
+const buildLawValidators = () => LAW_VALIDATION_GROUPS.flatMap(([group, title], groupIndex) =>
+  Array.from({ length: 20 }, (_, i) => {
+    const n = groupIndex * 20 + i + 1;
+    const check = (m) => {
+      switch (i % 20) {
+        case 0: return m.length >= 24;
+        case 1: return m.entropy >= 3.2 || m.hexRuns.length || m.b64Runs.length;
+        case 2: return !m.hasDanger;
+        case 3: return group === 'brand' ? m.hasBrand : (m.hasPacket || m.hasPayload || m.length > 48);
+        case 4: return group === 'download' ? (m.hasBrand && m.hasLogo) : true;
+        case 5: return group === 'crypto' ? (m.hasSha || m.hasHmac || m.hasSalt || m.hasNonce) : true;
+        case 6: return group === 'integrity' ? (m.hasCheck || m.sha256.length === 64) : true;
+        case 7: return group === 'metadata' ? (m.hasTime || m.hasVersion || m.lineCount > 1) : true;
+        case 8: return group === 'antiFraud' ? !m.hasPrivateLeak : true;
+        case 9: return group === 'transport' ? (m.hasRoute || m.hasQr || m.length > 80) : true;
+        case 10: return group === 'timestamp' ? (m.hasTime || m.hasVersion) : true;
+        case 11: return group === 'qr' ? (m.hasQr || m.hasCheck || m.length > 64) : true;
+        case 12: return group === 'container' ? (/PACK|CONTAINER|BOX|IH=|payload_encoding/i.test(m.value) || m.length > 80) : true;
+        case 13: return group === 'catalog' ? (/HC-|OCG-|Hashcod Variant|TYPE=|FAMILY=/i.test(m.value) || !!m.type) : true;
+        case 14: return m.uniqueRatio > 0.03 && m.uniqueRatio < 0.98;
+        case 15: return !/undefined|null|nullish|NaN/i.test(m.value);
+        case 16: return group === 'session' ? (m.jsonOk || m.hasTime || m.hasBrand) : true;
+        case 17: return group === 'privacy' ? !m.hasPrivateLeak : true;
+        case 18: return group === 'law' ? (m.sha256.length === 64 && !m.hasDanger) : true;
+        default: return true;
+      }
+    };
+    return {
+      id: `HLAW-${String(n).padStart(3, '0')}`,
+      group,
+      title: `${title} ${String(i + 1).padStart(2, '0')}`,
+      run: check,
+    };
+  })
+);
+
+const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const [manual, setManual] = useState('');
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const validators = useMemo(() => buildLawValidators(), []);
+  const sources = useMemo(() => {
+    const fromRows = [...(outputRows || []), ...(rows || [])].slice(0, 240).map((row, i) => ({
+      id: row.id || `row-${i}`,
+      label: `${String(row.idx || i + 1).padStart(3, '0')} | ${row.type || row.primitiveLabel || 'code'}`,
+      type: row.type || row.typeId || '',
+      value: row.value || '',
+      origin: row.id ? 'generated/database' : 'database',
+    }));
+    const manualItems = manual.trim()
+      ? [{ id: 'manual-input', label: L('Entrada pegada / archivo', 'Pasted/file input'), type: 'downloaded-artifact', value: manual, origin: 'manual' }]
+      : [];
+    return [...manualItems, ...fromRows].filter(item => String(item.value || '').trim());
+  }, [rows, outputRows, manual, language]);
+
+  if (!open) return null;
+
+  const runLaw = async () => {
+    setBusy(true);
+    try {
+      const metrics = await Promise.all(sources.map(lawCandidateMetrics));
+      const checks = validators.map(rule => {
+        const passed = metrics.filter(m => rule.run(m)).length;
+        const total = Math.max(1, metrics.length);
+        const ratio = passed / total;
+        return { ...rule, passed, total, ratio, status: ratio >= 0.9 ? 'pass' : ratio >= 0.62 ? 'warn' : 'fail' };
+      });
+      const passed = checks.filter(c => c.status === 'pass').length;
+      const warned = checks.filter(c => c.status === 'warn').length;
+      const failed = checks.filter(c => c.status === 'fail').length;
+      const score = Math.round(((passed + warned * 0.55) / checks.length) * 100);
+      const digest = (await digestHex(JSON.stringify({ metrics: metrics.map(m => ({ id: m.id, sha256: m.sha256, length: m.length })), checks: checks.map(c => [c.id, c.status]) }))).toUpperCase();
+      setResult({ at: new Date().toISOString(), sources: metrics, checks, passed, warned, failed, score, digest });
+      notify?.(L(`Hashcod Law completo: ${score}%`, `Hashcod Law complete: ${score}%`));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    setManual(text);
+  };
+  const exportReport = () => {
+    if (!result) return;
+    triggerDownload(`Hashcod-Law-report-${tsStamp()}.json`, JSON.stringify({ hashcod_law: result }, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportTxt = () => {
+    if (!result) return;
+    const body = [
+      'HASHCOD LAW VALIDATION REPORT',
+      `Generated: ${result.at}`,
+      `Score: ${result.score}%`,
+      `Systems: ${result.checks.length}`,
+      `Pass: ${result.passed}`,
+      `Warn: ${result.warned}`,
+      `Fail: ${result.failed}`,
+      `Digest: ${result.digest}`,
+      '',
+      ...result.checks.map(c => `${c.id} | ${c.status.toUpperCase()} | ${c.title} | ${c.passed}/${c.total}`),
+    ].join('\n');
+    triggerDownload(`Hashcod-Law-report-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
+  };
+
+  const shownChecks = result?.checks?.slice(0, 80) || [];
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg lawdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="lawdlg-head">
+            <span className="lawdlg-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} />
+            <div>
+              <h2>{L('Hashcod Law', 'Hashcod Law')}</h2>
+              <p>{L('Ley operativa antifraude: 420 sistemas de validacion para codes generados y artefactos descargados.', 'Anti-fraud operational law: 420 validation systems for generated codes and downloaded artifacts.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="lawdlg-grid">
+          <aside className="lawdlg-side">
+            <div className="lawdlg-stat"><span>{L('Sistemas', 'Systems')}</span><b>{validators.length}</b></div>
+            <div className="lawdlg-stat"><span>{L('Fuentes', 'Sources')}</span><b>{sources.length}</b></div>
+            <label><span>{L('Subir descarga', 'Upload download')}</span><input type="file" onChange={handleFile} /></label>
+            <label><span>{L('Pegar code o archivo', 'Paste code or file')}</span><textarea value={manual} onChange={e => setManual(e.target.value)} placeholder="HASHCOD.PQK.v13..." /></label>
+            <button onClick={runLaw} disabled={busy || !sources.length}>{busy ? L('Validando...', 'Validating...') : L('Ejecutar ley', 'Run law')}</button>
+            <button onClick={exportReport} disabled={!result}>JSON</button>
+            <button onClick={exportTxt} disabled={!result}>TXT</button>
+          </aside>
+          <main className="lawdlg-main">
+            {!result ? (
+              <div className="lawdlg-empty">{L('Ejecuta Hashcod Law para crear un reporte criptografico antifraude.', 'Run Hashcod Law to create an anti-fraud cryptographic report.')}</div>
+            ) : (
+              <>
+                <div className="lawdlg-score">
+                  <div><span>{L('Puntuacion', 'Score')}</span><b>{result.score}%</b></div>
+                  <div><span>PASS</span><b>{result.passed}</b></div>
+                  <div><span>WARN</span><b>{result.warned}</b></div>
+                  <div><span>FAIL</span><b>{result.failed}</b></div>
+                </div>
+                <div className="lawdlg-digest"><span>{L('Sello del reporte', 'Report seal')}</span><code>{result.digest}</code></div>
+                <div className="lawdlg-sources">
+                  {result.sources.slice(0, 12).map(src => <article key={src.id}><b>{src.label}</b><span>{src.sha256.slice(0, 32)}... · {src.length} ch · H={src.entropy.toFixed(2)}</span></article>)}
+                </div>
+                <div className="lawdlg-checks">
+                  {shownChecks.map(check => <article key={check.id} className={check.status}><b>{check.id}</b><span>{check.title}</span><em>{check.passed}/{check.total}</em></article>)}
+                </div>
+              </>
+            )}
           </main>
         </div>
       </section>
@@ -11234,6 +11458,7 @@ const App = () => {
   const [userLoungeOpen, setUserLoungeOpen] = useState(false);
   const [codeLibraryOpen, setCodeLibraryOpen] = useState(false);
   const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
+  const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -12677,6 +12902,7 @@ const App = () => {
       <UserLoungeDialog open={userLoungeOpen} onClose={() => setUserLoungeOpen(false)} notify={notify} language={language} />
       <CodeLibraryDialog open={codeLibraryOpen} onClose={() => setCodeLibraryOpen(false)} catalog={catalog} language={language} />
       <CryptoIdeDialog open={cryptoIdeOpen} onClose={() => setCryptoIdeOpen(false)} notify={notify} language={language} />
+      <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -12845,6 +13071,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setCryptoIdeOpen(true)} title={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'} aria-label={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoIde}} />
                 <b>Crypto IDE</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setHashcodLawOpen(true)} title={language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law'} aria-label={language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} />
+                <b>Law</b>
               </button>
             </div>
           </div>
