@@ -2438,6 +2438,7 @@ const TOP_MENU_ICONS = {
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
   quoteSystem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
   billingTimer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l-2 4"/></svg>`,
+  clientVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M12 9v11"/><path d="M2 9h13a2 2 0 0 1 2 2v9"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
@@ -13606,6 +13607,144 @@ const billingTimerMoney = (elapsedMs) => {
   const blocks = Math.floor(Math.max(0, Number(elapsedMs) || 0) / (BILLING_TIMER_BLOCK_SECONDS * 1000));
   return { blocks, amount: Number((blocks * BILLING_TIMER_RATE_USD).toFixed(2)) };
 };
+const HASHCOD_CLIENT_VAULT_STORAGE = 'hashcod_client_credentials_v1';
+const readClientVaultRecords = () => safeJsonParse(localStorage.getItem(HASHCOD_CLIENT_VAULT_STORAGE) || '[]', []);
+const writeClientVaultRecords = (rows) => localStorage.setItem(HASHCOD_CLIENT_VAULT_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
+const makeClientToken = () => {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  return `HCC-${Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+};
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+const HashcodClientVaultDialog = ({ open, onClose, language, notify }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const emptyForm = () => ({
+    name: '',
+    email: '',
+    phone: '',
+    idNumber: '',
+    address: '',
+    company: '',
+    credentialType: 'client-access',
+    credentialLabel: '',
+    notes: '',
+  });
+  const [form, setForm] = useState(emptyForm);
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [records, setRecords] = useState(() => readClientVaultRecords());
+  const updateForm = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return records;
+    return records.filter(row => `${row.token} ${row.name} ${row.email} ${row.phone} ${row.company} ${row.credentialType}`.toLowerCase().includes(q));
+  }, [records, query]);
+  const onImages = async (event) => {
+    const files = Array.from(event.target.files || []);
+    const jpgs = files.filter(file => /image\/jpe?g/i.test(file.type) && file.size <= 1.5 * 1024 * 1024).slice(0, 6);
+    if (jpgs.length !== files.length) notify?.(L('Solo se aceptan JPG menores de 1.5 MB.', 'Only JPG files under 1.5 MB are accepted.'));
+    const next = await Promise.all(jpgs.map(async file => ({
+      id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      dataUrl: await fileToDataUrl(file),
+    })));
+    setImages(prev => [...next, ...prev].slice(0, 10));
+    event.target.value = '';
+  };
+  const saveRecord = () => {
+    if (!form.name.trim() || !form.email.trim()) {
+      notify?.(L('Nombre y correo son obligatorios para crear el token del cliente.', 'Name and email are required to create the client token.'));
+      return;
+    }
+    const record = {
+      token: makeClientToken(),
+      ...form,
+      images,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      source: 'Hashcod Client Credential Vault',
+    };
+    const next = [record, ...records];
+    setRecords(next);
+    writeClientVaultRecords(next);
+    setForm(emptyForm());
+    setImages([]);
+    notify?.(L(`Cliente guardado: ${record.token}`, `Client saved: ${record.token}`));
+  };
+  const removeRecord = (token) => {
+    const next = records.filter(row => row.token !== token);
+    setRecords(next);
+    writeClientVaultRecords(next);
+  };
+  const exportRecord = (record) => {
+    const safe = { ...record, images: record.images?.map(img => ({ name: img.name, size: img.size, type: img.type, dataUrl: img.dataUrl })) || [] };
+    triggerDownload(`Hashcod-client-${sanitizeFilename(record.token)}.json`, JSON.stringify({ hashcod_client_credential: safe }, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportAll = () => triggerDownload(`Hashcod-client-vault-${tsStamp()}.json`, JSON.stringify({ total: records.length, records }, null, 2), 'application/json;charset=utf-8');
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg clientdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h client-head">
+          <div className="client-title">
+            <span className="client-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.clientVault}} />
+            <div>
+              <h2>{L('Vault de Credenciales de Clientes', 'Client Credential Vault')}</h2>
+              <p>{L('Registra datos del cliente, genera un token identificador y adjunta imagenes JPG verificables.', 'Register client data, generate an identifier token and attach verifiable JPG images.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="client-shell">
+          <aside className="client-form">
+            <label><span>{L('Nombre completo', 'Full name')}</span><input value={form.name} onChange={e => updateForm('name', e.target.value)} /></label>
+            <label><span>Email</span><input value={form.email} onChange={e => updateForm('email', e.target.value)} /></label>
+            <label><span>{L('Telefono', 'Phone')}</span><input value={form.phone} onChange={e => updateForm('phone', e.target.value)} /></label>
+            <label><span>{L('Cedula / ID', 'ID number')}</span><input value={form.idNumber} onChange={e => updateForm('idNumber', e.target.value)} /></label>
+            <label><span>{L('Empresa', 'Company')}</span><input value={form.company} onChange={e => updateForm('company', e.target.value)} /></label>
+            <label><span>{L('Tipo de credencial', 'Credential type')}</span><select value={form.credentialType} onChange={e => updateForm('credentialType', e.target.value)}><option value="client-access">client-access</option><option value="billing">billing</option><option value="contract">contract</option><option value="support">support</option><option value="enterprise">enterprise</option></select></label>
+            <label className="wide"><span>{L('Direccion', 'Address')}</span><input value={form.address} onChange={e => updateForm('address', e.target.value)} /></label>
+            <label className="wide"><span>{L('Etiqueta / credencial', 'Label / credential')}</span><input value={form.credentialLabel} onChange={e => updateForm('credentialLabel', e.target.value)} placeholder={L('No guardes passwords reales aqui.', 'Do not store real passwords here.')} /></label>
+            <label className="wide"><span>{L('Notas', 'Notes')}</span><textarea value={form.notes} onChange={e => updateForm('notes', e.target.value)} /></label>
+            <label className="wide file"><span>{L('Imagenes JPG', 'JPG images')}</span><input type="file" accept="image/jpeg,image/jpg" multiple onChange={onImages} /></label>
+            <div className="client-images">
+              {images.map(img => <figure key={img.id}><img src={img.dataUrl} alt={img.name} /><button onClick={() => setImages(prev => prev.filter(item => item.id !== img.id))}>x</button></figure>)}
+              {!images.length && <p>{L('Sin imagenes adjuntas.', 'No images attached.')}</p>}
+            </div>
+            <button className="client-save" onClick={saveRecord}>{L('Guardar y crear token', 'Save and create token')}</button>
+          </aside>
+          <main className="client-records">
+            <div className="client-tools">
+              <input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('Buscar token, nombre, email...', 'Search token, name, email...')} />
+              <button onClick={exportAll}>{L('Exportar todo', 'Export all')}</button>
+              <code>{records.length} {L('registros', 'records')}</code>
+            </div>
+            <div className="client-list">
+              {filtered.map(record => (
+                <article key={record.token}>
+                  <header><b>{record.name}</b><code>{record.token}</code></header>
+                  <p>{record.email} · {record.phone || '-'} · {record.company || '-'}</p>
+                  <small>{record.credentialType} · {record.credentialLabel || L('sin etiqueta', 'no label')} · {new Date(record.createdAt).toLocaleString()}</small>
+                  <div className="client-thumbs">{(record.images || []).slice(0, 4).map(img => <img key={img.id || img.name} src={img.dataUrl} alt={img.name} />)}</div>
+                  <footer><button onClick={() => exportRecord(record)}>JSON</button><button onClick={() => removeRecord(record.token)}>{L('Eliminar', 'Delete')}</button></footer>
+                </article>
+              ))}
+              {!filtered.length && <div className="client-empty">{L('No hay registros que coincidan.', 'No matching records.')}</div>}
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
 
 const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
   const L = (es, en) => (language === 'es' ? es : en);
@@ -14333,6 +14472,7 @@ const App = () => {
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
   const [quoteSystemOpen, setQuoteSystemOpen] = useState(false);
   const [billingTimerOpen, setBillingTimerOpen] = useState(false);
+  const [clientVaultOpen, setClientVaultOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
@@ -15171,6 +15311,7 @@ const App = () => {
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
   const openQuoteSystem = () => setQuoteSystemOpen(true);
   const openBillingTimer = () => setBillingTimerOpen(true);
+  const openClientVault = () => setClientVaultOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
@@ -15459,6 +15600,11 @@ const App = () => {
     { label: language === 'es' ? '0.05 USD por cada 10 segundos' : '0.05 USD per 10 seconds', onClick: openBillingTimer },
     { label: language === 'es' ? 'Activar, pausar, continuar y parar' : 'Activate, pause, resume and stop', onClick: openBillingTimer },
   ];
+  const clientVaultItems = [
+    { label: language === 'es' ? 'Abrir vault de clientes' : 'Open client vault', onClick: openClientVault },
+    { label: language === 'es' ? 'Token identificador por cliente' : 'Identifier token per client', onClick: openClientVault },
+    { label: language === 'es' ? 'Datos, credenciales e imagenes JPG' : 'Data, credentials and JPG images', onClick: openClientVault },
+  ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
     { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
@@ -15664,7 +15810,7 @@ const App = () => {
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
-        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer,
+        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
@@ -15835,6 +15981,8 @@ const App = () => {
       factura: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['emitir','guardar','cliente','impuesto','vencimiento','pdf','json','csv'] },
       timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','10s','seconds','png'] },
       cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','10s','segundos','png'] },
+      clientvault: { open: openClientVault, label: 'Hashcod Client Credential Vault', verbs: ['client','credential','token','jpg','record','export'] },
+      clientes: { open: openClientVault, label: 'Hashcod Client Credential Vault', verbs: ['cliente','credencial','token','jpg','registro','exportar'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
@@ -15882,7 +16030,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -15923,6 +16071,7 @@ const App = () => {
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
       <HashcodQuoteSystemDialog open={quoteSystemOpen} onClose={() => setQuoteSystemOpen(false)} catalog={catalog} notify={notify} language={language} />
       <HashcodBillingTimerDialog open={billingTimerOpen} onClose={() => setBillingTimerOpen(false)} notify={notify} language={language} />
+      <HashcodClientVaultDialog open={clientVaultOpen} onClose={() => setClientVaultOpen(false)} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -15984,6 +16133,7 @@ const App = () => {
             <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
             <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
             <MenuButton label="BILLING TIMER" icon={TOP_MENU_ICONS.billingTimer} iconOnly items={billingTimerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBillingTimer} />
+            <MenuButton label="CLIENT VAULT" icon={TOP_MENU_ICONS.clientVault} iconOnly items={clientVaultItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openClientVault} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
