@@ -2422,6 +2422,7 @@ const TOP_MENU_ICONS = {
   hcp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m10 8 4 4-4 4"/></svg>`,
   hnsBrowser: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>`,
   cryptoAi: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15h4"/><path d="m14.817 10.995-.971-1.45 1.034-1.232a2 2 0 0 0-2.025-3.238l-1.82.364L9.91 3.885a2 2 0 0 0-3.625.748L6.141 6.55l-1.725.426a2 2 0 0 0-.19 3.756l.657.27"/><path d="m18.822 10.995 2.26-5.38a1 1 0 0 0-.557-1.318L16.954 2.9a1 1 0 0 0-1.281.533l-.924 2.122"/><path d="M4 12.006A1 1 0 0 1 4.994 11H19a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>`,
+  translator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>`,
   containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
@@ -6503,6 +6504,384 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
               <button disabled={busy}>{busy ? L('Pensando', 'Thinking') : L('Enviar', 'Send')}</button>
             </form>
             {status && <div className="cryptoai-status">{status}</div>}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HASHCOD_TRANSLATOR_GLOSSARY = [
+  ['conocimiento cero', 'zero knowledge'],
+  ['prueba de conocimiento cero', 'zero-knowledge proof'],
+  ['computacion multipartita segura', 'secure multi-party computation'],
+  ['computación multipartita segura', 'secure multi-party computation'],
+  ['cifrado homomorfico', 'homomorphic encryption'],
+  ['cifrado homomórfico', 'homomorphic encryption'],
+  ['criptografia de umbral', 'threshold cryptography'],
+  ['criptografía de umbral', 'threshold cryptography'],
+  ['funcion de retardo verificable', 'verifiable delay function'],
+  ['función de retardo verificable', 'verifiable delay function'],
+  ['funcion aleatoria verificable', 'verifiable random function'],
+  ['función aleatoria verificable', 'verifiable random function'],
+  ['cifrado autenticado ligero', 'lightweight authenticated encryption'],
+  ['funcion de salida extensible', 'extendable output function'],
+  ['función de salida extensible', 'extendable output function'],
+  ['derivacion segura de claves', 'secure key derivation'],
+  ['derivación segura de claves', 'secure key derivation'],
+  ['autenticacion de mensajes', 'message authentication'],
+  ['autenticación de mensajes', 'message authentication'],
+  ['intercambio seguro con contraseña', 'password-authenticated key exchange'],
+  ['acumulador criptografico', 'cryptographic accumulator'],
+  ['acumulador criptográfico', 'cryptographic accumulator'],
+  ['cifrado basado en identidad', 'identity-based encryption'],
+  ['cifrado basado en atributos', 'attribute-based encryption'],
+  ['firma de anillo', 'ring signature'],
+  ['firma ciega', 'blind signature'],
+  ['intercambio de claves post-cuantico', 'post-quantum key exchange'],
+  ['intercambio de claves post-cuántico', 'post-quantum key exchange'],
+  ['firma digital post-cuantica', 'post-quantum digital signature'],
+  ['firma digital post-cuántica', 'post-quantum digital signature'],
+  ['firma basada en hash', 'hash-based signature'],
+  ['cifrado publico hibrido', 'hybrid public-key encryption'],
+  ['cifrado público híbrido', 'hybrid public-key encryption'],
+  ['codigo criptografico', 'cryptographic code'],
+  ['código criptográfico', 'cryptographic code'],
+  ['codes criptograficos', 'cryptographic codes'],
+  ['codes criptográficos', 'cryptographic codes'],
+  ['clave privada', 'private key'],
+  ['clave publica', 'public key'],
+  ['clave pública', 'public key'],
+  ['clave secreta', 'secret key'],
+  ['clave de acceso', 'access key'],
+  ['base de datos', 'database'],
+  ['inicio de sesion', 'login'],
+  ['inicio de sesión', 'login'],
+  ['correo electronico', 'email'],
+  ['correo electrónico', 'email'],
+  ['firma digital', 'digital signature'],
+  ['archivo log', 'log file'],
+  ['codigo qr', 'QR code'],
+  ['código qr', 'QR code'],
+  ['codigo de acceso', 'access code'],
+  ['código de acceso', 'access code'],
+  ['panel de admin', 'admin panel'],
+  ['panel administrador', 'administrator panel'],
+  ['descargar', 'download'],
+  ['descarga', 'download'],
+  ['subir', 'upload'],
+  ['guardar', 'save'],
+  ['guardado', 'saved'],
+  ['generar', 'generate'],
+  ['generado', 'generated'],
+  ['crear', 'create'],
+  ['creado', 'created'],
+  ['verificar', 'verify'],
+  ['validar', 'validate'],
+  ['enviar', 'send'],
+  ['recibir', 'receive'],
+  ['copiar', 'copy'],
+  ['exportar', 'export'],
+  ['traducir', 'translate'],
+  ['traductor', 'translator'],
+  ['herramienta', 'tool'],
+  ['plataforma', 'platform'],
+  ['seguridad', 'security'],
+  ['seguro', 'secure'],
+  ['segura', 'secure'],
+  ['usuario', 'user'],
+  ['contraseña', 'password'],
+  ['contrasena', 'password'],
+  ['archivo', 'file'],
+  ['formato', 'format'],
+  ['reporte', 'report'],
+  ['riesgo', 'risk'],
+  ['licencia', 'license'],
+  ['certificado', 'certificate'],
+  ['contenedor', 'container'],
+  ['caja', 'box'],
+  ['muestra', 'sample'],
+  ['telefono', 'phone'],
+  ['teléfono', 'phone'],
+  ['notificacion', 'notification'],
+  ['notificación', 'notification'],
+  ['cifrado', 'encryption'],
+  ['hash', 'hash'],
+  ['token', 'token'],
+  ['nonce', 'nonce'],
+  ['payload', 'payload'],
+  ['salt', 'salt'],
+  ['firma', 'signature'],
+  ['llave', 'key'],
+  ['clave', 'key'],
+  ['claves', 'keys'],
+  ['texto', 'text'],
+  ['español', 'Spanish'],
+  ['ingles', 'English'],
+  ['inglés', 'English'],
+  ['funcional', 'functional'],
+  ['real', 'real'],
+  ['avanzado', 'advanced'],
+  ['moderno', 'modern'],
+  ['produccion', 'production'],
+  ['producción', 'production'],
+  ['empresa', 'enterprise'],
+  ['puerto', 'port'],
+  ['navegador', 'browser'],
+  ['consola', 'console'],
+  ['comando', 'command'],
+  ['matriz', 'matrix'],
+  ['reticulo', 'lattice'],
+  ['retículo', 'lattice'],
+  ['entropia', 'entropy'],
+  ['entropía', 'entropy'],
+  ['aleatorio', 'random'],
+  ['aleatoria', 'random'],
+  ['sistema', 'system'],
+  ['sesion', 'session'],
+  ['sesión', 'session'],
+  ['registro', 'record'],
+  ['registros', 'records'],
+  ['solicitud', 'request'],
+  ['aprobado', 'approved'],
+  ['pendiente', 'pending'],
+  ['rechazado', 'rejected'],
+];
+
+const HASHCOD_TRANSLATOR_COMMON = [
+  ['para que', 'so that'],
+  ['por favor', 'please'],
+  ['quiero que', 'I want you to'],
+  ['haz que', 'make'],
+  ['creame', 'create for me'],
+  ['créame', 'create for me'],
+  ['agrega', 'add'],
+  ['añade', 'add'],
+  ['quita', 'remove'],
+  ['cambia', 'change'],
+  ['mejora', 'improve'],
+  ['adaptado a', 'adapted to'],
+  ['adaptada a', 'adapted to'],
+  ['debe de', 'must'],
+  ['debe', 'must'],
+  ['puede', 'can'],
+  ['con este icono', 'with this icon'],
+  ['sin texto', 'without text'],
+  ['solo icono', 'icon only'],
+  ['del lado derecho', 'on the right side'],
+  ['en la parte derecha', 'on the right side'],
+  ['en la barra inferior', 'in the bottom bar'],
+  ['en la barra superior', 'in the top bar'],
+  ['base de idea', 'idea base'],
+  ['como funciona', 'how it works'],
+  ['para que sirve', 'what it is for'],
+  ['se pueda', 'can be'],
+  ['se guarde', 'is saved'],
+  ['que funcione', 'that it works'],
+  ['y que', 'and that'],
+  ['donde', 'where'],
+  ['cuando', 'when'],
+  ['tambien', 'also'],
+  ['también', 'also'],
+  ['cualquier', 'any'],
+  ['todos los', 'all the'],
+  ['todas las', 'all the'],
+  ['cada', 'each'],
+  ['nuevo', 'new'],
+  ['nueva', 'new'],
+  ['diferente', 'different'],
+  ['antes de', 'before'],
+  ['despues de', 'after'],
+  ['después de', 'after'],
+  ['desde', 'from'],
+  ['hacia', 'toward'],
+  ['con', 'with'],
+  ['sin', 'without'],
+  ['en', 'in'],
+  ['de', 'of'],
+  ['la', 'the'],
+  ['el', 'the'],
+  ['los', 'the'],
+  ['las', 'the'],
+  ['un', 'a'],
+  ['una', 'a'],
+  ['es', 'is'],
+  ['son', 'are'],
+  ['sea', 'be'],
+  ['sean', 'be'],
+  ['como', 'as'],
+  ['y', 'and'],
+  ['o', 'or'],
+];
+
+const HASHCOD_TRANSLATOR_PROTECTED_RE = /```[\s\S]*?```|`[^`\n]+`|https?:\/\/[^\s)]+|hns:\/\/[^\s)]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b|\b[A-Fa-f0-9]{24,}\b|\b[A-Za-z0-9+/_-]{28,}={0,2}\b|\b(?:AES|SHA|HMAC|HKDF|PBKDF2|ARGON2|BLAKE|BLAKE3|CHACHA|XCHACHA|POLY1305|ED25519|ECDSA|RSA|KYBER|DILITHIUM|SPHINCS|FALCON|HNS|HOS|HCP|JWT|API|QR|UUID|GOST|SM4|CAST|SERPENT|LWE|PQC)[A-Za-z0-9_.:+/-]*\b/g;
+
+const escapeTranslatorRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const protectCryptoTranslatorSegments = (source = '') => {
+  const tokens = [];
+  const text = String(source).replace(HASHCOD_TRANSLATOR_PROTECTED_RE, (match) => {
+    const id = `__HC_KEEP_${tokens.length}__`;
+    tokens.push([id, match]);
+    return id;
+  });
+  return { text, tokens };
+};
+
+const restoreCryptoTranslatorSegments = (source = '', tokens = []) => {
+  let out = String(source);
+  tokens.forEach(([id, value]) => {
+    out = out.split(id).join(value);
+  });
+  return out;
+};
+
+const normalizeTranslatorPunctuation = (value = '') => String(value)
+  .replace(/\s+([,.;:!?])/g, '$1')
+  .replace(/([¿¡])/g, '')
+  .replace(/\b(\w+)\s+\1\b/gi, '$1')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+const translateSpanishCryptoText = (source = '') => {
+  const raw = String(source || '');
+  const { text, tokens } = protectCryptoTranslatorSegments(raw);
+  const used = new Set();
+  const replacements = [...HASHCOD_TRANSLATOR_GLOSSARY, ...HASHCOD_TRANSLATOR_COMMON]
+    .sort((a, b) => b[0].length - a[0].length);
+  let translated = text;
+  replacements.forEach(([from, to]) => {
+    const pattern = new RegExp(`\\b${escapeTranslatorRegex(from)}\\b`, 'gi');
+    if (pattern.test(translated)) {
+      used.add(`${from} -> ${to}`);
+      translated = translated.replace(pattern, to);
+    }
+  });
+  translated = translated
+    .replace(/\besta\b/gi, 'this')
+    .replace(/\beste\b/gi, 'this')
+    .replace(/\bestos\b/gi, 'these')
+    .replace(/\bestas\b/gi, 'these')
+    .replace(/\bmi\b/gi, 'my')
+    .replace(/\btu\b/gi, 'your')
+    .replace(/\bsu\b/gi, 'its')
+    .replace(/\bdel\b/gi, 'of the')
+    .replace(/\bal\b/gi, 'to the')
+    .replace(/\bsi\b/gi, 'if')
+    .replace(/\bno\b/gi, 'not')
+    .replace(/\bmas\b/gi, 'more')
+    .replace(/\bmás\b/gi, 'more')
+    .replace(/\bmejor\b/gi, 'better')
+    .replace(/\bsuper\b/gi, 'super')
+    .replace(/\bultra\b/gi, 'ultra');
+  translated = restoreCryptoTranslatorSegments(normalizeTranslatorPunctuation(translated), tokens);
+  const confidence = Math.min(99, Math.round(52 + Math.min(32, used.size * 2.2) + Math.min(15, tokens.length)));
+  return {
+    translated,
+    protectedCount: tokens.length,
+    terms: Array.from(used).slice(0, 26),
+    confidence,
+  };
+};
+
+const CryptoTranslatorDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const sourceRows = useMemo(() => [...(outputRows || []), ...(rows || [])].filter(row => row?.value).slice(0, 600), [rows, outputRows]);
+  const [input, setInput] = useState('Genera una clave AES-256 para proteger el archivo y guarda el code criptografico en la base de datos.');
+  const [output, setOutput] = useState('');
+  const [stats, setStats] = useState({ protectedCount: 0, terms: [], confidence: 0 });
+  const [selectedId, setSelectedId] = useState('');
+  if (!open) return null;
+  const selectedRow = sourceRows.find((row, idx) => String(row.id || row.idx || idx) === selectedId) || sourceRows[0] || null;
+  const runTranslate = () => {
+    const result = translateSpanishCryptoText(input);
+    setOutput(result.translated);
+    setStats(result);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'translator:es-en', text: result.translated, meta: { protectedSegments: result.protectedCount, glossaryTerms: result.terms.length } }));
+    notify?.(L('Traductor ES -> EN ejecutado', 'ES -> EN translator executed'));
+  };
+  const loadSelectedCode = () => {
+    if (!selectedRow) return;
+    const body = [
+      `Code seleccionado: ${String(selectedRow.idx || '').padStart(3, '0')} | ${selectedRow.type || 'Hashcod code'}`,
+      `Valor: ${selectedRow.value}`,
+      `Necesito explicarlo en ingles para documentacion tecnica y uso seguro.`,
+    ].join('\n');
+    setInput(body);
+    setOutput('');
+    notify?.(L('Code cargado en el traductor', 'Code loaded into translator'));
+  };
+  const copyOutput = async () => {
+    if (!output.trim()) return;
+    try {
+      await navigator.clipboard?.writeText(output);
+      notify?.(L('Traduccion copiada', 'Translation copied'));
+    } catch {
+      notify?.(L('No se pudo copiar', 'Could not copy'));
+    }
+  };
+  const exportTxt = () => {
+    if (!output.trim()) return;
+    triggerDownload(`hashcod-translator-es-en-${tsStamp()}.txt`, `Hashcod Crypto Translator ES -> EN\n\nSOURCE\n${input}\n\nTRANSLATION\n${output}\n\nProtected segments: ${stats.protectedCount}\nConfidence: ${stats.confidence}%`, 'text/plain;charset=utf-8');
+  };
+  const exportJson = () => {
+    if (!output.trim()) return;
+    triggerDownload(`hashcod-translator-es-en-${tsStamp()}.json`, JSON.stringify({
+      tool: 'Hashcod Crypto Translator ES -> EN',
+      engine: 'Local glossary + crypto segment protector inspired by Argos offline flow',
+      source: input,
+      translation: output,
+      protectedSegments: stats.protectedCount,
+      glossaryTerms: stats.terms,
+      confidence: stats.confidence,
+      createdAt: new Date().toISOString(),
+    }, null, 2), 'application/json;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg transdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h trans-head">
+          <div className="trans-title">
+            <span className="trans-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.translator}} />
+            <div>
+              <h2>{L('Traductor ES -> EN', 'ES -> EN Translator')}</h2>
+              <p>{L('Traduce texto tecnico sin romper hashes, keys, HNS, JWT, QR payloads ni bloques de code.', 'Translate technical text without breaking hashes, keys, HNS, JWT, QR payloads, or code blocks.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="trans-shell">
+          <aside className="trans-side">
+            <label><span>{L('Code de referencia', 'Reference code')}</span><select value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+              {sourceRows.length ? sourceRows.map((row, idx) => <option key={`${row.id || row.idx || idx}`} value={String(row.id || row.idx || idx)}>{String(row.idx || idx + 1).padStart(3, '0')} | {row.type}</option>) : <option>{L('Sin codes cargados', 'No codes loaded')}</option>}
+            </select></label>
+            <button onClick={loadSelectedCode} disabled={!selectedRow}>{L('Usar code seleccionado', 'Use selected code')}</button>
+            <div className="trans-statgrid">
+              <div><span>{L('Segmentos protegidos', 'Protected segments')}</span><b>{stats.protectedCount}</b></div>
+              <div><span>{L('Glosario aplicado', 'Glossary applied')}</span><b>{stats.terms.length}</b></div>
+              <div><span>{L('Confianza local', 'Local confidence')}</span><b>{stats.confidence || 0}%</b></div>
+              <div><span>{L('Motor', 'Engine')}</span><b>HC-ESEN</b></div>
+            </div>
+            <div className="trans-note">
+              {L('Inspirado en Argos Translate: flujo local/offline, paquetes de idioma y proteccion de HTML/texto. Esta version usa un glosario crypto local para no enviar secretos a terceros.', 'Inspired by Argos Translate: local/offline flow, language packages, and HTML/text protection. This version uses a local crypto glossary so secrets are not sent to third parties.')}
+            </div>
+            <div className="trans-glossary">
+              <span>{L('Terminos detectados', 'Detected terms')}</span>
+              {(stats.terms.length ? stats.terms : ['AES -> AES', 'hash -> hash', 'clave -> key']).map(item => <code key={item}>{item}</code>)}
+            </div>
+          </aside>
+          <main className="trans-main">
+            <div className="trans-grid">
+              <label><span>{L('Texto en espanol', 'Spanish text')}</span><textarea value={input} onChange={e => setInput(e.target.value)} spellCheck="false" /></label>
+              <label><span>{L('Salida en ingles', 'English output')}</span><textarea value={output} onChange={e => setOutput(e.target.value)} spellCheck="false" /></label>
+            </div>
+            <div className="trans-actions">
+              <button onClick={runTranslate}>{L('Traducir', 'Translate')}</button>
+              <button onClick={copyOutput} disabled={!output.trim()}>{L('Copiar', 'Copy')}</button>
+              <button onClick={exportTxt} disabled={!output.trim()}>TXT</button>
+              <button onClick={exportJson} disabled={!output.trim()}>JSON</button>
+              <button onClick={() => { setInput(''); setOutput(''); setStats({ protectedCount: 0, terms: [], confidence: 0 }); }}>{L('Limpiar', 'Clear')}</button>
+            </div>
           </main>
         </div>
       </section>
@@ -13061,6 +13440,7 @@ const App = () => {
   const [hcpOpen, setHcpOpen] = useState(false);
   const [hnsBrowserOpen, setHnsBrowserOpen] = useState(false);
   const [cryptoAiOpen, setCryptoAiOpen] = useState(false);
+  const [translatorOpen, setTranslatorOpen] = useState(false);
   const [containerPortOpen, setContainerPortOpen] = useState(false);
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
@@ -13899,6 +14279,7 @@ const App = () => {
   const openHcp = () => setHcpOpen(true);
   const openHnsBrowser = () => setHnsBrowserOpen(true);
   const openCryptoAi = () => setCryptoAiOpen(true);
+  const openTranslator = () => setTranslatorOpen(true);
   const openContainerPort = () => setContainerPortOpen(true);
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
@@ -14128,6 +14509,11 @@ const App = () => {
     { label: 'Claude -> HSC-02910', onClick: openCryptoAi },
     { label: 'GPT -> HSC-28193', onClick: openCryptoAi },
     { label: 'Gemini -> HSC-44201', onClick: openCryptoAi },
+  ];
+  const translatorItems = [
+    { label: language === 'es' ? 'Abrir traductor ES -> EN' : 'Open ES -> EN translator', onClick: openTranslator },
+    { label: language === 'es' ? 'Preservar codes, hashes, claves y payloads' : 'Preserve codes, hashes, keys, and payloads', onClick: openTranslator },
+    { label: language === 'es' ? 'Exportar traduccion TXT / JSON' : 'Export translation TXT / JSON', onClick: openTranslator },
   ];
   const containerPortItems = [
     { label: language === 'es' ? 'Abrir puerto de contenedores' : 'Open container port', onClick: openContainerPort },
@@ -14371,6 +14757,7 @@ const App = () => {
         hns: openHns, namesystem: openHns, 'hash-name-system': openHns,
         hnsbrowser: openHnsBrowser, browserhns: openHnsBrowser, 'hns-browser': openHnsBrowser,
         cryptoai: openCryptoAi, ai: openCryptoAi, hsc: openCryptoAi, 'crypto-ai': openCryptoAi,
+        translator: openTranslator, traductor: openTranslator, translate: openTranslator, 'es-en': openTranslator, languages: openTranslator,
         containerport: openContainerPort, container: openContainerPort, containers: openContainerPort, puerto: openContainerPort, 'container-port': openContainerPort,
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
@@ -14528,6 +14915,8 @@ const App = () => {
       hns: { open: openHns, label: 'HNS', verbs: ['name','zone','export','namespace','secret','www','help'] },
       hnsbrowser: { open: openHnsBrowser, label: 'HNS Browser', verbs: ['open','resolve','packet','gateway','phone','cli','help'] },
       cryptoai: { open: openCryptoAi, label: 'Crypto AI', verbs: ['chat','claude','gpt','gemini','review','tokenize','security','help'] },
+      translator: { open: openTranslator, label: 'ES -> EN Translator', verbs: ['spanish','english','crypto','hash','token','json','txt','glossary'] },
+      traductor: { open: openTranslator, label: 'Traductor ES -> EN', verbs: ['espanol','ingles','crypto','hash','token','json','txt','glosario'] },
       containerport: { open: openContainerPort, label: 'Container Port', verbs: ['box','container','ih','hmac','phone','manifest','formula','help'] },
       derivatives: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['create','derive','hkdf','hmac','save','export','salt','domain','help'] },
       derivadas: { open: openDerivativesLab, label: 'Derivatives Lab', verbs: ['crear','derivar','guardar','exportar','salt','dominio','help'] },
@@ -14584,7 +14973,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -14609,6 +14998,7 @@ const App = () => {
       <HashCommandPromptingDialog open={hcpOpen} onClose={() => setHcpOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <HnsBrowserDialog open={hnsBrowserOpen} onClose={() => setHnsBrowserOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <CryptoAiDialog open={cryptoAiOpen} onClose={() => setCryptoAiOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
+      <CryptoTranslatorDialog open={translatorOpen} onClose={() => setTranslatorOpen(false)} rows={copyDb} outputRows={hashSystemRows} notify={notify} language={language} />
       <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
@@ -14670,6 +15060,7 @@ const App = () => {
             <MenuButton label="HNS" icon={TOP_MENU_ICONS.hns} iconOnly items={hnsItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHns} />
             <MenuButton label="HNS BROWSER" icon={TOP_MENU_ICONS.hnsBrowser} iconOnly items={hnsBrowserItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHnsBrowser} />
             <MenuButton label="CRYPTO AI" icon={TOP_MENU_ICONS.cryptoAi} iconOnly items={cryptoAiItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoAi} />
+            <MenuButton label="ES -> EN" icon={TOP_MENU_ICONS.translator} iconOnly items={translatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTranslator} />
             <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
