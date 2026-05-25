@@ -13579,6 +13579,7 @@ const quoteCodePriceFor = ({ category, type, globalIndex }) => {
 };
 const quoteMoney = (amount) => `${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
 const HASHCOD_INVOICES_STORAGE = 'hashcod_billing_invoices_v1';
+const HASHCOD_QUOTE_PAGE_SIZE = 250;
 const readHashcodInvoices = () => safeJsonParse(localStorage.getItem(HASHCOD_INVOICES_STORAGE) || '[]', []);
 const writeHashcodInvoices = (rows) => localStorage.setItem(HASHCOD_INVOICES_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
 const makeHashcodDocId = (prefix) => {
@@ -13609,6 +13610,7 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
   const [quoteId, setQuoteId] = useState(() => makeHashcodDocId('QTE'));
   const [invoiceId, setInvoiceId] = useState(() => makeHashcodDocId('INV'));
   const [invoices, setInvoices] = useState(() => readHashcodInvoices());
+  const [codePage, setCodePage] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [items, setItems] = useState([]);
@@ -13664,6 +13666,15 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
     const rows = q ? codeRows.filter(row => `${row.index} ${row.name} ${row.family} ${row.category} ${row.standard}`.toLowerCase().includes(q)) : codeRows;
     return rows;
   }, [codeRows, query]);
+  const codePageCount = Math.max(1, Math.ceil(filteredCodes.length / HASHCOD_QUOTE_PAGE_SIZE));
+  const safeCodePage = Math.min(codePage, codePageCount - 1);
+  const pagedCodes = useMemo(() => {
+    const start = safeCodePage * HASHCOD_QUOTE_PAGE_SIZE;
+    return filteredCodes.slice(start, start + HASHCOD_QUOTE_PAGE_SIZE);
+  }, [filteredCodes, safeCodePage]);
+  useEffect(() => {
+    setCodePage(0);
+  }, [query, mode]);
   const filteredTools = useMemo(() => {
     const q = query.trim().toLowerCase();
     const rows = q ? toolRows.filter(row => `${row.name} ${row.purpose}`.toLowerCase().includes(q)) : toolRows;
@@ -13820,9 +13831,19 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
         <div className="quote-shell">
           <main className="quote-catalog">
             {mode === 'codes' ? (
-              <table><thead><tr><th>#</th><th>Code</th><th>Familia</th><th>1 code</th><th>10 codes</th><th></th></tr></thead><tbody>
-                {filteredCodes.map(row => <tr key={row.id}><td>{String(row.index).padStart(4, '0')}</td><td><b>{row.name}</b><small>{row.category} · {row.standard} · {row.entropy}</small></td><td>{row.family}</td><td>{quoteMoney(row.each)}</td><td>{quoteMoney(row.per10)}</td><td><button onClick={() => addCodeItem(row, 10)}>+10</button><button onClick={() => addCodeItem(row, 1)}>+1</button></td></tr>)}
-              </tbody></table>
+              <>
+                <div className="quote-pager">
+                  <span>{L('Mostrando', 'Showing')} {filteredCodes.length ? safeCodePage * HASHCOD_QUOTE_PAGE_SIZE + 1 : 0}-{Math.min(filteredCodes.length, (safeCodePage + 1) * HASHCOD_QUOTE_PAGE_SIZE)} / {filteredCodes.length}</span>
+                  <button disabled={safeCodePage <= 0} onClick={() => setCodePage(0)}>{L('Primera', 'First')}</button>
+                  <button disabled={safeCodePage <= 0} onClick={() => setCodePage(page => Math.max(0, page - 1))}>{L('Anterior', 'Prev')}</button>
+                  <code>{safeCodePage + 1} / {codePageCount}</code>
+                  <button disabled={safeCodePage >= codePageCount - 1} onClick={() => setCodePage(page => Math.min(codePageCount - 1, page + 1))}>{L('Siguiente', 'Next')}</button>
+                  <button disabled={safeCodePage >= codePageCount - 1} onClick={() => setCodePage(codePageCount - 1)}>{L('Ultima', 'Last')}</button>
+                </div>
+                <table><thead><tr><th>#</th><th>Code</th><th>Familia</th><th>1 code</th><th>10 codes</th><th></th></tr></thead><tbody>
+                  {pagedCodes.map(row => <tr key={row.id}><td>{String(row.index).padStart(4, '0')}</td><td><b>{row.name}</b><small>{row.category} · {row.standard} · {row.entropy}</small></td><td>{row.family}</td><td>{quoteMoney(row.each)}</td><td>{quoteMoney(row.per10)}</td><td><button onClick={() => addCodeItem(row, 10)}>+10</button><button onClick={() => addCodeItem(row, 1)}>+1</button></td></tr>)}
+                </tbody></table>
+              </>
             ) : (
               <table><thead><tr><th>#</th><th>Herramienta</th><th>Mensual</th><th>Setup</th><th>Sugerido</th><th></th></tr></thead><tbody>
                 {filteredTools.map(row => <tr key={row.id}><td>{String(row.index).padStart(2, '0')}</td><td><b>{row.name}</b><small>{row.purpose}</small></td><td>{quoteMoney(row.monthly)}</td><td>{quoteMoney(row.setup)}</td><td>{quoteMoney(row.suggested)}</td><td><button onClick={() => addToolItem(row)}>+</button></td></tr>)}
