@@ -338,8 +338,27 @@ kbd {
 .lawdlg-side button:disabled { opacity:.45; cursor:not-allowed; }
 .lawdlg-stat { border:1px solid var(--line); padding:11px; display:grid; gap:5px; }
 .lawdlg-stat b { font-size:24px; }
+.lawdlg-control { border:1px solid var(--line); background:var(--bg); padding:11px; display:grid; gap:9px; }
+.lawdlg-control > span { color:var(--ink-4); font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.lawdlg-control div { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.lawdlg-control button { min-height:32px; background:var(--card); color:var(--ink); }
+.lawdlg-control button.active { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.lawdlg-control small { color:var(--ink-3); font-family:var(--mono); font-size:10px; line-height:1.45; }
 .lawdlg-main { padding:16px; overflow:auto; display:grid; gap:14px; align-content:start; }
 .lawdlg-empty { border:1px dashed var(--line-2); padding:28px; color:var(--ink-3); font-family:var(--mono); }
+.lawdlg-audit { border:1px solid var(--line); background:var(--card); display:grid; gap:0; }
+.lawdlg-audit header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-bottom:1px solid var(--line); }
+.lawdlg-audit header div { display:grid; gap:4px; }
+.lawdlg-audit header span { color:var(--ink-4); font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.lawdlg-audit header b { font-family:var(--mono); font-size:14px; letter-spacing:1.4px; text-transform:uppercase; }
+.lawdlg-audit header em, .lawdlg-audit article em, .lawdlg-audit article small { font-family:var(--mono); font-style:normal; color:var(--ink-4); font-size:10px; }
+.lawdlg-audit p { margin:0; padding:14px; color:var(--ink-3); font-family:var(--mono); font-size:11px; }
+.lawdlg-audit article { display:grid; grid-template-columns:140px minmax(0,1fr) 54px 138px; gap:8px; align-items:center; padding:9px 12px; border-bottom:1px solid var(--line); min-width:0; }
+.lawdlg-audit article:last-child { border-bottom:0; }
+.lawdlg-audit article.pass { border-left:3px solid #20b15a; }
+.lawdlg-audit article.warn { border-left:3px solid #d6a321; }
+.lawdlg-audit article.fail { border-left:3px solid #d64242; }
+.lawdlg-audit article b, .lawdlg-audit article span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--mono); font-size:11px; }
 .lawdlg-score { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); }
 .lawdlg-score div { padding:14px; border-right:1px solid var(--line); display:grid; gap:7px; }
 .lawdlg-score div:last-child { border-right:0; }
@@ -361,6 +380,7 @@ kbd {
   .lawdlg-grid { grid-template-columns:1fr; min-height:auto; }
   .lawdlg-side { border-right:0; border-bottom:1px solid var(--line); }
   .lawdlg-score, .lawdlg-sources, .lawdlg-checks { grid-template-columns:1fr; }
+  .lawdlg-audit article { grid-template-columns:1fr; gap:4px; }
   .lawdlg-score div { border-right:0; border-bottom:1px solid var(--line); }
   .lawdlg-score div:last-child { border-bottom:0; }
 }

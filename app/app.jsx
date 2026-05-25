@@ -1016,8 +1016,113 @@ const brandDownloadText = (filename, text, mime = '') => {
   ].join('\n');
 };
 
+const HASHCOD_LAW_LOG_KEY = 'hashcod_law_audit_v1';
+const HASHCOD_LAW_SETTINGS_KEY = 'hashcod_law_settings_v1';
+const HASHCOD_LAW_MAX_EVENTS = 700;
+
+const readHashcodLawLog = () => {
+  try {
+    const parsed = safeJsonParse(localStorage.getItem(HASHCOD_LAW_LOG_KEY), []);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeHashcodLawLog = (rows) => {
+  try {
+    localStorage.setItem(HASHCOD_LAW_LOG_KEY, JSON.stringify((rows || []).slice(0, HASHCOD_LAW_MAX_EVENTS)));
+  } catch {}
+};
+
+const readHashcodLawSettings = () => {
+  try {
+    const saved = safeJsonParse(localStorage.getItem(HASHCOD_LAW_SETTINGS_KEY), {});
+    return {
+      mode: 'monitor',
+      blockDanger: true,
+      blockSecretLeak: false,
+      keepAudit: true,
+      ...saved,
+    };
+  } catch {
+    return { mode: 'monitor', blockDanger: true, blockSecretLeak: false, keepAudit: true };
+  }
+};
+
+const writeHashcodLawSettings = (settings) => {
+  const next = { ...readHashcodLawSettings(), ...(settings || {}) };
+  try {
+    localStorage.setItem(HASHCOD_LAW_SETTINGS_KEY, JSON.stringify(next));
+    window.dispatchEvent(new CustomEvent('hashcod-law-settings', { detail: next }));
+  } catch {}
+  return next;
+};
+
+const hashcodLawAssessPayload = ({ action = 'event', filename = '', mime = '', text = '', size = 0, meta = {} } = {}) => {
+  const value = String(text ?? '');
+  const target = `${filename}\n${mime}\n${value}`;
+  const bytes = Number(size || value.length || 0);
+  const danger = /<script|javascript:|eval\s*\(|document\.cookie|drop\s+table|insert\s+into|delete\s+from|onerror\s*=|onload\s*=/i.test(target);
+  const secretLeak = /(password|passwd|private[_ -]?key|secret|auth[_ -]?token|bearer\s+[a-z0-9._-]{12,}|api[_ -]?key)\s*[:=]/i.test(target);
+  const hasBrand = /hashcod|hashcod_brand|hashcod_download_brand|cryptographic platform/i.test(target);
+  const hasLogo = /logo_svg|<svg|hashcod_download_logo/i.test(target);
+  const hasCryptoShape = /sha-?256|sha-?512|hmac|salt|nonce|payload|checksum|digest|signature|hns|ih=|hc-/i.test(target);
+  const textRequired = value.length > 0;
+  const checks = [
+    ['brand', hasBrand || !textRequired],
+    ['logo', hasLogo || !textRequired],
+    ['dangerousPayload', !danger],
+    ['secretLeak', !secretLeak],
+    ['cryptoShape', hasCryptoShape || !textRequired || /\.(png|jpg|jpeg|pdf|zip|iso)$/i.test(String(filename || ''))],
+    ['sizeGuard', bytes < 50 * 1024 * 1024],
+  ];
+  const passed = checks.filter(([, ok]) => ok).length;
+  const status = danger || secretLeak ? 'warn' : passed === checks.length ? 'pass' : 'warn';
+  return {
+    id: `HLAW-EVT-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: new Date().toISOString(),
+    action,
+    filename: String(filename || ''),
+    mime: String(mime || ''),
+    size: bytes,
+    status,
+    danger,
+    secretLeak,
+    hasBrand,
+    hasLogo,
+    passed,
+    total: checks.length,
+    checks: Object.fromEntries(checks),
+    meta,
+  };
+};
+
+const hashcodLawRecord = (event) => {
+  const settings = readHashcodLawSettings();
+  if (!settings.keepAudit) return event;
+  try {
+    const rows = readHashcodLawLog();
+    const next = [event, ...rows].slice(0, HASHCOD_LAW_MAX_EVENTS);
+    writeHashcodLawLog(next);
+    window.dispatchEvent(new CustomEvent('hashcod-law-event', { detail: event }));
+  } catch (err) {
+    console.warn('Hashcod Law audit failed', err);
+  }
+  return event;
+};
+
+const hashcodLawShouldBlock = (event) => {
+  const settings = readHashcodLawSettings();
+  if (settings.mode !== 'strict') return false;
+  return (settings.blockDanger && event.danger) || (settings.blockSecretLeak && event.secretLeak);
+};
+
 const triggerDownload = (filename, text, mime = 'text/markdown;charset=utf-8') => {
   const brandedText = brandDownloadText(filename, text, mime);
+  const lawEvent = hashcodLawAssessPayload({ action: 'download:text', filename, mime, text: brandedText });
+  hashcodLawRecord(lawEvent);
+  if (hashcodLawShouldBlock(lawEvent)) return;
   const blob = new Blob([brandedText], { type: mime });
   triggerBlobDownload(filename, blob);
 };
@@ -1082,6 +1187,15 @@ const triggerRawBlobDownload = (filename, blob) => {
 
 const triggerBlobDownload = (filename, blob) => {
   const lowerName = String(filename || '').toLowerCase();
+  const lawEvent = hashcodLawAssessPayload({
+    action: 'download:blob',
+    filename,
+    mime: blob?.type || '',
+    size: blob?.size || 0,
+    meta: { binary: true },
+  });
+  hashcodLawRecord(lawEvent);
+  if (hashcodLawShouldBlock(lawEvent)) return;
   if ((blob?.type || '').includes('image/png') || lowerName.endsWith('.png')) {
     brandPngBlob(blob)
       .then(branded => triggerRawBlobDownload(filename, branded || blob))
@@ -3667,6 +3781,8 @@ const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, l
   const [manual, setManual] = useState('');
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [auditLog, setAuditLog] = useState(() => readHashcodLawLog());
+  const [settings, setSettings] = useState(() => readHashcodLawSettings());
   const validators = useMemo(() => buildLawValidators(), []);
   const sources = useMemo(() => {
     const fromRows = [...(outputRows || []), ...(rows || [])].slice(0, 240).map((row, i) => ({
@@ -3681,6 +3797,19 @@ const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, l
       : [];
     return [...manualItems, ...fromRows].filter(item => String(item.value || '').trim());
   }, [rows, outputRows, manual, language]);
+
+  useEffect(() => {
+    const refreshAudit = () => setAuditLog(readHashcodLawLog());
+    const refreshSettings = () => setSettings(readHashcodLawSettings());
+    window.addEventListener('hashcod-law-event', refreshAudit);
+    window.addEventListener('hashcod-law-settings', refreshSettings);
+    refreshAudit();
+    refreshSettings();
+    return () => {
+      window.removeEventListener('hashcod-law-event', refreshAudit);
+      window.removeEventListener('hashcod-law-settings', refreshSettings);
+    };
+  }, []);
 
   if (!open) return null;
 
@@ -3732,8 +3861,21 @@ const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, l
     ].join('\n');
     triggerDownload(`Hashcod-Law-report-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
   };
+  const setLawMode = (mode) => {
+    setSettings(writeHashcodLawSettings({ mode }));
+    notify?.(mode === 'strict' ? L('Hashcod Law en modo estricto', 'Hashcod Law strict mode') : L('Hashcod Law en modo monitor', 'Hashcod Law monitor mode'));
+  };
+  const clearAudit = () => {
+    writeHashcodLawLog([]);
+    setAuditLog([]);
+    notify?.(L('Auditoria Hashcod Law limpiada', 'Hashcod Law audit cleared'));
+  };
+  const exportAudit = () => {
+    triggerDownload(`Hashcod-Law-audit-${tsStamp()}.json`, JSON.stringify({ hashcod_law_audit: auditLog, settings }, null, 2), 'application/json;charset=utf-8');
+  };
 
   const shownChecks = result?.checks?.slice(0, 80) || [];
+  const recentAudit = auditLog.slice(0, 18);
   return (
     <div className="dlg-back" onClick={onClose}>
       <section className="dlg lawdlg" onClick={e => e.stopPropagation()}>
@@ -3751,13 +3893,42 @@ const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, l
           <aside className="lawdlg-side">
             <div className="lawdlg-stat"><span>{L('Sistemas', 'Systems')}</span><b>{validators.length}</b></div>
             <div className="lawdlg-stat"><span>{L('Fuentes', 'Sources')}</span><b>{sources.length}</b></div>
+            <div className="lawdlg-control">
+              <span>{L('Control global', 'Global control')}</span>
+              <div>
+                <button className={settings.mode === 'monitor' ? 'active' : ''} onClick={() => setLawMode('monitor')}>Monitor</button>
+                <button className={settings.mode === 'strict' ? 'active' : ''} onClick={() => setLawMode('strict')}>Strict</button>
+              </div>
+              <small>{L('Monitorea generaciones, descargas, base de datos y sesiones. Strict bloquea payloads peligrosos.', 'Monitors generation, downloads, database, and sessions. Strict blocks dangerous payloads.')}</small>
+            </div>
             <label><span>{L('Subir descarga', 'Upload download')}</span><input type="file" onChange={handleFile} /></label>
             <label><span>{L('Pegar code o archivo', 'Paste code or file')}</span><textarea value={manual} onChange={e => setManual(e.target.value)} placeholder="HASHCOD.PQK.v13..." /></label>
             <button onClick={runLaw} disabled={busy || !sources.length}>{busy ? L('Validando...', 'Validating...') : L('Ejecutar ley', 'Run law')}</button>
             <button onClick={exportReport} disabled={!result}>JSON</button>
             <button onClick={exportTxt} disabled={!result}>TXT</button>
+            <button onClick={exportAudit} disabled={!auditLog.length}>{L('Exportar auditoria', 'Export audit')}</button>
+            <button onClick={clearAudit} disabled={!auditLog.length}>{L('Limpiar auditoria', 'Clear audit')}</button>
           </aside>
           <main className="lawdlg-main">
+            <section className="lawdlg-audit">
+              <header>
+                <div>
+                  <span>{L('Control conectado', 'Connected control')}</span>
+                  <b>{L('Auditoria de plataforma', 'Platform audit')}</b>
+                </div>
+                <em>{auditLog.length} {L('eventos', 'events')}</em>
+              </header>
+              {!recentAudit.length ? (
+                <p>{L('Aun no hay eventos. Genera, copia o descarga codes para activar el control.', 'No events yet. Generate, copy, or download codes to activate control.')}</p>
+              ) : recentAudit.map(event => (
+                <article key={event.id} className={event.status}>
+                  <b>{event.action}</b>
+                  <span>{event.filename || event.meta?.typeId || event.meta?.mode || 'platform'}</span>
+                  <em>{event.passed}/{event.total}</em>
+                  <small>{new Date(event.at).toLocaleString()}</small>
+                </article>
+              ))}
+            </section>
             {!result ? (
               <div className="lawdlg-empty">{L('Ejecuta Hashcod Law para crear un reporte criptografico antifraude.', 'Run Hashcod Law to create an anti-fraud cryptographic report.')}</div>
             ) : (
@@ -3808,6 +3979,9 @@ const AuthGate = ({ children }) => {
       setProviders(data.providers || []);
       setAuthMeta(data.auth || null);
       applyServerPlan(data.user);
+      if (data.user) {
+        hashcodLawRecord(hashcodLawAssessPayload({ action: 'auth:session', meta: { email: data.user.email, role: data.user.role } }));
+      }
       setAuth({ loading: false, setupRequired: !!data.setupRequired, user: data.user || null });
       if (!data.user) setMode(data.setupRequired ? 'setup' : 'login');
     } catch {
@@ -3835,9 +4009,9 @@ const AuthGate = ({ children }) => {
         <div className="auth-session">
           <span>{auth.user.email} - {auth.user.role}</span>
           <button onClick={loadSessions}>Sessions</button>
-          <button onClick={async () => { await authFetch('/api/auth/logout-all', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout all</button>
+          <button onClick={async () => { hashcodLawRecord(hashcodLawAssessPayload({ action: 'auth:logout-all', meta: { email: auth.user.email } })); await authFetch('/api/auth/logout-all', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout all</button>
           {auth.user.role === 'admin' && <button className="auth-admin-icon" onClick={() => setUsersOpen(true)} title="Admin panel" aria-label="Admin panel"><span dangerouslySetInnerHTML={{__html: ADMIN_PANEL_ICON}} /></button>}
-          <button onClick={async () => { await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout</button>
+          <button onClick={async () => { hashcodLawRecord(hashcodLawAssessPayload({ action: 'auth:logout', meta: { email: auth.user.email } })); await authFetch('/api/auth/logout', { method: 'POST' }); window.HASHCOD_CSRF = ''; setAuth({ loading: false, setupRequired: false, user: null }); setSessionsList([]); }}>Logout</button>
         </div>
         {!!sessionsList.length && (
           <div className="auth-session-list">
@@ -3868,6 +4042,7 @@ const AuthGate = ({ children }) => {
       if (mode === 'request') {
         setRequestInfo(data.request);
         setForm({ ...form, serial: data.request.serial });
+        hashcodLawRecord(hashcodLawAssessPayload({ action: 'auth:access-request', meta: { email: form.email, serial: data.request.serial, blowfishId: data.request.blowfishId } }));
         setNotice('Solicitud guardada. Blowfish: ' + data.request.blowfishId + ' | Serial: ' + data.request.serial);
         setMode('check');
         return;
@@ -3876,6 +4051,7 @@ const AuthGate = ({ children }) => {
         if (data.user) {
           window.HASHCOD_CSRF = data.csrf || '';
           applyServerPlan(data.user);
+          hashcodLawRecord(hashcodLawAssessPayload({ action: 'auth:access-approved', meta: { email: data.user.email, role: data.user.role } }));
           setAuth({ loading: false, setupRequired: false, user: data.user });
         } else {
           setNotice('Estado de solicitud: ' + data.status + '. Serial: ' + data.serial);
@@ -3890,6 +4066,7 @@ const AuthGate = ({ children }) => {
       window.HASHCOD_CSRF = data.csrf || '';
       if (data.recoveryCode) setNotice('Recovery code: ' + data.recoveryCode);
       applyServerPlan(data.user);
+      hashcodLawRecord(hashcodLawAssessPayload({ action: mode === 'setup' ? 'auth:admin-created' : 'auth:login', meta: { email: data.user?.email, role: data.user?.role } }));
       setAuth({ loading: false, setupRequired: false, user: data.user });
     } catch (err) {
       setError(mode === 'setup' ? 'No se pudo crear el primer usuario. Usa email real y una clave de 8+ caracteres.' : mode === 'request' ? 'Solicitud invalida. Usa un email real y escribe la clave que quieras usar.' : mode === 'check' ? 'No se pudo verificar. Revisa email, serial y clave.' : mode === 'recover' ? 'Recovery invalido o password debil.' : 'Login invalido.');
@@ -11539,6 +11716,11 @@ const App = () => {
     if (!items.length) return;
     COPY_DB.addMany(items, mode);
     syncCopyDb();
+    hashcodLawRecord(hashcodLawAssessPayload({
+      action: 'database:save',
+      text: items.slice(0, 12).map(item => `${item.type || ''}:${item.value || ''}`).join('\n'),
+      meta: { mode, count: items.length },
+    }));
     const first = items[0];
     if (first) {
       authFetch('/api/phone-os/send', {
@@ -11673,15 +11855,25 @@ const App = () => {
       generated: prev.generated + total,
       unique: seen.size,
     }));
+    hashcodLawRecord(hashcodLawAssessPayload({
+      action: 'generate',
+      text: items.slice(0, 18).map(item => item.value).join('\n'),
+      meta: { count: total, typeId: selectedType.id, categoryId: selectedCat?.id || '' },
+    }));
     setBusy(false);
     if (outRef.current) outRef.current.scrollTop = 0;
     if (activePlan.id === 'free') {
       setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
     }
-  }, [selectedType, length, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
+  }, [selectedType, selectedCat, length, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
 
-  const clearOutput = () => { setOutput([]); notify(t('outputCleared')); };
+  const clearOutput = () => {
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'output:clear', meta: { count: output.length } }));
+    setOutput([]);
+    notify(t('outputCleared'));
+  };
   const newSession = () => {
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'session:new', meta: { output: output.length, database: copyDb.length } }));
     setOutput([]);
     setQuery('');
     setSelectedId('aes256');
@@ -12149,6 +12341,7 @@ const App = () => {
       return;
     }
     const payload = sessionToJson({ output, selectedId, selectedCatId, length, qty, prefix, charset, stats });
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'session:save', filename: `opencriptG-session-${tsStamp()}.ocg.json`, text: payload, meta: { output: output.length } }));
     triggerDownload(`opencriptG-session-${tsStamp()}.ocg.json`, payload, 'application/json;charset=utf-8');
     notify(t('sessionSaved'));
   };
@@ -12190,6 +12383,12 @@ const App = () => {
         setCharset(st.charset || { upper: true, lower: true, num: true, sym: false });
         setStats(st.stats || { generated: cleanOutput.length, unique: new Set(cleanOutput.map(r => r.value)).size, sessionStart: Date.now() });
         idRef.current = Math.max(0, ...cleanOutput.map(r => Number(r.id || r.idx || 0)));
+        hashcodLawRecord(hashcodLawAssessPayload({
+          action: 'session:load',
+          filename: file.name,
+          text: cleanOutput.slice(0, 18).map(row => row.value).join('\n'),
+          meta: { output: cleanOutput.length },
+        }));
         notify(t('sessionLoaded'));
       } catch (err) {
         notify(t('invalidSession'));
@@ -12316,8 +12515,18 @@ const App = () => {
     if (!MOUNTAIN_TOOL_CONFIG[key]) return;
     setMountainToolOpen(key);
   };
-  const clearDatabase = () => { COPY_DB.clear(); syncCopyDb(); notify(t('databaseCleared')); };
-  const deleteDatabaseRow = (id) => { COPY_DB.remove(id); syncCopyDb(); };
+  const clearDatabase = () => {
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'database:clear', meta: { count: copyDb.length } }));
+    COPY_DB.clear();
+    syncCopyDb();
+    notify(t('databaseCleared'));
+  };
+  const deleteDatabaseRow = (id) => {
+    const row = copyDb.find(item => item.id === id);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'database:delete', text: row?.value || '', meta: { id, type: row?.type || '' } }));
+    COPY_DB.remove(id);
+    syncCopyDb();
+  };
   const applyCodeGuiEdit = (id, value) => {
     setOutput(prev => prev.map(row => row.id === id ? { ...row, value: String(value || ''), editedAt: Date.now() } : row));
     setCodeGuiRow(prev => prev?.id === id ? { ...prev, value: String(value || ''), editedAt: Date.now() } : prev);
@@ -12326,11 +12535,13 @@ const App = () => {
   const exportDatabase = () => {
     if (!planAllows('databaseExport', language === 'es' ? 'Exportar base de datos requiere Starter o superior.' : 'Database export requires Starter or higher.')) return;
     const payload = JSON.stringify(copyDb, null, 2);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'database:export', filename: `opencriptG-copy-database-${tsStamp()}.json`, text: payload, meta: { count: copyDb.length } }));
     triggerDownload(`opencriptG-copy-database-${tsStamp()}.json`, payload, 'application/json;charset=utf-8');
     notify(t('databaseExported'));
   };
   const copyDatabaseRow = (row) => {
     navigator.clipboard?.writeText(row.value);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'database:copy', text: row.value, meta: { id: row.id, type: row.type } }));
     notify(t('valuesCopied', { count: 1 }));
   };
 
