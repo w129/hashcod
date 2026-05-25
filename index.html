@@ -8,22 +8,19 @@
   <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
   <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="app/styles.css?v=identity-platform-1" />
+  <link rel="stylesheet" href="app/styles.css?v=codec-pro-1" />
   <link rel="stylesheet" href="app/vault.css?v=v12-siphash-2" />
   <link rel="stylesheet" href="app/tour.css?v=enterprise-tour-1" />
   <style>
-    .instant-auth{min-height:100vh;display:grid;place-items:start center;padding:28px 16px;background:linear-gradient(#e8e8e5 1px,transparent 1px),linear-gradient(90deg,#e8e8e5 1px,transparent 1px),#f4f4f1;background-size:32px 32px;color:#f5f5f5;font-family:"JetBrains Mono","Courier New",monospace}
+    @font-face{font-family:"Codec Pro";src:local("Codec Pro"),local("Codec Pro Regular"),local("CodecPro"),local("CodecPro-Regular");font-display:swap}
+    .instant-auth{min-height:100vh;display:grid;place-items:start center;padding:28px 16px;background:linear-gradient(#e8e8e5 1px,transparent 1px),linear-gradient(90deg,#e8e8e5 1px,transparent 1px),#f4f4f1;background-size:32px 32px;color:#f5f5f5;font-family:"Codec Pro","CodecPro","Segoe UI",Arial,sans-serif}
     .instant-card{width:min(1040px,calc(100vw - 42px));max-height:calc(100dvh - 56px);overflow:auto;border:1px solid #2a2a2a;background:radial-gradient(circle at 14% 18%,rgba(245,245,245,.08),transparent 28%),linear-gradient(135deg,#1a1a1a 0%,#101010 58%,#0a0a0a 100%);box-shadow:22px 22px 0 rgba(0,0,0,.22)}
     .instant-hero{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:34px;padding:32px 42px 22px;border-bottom:1px solid #2a2a2a}
     .instant-mark{width:56px;height:56px;display:grid;place-items:center;background:#0f0f0f;border:1px solid #2a2a2a;box-shadow:8px 8px 0 #050505;margin-bottom:14px}.instant-mark svg{width:28px;height:28px}
-    .instant-k{display:block;color:#a3a3a3;font-size:10px;letter-spacing:5px;text-transform:uppercase;margin-bottom:14px}.instant-card h1{margin:0 0 12px;font-family:Georgia,serif;font-size:clamp(46px,7vw,76px);line-height:1;text-shadow:4px 4px 0 #000}.instant-card p{margin:0;color:#a3a3a3;font-size:14px;line-height:1.55}
+    .instant-k{display:block;color:#a3a3a3;font-size:10px;letter-spacing:5px;text-transform:uppercase;margin-bottom:14px}.instant-card h1{margin:0 0 12px;font-family:"Codec Pro","CodecPro","Segoe UI",Arial,sans-serif;font-size:clamp(46px,7vw,76px);line-height:1;text-shadow:4px 4px 0 #000}.instant-card p{margin:0;color:#a3a3a3;font-size:14px;line-height:1.55}
     .instant-hand{border:1px solid #2a2a2a;background:linear-gradient(#202020 1px,transparent 1px),linear-gradient(90deg,#202020 1px,transparent 1px),#0f0f0f;background-size:14px 14px;padding:16px;display:grid;gap:10px;align-content:start}.instant-hand b{font-size:11px;letter-spacing:2.4px}.instant-hand span{display:flex;gap:9px;align-items:center;color:#d4d4d4;font-size:11px}.instant-hand i{width:8px;height:8px;background:#f5f5f5;box-shadow:0 0 0 3px rgba(245,245,245,.12)}
     .instant-flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0 42px 18px;background:#2a2a2a;border:1px solid #2a2a2a}.instant-flow span{background:#141414;padding:12px;text-align:center;color:#f5f5f5;font-size:9px;letter-spacing:2px;text-transform:uppercase}
-    .instant-form{display:grid;gap:14px;margin:0 42px 42px}.instant-form input{min-height:58px;border:1px solid #2a2a2a;background:#0f0f0f;color:#f5f5f5;padding:0 14px;font:14px "JetBrains Mono","Courier New",monospace}.instant-form button{min-height:60px;border:1px solid #f5f5f5;background:#f5f5f5;color:#0f0f0f;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.instant-status{display:none;border-left:4px solid #18884f;background:rgba(24,136,79,.12);color:#9ee6bd;padding:10px 12px;font-size:12px}
+    .instant-form{display:grid;gap:14px;margin:0 42px 42px}.instant-form input{min-height:58px;border:1px solid #2a2a2a;background:#0f0f0f;color:#f5f5f5;padding:0 14px;font:14px "Codec Pro","CodecPro","Segoe UI",Arial,sans-serif}.instant-form button{min-height:60px;border:1px solid #f5f5f5;background:#f5f5f5;color:#0f0f0f;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase}.instant-status{display:none;border-left:4px solid #18884f;background:rgba(24,136,79,.12);color:#9ee6bd;padding:10px 12px;font-size:12px}
     @media(max-width:760px){.instant-card{width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}.instant-hero{grid-template-columns:1fr;padding:24px 18px 18px}.instant-flow{grid-template-columns:1fr 1fr}.instant-flow,.instant-form{margin-left:18px;margin-right:18px}.instant-card h1{font-size:clamp(42px,17vw,64px)}}
   </style>
 </head>
