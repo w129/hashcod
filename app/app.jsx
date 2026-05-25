@@ -13662,7 +13662,7 @@ const HashcodQuoteSystemDialog = ({ open, onClose, catalog = [], language, notif
   const filteredCodes = useMemo(() => {
     const q = query.trim().toLowerCase();
     const rows = q ? codeRows.filter(row => `${row.index} ${row.name} ${row.family} ${row.category} ${row.standard}`.toLowerCase().includes(q)) : codeRows;
-    return rows.slice(0, 240);
+    return rows;
   }, [codeRows, query]);
   const filteredTools = useMemo(() => {
     const q = query.trim().toLowerCase();
