@@ -158,10 +158,37 @@ const pdfEscape = (text) => ascii(text).replace(/\\/g, '\\\\').replace(/\(/g, '\
 const line = (x, y, text, size = 8, font = 'F2') =>
   `BT /${font} ${size} Tf ${x} ${y} Td (${pdfEscape(text)}) Tj ET\n`;
 
+const drawHashcodLogo = (x, y, size = 28) => {
+  const s = size;
+  const monitorX = x + s * 0.1;
+  const monitorY = y + s * 0.38;
+  const monitorW = s * 0.8;
+  const monitorH = s * 0.42;
+  const triTop = y + s * 0.5;
+  return [
+    'q',
+    '0 0 0 RG 0 0 0 rg',
+    `${Math.max(1, s * 0.07).toFixed(2)} w`,
+    `${monitorX.toFixed(2)} ${monitorY.toFixed(2)} m`,
+    `${(monitorX + monitorW).toFixed(2)} ${monitorY.toFixed(2)} l`,
+    `${(monitorX + monitorW).toFixed(2)} ${(monitorY + monitorH).toFixed(2)} l`,
+    `${monitorX.toFixed(2)} ${(monitorY + monitorH).toFixed(2)} l`,
+    `${monitorX.toFixed(2)} ${(monitorY + s * 0.1).toFixed(2)} l`,
+    'S',
+    `${(x + s * 0.5).toFixed(2)} ${triTop.toFixed(2)} m`,
+    `${(x + s * 0.23).toFixed(2)} ${(y + s * 0.05).toFixed(2)} l`,
+    `${(x + s * 0.77).toFixed(2)} ${(y + s * 0.05).toFixed(2)} l`,
+    'h f',
+    'Q',
+    '',
+  ].join('\n');
+};
+
 const drawHeader = (pageNo, totalPages) => {
   let s = '';
-  s += line(34, 564, 'Hashcod', 18, 'F1');
-  s += line(132, 568, 'Cryptographic Code Pricing Catalog', 11, 'F2');
+  s += drawHashcodLogo(34, 556, 28);
+  s += line(72, 564, 'Hashcod', 18, 'F1');
+  s += line(162, 568, 'Cryptographic Code Pricing Catalog', 11, 'F2');
   s += line(724, 568, `Page ${pageNo}/${totalPages}`, 8, 'F2');
   s += '0.75 w 34 552 m 808 552 l S\n';
   return s;
