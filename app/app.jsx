@@ -2427,6 +2427,7 @@ const TOP_MENU_ICONS = {
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
+  complexEntropy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 22v-5"/><path d="M14 19v-2"/><path d="M18 20v-3"/><path d="M2 13h20"/><path d="M6 20v-3"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
   latticeLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="m8.5 14 7-4"/><path d="m8.5 10 7 4"/></svg>`,
@@ -7396,6 +7397,249 @@ const UniversalFileViewerDialog = ({ open, onClose, notify, language }) => {
           <main className="fileview-main">
             {error && <div className="fileview-error">{error}</div>}
             {renderPreview()}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const ComplexEntropyMapDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const canvasRef = useRef(null);
+  const [selectedId, setSelectedId] = useState('');
+  const [manual, setManual] = useState('');
+  const [result, setResult] = useState(null);
+  const sourceRows = useMemo(() => [...outputRows, ...rows].filter(row => row?.value).slice(0, 900), [rows, outputRows]);
+  const selectedRow = sourceRows.find(row => String(row.id || row.idx || row.value) === selectedId) || sourceRows[0] || null;
+  const valueToAnalyze = manual.trim() || selectedRow?.value || '';
+
+  const bytesFromText = (text) => Array.from(new TextEncoder().encode(String(text || '')));
+  const entropyOf = (bytes) => {
+    if (!bytes.length) return 0;
+    const freq = new Array(256).fill(0);
+    bytes.forEach(b => { freq[b] += 1; });
+    return freq.reduce((sum, count) => {
+      if (!count) return sum;
+      const p = count / bytes.length;
+      return sum - p * Math.log2(p);
+    }, 0);
+  };
+  const checksumHex = (bytes) => {
+    let acc = 0x811c9dc5;
+    bytes.forEach((b, i) => {
+      acc ^= (b + i) & 0xff;
+      acc = Math.imul(acc, 0x01000193) >>> 0;
+    });
+    return acc.toString(16).padStart(8, '0').toUpperCase();
+  };
+  const analyzeComplex = (text, row = null) => {
+    const bytes = bytesFromText(text);
+    const points = [];
+    const radial = new Array(12).fill(0);
+    const angular = new Array(16).fill(0);
+    const quadrants = [0, 0, 0, 0];
+    let radiusSum = 0;
+    let radiusSq = 0;
+    for (let i = 0; i < bytes.length - 1; i += 2) {
+      const re = (bytes[i] - 127.5) / 127.5;
+      const im = (bytes[i + 1] - 127.5) / 127.5;
+      const radius = Math.min(Math.sqrt(re * re + im * im), Math.SQRT2);
+      const angle = Math.atan2(im, re);
+      const rBin = Math.min(radial.length - 1, Math.floor((radius / Math.SQRT2) * radial.length));
+      const aBin = Math.min(angular.length - 1, Math.floor(((angle + Math.PI) / (Math.PI * 2)) * angular.length));
+      const q = re >= 0 && im >= 0 ? 0 : re < 0 && im >= 0 ? 1 : re < 0 && im < 0 ? 2 : 3;
+      radial[rBin] += 1;
+      angular[aBin] += 1;
+      quadrants[q] += 1;
+      radiusSum += radius;
+      radiusSq += radius * radius;
+      if (points.length < 3600) points.push({ re, im, radius, angle, q });
+    }
+    const pointCount = Math.max(1, points.length);
+    const entropy = entropyOf(bytes);
+    const entropyScore = Math.min(100, Math.max(0, (entropy / 8) * 100));
+    const maxRadial = Math.max(...radial, 0);
+    const maxAngular = Math.max(...angular, 0);
+    const maxQuadrant = Math.max(...quadrants, 0);
+    const minQuadrant = Math.min(...quadrants, 0);
+    const radialConcentration = (maxRadial / pointCount) * 100;
+    const angularConcentration = (maxAngular / pointCount) * 100;
+    const quadrantBalance = Math.max(0, 100 - ((maxQuadrant - minQuadrant) / pointCount) * 100);
+    const radiusMean = radiusSum / pointCount;
+    const radiusStd = Math.sqrt(Math.max(0, radiusSq / pointCount - radiusMean * radiusMean));
+    const mirrorRisk = Math.min(100, Math.abs((quadrants[0] + quadrants[3]) - (quadrants[1] + quadrants[2])) / pointCount * 100);
+    const bandRisk = Math.min(100, Math.max(radialConcentration, angularConcentration) * 1.8);
+    const risk = Math.round(Math.min(100,
+      (100 - entropyScore) * 0.36 +
+      bandRisk * 0.24 +
+      (100 - quadrantBalance) * 0.22 +
+      mirrorRisk * 0.18
+    ));
+    const verdict = entropy < 2.5 || risk >= 88
+      ? 'CRITICAL'
+      : risk >= 70
+        ? 'HIGH RISK'
+        : risk >= 52
+          ? 'STRUCTURED / REVIEW'
+          : risk >= 34
+            ? 'WATCHLIST'
+            : 'CLEAR';
+    return {
+      id: `HC-CMPLX-${checksumHex(bytes)}`,
+      createdAt: new Date().toISOString(),
+      source: row ? `${String(row.idx || '000').padStart(3, '0')} | ${row.primitiveLabel || row.type || 'Hashcod code'}` : 'manual-input',
+      length: bytes.length,
+      points,
+      radial,
+      angular,
+      quadrants,
+      metrics: {
+        entropy: Number(entropy.toFixed(4)),
+        entropyScore: Math.round(entropyScore),
+        risk,
+        radialConcentration: Number(radialConcentration.toFixed(2)),
+        angularConcentration: Number(angularConcentration.toFixed(2)),
+        quadrantBalance: Number(quadrantBalance.toFixed(2)),
+        radiusMean: Number(radiusMean.toFixed(4)),
+        radiusStd: Number(radiusStd.toFixed(4)),
+        mirrorRisk: Number(mirrorRisk.toFixed(2)),
+      },
+      verdict,
+      recommendations: [
+        entropyScore < 72 ? L('Sube entropia o usa CSPRNG para generar este code.', 'Raise entropy or use CSPRNG to generate this code.') : L('Entropia aceptable para la muestra analizada.', 'Acceptable entropy for the analyzed sample.'),
+        quadrantBalance < 72 ? L('Revisa sesgo por cuadrantes en el plano complejo.', 'Review quadrant bias in the complex plane.') : L('Distribucion por cuadrantes estable.', 'Stable quadrant distribution.'),
+        bandRisk > 55 ? L('Se detectan bandas radiales/angulares; requiere revision.', 'Radial/angular bands detected; review required.') : L('No hay concentracion fuerte de bandas.', 'No strong band concentration.'),
+      ],
+    };
+  };
+  const drawComplexMap = (analysis = result) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !analysis) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const pad = 66;
+    const cx = w / 2;
+    const cy = h / 2;
+    const scale = Math.min(w, h) / 2 - pad;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.lineWidth = 1;
+    for (let i = -10; i <= 10; i++) {
+      const x = cx + (i / 10) * scale;
+      const y = cy + (i / 10) * scale;
+      ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, h - pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+    }
+    ctx.strokeStyle = '#A3A3A3';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, h - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, cy); ctx.lineTo(w - pad, cy); ctx.stroke();
+    ctx.strokeStyle = '#F5F5F5';
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(cx, cy, scale, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    analysis.points.forEach((point, idx) => {
+      const x = cx + point.re * scale;
+      const y = cy - point.im * scale;
+      const hue = [150, 205, 45, 325][point.q] || 180;
+      ctx.fillStyle = `hsla(${hue}, 90%, ${idx % 5 === 0 ? 68 : 55}%, .72)`;
+      ctx.fillRect(x - 1.4, y - 1.4, 2.8, 2.8);
+    });
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '18px "Codec Pro", "Segoe UI", Arial, sans-serif';
+    ctx.fillText('Hashcod Complex Entropy Map', 26, 34);
+    ctx.font = '12px "Codec Pro", "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = '#A3A3A3';
+    ctx.fillText(`${analysis.id} | ${analysis.verdict} | risk ${analysis.metrics.risk}/100 | entropy ${analysis.metrics.entropy}`, 26, 55);
+  };
+  const runAnalysis = () => {
+    if (!valueToAnalyze) {
+      notify?.(L('No hay code para analizar.', 'There is no code to analyze.'));
+      return;
+    }
+    const analysis = analyzeComplex(valueToAnalyze, manual.trim() ? null : selectedRow);
+    setResult(analysis);
+    setTimeout(() => drawComplexMap(analysis), 30);
+    notify?.(`${analysis.id} ${analysis.verdict}`);
+  };
+  useEffect(() => {
+    if (open && !selectedId && sourceRows[0]) setSelectedId(String(sourceRows[0].id || sourceRows[0].idx || sourceRows[0].value));
+  }, [open, selectedId, sourceRows]);
+  useEffect(() => {
+    if (open && !result && valueToAnalyze) setTimeout(runAnalysis, 60);
+  }, [open]);
+  useEffect(() => { if (open && result) setTimeout(() => drawComplexMap(result), 30); }, [open, result?.id]);
+  if (!open) return null;
+  const exportJson = () => {
+    if (!result) return;
+    const payload = { platform: 'Hashcod', tool: 'Complex Entropy Map', ...result, points: result.points.slice(0, 1200) };
+    triggerDownload(`Hashcod-ComplexEntropy-${result.id}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportPng = () => {
+    if (!result) return;
+    drawComplexMap(result);
+    canvasRef.current?.toBlob(blob => blob && triggerBlobDownload(`Hashcod-ComplexEntropy-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+  };
+  const fillFromSelected = () => setManual(selectedRow?.value || '');
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg complexdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h complex-head">
+          <div className="complex-title">
+            <span className="complex-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.complexEntropy}} />
+            <div>
+              <h2>{L('Complex Entropy Map', 'Complex Entropy Map')}</h2>
+              <p>{L('Convierte bytes del code en coordenadas complejas, mide entropia, balance, bandas y riesgo estructural.', 'Converts code bytes into complex coordinates and measures entropy, balance, bands, and structural risk.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="complex-shell">
+          <aside className="complex-side">
+            <label>
+              <span>{L('Code de la base', 'Database code')}</span>
+              <select value={selectedId} onChange={e => setSelectedId(e.target.value)}>
+                {sourceRows.length ? sourceRows.map(row => (
+                  <option key={String(row.id || row.idx || row.value)} value={String(row.id || row.idx || row.value)}>
+                    {String(row.idx || '000').padStart(3, '0')} | {row.primitiveLabel || row.type || 'Hashcod code'}
+                  </option>
+                )) : <option value="">{L('Sin codes guardados', 'No saved codes')}</option>}
+              </select>
+            </label>
+            <label>
+              <span>{L('Entrada manual opcional', 'Optional manual input')}</span>
+              <textarea value={manual} onChange={e => setManual(e.target.value)} placeholder={L('Pega aqui cualquier hash, token o code...', 'Paste any hash, token, or code here...')} spellCheck="false" />
+            </label>
+            <div className="complex-actions">
+              <button onClick={runAnalysis}>{L('Analizar', 'Analyze')}</button>
+              <button onClick={fillFromSelected} disabled={!selectedRow}>{L('Usar seleccionado', 'Use selected')}</button>
+              <button onClick={() => setManual('')}>{L('Limpiar', 'Clear')}</button>
+            </div>
+            {result && (
+              <div className="complex-stats">
+                <div><span>ID</span><b>{result.id}</b></div>
+                <div><span>{L('Veredicto', 'Verdict')}</span><b>{result.verdict}</b></div>
+                <div><span>{L('Riesgo', 'Risk')}</span><b>{result.metrics.risk}/100</b></div>
+                <div><span>{L('Entropia', 'Entropy')}</span><b>{result.metrics.entropy} bits</b></div>
+                <div><span>{L('Balance cuadrantes', 'Quadrant balance')}</span><b>{result.metrics.quadrantBalance}%</b></div>
+                <div><span>{L('Concentracion radial', 'Radial concentration')}</span><b>{result.metrics.radialConcentration}%</b></div>
+                <div><span>{L('Muestras complejas', 'Complex samples')}</span><b>{result.points.length}</b></div>
+                <div><span>{L('Longitud bytes', 'Byte length')}</span><b>{result.length}</b></div>
+              </div>
+            )}
+            <div className="complex-actions">
+              <button onClick={exportPng} disabled={!result}>PNG</button>
+              <button onClick={exportJson} disabled={!result}>JSON</button>
+            </div>
+            {result && <div className="complex-report">{result.recommendations.map(item => <p key={item}>{item}</p>)}</div>}
+          </aside>
+          <main className="complex-main">
+            <canvas ref={canvasRef} width="1180" height="780" />
           </main>
         </div>
       </section>
@@ -13536,6 +13780,7 @@ const App = () => {
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
+  const [complexEntropyOpen, setComplexEntropyOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
   const [latticeLabOpen, setLatticeLabOpen] = useState(false);
@@ -14375,6 +14620,7 @@ const App = () => {
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
+  const openComplexEntropy = () => setComplexEntropyOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
   const openLatticeLab = () => setLatticeLabOpen(true);
@@ -14630,6 +14876,12 @@ const App = () => {
     { label: language === 'es' ? 'Funciones trigonométricas y potencias' : 'Trig functions and powers', onClick: openGraphLab },
     { label: language === 'es' ? 'Descargar PDF / PNG' : 'Download PDF / PNG', onClick: openGraphLab },
   ];
+  const complexEntropyItems = [
+    { label: language === 'es' ? 'Abrir Complex Entropy Map' : 'Open Complex Entropy Map', onClick: openComplexEntropy },
+    { label: language === 'es' ? 'Mapa complejo desde bytes' : 'Complex map from bytes', onClick: openComplexEntropy },
+    { label: language === 'es' ? 'Entropia, cuadrantes y bandas' : 'Entropy, quadrants and bands', onClick: openComplexEntropy },
+    { label: language === 'es' ? 'Descargar PNG / JSON' : 'Download PNG / JSON', onClick: openComplexEntropy },
+  ];
   const securityKingItems = [
     { label: language === 'es' ? 'Abrir Security King' : 'Open Security King', onClick: openSecurityKing },
     { label: language === 'es' ? 'Usuarios, entradas y eventos' : 'Users, logins and events', onClick: openSecurityKing },
@@ -14853,6 +15105,7 @@ const App = () => {
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
+        complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
@@ -15015,6 +15268,8 @@ const App = () => {
       visualizador: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['abrir','subir','ver','pdf','imagen','video','audio','json','hex','sha256','help'] },
       graph: { open: openGraphLab, label: 'Graph Lab', verbs: ['plot','function','range','pdf','png','sin','cos','pow','help'] },
       graficadora: { open: openGraphLab, label: 'Graph Lab', verbs: ['graficar','funcion','rango','pdf','png','seno','coseno','potencia','help'] },
+      complexentropy: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','complex','entropy','map','quadrants','bands','png','json','risk'] },
+      complexmap: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','bytes','plane','risk','png','json'] },
       licenses: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
       licencias: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['emitir','catalogo','json','yaml','png','txt','copyright','plantilla','help'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
@@ -15064,7 +15319,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -15094,6 +15349,7 @@ const App = () => {
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
+      <ComplexEntropyMapDialog open={complexEntropyOpen} onClose={() => setComplexEntropyOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
       <LatticeLweLabDialog open={latticeLabOpen} onClose={() => setLatticeLabOpen(false)} notify={notify} language={language} />
@@ -15156,6 +15412,7 @@ const App = () => {
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
+            <MenuButton label="COMPLEX MAP" icon={TOP_MENU_ICONS.complexEntropy} iconOnly items={complexEntropyItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openComplexEntropy} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
