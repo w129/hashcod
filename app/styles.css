@@ -384,6 +384,46 @@ kbd {
   .lawdlg-score div { border-right:0; border-bottom:1px solid var(--line); }
   .lawdlg-score div:last-child { border-bottom:0; }
 }
+.hclicdlg { width:min(1240px, calc(100vw - 32px)); max-height:calc(100vh - 36px); display:flex; flex-direction:column; overflow:hidden; }
+.hclic-title { display:flex; align-items:center; gap:14px; min-width:0; }
+.hclic-mark { width:44px; height:44px; display:grid; place-items:center; background:#0F0F0F; color:#F5F5F5; border:1px solid #2A2A2A; flex:0 0 auto; }
+.hclic-mark svg { width:25px; height:25px; }
+.hclic-head h2 { margin:0; font-size:28px; }
+.hclic-head p { margin:5px 0 0; color:var(--ink-3); font-family:var(--mono); font-size:12px; line-height:1.45; }
+.hclic-shell { min-height:0; display:grid; grid-template-columns:340px minmax(0,1fr); border-top:1px solid var(--line); background:var(--bg); }
+.hclic-side { border-right:1px solid var(--line); background:var(--card); padding:15px; display:grid; gap:10px; align-content:start; overflow:auto; }
+.hclic-side label { display:grid; gap:6px; min-width:0; }
+.hclic-side label span, .hclic-stat span, .hclic-preview > span { color:var(--ink-4); font-family:var(--mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.hclic-side input, .hclic-side select { min-height:39px; border:1px solid var(--line-2); background:var(--bg); color:var(--ink); padding:0 10px; font-family:var(--mono); font-size:12px; min-width:0; }
+.hclic-side button { min-height:39px; border:1px solid var(--line-2); background:var(--ink); color:var(--bg); font-family:var(--mono); font-size:10px; letter-spacing:1.8px; text-transform:uppercase; }
+.hclic-side button:disabled { opacity:.45; cursor:not-allowed; }
+.hclic-stat { border:1px solid var(--line); background:var(--bg); padding:11px; display:grid; gap:5px; }
+.hclic-stat b { font-size:24px; }
+.hclic-main { min-width:0; min-height:640px; max-height:calc(100vh - 150px); overflow:auto; padding:16px; display:grid; grid-template-rows:auto minmax(0,1fr); gap:14px; }
+.hclic-preview { border:1px solid var(--line); background:var(--card); padding:16px; display:grid; gap:12px; }
+.hclic-preview h3 { margin:0; font-size:27px; line-height:1.08; }
+.hclic-preview p { margin:0; color:var(--ink-3); font-family:var(--mono); font-size:12px; line-height:1.5; }
+.hclic-preview div { display:grid; grid-template-columns:120px repeat(4,minmax(0,1fr)); gap:8px; align-items:start; border-top:1px solid var(--line); padding-top:10px; }
+.hclic-preview b { font-family:var(--mono); font-size:11px; letter-spacing:1.6px; text-transform:uppercase; }
+.hclic-preview em { font-style:normal; color:var(--ink-3); font-family:var(--mono); font-size:11px; line-height:1.4; }
+.hclic-records { display:grid; gap:9px; align-content:start; }
+.hclic-empty { border:1px dashed var(--line-2); padding:28px; color:var(--ink-3); font-family:var(--mono); }
+.hclic-records article { border:1px solid var(--line); background:var(--card); padding:11px; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto; gap:10px; align-items:center; }
+.hclic-records article div:first-child { display:grid; gap:5px; min-width:0; }
+.hclic-records span { color:var(--ink-4); font-family:var(--mono); font-size:9px; letter-spacing:1.7px; text-transform:uppercase; }
+.hclic-records b, .hclic-records code { font-family:var(--mono); font-size:11px; overflow-wrap:anywhere; }
+.hclic-records em { color:var(--ink-3); font-style:normal; font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hclic-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.hclic-actions button { min-height:30px; border:1px solid var(--line-2); background:var(--bg); color:var(--ink); padding:0 9px; font-family:var(--mono); font-size:9px; letter-spacing:1.2px; }
+.hclic-actions button:hover { background:var(--ink); color:var(--bg); }
+@media (max-width: 900px) {
+  .hclicdlg { width:calc(100vw - 14px); }
+  .hclic-shell { grid-template-columns:1fr; }
+  .hclic-side { border-right:0; border-bottom:1px solid var(--line); }
+  .hclic-main { min-height:520px; max-height:none; }
+  .hclic-preview div, .hclic-records article { grid-template-columns:1fr; }
+  .hclic-actions { justify-content:flex-start; }
+}
 .auth-session {
   position: fixed;
   right: 12px;

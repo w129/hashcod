@@ -2433,6 +2433,7 @@ const TOP_MENU_ICONS = {
   codeLibrary: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 11h8"/><path d="M8 7h6"/></svg>`,
   cryptoIde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="M19 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="m7 15 3 3"/><path d="m7 21 3-3H5a2 2 0 0 1-2-2v-2"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/></svg>`,
   hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
+  hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -3948,6 +3949,304 @@ const HashcodLawDialog = ({ open, onClose, rows = [], outputRows = [], notify, l
                 </div>
               </>
             )}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HASHCOD_LICENSE_FACTORY_KEY = 'hashcod_license_factory_records_v1';
+const HASHCOD_LICENSE_FAMILIES = [
+  ['HCL-SOFT', 'Software Source License', 'codigo fuente, apps, IDEs y librerias'],
+  ['HCL-API', 'API Access License', 'endpoints, integraciones y llaves API'],
+  ['HCL-DATA', 'Dataset License', 'datasets, tablas, entrenamientos y archivos'],
+  ['HCL-AI', 'AI Model License', 'modelos, prompts, agentes y pesos'],
+  ['HCL-TOKEN', 'Token Utility License', 'tokens, unidades, credits y vaults'],
+  ['HCL-MEDIA', 'Media Asset License', 'imagenes, video, audio y publicaciones'],
+  ['HCL-BRAND', 'Brand Evidence License', 'nombres, logos, slogans e identidad'],
+  ['HCL-PATTERN', 'Pattern Method License', 'metodos, formulas y patrones'],
+  ['HCL-HNS', 'HNS Namespace License', 'rutas hns, dominios internos y aliases'],
+  ['HCL-DEVICE', 'Device Pairing License', 'PC, phone, gateways y dispositivos'],
+  ['HCL-CONTAINER', 'Container Port License', 'contenedores, cajas e IH'],
+  ['HCL-EDU', 'Education License', 'cursos, guias, academias y tutoriales'],
+  ['HCL-COMM', 'Commercial Use License', 'ventas, revendedores y operaciones'],
+  ['HCL-ENTERPRISE', 'Enterprise Site License', 'equipos, sedes y departamentos'],
+  ['HCL-RESEARCH', 'Research License', 'laboratorios, pruebas y publicaciones'],
+  ['HCL-OEM', 'OEM Embed License', 'embebidos, marca blanca y fabricantes'],
+  ['HCL-SECURITY', 'Security Audit License', 'auditorias, pentest y evidencia'],
+  ['HCL-CLOUD', 'Cloud Deployment License', 'SaaS, Render, cloud y servidores'],
+  ['HCL-CREATOR', 'Creator Royalty License', 'creadores, royalties y afiliados'],
+  ['HCL-CUSTOM', 'Custom Hashcod License', 'cualquier activo especializado'],
+];
+const HASHCOD_LICENSE_MODES = [
+  ['PERSONAL', 'uso personal no transferible', 'sin sublicencia, sin reventa'],
+  ['TEAM', 'uso por equipo interno', 'limite por miembros declarados'],
+  ['COMMERCIAL', 'uso comercial controlado', 'mantener atribucion Hashcod'],
+  ['ENTERPRISE', 'uso empresarial amplio', 'auditoria y logs requeridos'],
+  ['OEM', 'integracion en producto propio', 'no remover sellos tecnicos'],
+  ['SaaS', 'explotacion como servicio', 'no entregar codigo fuente salvo pacto'],
+  ['RESEARCH', 'investigacion y prueba', 'sin produccion publica'],
+  ['EDUCATION', 'clases y entrenamiento', 'no venta directa del material'],
+  ['EXCLUSIVE', 'exclusividad privada', 'territorio y periodo definidos'],
+  ['NONEXCLUSIVE', 'uso no exclusivo', 'Hashcod puede emitir usos similares'],
+  ['TRIAL', 'prueba temporal', 'expira sin renovacion automatica'],
+  ['ROYALTY', 'royalty por uso/venta', 'declaracion periodica de ingresos'],
+  ['OPEN-USE', 'uso abierto con condiciones', 'sin garantia legal exclusiva'],
+  ['CONFIDENTIAL', 'uso bajo confidencialidad', 'no divulgar activo ni claves'],
+  ['API-SCOPE', 'uso limitado por scopes', 'revocable por abuso o fuga'],
+  ['DERIVATIVE', 'permite derivados controlados', 'derivados deben citar origen'],
+  ['DISTRIBUTION', 'distribucion empaquetada', 'conservar licencia y hashes'],
+  ['ARCHIVAL', 'evidencia y archivo', 'solo prueba documental'],
+  ['GOV-READY', 'paquete para tramite externo', 'no sustituye autoridad oficial'],
+  ['CUSTOM', 'terminos personalizados', 'requiere clausulas anexas'],
+];
+
+const buildHashcodLicenseCatalog = () => HASHCOD_LICENSE_FAMILIES.flatMap((family, familyIndex) =>
+  HASHCOD_LICENSE_MODES.map((mode, modeIndex) => {
+    const n = familyIndex * HASHCOD_LICENSE_MODES.length + modeIndex + 1;
+    const level = ['L1', 'L2', 'L3', 'L4', 'L5'][n % 5];
+    const rights = [
+      'usar',
+      n % 2 ? 'copiar internamente' : 'ejecutar en produccion',
+      n % 3 ? 'descargar certificados' : 'integrar con sistemas externos',
+      n % 4 ? 'crear evidencia Hashcod' : 'emitir derivados auditados',
+    ];
+    const restrictions = [
+      mode[2],
+      'no retirar marca Hashcod de documentos emitidos',
+      'no presentar esta licencia como registro gubernamental',
+      n % 2 ? 'mantener hashes y seriales de verificacion' : 'activar auditoria si se comparte con terceros',
+    ];
+    return {
+      id: `HCL-${String(n).padStart(4, '0')}`,
+      family: family[0],
+      title: `Hashcod ${family[1]} ${mode[0]}`,
+      assetClass: family[2],
+      mode: mode[0],
+      grant: mode[1],
+      level,
+      rights,
+      restrictions,
+      renewal: n % 4 === 0 ? 'manual review' : n % 3 === 0 ? 'annual renewal' : 'fixed term',
+      verification: `HCL-VERIFY-${family[0].replace('HCL-', '')}-${mode[0]}-${String(n).padStart(4, '0')}`,
+      summary: `${family[1]} para ${family[2]} con ${mode[1]}.`,
+    };
+  })
+);
+
+const HASHCOD_LICENSE_CATALOG_400 = buildHashcodLicenseCatalog();
+
+const readHashcodLicenseRecords = () => {
+  try {
+    const rows = safeJsonParse(localStorage.getItem(HASHCOD_LICENSE_FACTORY_KEY), []);
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeHashcodLicenseRecords = (rows) => {
+  try {
+    localStorage.setItem(HASHCOD_LICENSE_FACTORY_KEY, JSON.stringify((rows || []).slice(0, 2500)));
+  } catch {}
+};
+
+const yamlValue = (value) => JSON.stringify(String(value ?? ''));
+const hashcodLicenseToText = (license) => [
+  'HASHCOD PRIVATE LICENSE',
+  `ID: ${license.id}`,
+  `Serial: ${license.serial}`,
+  `Template: ${license.template.id} - ${license.template.title}`,
+  `Holder: ${license.holder}`,
+  `Asset: ${license.asset}`,
+  `Scope: ${license.scope}`,
+  `Term: ${license.term}`,
+  `Jurisdiction: ${license.jurisdiction}`,
+  `Issued: ${license.issuedAt}`,
+  `Hash: ${license.hash}`,
+  '',
+  'RIGHTS',
+  ...license.template.rights.map(item => `- ${item}`),
+  '',
+  'RESTRICTIONS',
+  ...license.template.restrictions.map(item => `- ${item}`),
+  '',
+  'NOTICE',
+  license.notice,
+].join('\n');
+
+const hashcodLicenseToYaml = (license) => [
+  'hashcod_license:',
+  `  id: ${yamlValue(license.id)}`,
+  `  serial: ${yamlValue(license.serial)}`,
+  `  holder: ${yamlValue(license.holder)}`,
+  `  asset: ${yamlValue(license.asset)}`,
+  `  scope: ${yamlValue(license.scope)}`,
+  `  term: ${yamlValue(license.term)}`,
+  `  jurisdiction: ${yamlValue(license.jurisdiction)}`,
+  `  issued_at: ${yamlValue(license.issuedAt)}`,
+  `  hash: ${yamlValue(license.hash)}`,
+  '  template:',
+  `    id: ${yamlValue(license.template.id)}`,
+  `    title: ${yamlValue(license.template.title)}`,
+  `    family: ${yamlValue(license.template.family)}`,
+  `    mode: ${yamlValue(license.template.mode)}`,
+  `    level: ${yamlValue(license.template.level)}`,
+  '  rights:',
+  ...license.template.rights.map(item => `    - ${yamlValue(item)}`),
+  '  restrictions:',
+  ...license.template.restrictions.map(item => `    - ${yamlValue(item)}`),
+  `  notice: ${yamlValue(license.notice)}`,
+].join('\n');
+
+const HashcodLicenseFactoryDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const [records, setRecords] = useState(() => readHashcodLicenseRecords());
+  const [query, setQuery] = useState('');
+  const [templateId, setTemplateId] = useState('HCL-0001');
+  const [holder, setHolder] = useState('');
+  const [asset, setAsset] = useState('');
+  const [scope, setScope] = useState('');
+  const [term, setTerm] = useState('12 meses');
+  const [jurisdiction, setJurisdiction] = useState('Private Hashcod ecosystem');
+  const selectedTemplate = useMemo(() => HASHCOD_LICENSE_CATALOG_400.find(item => item.id === templateId) || HASHCOD_LICENSE_CATALOG_400[0], [templateId]);
+  const filteredTemplates = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return HASHCOD_LICENSE_CATALOG_400;
+    return HASHCOD_LICENSE_CATALOG_400.filter(item => JSON.stringify(item).toLowerCase().includes(q));
+  }, [query]);
+
+  useEffect(() => {
+    if (!open) return;
+    setRecords(readHashcodLicenseRecords());
+  }, [open]);
+
+  if (!open) return null;
+
+  const saveRecords = (next) => {
+    setRecords(next);
+    writeHashcodLicenseRecords(next);
+  };
+  const issueLicense = async () => {
+    const issuedAt = new Date().toISOString();
+    const source = rows[0]?.value || '';
+    const base = [selectedTemplate.id, holder, asset, scope, term, jurisdiction, issuedAt, source, mountainRand(16)].join('|');
+    const hash = (await digestHex(base)).toUpperCase();
+    const license = {
+      id: `HASHCOD-LIC-${hash.slice(0, 8)}-${hash.slice(8, 16)}`,
+      serial: `HCL-${selectedTemplate.id.slice(-4)}-${hash.slice(16, 24)}-${hash.slice(24, 32)}`,
+      holder: holder.trim() || 'Unassigned holder',
+      asset: asset.trim() || selectedTemplate.assetClass,
+      scope: scope.trim() || selectedTemplate.grant,
+      term: term.trim() || '12 meses',
+      jurisdiction: jurisdiction.trim() || 'Private Hashcod ecosystem',
+      issuedAt,
+      sourceCodeHash: source ? (await digestHex(source)).toUpperCase() : '',
+      template: selectedTemplate,
+      hash,
+      notice: 'Licencia privada generada por Hashcod. No sustituye asesoria legal, registro oficial, ONAPI, ONDA, contrato notarial ni autoridad competente.',
+      brand: hashcodDownloadBrand(),
+    };
+    saveRecords([license, ...records]);
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'license:issue', text: hashcodLicenseToText(license), meta: { licenseId: license.id, templateId: selectedTemplate.id } }));
+    notify?.(L('Licencia Hashcod emitida', 'Hashcod license issued'));
+  };
+  const downloadJson = (license) => triggerDownload(`${license.id}.json`, JSON.stringify({ hashcod_license: license }, null, 2), 'application/json;charset=utf-8');
+  const downloadYaml = (license) => triggerDownload(`${license.id}.yaml`, hashcodLicenseToYaml(license), 'text/yaml;charset=utf-8');
+  const downloadText = (license) => triggerDownload(`${license.id}.txt`, hashcodLicenseToText(license), 'text/plain;charset=utf-8');
+  const downloadPng = async (license) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 760;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '700 58px Georgia, serif';
+    ctx.fillText('Hashcod License', 72, 126);
+    ctx.font = '700 24px Consolas, monospace';
+    ctx.fillText(license.id, 74, 178);
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '18px Consolas, monospace';
+    const lines = [
+      `Template: ${license.template.id} | ${license.template.title}`,
+      `Holder: ${license.holder}`,
+      `Asset: ${license.asset}`,
+      `Scope: ${license.scope}`,
+      `Term: ${license.term}`,
+      `Serial: ${license.serial}`,
+      `Hash: ${license.hash}`,
+      license.notice,
+    ];
+    lines.forEach((line, i) => ctx.fillText(line.slice(0, 105), 76, 240 + i * 48));
+    canvas.toBlob(blob => blob && triggerBlobDownload(`${license.id}.png`, blob), 'image/png');
+  };
+  const exportCatalog = () => {
+    triggerDownload(`Hashcod-400-license-catalog-${tsStamp()}.json`, JSON.stringify({ total: HASHCOD_LICENSE_CATALOG_400.length, licenses: HASHCOD_LICENSE_CATALOG_400 }, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportRecords = () => {
+    triggerDownload(`Hashcod-issued-licenses-${tsStamp()}.json`, JSON.stringify({ total: records.length, records }, null, 2), 'application/json;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg hclicdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h hclic-head">
+          <div className="hclic-title">
+            <span className="hclic-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLicenseFactory}} />
+            <div>
+              <h2>{L('Hashcod License Factory', 'Hashcod License Factory')}</h2>
+              <p>{L('Crea licencias privadas Hashcod especializadas: 400 plantillas distintas para software, IA, API, marcas, datos, tokens y cualquier activo.', 'Create specialized private Hashcod licenses: 400 distinct templates for software, AI, API, brands, data, tokens and any asset.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="hclic-shell">
+          <aside className="hclic-side">
+            <div className="hclic-stat"><span>{L('Plantillas', 'Templates')}</span><b>{HASHCOD_LICENSE_CATALOG_400.length}</b></div>
+            <div className="hclic-stat"><span>{L('Emitidas', 'Issued')}</span><b>{records.length}</b></div>
+            <label><span>{L('Buscar tipo', 'Search type')}</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="API, AI, OEM, token..." /></label>
+            <label><span>{L('Plantilla Hashcod', 'Hashcod template')}</span><select value={templateId} onChange={e => setTemplateId(e.target.value)}>{filteredTemplates.map(item => <option key={item.id} value={item.id}>{item.id} | {item.title}</option>)}</select></label>
+            <label><span>{L('Titular', 'Holder')}</span><input value={holder} onChange={e => setHolder(e.target.value)} placeholder="Nombre / empresa / usuario" /></label>
+            <label><span>{L('Activo', 'Asset')}</span><input value={asset} onChange={e => setAsset(e.target.value)} placeholder="App, API, logo, token, dataset..." /></label>
+            <label><span>{L('Alcance', 'Scope')}</span><input value={scope} onChange={e => setScope(e.target.value)} placeholder={selectedTemplate.grant} /></label>
+            <label><span>{L('Tiempo', 'Term')}</span><input value={term} onChange={e => setTerm(e.target.value)} /></label>
+            <label><span>{L('Jurisdiccion privada', 'Private jurisdiction')}</span><input value={jurisdiction} onChange={e => setJurisdiction(e.target.value)} /></label>
+            <button onClick={issueLicense}>{L('Emitir licencia', 'Issue license')}</button>
+            <button onClick={exportCatalog}>{L('Descargar catalogo 400', 'Download 400 catalog')}</button>
+            <button onClick={exportRecords} disabled={!records.length}>{L('Exportar emitidas', 'Export issued')}</button>
+          </aside>
+          <main className="hclic-main">
+            <section className="hclic-preview">
+              <span>{selectedTemplate.family} | {selectedTemplate.level}</span>
+              <h3>{selectedTemplate.title}</h3>
+              <p>{selectedTemplate.summary}</p>
+              <div>
+                <b>{L('Derechos', 'Rights')}</b>
+                {selectedTemplate.rights.map(item => <em key={item}>{item}</em>)}
+              </div>
+              <div>
+                <b>{L('Restricciones', 'Restrictions')}</b>
+                {selectedTemplate.restrictions.map(item => <em key={item}>{item}</em>)}
+              </div>
+            </section>
+            <section className="hclic-records">
+              {!records.length ? <div className="hclic-empty">{L('Aun no hay licencias emitidas.', 'No issued licenses yet.')}</div> : records.slice(0, 100).map(license => (
+                <article key={license.id}>
+                  <div><span>{license.template.id}</span><b>{license.id}</b><em>{license.holder} | {license.asset}</em></div>
+                  <code>{license.serial}</code>
+                  <div className="hclic-actions">
+                    <button onClick={() => downloadJson(license)}>JSON</button>
+                    <button onClick={() => downloadYaml(license)}>YAML</button>
+                    <button onClick={() => downloadText(license)}>TXT</button>
+                    <button onClick={() => downloadPng(license)}>PNG</button>
+                  </div>
+                </article>
+              ))}
+            </section>
           </main>
         </div>
       </section>
@@ -11636,6 +11935,7 @@ const App = () => {
   const [codeLibraryOpen, setCodeLibraryOpen] = useState(false);
   const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
   const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
+  const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -12465,6 +12765,7 @@ const App = () => {
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
   const openLatticeLab = () => setLatticeLabOpen(true);
+  const openHashcodLicenses = () => setHashcodLicensesOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -12720,6 +13021,11 @@ const App = () => {
     { label: 'b = A*s + e mod q', onClick: openLatticeLab },
     { label: language === 'es' ? 'Exportar instancia JSON/YAML' : 'Export JSON/YAML instance', onClick: openLatticeLab },
   ];
+  const hashcodLicenseItems = [
+    { label: language === 'es' ? 'Abrir License Factory' : 'Open License Factory', onClick: openHashcodLicenses },
+    { label: language === 'es' ? '400 plantillas Hashcod' : '400 Hashcod templates', onClick: openHashcodLicenses },
+    { label: language === 'es' ? 'Emitir JSON / YAML / TXT / PNG' : 'Issue JSON / YAML / TXT / PNG', onClick: openHashcodLicenses },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -12912,6 +13218,7 @@ const App = () => {
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
+        licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -13053,6 +13360,8 @@ const App = () => {
       visualizador: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['abrir','subir','ver','pdf','imagen','video','audio','json','hex','sha256','help'] },
       graph: { open: openGraphLab, label: 'Graph Lab', verbs: ['plot','function','range','pdf','png','sin','cos','pow','help'] },
       graficadora: { open: openGraphLab, label: 'Graph Lab', verbs: ['graficar','funcion','rango','pdf','png','seno','coseno','potencia','help'] },
+      licenses: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
+      licencias: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['emitir','catalogo','json','yaml','png','txt','copyright','plantilla','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -13078,7 +13387,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -13114,6 +13423,7 @@ const App = () => {
       <CodeLibraryDialog open={codeLibraryOpen} onClose={() => setCodeLibraryOpen(false)} catalog={catalog} language={language} />
       <CryptoIdeDialog open={cryptoIdeOpen} onClose={() => setCryptoIdeOpen(false)} notify={notify} language={language} />
       <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
+      <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -13167,6 +13477,7 @@ const App = () => {
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
+            <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -13286,6 +13597,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setHashcodLawOpen(true)} title={language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law'} aria-label={language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} />
                 <b>Law</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setHashcodLicensesOpen(true)} title={language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory'} aria-label={language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLicenseFactory}} />
+                <b>Licenses</b>
               </button>
             </div>
           </div>
