@@ -6532,3 +6532,7 @@ textarea,
 .ocgu-qrdata-plain {
   font-family: var(--mono) !important;
 }
+
+.tb-name b {
+  font-family: 'Codec Pro', var(--ui) !important;
+}
