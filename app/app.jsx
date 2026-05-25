@@ -6567,10 +6567,29 @@ const HASHCOD_TRANSLATOR_GLOSSARY = [
   ['código de acceso', 'access code'],
   ['panel de admin', 'admin panel'],
   ['panel administrador', 'administrator panel'],
+  ['code seleccionado', 'selected code'],
+  ['codigo seleccionado', 'selected code'],
+  ['código seleccionado', 'selected code'],
+  ['valor', 'value'],
+  ['documentacion tecnica', 'technical documentation'],
+  ['documentación técnica', 'technical documentation'],
+  ['uso seguro', 'secure use'],
+  ['modo seguro', 'secure mode'],
+  ['texto tecnico', 'technical text'],
+  ['texto técnico', 'technical text'],
+  ['datos sensibles', 'sensitive data'],
+  ['bloque de codigo', 'code block'],
+  ['bloque de código', 'code block'],
+  ['bloques de code', 'code blocks'],
+  ['salida en ingles', 'English output'],
+  ['salida en inglés', 'English output'],
+  ['texto en espanol', 'Spanish text'],
+  ['texto en español', 'Spanish text'],
   ['descargar', 'download'],
   ['descarga', 'download'],
   ['subir', 'upload'],
   ['guardar', 'save'],
+  ['guardar en', 'save in'],
   ['guardado', 'saved'],
   ['generar', 'generate'],
   ['generado', 'generated'],
@@ -6583,6 +6602,8 @@ const HASHCOD_TRANSLATOR_GLOSSARY = [
   ['copiar', 'copy'],
   ['exportar', 'export'],
   ['traducir', 'translate'],
+  ['traduccion', 'translation'],
+  ['traducción', 'translation'],
   ['traductor', 'translator'],
   ['herramienta', 'tool'],
   ['plataforma', 'platform'],
@@ -6616,6 +6637,14 @@ const HASHCOD_TRANSLATOR_GLOSSARY = [
   ['clave', 'key'],
   ['claves', 'keys'],
   ['texto', 'text'],
+  ['necesito', 'I need'],
+  ['explicarlo', 'to explain it'],
+  ['explicar', 'explain'],
+  ['documentacion', 'documentation'],
+  ['documentación', 'documentation'],
+  ['tecnica', 'technical'],
+  ['técnica', 'technical'],
+  ['uso', 'use'],
   ['español', 'Spanish'],
   ['ingles', 'English'],
   ['inglés', 'English'],
@@ -6649,6 +6678,10 @@ const HASHCOD_TRANSLATOR_GLOSSARY = [
 ];
 
 const HASHCOD_TRANSLATOR_COMMON = [
+  ['Necesito explicarlo en ingles para documentacion tecnica y uso seguro.', 'I need to explain it in English for technical documentation and secure use.'],
+  ['Necesito explicarlo en inglés para documentación técnica y uso seguro.', 'I need to explain it in English for technical documentation and secure use.'],
+  ['Necesito explicar este code en ingles para documentacion tecnica y uso seguro.', 'I need to explain this code in English for technical documentation and secure use.'],
+  ['Necesito explicar este code en inglés para documentación técnica y uso seguro.', 'I need to explain this code in English for technical documentation and secure use.'],
   ['para que', 'so that'],
   ['por favor', 'please'],
   ['quiero que', 'I want you to'],
@@ -6714,6 +6747,15 @@ const HASHCOD_TRANSLATOR_COMMON = [
   ['o', 'or'],
 ];
 
+const HASHCOD_TRANSLATOR_DIRECT_RULES = [
+  [/^Code seleccionado:/gim, 'Selected code:'],
+  [/^C[oó]digo seleccionado:/gim, 'Selected code:'],
+  [/^Valor:/gim, 'Value:'],
+  [/Necesito explicarlo en ingl[eé]s para documentaci[oó]n t[eé]cnica y uso seguro\.?/gi, 'I need to explain it in English for technical documentation and secure use.'],
+  [/Necesito explicar este code en ingl[eé]s para documentaci[oó]n t[eé]cnica y uso seguro\.?/gi, 'I need to explain this code in English for technical documentation and secure use.'],
+  [/Necesito explicar este c[oó]digo en ingl[eé]s para documentaci[oó]n t[eé]cnica y uso seguro\.?/gi, 'I need to explain this code in English for technical documentation and secure use.'],
+];
+
 const HASHCOD_TRANSLATOR_PROTECTED_RE = /```[\s\S]*?```|`[^`\n]+`|https?:\/\/[^\s)]+|hns:\/\/[^\s)]+|\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b|\b[A-Fa-f0-9]{24,}\b|\b[A-Za-z0-9+/_-]{28,}={0,2}\b|\b(?:AES|SHA|HMAC|HKDF|PBKDF2|ARGON2|BLAKE|BLAKE3|CHACHA|XCHACHA|POLY1305|ED25519|ECDSA|RSA|KYBER|DILITHIUM|SPHINCS|FALCON|HNS|HOS|HCP|JWT|API|QR|UUID|GOST|SM4|CAST|SERPENT|LWE|PQC)[A-Za-z0-9_.:+/-]*\b/g;
 
 const escapeTranslatorRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -6740,7 +6782,9 @@ const normalizeTranslatorPunctuation = (value = '') => String(value)
   .replace(/\s+([,.;:!?])/g, '$1')
   .replace(/([¿¡])/g, '')
   .replace(/\b(\w+)\s+\1\b/gi, '$1')
-  .replace(/\s{2,}/g, ' ')
+  .replace(/[ \t]{2,}/g, ' ')
+  .replace(/[ \t]+\n/g, '\n')
+  .replace(/\n[ \t]+/g, '\n')
   .trim();
 
 const translateSpanishCryptoText = (source = '') => {
@@ -6750,6 +6794,14 @@ const translateSpanishCryptoText = (source = '') => {
   const replacements = [...HASHCOD_TRANSLATOR_GLOSSARY, ...HASHCOD_TRANSLATOR_COMMON]
     .sort((a, b) => b[0].length - a[0].length);
   let translated = text;
+  HASHCOD_TRANSLATOR_DIRECT_RULES.forEach(([pattern, to]) => {
+    pattern.lastIndex = 0;
+    if (pattern.test(translated)) {
+      used.add(`direct -> ${to}`);
+      pattern.lastIndex = 0;
+      translated = translated.replace(pattern, to);
+    }
+  });
   replacements.forEach(([from, to]) => {
     const pattern = new RegExp(`\\b${escapeTranslatorRegex(from)}\\b`, 'gi');
     if (pattern.test(translated)) {
@@ -6769,6 +6821,17 @@ const translateSpanishCryptoText = (source = '') => {
     .replace(/\bal\b/gi, 'to the')
     .replace(/\bsi\b/gi, 'if')
     .replace(/\bno\b/gi, 'not')
+    .replace(/\bnecesito\b/gi, 'I need')
+    .replace(/\bexplicarlo\b/gi, 'to explain it')
+    .replace(/\bexplicar\b/gi, 'explain')
+    .replace(/\bdocumentacion\b/gi, 'documentation')
+    .replace(/\bdocumentación\b/gi, 'documentation')
+    .replace(/\btecnica\b/gi, 'technical')
+    .replace(/\btécnica\b/gi, 'technical')
+    .replace(/\buso\b/gi, 'use')
+    .replace(/\bvalor\b/gi, 'value')
+    .replace(/\bseleccionado\b/gi, 'selected')
+    .replace(/\bseleccionada\b/gi, 'selected')
     .replace(/\bmas\b/gi, 'more')
     .replace(/\bmás\b/gi, 'more')
     .replace(/\bmejor\b/gi, 'better')
