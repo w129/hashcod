@@ -26,10 +26,12 @@ const userBuckets = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
 const securityKingSessions = new Map();
+const platformGateSessions = new Map();
 const oauthStates = new Map();
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
 const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
 const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
+const PLATFORM_GATE_TOKEN_HASH = process.env.HASHCOD_PLATFORM_GATE_TOKEN_HASH || '64e1d72998d2090a3ed522aebbb00557a81a635e6e5f1167935a8a6bf831e0f0';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
@@ -802,6 +804,51 @@ function makeSecurityKingSession() {
   return { sid };
 }
 
+function platformGateExpiryFromToken(token) {
+  try {
+    const params = new URLSearchParams(String(token || ''));
+    const expires = Date.parse(params.get('se') || '');
+    if (!Number.isFinite(expires)) return 0;
+    return expires;
+  } catch {
+    return 0;
+  }
+}
+
+function verifyPlatformGateToken(token) {
+  const raw = String(token || '').trim();
+  const expected = String(PLATFORM_GATE_TOKEN_HASH || '').trim();
+  if (expected.length !== 64 || !raw) return { ok: false, error: 'invalid_gate_token' };
+  const hash = crypto.createHash('sha256').update(raw).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(expected))) return { ok: false, error: 'invalid_gate_token' };
+  const expiresAt = platformGateExpiryFromToken(raw);
+  if (!expiresAt || expiresAt <= Date.now()) return { ok: false, error: 'gate_token_expired' };
+  return { ok: true, expiresAt };
+}
+
+function makePlatformGateSession(req, expiresAt) {
+  const sid = b64url(crypto.randomBytes(32));
+  platformGateSessions.set(sid, {
+    createdAt: Date.now(),
+    lastSeenAt: Date.now(),
+    ip: clientIp(req),
+    userAgent: safeText(req.headers['user-agent'], 180),
+    expiresAt,
+  });
+  return { sid, expiresAt };
+}
+
+function getPlatformGateSession(req) {
+  const sid = parseCookies(req).hashcod_platform_gate;
+  const session = sid && platformGateSessions.get(sid);
+  if (!session || session.expiresAt < Date.now()) {
+    if (sid) platformGateSessions.delete(sid);
+    return null;
+  }
+  session.lastSeenAt = Date.now();
+  return { sid, session };
+}
+
 function getSecurityKingSession(req) {
   const sid = parseCookies(req).hashcod_security_king;
   const session = sid && securityKingSessions.get(sid);
@@ -965,6 +1012,49 @@ async function handleSecurityKing(req, res) {
   }
 
   send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'security_king_route_not_found' }));
+}
+
+async function handlePlatformGate(req, res) {
+  const route = (req.url || '').split('?')[0];
+  if (route === '/api/platform-gate/status' && req.method === 'GET') {
+    const gate = getPlatformGateSession(req);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({
+      ok: true,
+      unlocked: !!gate,
+      expiresAt: gate ? new Date(gate.session.expiresAt).toISOString() : null,
+    }));
+    return;
+  }
+
+  if (route === '/api/platform-gate/unlock' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req, 32 * 1024);
+      const token = body.token || body.sas || body.signature || body.value || '';
+      const verified = verifyPlatformGateToken(token);
+      if (!verified.ok) {
+        audit('platform_gate.unlock_failed', { ip: clientIp(req), error: verified.error });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: verified.error }));
+        return;
+      }
+      const session = makePlatformGateSession(req, verified.expiresAt);
+      const maxAge = Math.max(1, Math.floor((verified.expiresAt - Date.now()) / 1000));
+      audit('platform_gate.unlock', { ip: clientIp(req), expiresAt: new Date(verified.expiresAt).toISOString() });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_platform_gate=${encodeURIComponent(session.sid)}; ${cookieOptions(req, maxAge)}` }, JSON.stringify({ ok: true, expiresAt: new Date(verified.expiresAt).toISOString() }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+
+  if (route === '/api/platform-gate/logout' && req.method === 'POST') {
+    const sid = parseCookies(req).hashcod_platform_gate;
+    if (sid) platformGateSessions.delete(sid);
+    audit('platform_gate.logout', { ip: clientIp(req) });
+    send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_platform_gate=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0` }, JSON.stringify({ ok: true }));
+    return;
+  }
+
+  send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'platform_gate_route_not_found' }));
 }
 
 async function handleBillingContract(req, res) {
@@ -2101,53 +2191,64 @@ function enforceHttps(req, res) {
 const server = http.createServer((req, res) => {
   if (enforceHttps(req, res)) return;
   if (!rateLimit(req, res)) return;
+  const routePath = (req.url || '').split('?')[0];
 
-  if ((req.url || '').split('?')[0].startsWith('/api/auth/') || (req.url || '').split('?')[0].startsWith('/api/admin/') || (req.url || '').split('?')[0].startsWith('/api/access/')) {
+  if (routePath.startsWith('/api/platform-gate/')) {
+    handlePlatformGate(req, res);
+    return;
+  }
+
+  if (routePath.startsWith('/api/') && !getPlatformGateSession(req)) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'platform_gate_required' }));
+    return;
+  }
+
+  if (routePath.startsWith('/api/auth/') || routePath.startsWith('/api/admin/') || routePath.startsWith('/api/access/')) {
     handleAuth(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0].startsWith('/api/security-king/')) {
+  if (routePath.startsWith('/api/security-king/')) {
     handleSecurityKing(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0].startsWith('/api/billing-contract/')) {
+  if (routePath.startsWith('/api/billing-contract/')) {
     handleBillingContract(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0] === '/api/assist-requests') {
+  if (routePath === '/api/assist-requests') {
     handleAssistRequests(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0] === '/api/sms/send') {
+  if (routePath === '/api/sms/send') {
     handleSmsSend(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0].startsWith('/api/sms-gateway/')) {
+  if (routePath.startsWith('/api/sms-gateway/')) {
     handleSmsGateway(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0].startsWith('/api/phone-os/')) {
+  if (routePath.startsWith('/api/phone-os/')) {
     handlePhoneOs(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0] === '/api/cli-console') {
+  if (routePath === '/api/cli-console') {
     handleCliConsole(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0] === '/api/crypto-ai/chat') {
+  if (routePath === '/api/crypto-ai/chat') {
     handleCryptoAiChat(req, res);
     return;
   }
 
-  if ((req.url || '').split('?')[0] === '/enterprise/manifest.json') {
+  if (routePath === '/enterprise/manifest.json') {
     send(res, 200, { 'Content-Type': MIME['.json'] }, enterpriseManifest());
     return;
   }

@@ -551,6 +551,7 @@ kbd {
   box-shadow: 22px 22px 0 rgba(0,0,0,.22), 0 0 0 1px rgba(255,255,255,.04) inset;
 }
 .authbox-pro > input,
+.authbox-pro > textarea,
 .authbox-pro > button,
 .authbox-pro > em,
 .authbox-pro > .oauth-row,
@@ -560,14 +561,24 @@ kbd {
   margin-left: 42px;
   margin-right: 42px;
 }
-.authbox-pro > input {
+.authbox-pro > input,
+.authbox-pro > textarea {
   min-height: 58px;
   border-color: #2A2A2A;
   background: #0F0F0F;
   color: #F5F5F5;
   box-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
+  font-family: var(--mono);
+  font-size: 13px;
 }
-.authbox-pro > input:focus {
+.authbox-pro > textarea {
+  min-height: 128px;
+  padding: 14px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.authbox-pro > input:focus,
+.authbox-pro > textarea:focus {
   outline: 2px solid #F5F5F5;
   outline-offset: 2px;
 }
@@ -4908,6 +4919,7 @@ kbd {
     padding: 24px 18px 18px;
   }
   .authbox-pro > input,
+  .authbox-pro > textarea,
   .authbox-pro > button,
   .authbox-pro > em,
   .authbox-pro > .oauth-row,

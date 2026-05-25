@@ -4256,6 +4256,7 @@ const HashcodLicenseFactoryDialog = ({ open, onClose, notify, language, rows = [
 
 const AuthGate = ({ children }) => {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, user: null });
+  const [platformGate, setPlatformGate] = useState({ loading: true, unlocked: false, token: '', expiresAt: null });
   const [mode, setMode] = useState('login');
   const [form, setForm] = useState({ name: '', email: '', password: '', recoveryCode: '', serial: '' });
   const [error, setError] = useState('');
@@ -4290,7 +4291,24 @@ const AuthGate = ({ children }) => {
       clearTimeout(timeoutId);
     }
   };
-  useEffect(() => { refresh(); }, []);
+  const refreshPlatformGate = async () => {
+    try {
+      const res = await fetch('/api/platform-gate/status');
+      const data = await res.json();
+      if (data.unlocked) {
+        setPlatformGate(prev => ({ ...prev, loading: false, unlocked: true, expiresAt: data.expiresAt || null }));
+        await refresh();
+      } else {
+        setPlatformGate(prev => ({ ...prev, loading: false, unlocked: false, expiresAt: null }));
+        setAuth({ loading: false, setupRequired: false, user: null });
+      }
+    } catch {
+      setPlatformGate(prev => ({ ...prev, loading: false, unlocked: false, expiresAt: null }));
+      setAuth({ loading: false, setupRequired: false, user: null });
+      setNotice('Gate listo. Si Render esta despertando, intenta de nuevo en unos segundos.');
+    }
+  };
+  useEffect(() => { refreshPlatformGate(); }, []);
   const loadSessions = async () => {
     try {
       const res = await authFetch('/api/auth/sessions');
@@ -4301,7 +4319,59 @@ const AuthGate = ({ children }) => {
       setNotice('No se pudieron cargar las sesiones activas.');
     }
   };
-  if (auth.loading) return <div className="authgate"><div className="authbox"><h1>Hashcod</h1><p>Loading secure session...</p></div></div>;
+  const unlockPlatformGate = async (e) => {
+    e.preventDefault();
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch('/api/platform-gate/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: platformGate.token }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'gate_failed');
+      hashcodLawRecord(hashcodLawAssessPayload({ action: 'platform-gate:unlock', meta: { expiresAt: data.expiresAt } }));
+      setPlatformGate(prev => ({ ...prev, unlocked: true, loading: false, token: '', expiresAt: data.expiresAt || null }));
+      await refresh();
+    } catch (err) {
+      const msg = String(err.message || '');
+      setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : 'Gate invalido. Pega el token completo sv/sig/se.');
+    }
+  };
+  if (platformGate.loading || auth.loading) return <div className="authgate"><div className="authbox"><h1>Hashcod</h1><p>Loading secure session...</p></div></div>;
+  if (!platformGate.unlocked) {
+    return (
+      <div className="authgate">
+        <form className="authbox authbox-modern authbox-pro platform-gate-box" onSubmit={unlockPlatformGate}>
+          <div className="auth-hero">
+            <div>
+              <div className="authmark"><span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} /></div>
+              <span>HASHCOD PLATFORM GATE</span>
+              <h1>Access Token</h1>
+              <p>La unica entrada activa requiere el token completo con sv, sig y se. Luego se abre el login normal de Hashcod.</p>
+            </div>
+            <aside className="auth-handshake" aria-label="Platform gate checks">
+              <b>GATE CHECK</b>
+              <span><i /> SHA-256 server compare</span>
+              <span><i /> Expiration check</span>
+              <span><i /> HttpOnly gate cookie</span>
+              <span><i /> API routes locked</span>
+            </aside>
+          </div>
+          <textarea
+            value={platformGate.token}
+            onChange={e => setPlatformGate(prev => ({ ...prev, token: e.target.value }))}
+            placeholder="sv=2024-01-01&sig=...&se=..."
+            autoFocus
+          />
+          {error && <em>{error}</em>}
+          {notice && <em className="ok">{notice}</em>}
+          <button>Unlock Hashcod</button>
+        </form>
+      </div>
+    );
+  }
   if (auth.user) {
     return (
       <>
