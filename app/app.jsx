@@ -14917,5 +14917,5 @@ const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidd
 window.HashcodApp = App;
 window.App = () => {
   const Platform = window.HashcodApp;
-  return <AuthGate><Platform /></AuthGate>;
+  return <Platform />;
 };
