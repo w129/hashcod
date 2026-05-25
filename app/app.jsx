@@ -4587,6 +4587,130 @@ const buildCloudAndRadarLayers = (matrix, radius) => {
   };
 };
 
+const pivotProfessionalVerdict = ({ byteLength, entropy, risk, cloudMean, clearRatio, peakScore }) => {
+  if (byteLength < 16) {
+    return {
+      level: 'INVALID SAMPLE',
+      meaning: 'Muestra insuficiente o corrupta: no hay bytes suficientes para una lectura estadistica estable.',
+      rule: 'byteLength < 16',
+    };
+  }
+  if (entropy < 2.5 || risk >= 92 || clearRatio < 0.18) {
+    return {
+      level: 'CRITICAL',
+      meaning: 'Entropia muy baja, nube excesiva o patron dominante. No debe tratarse como salida criptografica fuerte.',
+      rule: 'entropy < 2.5 OR risk >= 92 OR clearRatio < 0.18',
+    };
+  }
+  if (entropy < 4.2 || risk >= 78 || peakScore > 90) {
+    return {
+      level: 'HIGH RISK',
+      meaning: 'Patron fuerte, repetitivo o estructurado. Requiere revision antes de usarlo en seguridad.',
+      rule: 'entropy < 4.2 OR risk >= 78 OR peakScore > 90',
+    };
+  }
+  if (risk >= 60 || cloudMean > 55) {
+    return {
+      level: 'STRUCTURED / REVIEW',
+      meaning: 'Estructura marcada detectada. Puede ser formato valido, pero necesita comparacion con estandares.',
+      rule: 'risk >= 60 OR cloudMean > 55',
+    };
+  }
+  if (risk >= 35 || cloudMean > 28) {
+    return {
+      level: 'WATCHLIST',
+      meaning: 'Hay senales moderadas. Conviene analizar longitud, fuente, formato y aleatoriedad adicional.',
+      rule: 'risk >= 35 OR cloudMean > 28',
+    };
+  }
+  return {
+    level: 'CLEAR',
+    meaning: 'No se detectan patrones fuertes en esta lectura. No equivale a prueba formal de seguridad.',
+    rule: 'risk < 35 AND cloudMean <= 28 AND entropy >= 4.2',
+  };
+};
+
+const hashcodAnalysisSpecText = () => [
+  '# Hashcod Cryptographic Analysis Specification',
+  '',
+  'Version: HCAS-1.0',
+  'Scope: reproducible byte-level analysis for generated codes, files, tokens and structured payloads.',
+  '',
+  '## Inputs',
+  '- Input bytes are UTF-8 encoded from the selected code or manual payload.',
+  '- Bytes are mapped into an N x N matrix. If the payload is shorter than N^2, bytes wrap cyclically.',
+  '- Samples below 16 bytes are marked INVALID SAMPLE.',
+  '',
+  '## Core formulas',
+  '- Entropy H = -sum(p_i * log2(p_i)) for all byte values 0..255.',
+  '- Circle-square delta = average(abs(mean(circle_kernel) - mean(square_kernel))).',
+  '- Ring delta = average(abs(mean(ring_kernel) - mean(circle_kernel))).',
+  '- Diagonal symmetry = max(0, 100 - abs(diagonal_A_mean - diagonal_B_mean) / 255 * 100).',
+  '- Cloud score = round(100 * clamp(brightness * 0.42 + smoothness * 0.24 + low_variance_patch * 0.34)).',
+  '- Clear byte ratio = count(cloud_score <= 20) / matrix_cells.',
+  '- Radar balance = ascending_gradient_total / descending_gradient_total.',
+  '- Pivot risk = clamp(round((peak_score / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloud_penalty + balance_penalty), 0, 100).',
+  '',
+  '## Professional verdict scale',
+  '- CLEAR: no strong pattern detected. Not a formal proof of cryptographic security.',
+  '- WATCHLIST: moderate signals; review source, length, format and randomness.',
+  '- STRUCTURED / REVIEW: marked structure detected; compare against expected format and standards.',
+  '- HIGH RISK: strong repetitive or structured signal.',
+  '- CRITICAL: very low entropy, dominant cloud pattern or grave repetitive structure.',
+  '- INVALID SAMPLE: insufficient or corrupt sample.',
+  '',
+  '## Required comparisons',
+  '- Normal text, images, ZIP-like payloads, SHA-256 hashes, AES/ChaCha-like output, CSPRNG bytes, weak passwords, strong passwords, JWTs, UUIDs, fake API keys and repetitive data.',
+  '',
+  '## Limits',
+  '- This lab does not replace NIST STS, Dieharder, TestU01 or PractRand.',
+  '- A visual map can reveal patterns, but cannot prove an algorithm secure by itself.',
+  '- Hashcod should integrate established primitives and audit outputs honestly instead of relying on secret algorithms.',
+].join('\n');
+
+const deterministicHex = (seed, bytes = 32) => {
+  let state = seed >>> 0;
+  const out = [];
+  for (let i = 0; i < bytes; i++) {
+    state = (1664525 * state + 1013904223) >>> 0;
+    out.push((state & 255).toString(16).padStart(2, '0'));
+  }
+  return out.join('');
+};
+
+const buildHashcodBenchmarkSamples = () => {
+  const samples = [];
+  const add = (type, name, value, expected) => samples.push({ index: samples.length + 1, type, name, value, expected });
+  const repeated = ['a', '0', '1', 'A', 'Z', '-', '_', 'x', '9', ' '];
+  repeated.forEach((ch, i) => add('repetitive', `repetitive-${i + 1}`, ch.repeat(160 + i * 7), 'CRITICAL'));
+  ['123456', 'password', 'qwerty2026', 'adminadmin', 'letmein', 'emil12345', 'hashcod', '00000000', 'abcabcabc', 'dragon2026'].forEach((v, i) => add('weak-password', `weak-password-${i + 1}`, v.repeat(12), 'HIGH RISK'));
+  Array.from({ length: 10 }, (_, i) => add('plain-text', `plain-text-${i + 1}`, `Hashcod technical text sample ${i}. Modular algebra, entropy, matrix kernels and audit limits must be documented before market release. `.repeat(3), 'STRUCTURED / REVIEW'));
+  Array.from({ length: 10 }, (_, i) => add('uuid', `uuid-${i + 1}`, `${deterministicHex(1000 + i, 4)}-${deterministicHex(2000 + i, 2)}-${deterministicHex(3000 + i, 2)}-${deterministicHex(4000 + i, 2)}-${deterministicHex(5000 + i, 6)}`, 'WATCHLIST'));
+  Array.from({ length: 10 }, (_, i) => add('jwt', `jwt-${i + 1}`, `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${toB64u(new TextEncoder().encode(JSON.stringify({ sub: `u${i}`, role: 'viewer', exp: 1770000000 + i })))}.${deterministicHex(6000 + i, 32)}`, 'WATCHLIST'));
+  Array.from({ length: 10 }, (_, i) => add('sha256', `sha256-${i + 1}`, deterministicHex(7000 + i, 32), 'CLEAR'));
+  Array.from({ length: 10 }, (_, i) => add('api-key', `api-key-${i + 1}`, `hsc_live_${deterministicHex(8000 + i, 36)}`, 'WATCHLIST'));
+  Array.from({ length: 10 }, (_, i) => add('csprng-base64', `csprng-base64-${i + 1}`, toB64u(new Uint8Array(deterministicHex(9000 + i, 72).match(/../g).map(x => parseInt(x, 16)))), 'CLEAR'));
+  Array.from({ length: 10 }, (_, i) => add('structured-json', `structured-json-${i + 1}`, JSON.stringify({ hashcod: true, version: i, rows: Array.from({ length: 8 }, (_, n) => ({ id: n, value: `HC-${i}-${n}` })) }), 'STRUCTURED / REVIEW'));
+  Array.from({ length: 10 }, (_, i) => add('zip-like', `zip-like-${i + 1}`, `PK\u0003\u0004${deterministicHex(10000 + i, 96)}PK\u0001\u0002${deterministicHex(11000 + i, 32)}`, 'CLEAR'));
+  return samples.slice(0, 100);
+};
+
+const benchmarkToCsv = (rows) => [
+  'index,type,name,expected,verdict,pass,entropy,pivotRisk,cloudScoreMean,clearByteRatio',
+  ...rows.map(row => [
+    row.index,
+    row.type,
+    `"${String(row.name).replace(/"/g, '""')}"`,
+    `"${row.expected}"`,
+    `"${row.verdict}"`,
+    row.pass ? 'PASS' : 'REVIEW',
+    row.entropy,
+    row.pivotRisk,
+    row.cloudScoreMean,
+    row.clearByteRatio,
+  ].join(',')),
+].join('\n');
+
 const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   const source = String(text || '');
   const bytes = Array.from(new TextEncoder().encode(source || 'hashcod-empty'));
@@ -4622,6 +4746,14 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   const cloudPenalty = Math.max(0, spectral.cloudMean - 20) * 0.45;
   const balancePenalty = Math.min(24, Math.abs(1 - spectral.ascDescBalance) * 16);
   const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloudPenalty + balancePenalty)));
+  const verdict = pivotProfessionalVerdict({
+    byteLength: bytes.length,
+    entropy,
+    risk,
+    cloudMean: spectral.cloudMean,
+    clearRatio: spectral.clearRatio,
+    peakScore,
+  });
   return {
     id: `HPK-${digest.slice(0, 10).toUpperCase()}`,
     createdAt: new Date().toISOString(),
@@ -4638,7 +4770,9 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
     clearByteRatio: spectral.clearRatio,
     radarAscDescBalance: spectral.ascDescBalance,
     pivotRisk: risk,
-    verdict: risk > 72 ? 'STRUCTURED / REVIEW' : risk > 42 ? 'WATCHLIST' : 'UNIFORM-LIKE',
+    verdict: verdict.level,
+    verdictRule: verdict.rule,
+    verdictMeaning: verdict.meaning,
     digest,
     matrix,
     cloud: spectral.cloud,
@@ -4658,7 +4792,9 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
   const [size, setSize] = useState(32);
   const [viewMode, setViewMode] = useState('matrix');
   const [busy, setBusy] = useState(false);
+  const [benchBusy, setBenchBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [benchmark, setBenchmark] = useState([]);
   const selectedText = sourceMode === 'manual' ? manual : String(sourceRows[0]?.value || manual || '');
   const drawResult = useCallback((payload) => {
     const canvas = canvasRef.current;
@@ -4720,6 +4856,8 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       '',
       `ID: ${result.id}`,
       `Verdict: ${result.verdict}`,
+      `Verdict rule: ${result.verdictRule}`,
+      `Verdict meaning: ${result.verdictMeaning}`,
       `Pivot risk: ${result.pivotRisk}/100`,
       `Entropy: ${result.entropy} bits/byte`,
       `Circle-square delta: ${result.avgCircleSquareDelta}`,
@@ -4741,9 +4879,39 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       '',
       '## Sentinel-style radar layer',
       'Inspired by Sentinel-1 filtering: adjacent byte gradients are separated into VV/VH ascending and descending composites to expose directional imbalance.',
+      '',
+      '## Professional limits',
+      'This report is a reproducible analysis layer, not a replacement for NIST STS, Dieharder, TestU01, PractRand or external cryptographic review.',
     ].join('\n');
     triggerDownload(`Hashcod-PivotKernel-report-${result.id}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
   };
+  const downloadSpec = () => triggerDownload(`Hashcod-Cryptographic-Analysis-Specification-${tsStamp()}.md`, hashcodAnalysisSpecText(), 'text/markdown;charset=utf-8');
+  const runBenchmark = async () => {
+    setBenchBusy(true);
+    try {
+      const samples = buildHashcodBenchmarkSamples();
+      const rows = [];
+      for (const sample of samples) {
+        const analysis = await analyzePivotKernel(sample.value, 4, 24);
+        const accepted = sample.expected === analysis.verdict || (sample.expected === 'HIGH RISK' && analysis.verdict === 'CRITICAL') || (sample.expected === 'CLEAR' && analysis.verdict === 'WATCHLIST');
+        rows.push({
+          ...sample,
+          verdict: analysis.verdict,
+          entropy: analysis.entropy,
+          pivotRisk: analysis.pivotRisk,
+          cloudScoreMean: analysis.cloudScoreMean,
+          clearByteRatio: analysis.clearByteRatio,
+          pass: accepted,
+        });
+      }
+      setBenchmark(rows);
+      notify?.(L('Benchmark Hashcod de 100 muestras completado', 'Hashcod 100-sample benchmark complete'));
+    } finally {
+      setBenchBusy(false);
+    }
+  };
+  const downloadBenchmarkJson = () => benchmark.length && triggerDownload(`Hashcod-benchmark-100-${tsStamp()}.json`, JSON.stringify(benchmark, null, 2), 'application/json;charset=utf-8');
+  const downloadBenchmarkCsv = () => benchmark.length && triggerDownload(`Hashcod-benchmark-100-${tsStamp()}.csv`, benchmarkToCsv(benchmark), 'text/csv;charset=utf-8');
   const downloadPng = () => {
     const canvas = canvasRef.current;
     if (!canvas || !result) return;
@@ -4772,6 +4940,8 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
             <button onClick={run} disabled={busy || !selectedText}>{busy ? L('Analizando...', 'Analyzing...') : L('Analizar kernels', 'Analyze kernels')}</button>
             <button onClick={downloadJson} disabled={!result}>JSON</button>
             <button onClick={downloadReport} disabled={!result}>{L('Reporte MD', 'MD report')}</button>
+            <button onClick={downloadSpec}>{L('Spec tecnica', 'Technical spec')}</button>
+            <button onClick={runBenchmark} disabled={benchBusy}>{benchBusy ? L('Probando...', 'Testing...') : L('100 muestras', '100 samples')}</button>
             <button onClick={downloadPng} disabled={!result}>PNG</button>
           </aside>
           <main className="pivot-main">
@@ -4785,6 +4955,13 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
               <article><span>{L('Radar balance', 'Radar balance')}</span><b>{result ? result.radarAscDescBalance : '--'}</b></article>
               <article><span>{L('Capa activa', 'Active layer')}</span><b>{viewMode.toUpperCase()}</b></article>
             </section>
+            {result && (
+              <section className="pivot-verdict">
+                <b>{result.verdict}</b>
+                <span>{result.verdictMeaning}</span>
+                <em>{result.verdictRule}</em>
+              </section>
+            )}
             <section className="pivot-layers">
               <button className={viewMode === 'matrix' ? 'active' : ''} onClick={() => setViewMode('matrix')}>{L('Bytes', 'Bytes')}</button>
               <button className={viewMode === 'cloud' ? 'active' : ''} onClick={() => setViewMode('cloud')}>{L('Cloud mask', 'Cloud mask')}</button>
@@ -4800,6 +4977,27 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
                 </article>
               ))}
               {!result && <div>{L('Ejecuta el analisis para ver el mapa de picos criptograficos.', 'Run analysis to see the cryptographic peak map.')}</div>}
+            </section>
+            <section className="pivot-benchmark">
+              <div className="pivot-benchmark-head">
+                <div>
+                  <b>{L('Bateria profesional de 100 muestras', 'Professional 100-sample battery')}</b>
+                  <span>{benchmark.length ? `${benchmark.filter(row => row.pass).length}/${benchmark.length} PASS` : L('Compara texto, hashes, JWT, UUID, CSPRNG, passwords y datos repetitivos.', 'Compares text, hashes, JWT, UUID, CSPRNG, passwords and repetitive data.')}</span>
+                </div>
+                <button onClick={downloadBenchmarkCsv} disabled={!benchmark.length}>CSV</button>
+                <button onClick={downloadBenchmarkJson} disabled={!benchmark.length}>JSON</button>
+              </div>
+              {!!benchmark.length && (
+                <div className="pivot-benchmark-grid">
+                  {benchmark.slice(0, 20).map(row => (
+                    <article key={row.index} className={row.pass ? 'pass' : 'review'}>
+                      <b>{String(row.index).padStart(3, '0')} {row.type}</b>
+                      <span>{row.verdict} / esperado {row.expected}</span>
+                      <em>H={row.entropy} R={row.pivotRisk} cloud={row.cloudScoreMean}</em>
+                    </article>
+                  ))}
+                </div>
+              )}
             </section>
           </main>
         </div>

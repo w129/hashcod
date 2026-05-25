@@ -509,8 +509,8 @@
     ].join('\n');
   }
 
-  async function hashcodAdvanced5000Template(typeId) {
-    const n = Math.max(1, Math.min(5000, Number(String(typeId).replace('hc5000_code_', '')) || 1));
+  async function hashcodAdvanced10000Template(typeId) {
+    const n = Math.max(1, Math.min(8282, Number(String(typeId).replace(/^hc(?:5000|10000)_code_/, '')) || 1));
     const profiles = [
       ['PQC-KEM', 'intercambio de claves post-cuantico', 'post-quantum key encapsulation', 92, 'PQK'],
       ['PQC-SIG', 'firma digital post-cuantica', 'post-quantum digital signature', 92, 'PQS'],
@@ -547,7 +547,7 @@
     const right = names[(pairIndex + 1) % names.length];
     const level = levels[(n - 1) % levels.length];
     const version = versionFor(n);
-    const codeName = `HC-${profile[0]}-${left}-${right}-${String(n).padStart(4, '0')}-${level}-${version}`;
+    const codeName = `HC-${profile[0]}-${left}-${right}-${String(n).padStart(5, '0')}-${level}-${version}`;
     const payload = bytes(profile[3] + Math.floor((n - 1) / 500));
     const salt = bytes(32);
     const nonce = bytes(24);
@@ -556,7 +556,7 @@
     const payloadB64 = toB64u(payload);
     const saltB64 = toB64u(salt);
     const nonceB64 = toB64u(nonce);
-    const policy = `HC5K-${String(n).padStart(4, '0')}-${profile[4]}-${level}`;
+    const policy = `HC10K-${String(n).padStart(5, '0')}-${profile[4]}-${level}`;
     const hmac256 = toHex(await hmacSha256(salt, `${codeName}:${payloadB64}:${nonceB64}:${route}:${issued}:${policy}`));
     const digest512 = toHex(await sha('SHA-512', enc.encode(`${hmac256}:${codeName}:${profile[2]}:${saltB64}`)));
     const binding256 = toHex(await sha('SHA-256', enc.encode(`${digest512}:${nonceB64}:${policy}:${version}`)));
@@ -590,7 +590,7 @@
     if (String(typeId).startsWith('xadv_code_')) return extraAdvancedCodeTemplate(typeId);
     if (String(typeId).startsWith('neo_code_')) return await neoCryptoCodeTemplate(typeId);
     if (String(typeId).startsWith('apex_code_')) return await apexCryptoCodeTemplate(typeId);
-    if (String(typeId).startsWith('hc5000_code_')) return await hashcodAdvanced5000Template(typeId);
+    if (/^hc(?:5000|10000)_code_/.test(String(typeId))) return await hashcodAdvanced10000Template(typeId);
     if (String(typeId).startsWith('card_tpl_')) return cardStudioTemplate(typeId);
     switch (typeId) {
       // Symmetric

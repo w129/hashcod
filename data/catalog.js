@@ -1454,7 +1454,8 @@ window.OCG_CATALOG = [
   });
 })();
 
-(function addHashcodAdvancedCodes5000() {
+(function addHashcodAdvancedCodes8282() {
+  const HASHCOD_ADVANCED_TOTAL = 8282;
   const profiles = [
     ['PQC-KEM', 'intercambio de claves post-cuantico', 'post-quantum key encapsulation', 'key', '896 bits'],
     ['PQC-SIG', 'firma digital post-cuantica', 'post-quantum digital signature', 'fingerprint', '896 bits'],
@@ -1489,23 +1490,23 @@ window.OCG_CATALOG = [
     const pairIndex = ((n - 1) * 2) % names.length;
     const a = names[pairIndex];
     const b = names[(pairIndex + 1) % names.length];
-    return `HC-${profile[0]}-${a}-${b}-${String(n).padStart(4, '0')}-${levels[(n - 1) % levels.length]}-${versionFor(n)}`;
+    return `HC-${profile[0]}-${a}-${b}-${String(n).padStart(5, '0')}-${levels[(n - 1) % levels.length]}-${versionFor(n)}`;
   };
 
   window.OCG_CATALOG.push({
-    id: 'hashcod_advanced_5000',
-    label: 'Hashcod Advanced Codes 5000',
+    id: 'hashcod_advanced_8282',
+    label: 'Hashcod Advanced Codes 8282',
     icon: 'container',
-    desc: 'Five thousand advanced Hashcod cryptographic code families for PQC, ZK, MPC, FHE, threshold systems, KDF, MAC, PAKE and privacy workflows.',
-    types: Array.from({ length: 5000 }, (_, i) => {
+    desc: 'Eight thousand two hundred eighty-two advanced Hashcod cryptographic code families. Combined with the base, NEO and APEX families, the platform reaches 10,000 total codes.',
+    types: Array.from({ length: HASHCOD_ADVANCED_TOTAL }, (_, i) => {
       const n = i + 1;
       const profile = profiles[(n - 1) % profiles.length];
       const name = codeName(n, profile);
       return {
-        id: `hc5000_code_${String(n).padStart(4, '0')}`,
+        id: `hc10000_code_${String(n).padStart(5, '0')}`,
         icon: profile[3],
         label: name,
-        badge: `H${String(n).padStart(4, '0')}`,
+        badge: `H${String(n).padStart(5, '0')}`,
         hasLen: false,
         hasCharset: false,
         engine: `${profile[0]} - HMAC-SHA256 + SHA-512 + SHA-256 binding + salt/nonce`,
@@ -1523,7 +1524,7 @@ window.OCG_CATALOG = [
   (window.OCG_CATALOG || []).forEach((category) => {
     (category.types || []).forEach((type) => {
       variantIndex += 1;
-      const variantNumber = String(variantIndex).padStart(4, '0');
+      const variantNumber = String(variantIndex).padStart(5, '0');
       const originalLabel = type.originalLabel || type.label || type.id;
 
       type.originalLabel = originalLabel;
