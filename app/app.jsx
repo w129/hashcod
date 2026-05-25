@@ -4491,6 +4491,24 @@ const buildPivotMatrix = (bytes, size) => {
   return matrix;
 };
 
+const mixPivotBytes = (bytes, digest) => {
+  const salt = String(digest || '').match(/../g)?.map(x => parseInt(x, 16)) || [0x5a];
+  const source = bytes.length ? bytes : [0];
+  const mixed = source.map((value, i) => {
+    const left = source[(i + salt[i % salt.length]) % source.length] || 0;
+    const right = source[(i * 7 + 3) % source.length] || 0;
+    const rotated = ((value << (i % 5)) | (value >>> (8 - (i % 5)))) & 255;
+    return (rotated ^ left ^ right ^ salt[i % salt.length] ^ ((i * 31) & 255)) & 255;
+  });
+  for (let i = mixed.length - 1; i > 0; i--) {
+    const j = (salt[i % salt.length] + i * 17) % (i + 1);
+    const tmp = mixed[i];
+    mixed[i] = mixed[j];
+    mixed[j] = tmp;
+  }
+  return mixed;
+};
+
 const kernelAverage = (matrix, x, y, radius, shape) => {
   const size = matrix.length;
   let total = 0;
@@ -4550,11 +4568,12 @@ const buildCloudAndRadarLayers = (matrix, radius) => {
       const south = matrix[Math.min(size - 1, y + 1)]?.[x] ?? v;
       const west = matrix[y]?.[Math.max(0, x - 1)] ?? v;
       const east = matrix[y]?.[Math.min(size - 1, x + 1)] ?? v;
-      const brightness = rescaleScore(v, 168, 255);
-      const smoothness = 1 - rescaleScore(Math.abs(east - west) + Math.abs(south - north), 0, 160);
+      const intensityExtremity = rescaleScore(Math.abs(v - 127.5), 84, 127.5);
+      const smoothness = 1 - rescaleScore(Math.abs(east - west) + Math.abs(south - north), 0, 96);
       const lowEntropyPatch = 1 - rescaleScore(localVariance(matrix, x, y, Math.max(1, Math.floor(radius / 2))), 180, 2800);
-      const score = Math.round(100 * Math.max(0, Math.min(1, brightness * 0.42 + smoothness * 0.24 + lowEntropyPatch * 0.34)));
-      const clear = score <= 20;
+      const neighborRepeat = 1 - rescaleScore(Math.abs(v - north) + Math.abs(v - south) + Math.abs(v - west) + Math.abs(v - east), 0, 220);
+      const score = Math.round(100 * Math.max(0, Math.min(1, intensityExtremity * 0.10 + smoothness * 0.30 + lowEntropyPatch * 0.46 + neighborRepeat * 0.14)));
+      const clear = score <= 38;
       cloudRow.push(score);
       maskRow.push(clear ? 1 : 0);
       if (clear) maskedCount += 1;
@@ -4587,7 +4606,27 @@ const buildCloudAndRadarLayers = (matrix, radius) => {
   };
 };
 
-const pivotProfessionalVerdict = ({ byteLength, entropy, risk, cloudMean, clearRatio, peakScore }) => {
+const pivotBandConcentration = (peaks, size) => {
+  const top = (peaks || []).slice(0, 24);
+  if (!top.length) return { row: 0, column: 0, penalty: 0 };
+  const rows = new Map();
+  const columns = new Map();
+  top.forEach((peak) => {
+    rows.set(peak.y, (rows.get(peak.y) || 0) + 1);
+    columns.set(peak.x, (columns.get(peak.x) || 0) + 1);
+  });
+  const row = Math.max(...rows.values()) / top.length;
+  const column = Math.max(...columns.values()) / top.length;
+  const expected = Math.min(0.28, Math.max(0.12, 3 / Math.max(1, size)));
+  const penalty = Math.max(0, Math.max(row, column) - expected) * 42;
+  return {
+    row: Number(row.toFixed(5)),
+    column: Number(column.toFixed(5)),
+    penalty: Number(penalty.toFixed(5)),
+  };
+};
+
+const pivotProfessionalVerdict = ({ byteLength, entropy, risk, cloudMean, clearRatio, peakScore, bandPenalty }) => {
   if (byteLength < 16) {
     return {
       level: 'INVALID SAMPLE',
@@ -4595,38 +4634,39 @@ const pivotProfessionalVerdict = ({ byteLength, entropy, risk, cloudMean, clearR
       rule: 'byteLength < 16',
     };
   }
-  if (entropy < 2.5 || risk >= 92 || clearRatio < 0.18) {
+  const weightedScore = Math.max(0, Math.min(100, risk * 0.62 + Math.max(0, 8 - entropy) * 4.2 + Math.max(0, cloudMean - 28) * 0.28 + bandPenalty * 0.34));
+  if (entropy < 2.5 || risk >= 92 || (clearRatio < 0.18 && entropy < 4.5) || (clearRatio < 0.18 && peakScore > 9.0)) {
     return {
       level: 'CRITICAL',
       meaning: 'Entropia muy baja, nube excesiva o patron dominante. No debe tratarse como salida criptografica fuerte.',
-      rule: 'entropy < 2.5 OR risk >= 92 OR clearRatio < 0.18',
+      rule: 'entropy < 2.5 OR risk >= 92 OR (clearRatio < 0.18 AND entropy < 4.5) OR (clearRatio < 0.18 AND peakScore > 9.0)',
     };
   }
-  if (entropy < 4.2 || risk >= 78 || peakScore > 90) {
+  if (entropy < 4.2 || weightedScore >= 78 || peakScore > 90) {
     return {
       level: 'HIGH RISK',
       meaning: 'Patron fuerte, repetitivo o estructurado. Requiere revision antes de usarlo en seguridad.',
-      rule: 'entropy < 4.2 OR risk >= 78 OR peakScore > 90',
+      rule: 'entropy < 4.2 OR weightedScore >= 78 OR peakScore > 90',
     };
   }
-  if (risk >= 60 || cloudMean > 55) {
+  if (weightedScore >= 60 || cloudMean > 55) {
     return {
       level: 'STRUCTURED / REVIEW',
       meaning: 'Estructura marcada detectada. Puede ser formato valido, pero necesita comparacion con estandares.',
-      rule: 'risk >= 60 OR cloudMean > 55',
+      rule: 'weightedScore >= 60 OR cloudMean > 55',
     };
   }
-  if (risk >= 35 || cloudMean > 28) {
+  if (weightedScore >= 35 || cloudMean > 28) {
     return {
       level: 'WATCHLIST',
       meaning: 'Hay senales moderadas. Conviene analizar longitud, fuente, formato y aleatoriedad adicional.',
-      rule: 'risk >= 35 OR cloudMean > 28',
+      rule: 'weightedScore >= 35 OR cloudMean > 28',
     };
   }
   return {
     level: 'CLEAR',
     meaning: 'No se detectan patrones fuertes en esta lectura. No equivale a prueba formal de seguridad.',
-    rule: 'risk < 35 AND cloudMean <= 28 AND entropy >= 4.2',
+    rule: 'weightedScore < 35 AND cloudMean <= 28 AND entropy >= 4.2',
   };
 };
 
@@ -4638,7 +4678,7 @@ const hashcodAnalysisSpecText = () => [
   '',
   '## Inputs',
   '- Input bytes are UTF-8 encoded from the selected code or manual payload.',
-  '- Bytes are mapped into an N x N matrix. If the payload is shorter than N^2, bytes wrap cyclically.',
+  '- Bytes are mixed with a deterministic digest-derived salt before matrix mapping, then mapped into an N x N matrix.',
   '- Samples below 16 bytes are marked INVALID SAMPLE.',
   '',
   '## Core formulas',
@@ -4646,17 +4686,18 @@ const hashcodAnalysisSpecText = () => [
   '- Circle-square delta = average(abs(mean(circle_kernel) - mean(square_kernel))).',
   '- Ring delta = average(abs(mean(ring_kernel) - mean(circle_kernel))).',
   '- Diagonal symmetry = max(0, 100 - abs(diagonal_A_mean - diagonal_B_mean) / 255 * 100).',
-  '- Cloud score = round(100 * clamp(brightness * 0.42 + smoothness * 0.24 + low_variance_patch * 0.34)).',
-  '- Clear byte ratio = count(cloud_score <= 20) / matrix_cells.',
+  '- Cloud score = round(100 * clamp(intensity_extremity * 0.10 + smoothness * 0.30 + low_variance_patch * 0.46 + neighbor_repeat * 0.14)).',
+  '- Clear byte ratio = count(cloud_score <= 38) / matrix_cells.',
   '- Radar balance = ascending_gradient_total / descending_gradient_total.',
-  '- Pivot risk = clamp(round((peak_score / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloud_penalty + balance_penalty), 0, 100).',
+  '- Band concentration = max concentration of the top 24 peaks by row and by column; both horizontal and vertical bands are penalized.',
+  '- Pivot risk = clamp(round((peak_score / 128) * 46 + (8 - entropy) * 7 + symmetry_penalty + cloud_penalty + balance_penalty + band_penalty), 0, 100).',
   '',
   '## Professional verdict scale',
   '- CLEAR: no strong pattern detected. Not a formal proof of cryptographic security.',
   '- WATCHLIST: moderate signals; review source, length, format and randomness.',
   '- STRUCTURED / REVIEW: marked structure detected; compare against expected format and standards.',
   '- HIGH RISK: strong repetitive or structured signal.',
-  '- CRITICAL: very low entropy, dominant cloud pattern or grave repetitive structure.',
+  '- CRITICAL: entropy < 2.5, risk >= 92, or clearRatio < 0.18 combined with entropy < 4.5 or peak_score > 9.0.',
   '- INVALID SAMPLE: insufficient or corrupt sample.',
   '',
   '## Required comparisons',
@@ -4696,7 +4737,7 @@ const buildHashcodBenchmarkSamples = () => {
 };
 
 const benchmarkToCsv = (rows) => [
-  'index,type,name,expected,verdict,pass,entropy,pivotRisk,cloudScoreMean,clearByteRatio',
+  'index,type,name,expected,verdict,pass,entropy,pivotRisk,cloudScoreMean,clearByteRatio,bandPenalty',
   ...rows.map(row => [
     row.index,
     row.type,
@@ -4708,15 +4749,18 @@ const benchmarkToCsv = (rows) => [
     row.pivotRisk,
     row.cloudScoreMean,
     row.clearByteRatio,
+    row.bandPenalty,
   ].join(',')),
 ].join('\n');
 
 const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   const source = String(text || '');
   const bytes = Array.from(new TextEncoder().encode(source || 'hashcod-empty'));
+  const digest = await digestHex(source);
+  const analysisBytes = mixPivotBytes(bytes, digest);
   const size = Math.max(12, Math.min(96, Number(sizeValue) || Math.ceil(Math.sqrt(bytes.length || 1))));
   const radius = Math.max(2, Math.min(Math.floor(size / 3), Number(radiusValue) || 5));
-  const matrix = buildPivotMatrix(bytes, size);
+  const matrix = buildPivotMatrix(analysisBytes, size);
   const spectral = buildCloudAndRadarLayers(matrix, radius);
   const peaks = [];
   let diffTotal = 0;
@@ -4736,16 +4780,17 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   peaks.sort((a, b) => b.score - a.score);
   const top = peaks.slice(0, 24);
   const entropy = byteEntropy(bytes);
-  const digest = await digestHex(source);
   const avgDiff = peaks.length ? diffTotal / peaks.length : 0;
   const avgRing = peaks.length ? ringTotal / peaks.length : 0;
   const diagonalA = matrix.reduce((sum, row, i) => sum + row[i], 0) / size;
   const diagonalB = matrix.reduce((sum, row, i) => sum + row[size - 1 - i], 0) / size;
   const symmetry = Math.max(0, 100 - Math.abs(diagonalA - diagonalB) / 255 * 100);
   const peakScore = top[0]?.score || 0;
+  const band = pivotBandConcentration(top, size);
   const cloudPenalty = Math.max(0, spectral.cloudMean - 20) * 0.45;
   const balancePenalty = Math.min(24, Math.abs(1 - spectral.ascDescBalance) * 16);
-  const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloudPenalty + balancePenalty)));
+  const symmetryPenalty = Math.max(0, symmetry - 62) * 0.18;
+  const risk = Math.max(0, Math.min(100, Math.round((peakScore / 128) * 46 + (8 - entropy) * 7 + symmetryPenalty + cloudPenalty + balancePenalty + band.penalty)));
   const verdict = pivotProfessionalVerdict({
     byteLength: bytes.length,
     entropy,
@@ -4753,6 +4798,7 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
     cloudMean: spectral.cloudMean,
     clearRatio: spectral.clearRatio,
     peakScore,
+    bandPenalty: band.penalty,
   });
   return {
     id: `HPK-${digest.slice(0, 10).toUpperCase()}`,
@@ -4769,6 +4815,9 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
     cloudScoreMean: spectral.cloudMean,
     clearByteRatio: spectral.clearRatio,
     radarAscDescBalance: spectral.ascDescBalance,
+    horizontalBandConcentration: band.row,
+    verticalBandConcentration: band.column,
+    bandPenalty: band.penalty,
     pivotRisk: risk,
     verdict: verdict.level,
     verdictRule: verdict.rule,
@@ -4866,6 +4915,9 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
       `Cloud score mean: ${result.cloudScoreMean}`,
       `Clear byte ratio: ${result.clearByteRatio}`,
       `Radar ASC/DESC balance: ${result.radarAscDescBalance}`,
+      `Horizontal band concentration: ${result.horizontalBandConcentration}`,
+      `Vertical band concentration: ${result.verticalBandConcentration}`,
+      `Band penalty: ${result.bandPenalty}`,
       `Digest: ${result.digest}`,
       '',
       '## Top kernel peaks',
@@ -4901,6 +4953,7 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
           pivotRisk: analysis.pivotRisk,
           cloudScoreMean: analysis.cloudScoreMean,
           clearByteRatio: analysis.clearByteRatio,
+          bandPenalty: analysis.bandPenalty,
           pass: accepted,
         });
       }
@@ -4953,6 +5006,7 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
               <article><span>{L('Cloud score', 'Cloud score')}</span><b>{result ? result.cloudScoreMean : '--'}</b></article>
               <article><span>{L('Clear ratio', 'Clear ratio')}</span><b>{result ? `${Math.round(result.clearByteRatio * 100)}%` : '--'}</b></article>
               <article><span>{L('Radar balance', 'Radar balance')}</span><b>{result ? result.radarAscDescBalance : '--'}</b></article>
+              <article><span>{L('Band penalty', 'Band penalty')}</span><b>{result ? result.bandPenalty : '--'}</b></article>
               <article><span>{L('Capa activa', 'Active layer')}</span><b>{viewMode.toUpperCase()}</b></article>
             </section>
             {result && (
@@ -4993,7 +5047,7 @@ const HashcodPivotKernelDialog = ({ open, onClose, rows = [], outputRows = [], n
                     <article key={row.index} className={row.pass ? 'pass' : 'review'}>
                       <b>{String(row.index).padStart(3, '0')} {row.type}</b>
                       <span>{row.verdict} / esperado {row.expected}</span>
-                      <em>H={row.entropy} R={row.pivotRisk} cloud={row.cloudScoreMean}</em>
+                      <em>H={row.entropy} R={row.pivotRisk} cloud={row.cloudScoreMean} band={row.bandPenalty}</em>
                     </article>
                   ))}
                 </div>

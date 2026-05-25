@@ -17,9 +17,10 @@ Hashcod analysis depends on:
 ## Input Model
 
 1. The selected code, file-derived payload or manual text is encoded as UTF-8 bytes.
-2. Bytes are mapped into an `N x N` matrix.
-3. If the payload is shorter than `N^2`, bytes wrap cyclically.
-4. Samples below 16 bytes are marked `INVALID SAMPLE`.
+2. Bytes are mixed with a deterministic digest-derived salt before matrix mapping.
+3. Mixed bytes are mapped into an `N x N` matrix.
+4. If the payload is shorter than `N^2`, bytes wrap cyclically.
+5. Samples below 16 bytes are marked `INVALID SAMPLE`.
 
 ## Pivot Kernel Formulas
 
@@ -32,13 +33,17 @@ Hashcod analysis depends on:
 - Diagonal symmetry:
   `max(0, 100 - abs(diagonal_A_mean - diagonal_B_mean) / 255 * 100)`.
 - Cloud score:
-  `round(100 * clamp(brightness * 0.42 + smoothness * 0.24 + low_variance_patch * 0.34))`.
+  `round(100 * clamp(intensity_extremity * 0.10 + smoothness * 0.30 + low_variance_patch * 0.46 + neighbor_repeat * 0.14))`.
 - Clear byte ratio:
-  `count(cloud_score <= 20) / matrix_cells`.
+  `count(cloud_score <= 38) / matrix_cells`.
 - Radar balance:
   `ascending_gradient_total / descending_gradient_total`.
+- Band concentration:
+  `max(top_peak_row_concentration, top_peak_column_concentration)`. Horizontal and vertical bands are both penalized.
 - Pivot risk:
-  `clamp(round((peak_score / 128) * 52 + (8 - entropy) * 8 + (symmetry / 100) * 16 + cloud_penalty + balance_penalty), 0, 100)`.
+  `clamp(round((peak_score / 128) * 46 + (8 - entropy) * 7 + symmetry_penalty + cloud_penalty + balance_penalty + band_penalty), 0, 100)`.
+- Critical verdict:
+  `entropy < 2.5 OR risk >= 92 OR (clearRatio < 0.18 AND entropy < 4.5) OR (clearRatio < 0.18 AND peak_score > 9.0)`.
 
 ## Verdict Scale
 
@@ -48,7 +53,7 @@ Hashcod analysis depends on:
 | WATCHLIST | Moderate signals; review source, length, format and randomness. |
 | STRUCTURED / REVIEW | Marked structure detected; compare against expected format and standards. |
 | HIGH RISK | Strong repetitive or structured signal. |
-| CRITICAL | Very low entropy, dominant cloud pattern or grave repetitive structure. |
+| CRITICAL | Very low entropy, risk >= 92, or low clear ratio combined with low entropy or strong peak score. |
 | INVALID SAMPLE | Insufficient or corrupt sample. |
 
 ## Benchmark Battery
