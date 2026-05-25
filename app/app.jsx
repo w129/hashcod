@@ -2434,6 +2434,7 @@ const TOP_MENU_ICONS = {
   cryptoIde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="M19 3a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1"/><path d="m7 15 3 3"/><path d="m7 21 3-3H5a2 2 0 0 1-2-2v-2"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="3" width="7" height="7" rx="1"/></svg>`,
   hashcodLaw: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`,
   hashcodLicenseFactory: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.83 14.83a4 4 0 1 1 0-5.66"/></svg>`,
+  launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
 };
 
 const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = null, icon = '', iconOnly = false }) => {
@@ -4245,6 +4246,216 @@ const HashcodLicenseFactoryDialog = ({ open, onClose, notify, language, rows = [
                     <button onClick={() => downloadPng(license)}>PNG</button>
                   </div>
                 </article>
+              ))}
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const HASHCOD_LAUNCH_KEY = 'hashcod_launch_readiness_v1';
+const HASHCOD_LAUNCH_CHECKS = [
+  { id: 'product-core', group: 'Producto', title: 'Producto principal definido', detail: 'Hashcod debe explicar en una frase que resuelve: generar, certificar, organizar y transportar codes criptograficos.' },
+  { id: 'product-demo', group: 'Producto', title: 'Demo guiada lista', detail: 'Una ruta corta: login, generar code, guardar, certificar, enviar al phone y descargar evidencia.' },
+  { id: 'product-docs', group: 'Producto', title: 'Documentacion de uso', detail: 'Biblioteca, glosario, casos de uso y ejemplos por industria.' },
+  { id: 'product-onboarding', group: 'Producto', title: 'Onboarding simple', detail: 'Primeros 5 minutos sin friccion: crear cuenta, aceptar contrato, generar primer code.' },
+  { id: 'prod-render-db', group: 'Produccion', title: 'Render PostgreSQL conectado', detail: 'DATABASE_URL configurado y persistencia validada despues de recargar.' },
+  { id: 'prod-env', group: 'Produccion', title: 'Secrets fuera del codigo', detail: 'HASHCOD_SECRET, gate hashes, OAuth y SMS en Environment Variables.' },
+  { id: 'prod-domain', group: 'Produccion', title: 'Dominio y HTTPS', detail: 'Dominio propio, TLS activo, redireccion obligatoria de HTTP a HTTPS.' },
+  { id: 'prod-backups', group: 'Produccion', title: 'Backups automaticos', detail: 'Export diario y retencion semanal de base de datos y expedientes.' },
+  { id: 'prod-monitoring', group: 'Produccion', title: 'Monitoreo y errores', detail: 'Logs, alertas de caida, errores 500 y medicion de latencia.' },
+  { id: 'security-auth', group: 'Seguridad', title: 'Auth real y sesiones', detail: 'Correo/password hash, OAuth/OIDC, cookies HttpOnly, CSRF y cierre de sesiones.' },
+  { id: 'security-rate', group: 'Seguridad', title: 'Rate limit por usuario', detail: 'Limites contra brute force, abuso de API y generacion excesiva.' },
+  { id: 'security-audit', group: 'Seguridad', title: 'Auditoria exportable', detail: 'Registro de login, cambios, descargas, aprobaciones y acciones admin.' },
+  { id: 'security-pentest', group: 'Seguridad', title: 'Prueba de seguridad', detail: 'Revisar XSS, CSRF, IDOR, secrets expuestos, headers CSP y permisos.' },
+  { id: 'legal-terms', group: 'Legal', title: 'Terminos y privacidad', detail: 'Terminos de uso, politica de privacidad, cookies, retencion y eliminacion.' },
+  { id: 'legal-disclaimer', group: 'Legal', title: 'Aviso de evidencia', detail: 'Hashcod conserva evidencia tecnica; no reemplaza registro oficial ante autoridad competente.' },
+  { id: 'legal-contract', group: 'Legal', title: 'Contrato de entrada', detail: 'Nombre, cedula/pasaporte si aplica, direccion, telefono y presupuesto declarado.' },
+  { id: 'sales-pricing', group: 'Comercial', title: 'Precios y oferta', detail: 'Paquetes claros: demo, profesional, enterprise, soporte y licencias.' },
+  { id: 'sales-case', group: 'Comercial', title: 'Casos de uso vendibles', detail: 'Proteccion de proyectos, evidencias, licencias, contenedores, SMS/Phone OS y certificados.' },
+  { id: 'sales-support', group: 'Comercial', title: 'Soporte operativo', detail: 'Canal de soporte, SLA, guia de recuperacion y contacto comercial.' },
+  { id: 'qa-mobile', group: 'Calidad', title: 'Mobile verificado', detail: 'Login, generacion, dialogs, Phone OS y descargas revisadas en telefono.' },
+  { id: 'qa-tests', group: 'Calidad', title: 'Tests antes de deploy', detail: 'Babel, server check, enterprise selftest y smoke test del sitio publicado.' },
+  { id: 'qa-release', group: 'Calidad', title: 'Release notes', detail: 'Cambios, riesgos, migraciones y version publicado en cada deploy.' },
+];
+
+const readHashcodLaunchState = () => {
+  try {
+    const raw = localStorage.getItem(HASHCOD_LAUNCH_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeHashcodLaunchState = (state) => {
+  try { localStorage.setItem(HASHCOD_LAUNCH_KEY, JSON.stringify(state)); } catch {}
+};
+
+const launchDocHeader = (title) => [
+  `# ${title}`,
+  '',
+  `Brand: ${hashcodDownloadBrand().name}`,
+  `Generated: ${new Date().toISOString()}`,
+  'Platform: Hashcod Cryptographic Platform v12',
+  '',
+].join('\n');
+
+const HashcodLaunchCenterDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const [state, setState] = useState(() => readHashcodLaunchState());
+  useEffect(() => {
+    if (open) setState(readHashcodLaunchState());
+  }, [open]);
+  if (!open) return null;
+  const completed = HASHCOD_LAUNCH_CHECKS.filter(item => state[item.id]).length;
+  const pct = Math.round((completed / HASHCOD_LAUNCH_CHECKS.length) * 100);
+  const groups = HASHCOD_LAUNCH_CHECKS.reduce((acc, item) => {
+    acc[item.group] = acc[item.group] || [];
+    acc[item.group].push(item);
+    return acc;
+  }, {});
+  const toggle = (id) => {
+    const next = { ...state, [id]: !state[id], updatedAt: new Date().toISOString() };
+    setState(next);
+    writeHashcodLaunchState(next);
+  };
+  const downloadReadiness = () => {
+    const payload = {
+      brand: hashcodDownloadBrand(),
+      generatedAt: new Date().toISOString(),
+      score: pct,
+      completed,
+      total: HASHCOD_LAUNCH_CHECKS.length,
+      checks: HASHCOD_LAUNCH_CHECKS.map(item => ({ ...item, done: !!state[item.id] })),
+    };
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'launch:center:readiness', text: JSON.stringify(payload), meta: { score: pct } }));
+    triggerDownload(`Hashcod-market-readiness-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    notify?.(L('Readiness exportado', 'Readiness exported'));
+  };
+  const downloadLegalPack = () => {
+    const body = launchDocHeader('Hashcod Legal Starter Pack') + [
+      'Aviso: este paquete es operativo y no sustituye asesoria legal profesional.',
+      '',
+      '## Terminos minimos',
+      '- El usuario declara que tiene derecho a subir, procesar y certificar los archivos.',
+      '- Hashcod conserva evidencia tecnica: fecha, hash, expediente, auditoria y certificado.',
+      '- Hashcod no promete registro oficial de marca, patente, obra ni propiedad exclusiva.',
+      '- El usuario acepta uso responsable de codes criptograficos y no abuso de la plataforma.',
+      '',
+      '## Privacidad minima',
+      '- Recolectar solo datos necesarios: nombre, correo, telefono, contrato y evidencia.',
+      '- Proteger datos sensibles con control de acceso, logs y cifrado en reposo cuando aplique.',
+      '- Permitir solicitud de exportacion y eliminacion segun ley aplicable.',
+      '',
+      '## Aviso para certificados',
+      'Este certificado no sustituye el registro oficial ante ONAPI, ONDA u otra autoridad competente. Su funcion es conservar evidencia tecnica y documental sobre fecha, autoria declarada, archivos depositados y existencia del proyecto al momento de emision.',
+    ].join('\n');
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'launch:center:legal-pack', text: body, meta: { type: 'legal' } }));
+    triggerDownload(`Hashcod-legal-starter-pack-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    notify?.(L('Paquete legal descargado', 'Legal pack downloaded'));
+  };
+  const downloadPitchPack = () => {
+    const body = launchDocHeader('Hashcod Commercial Pitch Pack') + [
+      '## One-liner',
+      'Hashcod es una plataforma enterprise para crear, validar, guardar, transportar y certificar codes criptograficos con evidencia, auditoria y herramientas operativas.',
+      '',
+      '## Problema que resuelve',
+      '- Equipos sin orden para claves, evidencias y formatos criptograficos.',
+      '- Dificultad para demostrar fecha, integridad y trazabilidad de proyectos.',
+      '- Necesidad de enviar codes a telefono, contenedores, tickets, licencias y certificados.',
+      '',
+      '## Oferta inicial',
+      '- Setup privado de plataforma.',
+      '- Generacion avanzada y base de datos de codes.',
+      '- Certificados, licencias, Phone OS, HNS Browser y auditoria.',
+      '- Soporte enterprise y personalizacion por contrato.',
+      '',
+      '## Demo recomendada',
+      'Login -> contrato -> generar code -> guardar en DB -> certificado -> contenedor -> enviar a Phone OS -> exportar evidencia.',
+    ].join('\n');
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'launch:center:pitch-pack', text: body, meta: { type: 'sales' } }));
+    triggerDownload(`Hashcod-commercial-pitch-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    notify?.(L('Pitch descargado', 'Pitch downloaded'));
+  };
+  const downloadSecurityPlan = () => {
+    const body = launchDocHeader('Hashcod Production Security Plan') + [
+      '## Render environment variables',
+      '- DATABASE_URL',
+      '- HASHCOD_SECRET',
+      '- PLATFORM_GATE_TOKEN_HASH',
+      '- PLATFORM_GATE_KEY_HASH',
+      '- OAuth client IDs and secrets, if enabled',
+      '- SMS provider credentials, if enabled',
+      '',
+      '## Required controls',
+      '- HTTPS only',
+      '- Cookies HttpOnly, Secure and SameSite',
+      '- CSRF tokens for mutations',
+      '- Argon2id/bcrypt/scrypt/PBKDF2 password hashing',
+      '- Rate limit by user and IP',
+      '- Audit log for admin actions',
+      '- Backups and restore drill',
+      '- CSP, X-Content-Type-Options and frame protection',
+      '- Secrets out of source code',
+      '- Manual security review before paid customers',
+    ].join('\n');
+    hashcodLawRecord(hashcodLawAssessPayload({ action: 'launch:center:security-plan', text: body, meta: { type: 'security' } }));
+    triggerDownload(`Hashcod-security-plan-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    notify?.(L('Plan de seguridad descargado', 'Security plan downloaded'));
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg launchdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h launch-head">
+          <div className="launch-title">
+            <span className="launch-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.launchCenter}} />
+            <div>
+              <h2>{L('Hashcod Launch Center', 'Hashcod Launch Center')}</h2>
+              <p>{L('Centro de salida al mercado: producto, produccion, seguridad, legal, comercial y calidad en una sola vista.', 'Go-to-market center: product, production, security, legal, commercial and quality in one view.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="launch-shell">
+          <aside className="launch-side">
+            <div className="launch-score">
+              <span>{L('Preparacion', 'Readiness')}</span>
+              <b>{pct}%</b>
+              <em>{completed}/{HASHCOD_LAUNCH_CHECKS.length} checks</em>
+              <i><u style={{ width: `${pct}%` }} /></i>
+            </div>
+            <div className="launch-actions">
+              <button onClick={downloadReadiness}>{L('Exportar readiness', 'Export readiness')}</button>
+              <button onClick={downloadLegalPack}>{L('Paquete legal', 'Legal pack')}</button>
+              <button onClick={downloadPitchPack}>{L('Pitch comercial', 'Commercial pitch')}</button>
+              <button onClick={downloadSecurityPlan}>{L('Plan seguridad', 'Security plan')}</button>
+            </div>
+            <section className="launch-env">
+              <span>{L('Variables Render', 'Render variables')}</span>
+              {['DATABASE_URL', 'HASHCOD_SECRET', 'PLATFORM_GATE_TOKEN_HASH', 'PLATFORM_GATE_KEY_HASH', 'OAUTH_CLIENT_ID', 'SMS_PROVIDER_KEY'].map(name => <code key={name}>{name}</code>)}
+            </section>
+          </aside>
+          <main className="launch-main">
+            <section className="launch-brief">
+              <article><span>01</span><b>{L('Vender claro', 'Sell clearly')}</b><p>{L('Hashcod debe vender evidencia, control, certificados y transporte seguro de codes, no solo generacion.', 'Hashcod should sell evidence, control, certificates and secure code transport, not only generation.')}</p></article>
+              <article><span>02</span><b>{L('Operar serio', 'Operate seriously')}</b><p>{L('PostgreSQL, backups, monitoreo, legal pack, seguridad y soporte antes de clientes pagos.', 'PostgreSQL, backups, monitoring, legal pack, security and support before paid customers.')}</p></article>
+              <article><span>03</span><b>{L('Demo compacta', 'Compact demo')}</b><p>{L('Un flujo de 3 minutos debe demostrar todo el valor enterprise.', 'A 3-minute flow should prove the full enterprise value.')}</p></article>
+            </section>
+            <section className="launch-checks">
+              {Object.entries(groups).map(([group, items]) => (
+                <div className="launch-group" key={group}>
+                  <h3>{group}</h3>
+                  {items.map(item => (
+                    <button key={item.id} className={state[item.id] ? 'done' : ''} onClick={() => toggle(item.id)} type="button">
+                      <i>{state[item.id] ? 'OK' : '...'}</i>
+                      <span><b>{item.title}</b><em>{item.detail}</em></span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </section>
           </main>
@@ -12014,6 +12225,7 @@ const App = () => {
   const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
   const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
   const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
+  const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
   const [planOpen, setPlanOpen] = useState(false);
   const [planFocus, setPlanFocus] = useState(null);
@@ -12844,6 +13056,7 @@ const App = () => {
   const openTicketForge = () => setTicketForgeOpen(true);
   const openLatticeLab = () => setLatticeLabOpen(true);
   const openHashcodLicenses = () => setHashcodLicensesOpen(true);
+  const openLaunchCenter = () => setLaunchCenterOpen(true);
   const addCodeToContainerPort = useCallback(async (row) => {
     if (!row?.value) return;
     const containerRandom = (len = 18, prefixValue = 'IH') => {
@@ -13104,6 +13317,11 @@ const App = () => {
     { label: language === 'es' ? '400 plantillas Hashcod' : '400 Hashcod templates', onClick: openHashcodLicenses },
     { label: language === 'es' ? 'Emitir JSON / YAML / TXT / PNG' : 'Issue JSON / YAML / TXT / PNG', onClick: openHashcodLicenses },
   ];
+  const launchCenterItems = [
+    { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
+    { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
+    { label: language === 'es' ? 'Legal, seguridad, pitch y readiness' : 'Legal, security, pitch and readiness', onClick: openLaunchCenter },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -13297,6 +13515,7 @@ const App = () => {
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
+        launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         hos: openHos, operative: openHos, 'hash-operative-system': openHos,
         hcp: openHcp, prompting: openHcp, 'hash-command-prompting': openHcp,
         manual: openCommandManual, comandos: openCommandManual, cmdform: openCommandManual,
@@ -13440,6 +13659,9 @@ const App = () => {
       graficadora: { open: openGraphLab, label: 'Graph Lab', verbs: ['graficar','funcion','rango','pdf','png','seno','coseno','potencia','help'] },
       licenses: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
       licencias: { open: openHashcodLicenses, label: 'Hashcod License Factory', verbs: ['emitir','catalogo','json','yaml','png','txt','copyright','plantilla','help'] },
+      launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
+      market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
+      mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
       hos: { open: openHos, label: 'HOS', verbs: ['manifest','receiver','route','notify','control','export','help'] },
       hcp: { open: openHcp, label: 'HCP', verbs: ['sc','pattern','prompt','hidden','control','export','help'] },
     };
@@ -13465,7 +13687,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openHashcodLicenses, openLaunchCenter, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -13502,6 +13724,7 @@ const App = () => {
       <CryptoIdeDialog open={cryptoIdeOpen} onClose={() => setCryptoIdeOpen(false)} notify={notify} language={language} />
       <HashcodLawDialog open={hashcodLawOpen} onClose={() => setHashcodLawOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodLicenseFactoryDialog open={hashcodLicensesOpen} onClose={() => setHashcodLicensesOpen(false)} rows={copyDb} notify={notify} language={language} />
+      <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
       <AssistRequestDialog open={!!assistRow} onClose={() => setAssistRow(null)} row={assistRow} notify={notify} language={language} />
@@ -13556,6 +13779,7 @@ const App = () => {
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
             <MenuButton label="HASHCOD LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHashcodLicenses} />
+            <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -13679,6 +13903,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setHashcodLicensesOpen(true)} title={language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory'} aria-label={language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLicenseFactory}} />
                 <b>Licenses</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setLaunchCenterOpen(true)} title={language === 'es' ? 'Launch Center de mercado' : 'Market launch center'} aria-label={language === 'es' ? 'Launch Center de mercado' : 'Market launch center'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.launchCenter}} />
+                <b>Launch</b>
               </button>
             </div>
           </div>
