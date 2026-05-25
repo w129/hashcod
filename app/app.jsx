@@ -13594,6 +13594,7 @@ const quoteDueDate = (days) => {
   return date.toISOString();
 };
 const BILLING_TIMER_RATE_USD = 0.05;
+const BILLING_TIMER_BLOCK_SECONDS = 10;
 const formatBillingTimer = (ms) => {
   const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
   const h = Math.floor(total / 3600);
@@ -13602,8 +13603,8 @@ const formatBillingTimer = (ms) => {
   return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
 };
 const billingTimerMoney = (elapsedMs) => {
-  const minutes = Math.floor(Math.max(0, Number(elapsedMs) || 0) / 60000);
-  return { minutes, amount: Number((minutes * BILLING_TIMER_RATE_USD).toFixed(2)) };
+  const blocks = Math.floor(Math.max(0, Number(elapsedMs) || 0) / (BILLING_TIMER_BLOCK_SECONDS * 1000));
+  return { blocks, amount: Number((blocks * BILLING_TIMER_RATE_USD).toFixed(2)) };
 };
 
 const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
@@ -13660,8 +13661,8 @@ const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
         status,
         elapsed: formatBillingTimer(elapsedMs),
         elapsed_ms: Math.floor(elapsedMs),
-        billable_minutes: billing.minutes,
-        rate_usd_per_minute: BILLING_TIMER_RATE_USD,
+        billable_blocks_10s: billing.blocks,
+        rate_usd_per_10_seconds: BILLING_TIMER_RATE_USD,
         amount_usd: billing.amount,
         exported_at: new Date().toISOString(),
       },
@@ -13677,7 +13678,7 @@ const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
             <span className="timer-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.billingTimer}} />
             <div>
               <h2>{L('Cronometro de Facturacion', 'Billing Timer')}</h2>
-              <p>{L('Cada minuto completo suma 0.05 USD hasta pausar o parar.', 'Every full minute adds 0.05 USD until paused or stopped.')}</p>
+              <p>{L('Cada 10 segundos completos suma 0.05 USD hasta pausar o parar.', 'Every full 10 seconds adds 0.05 USD until paused or stopped.')}</p>
             </div>
           </div>
           <button className="dlg-x" onClick={onClose}>x</button>
@@ -13686,11 +13687,11 @@ const HashcodBillingTimerDialog = ({ open, onClose, language, notify }) => {
           <div className="timer-display">
             <span>{status}</span>
             <strong>{formatBillingTimer(elapsedMs)}</strong>
-            <em>{billing.minutes} min x {quoteMoney(BILLING_TIMER_RATE_USD)} = {quoteMoney(billing.amount)}</em>
+            <em>{billing.blocks} x 10s x {quoteMoney(BILLING_TIMER_RATE_USD)} = {quoteMoney(billing.amount)}</em>
           </div>
           <div className="timer-stats">
-            <div><span>{L('Tarifa', 'Rate')}</span><b>{quoteMoney(BILLING_TIMER_RATE_USD)} / min</b></div>
-            <div><span>{L('Minutos facturables', 'Billable minutes')}</span><b>{billing.minutes}</b></div>
+            <div><span>{L('Tarifa', 'Rate')}</span><b>{quoteMoney(BILLING_TIMER_RATE_USD)} / 10s</b></div>
+            <div><span>{L('Bloques facturables', 'Billable blocks')}</span><b>{billing.blocks}</b></div>
             <div><span>{L('Total acumulado', 'Accumulated total')}</span><b>{quoteMoney(billing.amount)}</b></div>
           </div>
           <div className="timer-actions">
@@ -15413,7 +15414,7 @@ const App = () => {
   ];
   const billingTimerItems = [
     { label: language === 'es' ? 'Abrir cronometro de facturacion' : 'Open billing timer', onClick: openBillingTimer },
-    { label: language === 'es' ? '0.05 USD por minuto completo' : '0.05 USD per full minute', onClick: openBillingTimer },
+    { label: language === 'es' ? '0.05 USD por cada 10 segundos' : '0.05 USD per 10 seconds', onClick: openBillingTimer },
     { label: language === 'es' ? 'Activar, pausar, continuar y parar' : 'Activate, pause, resume and stop', onClick: openBillingTimer },
   ];
   const launchCenterItems = [
@@ -15790,8 +15791,8 @@ const App = () => {
       quote: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['price','codes','tools','invoice','billing','discount','tax','pdf','json','csv','customer'] },
       cotizacion: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['precio','codes','herramientas','factura','facturacion','descuento','impuesto','pdf','json','csv','cliente'] },
       factura: { open: openQuoteSystem, label: 'Hashcod Billing System', verbs: ['emitir','guardar','cliente','impuesto','vencimiento','pdf','json','csv'] },
-      timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','minute','json'] },
-      cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','minuto','json'] },
+      timer: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['start','pause','resume','stop','usd','10s','seconds','json'] },
+      cronometro: { open: openBillingTimer, label: 'Hashcod Billing Timer', verbs: ['activar','pausar','continuar','parar','usd','10s','segundos','json'] },
       launch: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','market','export','help'] },
       market: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','readiness','legal','security','pitch','production','export','help'] },
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
