@@ -14,7 +14,8 @@ const PLAN_SIMILARITY_DENSITY = {
 };
 
 
-const LANG_STORAGE_KEY = 'opencriptG_lang_v12';
+const LANG_STORAGE_KEY = 'hashcod_lang_v13_ja';
+const DEFAULT_LANGUAGE = 'ja';
 const LANGUAGE_OPTIONS = [
   { code: 'en', native: 'English' },
   { code: 'es', native: 'Español' },
@@ -82,6 +83,35 @@ const I18N = {
     languageChanged: 'Idioma cambiado a {name}',
     sessionLoaded: 'Sesión cargada', invalidSession: 'Archivo de sesión no válido', sessionSaved: 'Sesión guardada', markdownExported: 'Markdown exportado', txtExported: 'TXT exportado', jsonExported: 'JSON exportado', csvExported: 'CSV exportado', outputCleared: 'Salida limpiada', newSessionReady: 'Nueva sesión lista', valuesCopied: '{count} valores copiados', showingNewest: 'Mostrando la salida más reciente',
     openDatabase: 'Abrir base de datos', exportDatabase: 'Exportar base de datos', clearDatabase: 'Vaciar base de datos', databaseTitle: 'Base de Datos de Codes Copiados', databaseSubtitle: 'Bóveda local con los codes generados que el usuario ha copiado. Guardada en este navegador.', databaseSearch: 'Buscar code copiado, primitiva o texto…', databaseTotal: '{count} guardados', databaseEmpty: 'Todavía no hay codes copiados guardados.', databaseValue: 'Valor copiado', databasePrimitive: 'Primitiva', databaseCategory: 'Categoría', databaseMode: 'Modo', databaseCopiedAt: 'Copiado el', databaseCopyAgain: 'Copiar otra vez', databaseDelete: 'Eliminar', databaseCleared: 'Base de datos vaciada', databaseExported: 'Base de datos exportada', databaseSaved: '{count} code copiado guardado en la base de datos', databaseSavedPlural: '{count} codes copiados guardados en la base de datos', databaseBatch: 'lote', databaseSingle: 'individual', qrMenu: 'QR Vault', openQrVault: 'Abrir QR Vault', qrTitle: 'QR Vault Avanzado', qrSubtitle: 'Genera QR poco comunes y más avanzados usando los codes seleccionados desde la base de datos de copiados.', qrSearch: 'Buscar codes copiados para codificar…', qrSelected: '{count} seleccionados', qrNoneSelected: 'Selecciona al menos un code copiado de la lista.', qrMode: 'Modo QR', qrModeSingle: 'Un QR por cada code seleccionado', qrModeBundle: 'QR de paquete sellado', qrPayload: 'Estilo del payload', qrPayloadRaw: 'Valor copiado en bruto', qrPayloadPacket: 'JSON de paquete avanzado', qrCorrection: 'Corrección de errores', qrSize: 'Tamaño', qrTheme: 'Estilo de tarjeta', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: 'Seleccionar todo', qrClearSelection: 'Limpiar selección', qrGenerate: 'Generar QR', qrEmpty: 'Todavía no se ha generado ningún QR.', qrCopiedAt: 'Copiado originalmente', qrDownload: 'Descargar PNG', qrCopyPayload: 'Copiar payload', qrUseSelected: 'Usar codes seleccionados', qrBundleName: 'Paquete bundle', qrDatabaseEmpty: 'La base de datos de copiados está vacía. Copia primero algunos codes generados.', qrGenerated: 'QR generado', qrGeneratedPlural: 'QR generados', qrRawLabel: 'Valor bruto', qrPacketLabel: 'Paquete avanzado',
+  },
+  ja: {
+    searchPrimitives: '{count} 個のプリミティブを検索…',
+    prefix: '接頭辞', length: '長さ', charset: '文字セット', quantity: '数量', batch: 'バッチ',
+    clear: 'クリア', copyAll: 'すべてコピー', downloadMd: '.mdをダウンロード', generate: '生成', generating: '生成中…',
+    storyModeHover: 'ストーリーモード・ホバーで詳細',
+    menuFile: 'ファイル', menuGenerate: '生成', menuExport: 'エクスポート', menuView: '表示', menuHelp: 'ヘルプ', menuLanguages: '言語', menuDatabase: 'データベース',
+    newSession: '新規セッション', openSession: 'セッションを開く…', saveSession: 'セッションを保存', clearOutput: '出力をクリア',
+    generateSelected: '選択項目を生成', generate10: '10個生成', generate100: '100個生成', generate500: '500個生成', generate1000: '1000個生成',
+    exportMarkdown: 'Markdownをエクスポート', exportTxt: 'TXTをエクスポート', exportJson: 'JSONをエクスポート', exportCsv: 'CSVをエクスポート',
+    compactDensity: 'コンパクト表示', comfortableDensity: '標準表示', focusSearch: '検索にフォーカス', newestOutput: '最新の出力', replayTour: 'ツアーを再生',
+    openHelp: 'ヘルプを開く', shortcuts: 'ショートカット', aboutApp: 'Hashcodについて',
+    helpTitle: 'Hashcod ヘルプ', helpSubtitle: '開発者とサイバーセキュリティ作業向けのローカル暗号値ジェネレーター。',
+    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのHashcodセッションを読み込みます。',
+    helpGenerateDesc: '選択したプリミティブを生成し、バッチサイズを素早く変更し、結果をコピーまたは出力を消去します。',
+    helpExportDesc: '用途に応じて生成値をMarkdown、TXT、JSON、CSVとしてエクスポートします。',
+    helpViewDesc: '表示密度の変更、検索フォーカス、最新結果への移動、ガイドツアーの再生を行います。',
+    generated: '生成済み', unique: '一意', session: 'セッション', output: '出力', value: '値', values: '値',
+    hoverHint: '任意の値をクリックしてコピー',
+    nothingGenerated: 'まだ何も生成されていません',
+    emptyGenerateHint: '左側でプリミティブを選択し、パラメータを設定してから ⌘ ↵ または生成を押してください。',
+    webCrypto: 'Web Crypto API', localOffline: 'ローカル・オフライン',
+    csprng: 'CSPRNG・crypto.getRandomValues',
+    techSelectPrimitive: 'プリミティブを選択', techSelectPrimitiveDesc: '左側から暗号タイプを選択すると、仕様、エントロピープロファイル、推奨用途を確認できます。', techEngine: 'エンジン', techEntropy: 'エントロピー', techSearchSpace: '探索空間', techStandard: '標準', techUseItFor: '用途', techDont: '非推奨', techId: 'ID', techCategory: 'カテゴリ',
+    tour: 'ツアー',
+    languageChanged: '言語を {name} に変更しました',
+    sessionLoaded: 'セッションを読み込みました', invalidSession: '無効なセッションファイルです', sessionSaved: 'セッションを保存しました', markdownExported: 'Markdownをエクスポートしました', txtExported: 'TXTをエクスポートしました', jsonExported: 'JSONをエクスポートしました', csvExported: 'CSVをエクスポートしました', outputCleared: '出力をクリアしました', newSessionReady: '新規セッションの準備ができました', valuesCopied: '{count} 個の値をコピーしました', showingNewest: '最新の出力を表示しています',
+    openDatabase: 'データベースを開く', exportDatabase: 'データベースをエクスポート', clearDatabase: 'データベースをクリア', databaseTitle: 'コピー済みコードデータベース', databaseSubtitle: 'ユーザーがコピーした生成コードを保存するローカルVaultです。このブラウザに保存されます。', databaseSearch: 'コピー済みコード、プリミティブ、テキストを検索…', databaseTotal: '{count} 件保存', databaseEmpty: 'コピー済みコードはまだ保存されていません。', databaseValue: 'コピー済みの値', databasePrimitive: 'プリミティブ', databaseCategory: 'カテゴリ', databaseMode: 'モード', databaseCopiedAt: 'コピー日時', databaseCopyAgain: '再コピー', databaseDelete: '削除', databaseCleared: 'データベースをクリアしました', databaseExported: 'データベースをエクスポートしました', databaseSaved: '{count} 件のコピー済みコードをデータベースに保存しました', databaseSavedPlural: '{count} 件のコピー済みコードをデータベースに保存しました', databaseBatch: 'バッチ', databaseSingle: '単体',
+    qrMenu: 'QR Vault', openQrVault: 'QR Vaultを開く', qrTitle: '高度なQR Vault', qrSubtitle: 'コピー済みコードデータベースから選択したコードで、より高度なQRパケットを生成します。', qrSearch: 'エンコードするコピー済みコードを検索…', qrSelected: '{count} 件選択', qrNoneSelected: 'データベース一覧から少なくとも1つのコピー済みコードを選択してください。', qrMode: 'QRモード', qrModeSingle: '選択コードごとに1つのQR', qrModeBundle: '封印バンドルQR', qrPayload: 'ペイロード形式', qrPayloadRaw: 'コピー値そのまま', qrPayloadPacket: '高度なパケットJSON', qrCorrection: '誤り訂正', qrSize: 'サイズ', qrTheme: 'カードスタイル', qrThemeSealed: 'Sealed', qrThemeMatrix: 'Matrix', qrThemeMinimal: 'Minimal', qrSelectAll: 'すべて選択', qrClearSelection: '選択を解除', qrGenerate: 'QR生成', qrEmpty: 'まだQRは生成されていません。', qrCopiedAt: '元のコピー日時', qrDownload: 'PNGをダウンロード', qrCopyPayload: 'ペイロードをコピー', qrUseSelected: '選択したコードを使用', qrBundleName: 'バンドルパケット', qrDatabaseEmpty: 'コピー済みコードデータベースは空です。先に生成コードをコピーしてください。', qrGenerated: 'QRを生成しました', qrGeneratedPlural: 'QRコードを生成しました', qrRawLabel: '生の値', qrPacketLabel: '高度なパケット',
   },
   ko: {
     searchPrimitives: '{count}개 프리미티브 검색…',
@@ -163,6 +193,18 @@ const uiText = (lang, key, vars = {}) => {
 
 const getCategoryLabel = (cat, lang) => {
   if (!cat) return '—';
+  const jaCategories = {
+    symmetric: '対称鍵',
+    asymmetric: '非対称鍵',
+    hashes: 'ハッシュダイジェスト',
+    passwords: 'パスワードとフレーズ',
+    kdf: 'KDFとパスワードハッシュ',
+    macs: 'MACと認証子',
+    identifiers: '識別子',
+    tokens: 'トークンと認証',
+    pq: 'ポスト量子',
+  };
+  if (lang === 'ja' && jaCategories[cat.id]) return jaCategories[cat.id];
   return CATEGORY_I18N[cat.id]?.[lang] || CATEGORY_I18N[cat.id]?.en || cat.label || cat.id;
 };
 window.getCategoryLabel = getCategoryLabel;
@@ -14864,7 +14906,7 @@ const App = () => {
   const [dbQuery, setDbQuery] = useState('');
   const [copyDb, setCopyDb] = useState(() => COPY_DB.list());
   const [toast, setToast] = useState('');
-  const [language, setLanguage] = useState(() => localStorage.getItem(LANG_STORAGE_KEY) || 'en');
+  const [language, setLanguage] = useState(() => localStorage.getItem(LANG_STORAGE_KEY) || DEFAULT_LANGUAGE);
   const [cmdInput, setCmdInput] = useState('');
   const [cmdLog, setCmdLog] = useState(() => [
     { kind: 'sys', prompt: 'boot', text: 'Hashcod IDE CMD inicializado. Escribe help para ver comandos.' },
@@ -16761,18 +16803,18 @@ const HASHCOD_ZERO_TRUST_AUDIT_KEY = 'hashcod_zero_trust_audit_chain_v1';
 const HASHCOD_ZERO_TRUST_SESSION_KEY = 'hashcod_zero_trust_manifest_v1';
 const HASHCOD_ZERO_TRUST_FAIL_KEY = 'hashcod_zero_trust_fail_count_v1';
 const ZERO_TRUST_CONTROLS = [
-  ['zero-trust', 'Zero Trust Access', 'Cada accion sensible se valida antes de abrir la plataforma.'],
-  ['e2ee', 'End-to-End Encryption', 'WebCrypto disponible para cifrado y digest local.'],
-  ['client-side', 'Client-Side Encryption', 'Preparado para cifrar datos en el navegador antes de guardarlos.'],
-  ['hardware-kms', 'Hardware-backed Key Management', 'Detecta WebAuthn/passkeys como base de llaves hardware.'],
-  ['signed-reports', 'Signed Reports', 'Crea un manifiesto de entrada con firma HMAC local.'],
-  ['vault', 'Secure Vault', 'Comprueba almacenamiento aislado para vault cifrado.'],
-  ['sandbox', 'Sandbox Analyzer', 'Sesion separada para analisis sin confiar en archivos ni tokens.'],
-  ['scanner', 'Secret Scanner', 'Entrada revisada sin exponer la clave en logs.'],
-  ['audit', 'Immutable Audit Logs', 'Registra eventos con hash chain local.'],
-  ['api-gateway', 'API Security Gateway', 'Mantiene rutas bloqueadas hasta validar la clave.'],
-  ['threat', 'Threat Detection Engine', 'Sube el riesgo por intentos fallidos o entorno inseguro.'],
-  ['recovery', 'Recovery & Incident System', 'Deja evidencia de fallos para respuesta a incidentes.'],
+  ['zero-trust', 'ゼロトラストアクセス', 'プラットフォームを開く前に、重要な操作を毎回検証します。'],
+  ['e2ee', 'エンドツーエンド暗号化', 'WebCrypto によるローカル暗号化とダイジェストを確認します。'],
+  ['client-side', 'クライアント側暗号化', '保存前にブラウザ側でデータを暗号化できる状態です。'],
+  ['hardware-kms', 'ハードウェア鍵管理', 'WebAuthn / passkeys をハードウェア鍵基盤として検出します。'],
+  ['signed-reports', '署名付きレポート', 'ローカル HMAC 署名付きの入場マニフェストを作成します。'],
+  ['vault', 'セキュアVault', '暗号化Vault用の隔離ストレージを確認します。'],
+  ['sandbox', 'サンドボックス解析', 'ファイルやトークンを信頼せず、分離セッションで解析します。'],
+  ['scanner', 'シークレットスキャナー', 'キーをログに露出せず入力を検査します。'],
+  ['audit', '不変監査ログ', 'ローカルのハッシュチェーンでイベントを記録します。'],
+  ['api-gateway', 'APIセキュリティゲートウェイ', 'キー検証が完了するまでルートをロックします。'],
+  ['threat', '脅威検出エンジン', '失敗回数や安全でない環境に応じてリスクを上げます。'],
+  ['recovery', '復旧・インシデント対応', '障害の証跡を残し、対応に使えるようにします。'],
 ];
 
 const zeroTrustStorageReady = (storage) => {
@@ -16815,7 +16857,7 @@ const getZeroTrustChecks = () => {
     label,
     detail,
     ok: !!base[id],
-    status: base[id] ? 'ACTIVE' : 'LIMITED',
+    status: base[id] ? '有効' : '制限あり',
   }));
 };
 const readZeroTrustAudit = () => {
@@ -16832,7 +16874,7 @@ const writeZeroTrustAudit = (rows) => {
 };
 const appendZeroTrustAudit = async (event, meta = {}) => {
   const rows = readZeroTrustAudit();
-  const previousHash = rows.length ? rows[rows.length - 1].entryHash : 'GENESIS';
+  const previousHash = rows.length ? rows[rows.length - 1].entryHash : '起点';
   const entry = {
     id: `ZTA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(16).slice(2, 8).toUpperCase()}`,
     event,
@@ -16855,7 +16897,7 @@ const calcZeroTrustThreatScore = (checks, failCount = 0) => {
 };
 const buildZeroTrustManifest = async ({ keyHash, checks, threatScore }) => {
   const auditRows = readZeroTrustAudit();
-  const auditRoot = auditRows.length ? auditRows[auditRows.length - 1].entryHash : 'GENESIS';
+  const auditRoot = auditRows.length ? auditRows[auditRows.length - 1].entryHash : '起点';
   const manifest = {
     gateId: `HC-ZTA-${Date.now().toString(36).toUpperCase()}`,
     engine: 'HASHCOD-ZTA-1.0',
@@ -16923,7 +16965,7 @@ const HashcodSingleKeyGate = ({ children }) => {
       hashcodLawRecord(hashcodLawAssessPayload({ action: 'entry-key:unlock', meta: { gate: 'zero-trust', manifest: manifest.gateId } }));
       setUnlocked(true);
     } catch {
-      setError('No se pudo verificar la clave.');
+      setError('キーを検証できませんでした。');
       setChecking(false);
     }
   };
@@ -16933,13 +16975,13 @@ const HashcodSingleKeyGate = ({ children }) => {
       <form className="singlekey-card zero-trust-card" onSubmit={submit}>
         <section className="zta-hero">
           <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
-          <span>HASHCOD VERIFIABLE SECURITY LAYER</span>
-          <h1>Zero Trust Access</h1>
-          <p>Ningun usuario, token, archivo, API o sesion se considera seguro por defecto. Hashcod valida el entorno, firma un manifiesto de entrada y registra la accion en una cadena de auditoria antes de abrir.</p>
+          <span>HASHCOD 検証可能セキュリティレイヤー</span>
+          <h1>ゼロトラストアクセス</h1>
+          <p>ユーザー、トークン、ファイル、API、セッションは既定で信頼されません。Hashcod は起動前に環境を検証し、入場マニフェストへ署名し、監査チェーンへ記録します。</p>
         </section>
 
         <aside className="zta-panel">
-          <b>SECURITY STACK</b>
+          <b>セキュリティスタック</b>
           <div className="zta-stack">
             {checks.map(check => (
               <i key={check.id} className={check.ok ? 'ok' : 'warn'}>
@@ -16951,46 +16993,46 @@ const HashcodSingleKeyGate = ({ children }) => {
         </aside>
 
         <section className="zta-keybox">
-          <label>ENTRY KEY</label>
+          <label>エントリーキー</label>
           <input
             type="password"
             value={keyText}
             onChange={e => setKeyText(e.target.value)}
-            placeholder="Clave de acceso Hashcod"
+            placeholder="Hashcod アクセスキー"
             autoComplete="off"
             autoFocus
           />
           {error && <em>{error}</em>}
-          <button disabled={checking || !keyText.trim()}>{checking ? 'Verificando Zero Trust...' : 'Unlock Hashcod'}</button>
+          <button disabled={checking || !keyText.trim()}>{checking ? 'ゼロトラスト検証中...' : 'Hashcodを解除'}</button>
         </section>
 
         <section className="zta-metrics" aria-label="Zero Trust status">
           <div>
-            <span>THREAT SCORE</span>
+            <span>脅威スコア</span>
             <strong>{threatScore}/100</strong>
-            <small>{threatScore >= 70 ? 'INCIDENT WATCH' : threatScore >= 35 ? 'ELEVATED' : 'CONTROLLED'}</small>
+            <small>{threatScore >= 70 ? 'インシデント監視' : threatScore >= 35 ? '上昇中' : '制御済み'}</small>
           </div>
           <div>
-            <span>AUDIT CHAIN</span>
+            <span>監査チェーン</span>
             <strong>{auditRows.length}</strong>
-            <small>{auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : 'GENESIS'}</small>
+            <small>{auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : '起点'}</small>
           </div>
           <div>
-            <span>CRYPTO ENGINE</span>
-            <strong>{checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : 'LIMITED'}</strong>
+            <span>暗号エンジン</span>
+            <strong>{checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : '制限あり'}</strong>
             <small>SHA-256 + HMAC manifest</small>
           </div>
           <div>
-            <span>VAULT STATUS</span>
-            <strong>{checks.find(c => c.id === 'vault')?.ok ? 'READY' : 'LIMITED'}</strong>
-            <small>Local sealed session</small>
+            <span>Vault状態</span>
+            <strong>{checks.find(c => c.id === 'vault')?.ok ? '準備完了' : '制限あり'}</strong>
+            <small>ローカル封印セッション</small>
           </div>
         </section>
 
         <section className="zta-controls">
           {checks.map(check => (
             <article key={check.id}>
-              <span className={check.ok ? 'ok' : 'warn'}>{check.ok ? 'ACTIVE' : 'LIMITED'}</span>
+              <span className={check.ok ? 'ok' : 'warn'}>{check.ok ? '有効' : '制限あり'}</span>
               <b>{check.label}</b>
               <p>{check.detail}</p>
             </article>
