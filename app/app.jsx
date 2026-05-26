@@ -5,7 +5,7 @@ const APP_VERSION = 12;
 window.APP_VERSION = APP_VERSION;
 const MAX_GENERATION_BATCH = 100000;
 const GENERATION_CHUNK_SIZE = 500;
-const MAX_RENDERED_OUTPUT = 1000;
+const MAX_RENDERED_OUTPUT = 600;
 const PLAN_SIMILARITY_DENSITY = {
   free: 0.78,
   starter: 0.42,
@@ -2512,6 +2512,7 @@ const TOP_MENU_ICONS = {
   building: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
   cryptoExam: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/><path d="m15 15 2 2 4-4"/></svg>`,
+  geometricCode: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.34 17.52a10 10 0 1 0-2.82 2.82"/><circle cx="19" cy="19" r="2"/><path d="m13.41 13.41 4.18 4.18"/><circle cx="12" cy="12" r="2"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
   licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
   evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
@@ -8054,6 +8055,168 @@ const CryptoExamSuiteDialog = ({ open, onClose, rows = [], outputRows = [], noti
           </main>
         </div>
       </section>
+    </div>
+  );
+};
+
+const geometricCodeBuild = async (source, size = 13, mode = 'radial') => {
+  const raw = String(source?.value || source?.code || source || '');
+  const digest = await digestHex(raw || 'hashcod-geometric-empty');
+  const bytes = Array.from(digest.match(/../g) || [], h => parseInt(h, 16));
+  const n = Math.max(7, Math.min(31, Number(size) || 13));
+  const chars = ' .:+*oO#@';
+  const center = (n - 1) / 2;
+  const phase = (bytes[0] || 1) / 255 * Math.PI * 2;
+  const freqA = 2 + ((bytes[1] || 3) % 7);
+  const freqB = 3 + ((bytes[2] || 5) % 9);
+  const radiusBias = 0.52 + ((bytes[3] || 8) % 35) / 100;
+  const lines = [];
+  const points = [];
+  for (let y = 0; y < n; y++) {
+    let line = '';
+    for (let x = 0; x < n; x++) {
+      const dx = (x - center) / Math.max(1, center);
+      const dy = (y - center) / Math.max(1, center);
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const a = Math.atan2(dy, dx);
+      const b = bytes[(x + y * n) % bytes.length] || 0;
+      const wave = Math.sin(a * freqA + phase) * 0.22 + Math.cos((dx - dy) * freqB + b / 255) * 0.18;
+      const ring = 1 - Math.abs(r - radiusBias - wave) * 2.8;
+      const core = Math.max(0, 1 - r * 2.4);
+      const diagonal = mode === 'lattice' ? Math.max(0, 0.5 - Math.abs(dx - dy)) : 0;
+      const spiral = mode === 'spiral' ? Math.max(0, 0.72 - Math.abs((a + r * freqA + phase) % (Math.PI * 0.55))) : 0;
+      const v = Math.max(0, Math.min(1, ring + core * 0.55 + diagonal * 0.45 + spiral * 0.35 + (b / 255 - 0.5) * 0.18));
+      const idx = Math.max(0, Math.min(chars.length - 1, Math.round(v * (chars.length - 1))));
+      const ch = chars[idx];
+      line += ch;
+      if (idx > 2) points.push({ x, y, weight: idx });
+    }
+    lines.push(line);
+  }
+  const ascii = lines.join('\n');
+  const id = `HC-GEO-${digest.slice(0, 12).toUpperCase()}`;
+  return {
+    id,
+    type: 'Hashcod Geometric Code',
+    mode,
+    size: n,
+    sourceType: source?.type || 'database-code',
+    sourceIndex: source?.idx || source?.index || 0,
+    sourceSha256: digest,
+    value: `-----[${id}]-----\n${ascii}\n-----[SHA256:${digest.slice(0, 16)}]-----`,
+    ascii,
+    points,
+    createdAt: new Date().toISOString(),
+  };
+};
+
+const GeometricCodeDialog = ({ open, onClose, rows = [], notify, language, onSaveRows }) => {
+  const L = (es, en, ja) => language === 'ja' ? ja : language === 'es' ? es : en;
+  const canvasRef = useRef(null);
+  const [sourceId, setSourceId] = useState('');
+  const [mode, setMode] = useState('radial');
+  const [size, setSize] = useState(13);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const sources = useMemo(() => (rows || []).slice(0, 600), [rows]);
+  useEffect(() => {
+    if (!sourceId && sources[0]) setSourceId(String(sources[0].id || sources[0].copiedAt || 0));
+  }, [sourceId, sources]);
+  const source = useMemo(() => sources.find(row => String(row.id || row.copiedAt || 0) === sourceId) || sources[0], [sources, sourceId]);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !result) return;
+    const cell = Math.max(18, Math.floor(520 / result.size));
+    const pad = 28;
+    canvas.width = result.size * cell + pad * 2;
+    canvas.height = result.size * cell + pad * 2 + 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0F0F0F';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#2A2A2A';
+    ctx.strokeRect(pad, pad, result.size * cell, result.size * cell);
+    result.points.forEach(p => {
+      const alpha = Math.min(1, 0.18 + p.weight / 10);
+      ctx.fillStyle = `rgba(245,245,245,${alpha})`;
+      ctx.fillRect(pad + p.x * cell + 2, pad + p.y * cell + 2, cell - 4, cell - 4);
+    });
+    ctx.fillStyle = '#F5F5F5';
+    ctx.font = '700 18px Codec Pro, Consolas, monospace';
+    ctx.fillText('Hashcod Geometric Code', pad, canvas.height - 42);
+    ctx.fillStyle = '#A3A3A3';
+    ctx.font = '12px Codec Pro, Consolas, monospace';
+    ctx.fillText(`${result.id} · ${result.mode} · ${result.sourceSha256.slice(0, 24)}`, pad, canvas.height - 20);
+  }, [result]);
+  if (!open) return null;
+  const generateOne = async () => {
+    if (!source) return notify?.(L('No hay codes guardados en la base de datos.', 'No saved database codes found.', 'データベースに保存済みコードがありません。'));
+    setBusy(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      const next = await geometricCodeBuild(source, size, mode);
+      setResult(next);
+      notify?.(L('Code geometrico generado.', 'Geometric code generated.', '幾何学コードを生成しました。'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const saveResult = () => {
+    if (!result) return;
+    onSaveRows?.({
+      id: `${result.id}-${Date.now()}`,
+      idx: result.sourceIndex,
+      type: result.type,
+      value: result.value,
+      mode: 'geometric',
+      copiedAt: new Date().toISOString(),
+    }, 'geometric-code');
+    notify?.(L('Code geometrico guardado en la base de datos.', 'Geometric code saved to database.', '幾何学コードをデータベースに保存しました。'));
+  };
+  const downloadTxt = () => result && triggerDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.txt`, result.value, 'text/plain;charset=utf-8');
+  const downloadJson = () => result && triggerDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  const downloadPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !result) return;
+    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+  };
+  return (
+    <div className="complexdlg-backdrop">
+      <div className="complexdlg">
+        <header className="complex-head">
+          <div>
+            <span className="complex-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.geometricCode}} />
+            <h2>{L('Geometric Code Lab', 'Geometric Code Lab', '幾何学コードラボ')}</h2>
+            <p>{L('Genera codes criptograficos geometricos desde los codes guardados en la base de datos.', 'Generate geometric cryptographic codes from saved database codes.', 'データベース保存コードから幾何学的な暗号コードを生成します。')}</p>
+          </div>
+          <button className="complex-close" onClick={onClose}>x</button>
+        </header>
+        <div className="complex-body">
+          <aside className="complex-side">
+            <label>{L('Code fuente', 'Source code', 'ソースコード')}</label>
+            <select value={sourceId} onChange={e => setSourceId(e.target.value)}>
+              {sources.map((row, i) => <option key={row.id || i} value={String(row.id || row.copiedAt || i)}>{String(row.idx || i).padStart(3, '0')} | {row.type || 'Hashcod code'}</option>)}
+            </select>
+            <label>{L('Geometria', 'Geometry', 'ジオメトリ')}</label>
+            <select value={mode} onChange={e => setMode(e.target.value)}>
+              <option value="radial">radial ring</option>
+              <option value="spiral">spiral wave</option>
+              <option value="lattice">lattice diagonal</option>
+            </select>
+            <label>{L('Tamano', 'Size', 'サイズ')}</label>
+            <input type="number" min="7" max="31" step="2" value={size} onChange={e => setSize(e.target.value)} />
+            <button onClick={generateOne} disabled={busy}>{busy ? L('Generando...', 'Generating...', '生成中...') : L('Generar geometrico', 'Generate geometric', '幾何学コード生成')}</button>
+            <button onClick={saveResult} disabled={!result}>{L('Guardar en base de datos', 'Save to database', 'データベースに保存')}</button>
+            <button onClick={downloadTxt} disabled={!result}>TXT</button>
+            <button onClick={downloadJson} disabled={!result}>JSON</button>
+            <button onClick={downloadPng} disabled={!result}>PNG</button>
+            <div className="complex-note">{L('Render optimizado: solo se cargan 600 registros y el dibujo se calcula bajo demanda.', 'Optimized render: only 600 records are loaded and drawing is computed on demand.', '最適化済み: 600件のみ読み込み、描画は必要時に計算します。')}</div>
+          </aside>
+          <main className="complex-main">
+            <canvas ref={canvasRef} />
+            <pre className="complex-output">{result ? result.value : L('Selecciona un code guardado y genera una imagen geometrica.', 'Select a saved code and generate a geometric image.', '保存済みコードを選択して幾何学イメージを生成してください。')}</pre>
+          </main>
+        </div>
+      </div>
     </div>
   );
 };
@@ -14888,6 +15051,7 @@ const App = () => {
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
+  const [geometricCodeOpen, setGeometricCodeOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
   const [securitySuiteTool, setSecuritySuiteTool] = useState('tokenInspector');
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
@@ -15732,6 +15896,7 @@ const App = () => {
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openCryptoExam = () => setCryptoExamOpen(true);
+  const openGeometricCode = () => setGeometricCodeOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
     setSecuritySuiteTool(toolKey);
     setSecuritySuiteOpen(true);
@@ -16039,6 +16204,11 @@ const App = () => {
     { label: language === 'es' ? 'Entropia, NIST mini, reticulos, Fourier y veredicto' : 'Entropy, NIST mini, lattices, Fourier, and verdict', onClick: openCryptoExam },
     { label: language === 'es' ? 'Exportar reporte JSON / TXT' : 'Export JSON / TXT report', onClick: openCryptoExam },
   ];
+  const geometricCodeItems = [
+    { label: language === 'ja' ? '幾何学コードラボを開く' : language === 'es' ? 'Abrir Geometric Code Lab' : 'Open Geometric Code Lab', onClick: openGeometricCode },
+    { label: language === 'ja' ? '保存済みコードから生成' : language === 'es' ? 'Generar desde base de datos' : 'Generate from database', onClick: openGeometricCode },
+    { label: language === 'ja' ? 'ASCII / PNG / JSON' : 'ASCII / PNG / JSON', onClick: openGeometricCode },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -16237,6 +16407,7 @@ const App = () => {
         quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel, cryptoexam: openCryptoExam, examen: openCryptoExam, examenes: openCryptoExam, exams: openCryptoExam,
+        geometric: openGeometricCode, geometrico: openGeometricCode, geometry: openGeometricCode, geocode: openGeometricCode, radius: openGeometricCode, radio: openGeometricCode,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
         licenseshield: () => openSecuritySuite('licenseShield'), shield: () => openSecuritySuite('licenseShield'),
         evidencevault: () => openSecuritySuite('evidenceVault'), evidence: () => openSecuritySuite('evidenceVault'),
@@ -16414,6 +16585,8 @@ const App = () => {
       kernel: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
       cryptoexam: { open: openCryptoExam, label: 'Hashcod Crypto Exam Suite', verbs: ['30','entropy','nist','lattice','fourier','wavelet','verdict','json','txt'] },
       examenes: { open: openCryptoExam, label: 'Hashcod Crypto Exam Suite', verbs: ['30','entropia','nist','reticulos','fourier','veredicto','json','txt'] },
+      geometric: { open: openGeometricCode, label: 'Hashcod Geometric Code Lab', verbs: ['database','ascii','png','json','radial','spiral','lattice'] },
+      geometrico: { open: openGeometricCode, label: 'Hashcod Geometric Code Lab', verbs: ['base','ascii','png','json','radial','espiral','lattice'] },
       securitysuite: { open: () => openSecuritySuite('riskEngine'), label: 'Hashcod Security Suite', verbs: ['token','license','evidence','scanner','qr','ticket','fingerprint','benchmark','password','integrity','api','report','vault','learning','risk'] },
       tokeninspector: { open: () => openSecuritySuite('tokenInspector'), label: 'Hashcod Token Inspector', verbs: ['jwt','api-key','license','entropy','risk','report'] },
       licenseshield: { open: () => openSecuritySuite('licenseShield'), label: 'Hashcod License Shield', verbs: ['issue','sign','verify','offline','device','qr'] },
@@ -16456,7 +16629,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -16501,6 +16674,7 @@ const App = () => {
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CryptoExamSuiteDialog open={cryptoExamOpen} onClose={() => setCryptoExamOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
+      <GeometricCodeDialog open={geometricCodeOpen} onClose={() => setGeometricCodeOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
@@ -16565,6 +16739,7 @@ const App = () => {
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="CRYPTO EXAM" icon={TOP_MENU_ICONS.cryptoExam} iconOnly items={cryptoExamItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoExam} />
+            <MenuButton label="GEOMETRIC CODE" icon={TOP_MENU_ICONS.geometricCode} iconOnly items={geometricCodeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGeometricCode} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -16700,6 +16875,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setCryptoExamOpen(true)} title={language === 'es' ? 'Crypto Exam Suite' : 'Crypto Exam Suite'} aria-label={language === 'es' ? 'Crypto Exam Suite' : 'Crypto Exam Suite'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoExam}} />
                 <b>Exams</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setGeometricCodeOpen(true)} title={language === 'ja' ? '幾何学コードラボ' : language === 'es' ? 'Code geometrico' : 'Geometric Code Lab'} aria-label={language === 'ja' ? '幾何学コードラボ' : language === 'es' ? 'Code geometrico' : 'Geometric Code Lab'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.geometricCode}} />
+                <b>{language === 'ja' ? '幾何学' : language === 'es' ? 'Geometrico' : 'Geometry'}</b>
               </button>
               {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
                 <button type="button" className="bottom-tool-icon" key={tool.key} onClick={() => openSecuritySuite(tool.key)} title={tool.title} aria-label={tool.title}>
