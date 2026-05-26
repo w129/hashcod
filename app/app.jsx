@@ -14,8 +14,8 @@ const PLAN_SIMILARITY_DENSITY = {
 };
 
 
-const LANG_STORAGE_KEY = 'hashcod_lang_v13_ja';
-const DEFAULT_LANGUAGE = 'ja';
+const LANG_STORAGE_KEY = 'hashcod_lang_v13_en';
+const DEFAULT_LANGUAGE = 'en';
 const LANGUAGE_OPTIONS = [
   { code: 'en', native: 'English' },
   { code: 'es', native: 'Español' },
