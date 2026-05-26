@@ -8180,43 +8180,56 @@ const GeometricCodeDialog = ({ open, onClose, rows = [], notify, language, onSav
     canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.png`, blob), 'image/png');
   };
   return (
-    <div className="complexdlg-backdrop">
-      <div className="complexdlg">
-        <header className="complex-head">
-          <div>
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg complexdlg geodlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="complex-title">
             <span className="complex-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.geometricCode}} />
             <h2>{L('Geometric Code Lab', 'Geometric Code Lab', '幾何学コードラボ')}</h2>
             <p>{L('Genera codes criptograficos geometricos desde los codes guardados en la base de datos.', 'Generate geometric cryptographic codes from saved database codes.', 'データベース保存コードから幾何学的な暗号コードを生成します。')}</p>
           </div>
-          <button className="complex-close" onClick={onClose}>x</button>
-        </header>
-        <div className="complex-body">
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="complex-shell geodlg-shell">
           <aside className="complex-side">
-            <label>{L('Code fuente', 'Source code', 'ソースコード')}</label>
-            <select value={sourceId} onChange={e => setSourceId(e.target.value)}>
-              {sources.map((row, i) => <option key={row.id || i} value={String(row.id || row.copiedAt || i)}>{String(row.idx || i).padStart(3, '0')} | {row.type || 'Hashcod code'}</option>)}
-            </select>
-            <label>{L('Geometria', 'Geometry', 'ジオメトリ')}</label>
-            <select value={mode} onChange={e => setMode(e.target.value)}>
-              <option value="radial">radial ring</option>
-              <option value="spiral">spiral wave</option>
-              <option value="lattice">lattice diagonal</option>
-            </select>
-            <label>{L('Tamano', 'Size', 'サイズ')}</label>
-            <input type="number" min="7" max="31" step="2" value={size} onChange={e => setSize(e.target.value)} />
-            <button onClick={generateOne} disabled={busy}>{busy ? L('Generando...', 'Generating...', '生成中...') : L('Generar geometrico', 'Generate geometric', '幾何学コード生成')}</button>
-            <button onClick={saveResult} disabled={!result}>{L('Guardar en base de datos', 'Save to database', 'データベースに保存')}</button>
-            <button onClick={downloadTxt} disabled={!result}>TXT</button>
-            <button onClick={downloadJson} disabled={!result}>JSON</button>
-            <button onClick={downloadPng} disabled={!result}>PNG</button>
+            <label><span>{L('Code fuente', 'Source code', 'ソースコード')}</span>
+              <select value={sourceId} onChange={e => setSourceId(e.target.value)}>
+                {sources.length ? sources.map((row, i) => <option key={row.id || i} value={String(row.id || row.copiedAt || i)}>{String(row.idx || i).padStart(3, '0')} | {row.type || 'Hashcod code'}</option>) : <option>{L('Sin codes guardados', 'No saved codes', '保存済みコードなし')}</option>}
+              </select>
+            </label>
+            <label><span>{L('Geometria', 'Geometry', 'ジオメトリ')}</span>
+              <select value={mode} onChange={e => setMode(e.target.value)}>
+                <option value="radial">radial ring</option>
+                <option value="spiral">spiral wave</option>
+                <option value="lattice">lattice diagonal</option>
+              </select>
+            </label>
+            <label><span>{L('Tamano', 'Size', 'サイズ')}</span>
+              <input type="number" min="7" max="31" step="2" value={size} onChange={e => setSize(e.target.value)} />
+            </label>
+            <div className="complex-actions geodlg-actions">
+              <button onClick={generateOne} disabled={busy}>{busy ? L('Generando...', 'Generating...', '生成中...') : L('Generar', 'Generate', '生成')}</button>
+              <button onClick={saveResult} disabled={!result}>{L('Guardar', 'Save', '保存')}</button>
+              <button onClick={downloadTxt} disabled={!result}>TXT</button>
+              <button onClick={downloadJson} disabled={!result}>JSON</button>
+              <button onClick={downloadPng} disabled={!result}>PNG</button>
+            </div>
+            {result && (
+              <div className="complex-stats geodlg-stats">
+                <div><span>ID</span><b>{result.id}</b></div>
+                <div><span>SHA-256</span><b>{result.sourceSha256.slice(0, 16)}</b></div>
+              </div>
+            )}
             <div className="complex-note">{L('Render optimizado: solo se cargan 600 registros y el dibujo se calcula bajo demanda.', 'Optimized render: only 600 records are loaded and drawing is computed on demand.', '最適化済み: 600件のみ読み込み、描画は必要時に計算します。')}</div>
           </aside>
-          <main className="complex-main">
-            <canvas ref={canvasRef} />
-            <pre className="complex-output">{result ? result.value : L('Selecciona un code guardado y genera una imagen geometrica.', 'Select a saved code and generate a geometric image.', '保存済みコードを選択して幾何学イメージを生成してください。')}</pre>
+          <main className="complex-main geodlg-main">
+            <div className="geodlg-canvaswrap">
+              <canvas ref={canvasRef} />
+            </div>
+            <pre className="geodlg-output">{result ? result.value : L('Selecciona un code guardado y genera una imagen geometrica.', 'Select a saved code and generate a geometric image.', '保存済みコードを選択して幾何学イメージを生成してください。')}</pre>
           </main>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
