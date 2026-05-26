@@ -2468,6 +2468,7 @@ const TOP_MENU_ICONS = {
   clientVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M12 9v11"/><path d="M2 9h13a2 2 0 0 1 2 2v9"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
+  cryptoExam: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/><path d="m15 15 2 2 4-4"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
   licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
   evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
@@ -7674,6 +7675,339 @@ const ComplexEntropyMapDialog = ({ open, onClose, rows = [], outputRows = [], no
           </aside>
           <main className="complex-main">
             <canvas ref={canvasRef} width="1180" height="780" />
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CRYPTO_EXAM_NAMES = [
+  ['entropy', 'Entropy Examiner', 'Shannon/min-entropy and byte distribution'],
+  ['avalanche', 'Avalanche Test Lab', 'Digest bit diffusion after a one-bit mutation'],
+  ['chi', 'Chi-Square Randomness Test', 'Uniform byte distribution distance'],
+  ['runs', 'Runs Test Analyzer', 'Binary run balance and long-run pressure'],
+  ['autocorr', 'Autocorrelation Scanner', 'Lag correlation across byte stream'],
+  ['serial', 'Serial Correlation Lab', 'Dependence between adjacent bytes'],
+  ['bitfreq', 'Bit Frequency Examiner', 'Zero/one bit balance'],
+  ['nistmini', 'NIST Mini Suite', 'Frequency, runs, serial and block proxy'],
+  ['practrand', 'PractRand Style Monitor', 'Progressive chunk bias monitor'],
+  ['collision', 'Collision Risk Estimator', 'Birthday-bound collision pressure'],
+  ['preimage', 'Preimage Resistance Estimator', 'Estimated preimage work factor'],
+  ['bruteforce', 'Brute Force Cost Calculator', 'Keyspace and attack-cost approximation'],
+  ['keyspace', 'Keyspace Visualizer', 'Symbol-space size and effective bits'],
+  ['modulo', 'Modulo Pattern Detector', 'Residue distribution over prime moduli'],
+  ['prime', 'Prime Structure Inspector', 'Prime-like integer block structure'],
+  ['matrix', 'Matrix Byte Mapper', 'Row, column and diagonal balance'],
+  ['linear', 'Linear Dependence Test', 'GF(2) row dependence pressure'],
+  ['rank', 'Rank Test Lab', 'Binary matrix rank over GF(2)'],
+  ['lattice', 'Lattice Noise Examiner', 'LWE-style residual noise profile'],
+  ['fourier', 'Fourier Pattern Scanner', 'Periodic energy in frequency domain'],
+  ['wavelet', 'Wavelet Structure Analyzer', 'Multi-scale Haar contrast'],
+  ['compress', 'Compression Resistance Test', 'Repetition/compressibility proxy'],
+  ['hamming', 'Hamming Distance Lab', 'Block-to-block Hamming spread'],
+  ['edit', 'Edit Distance Token Test', 'Token segment edit similarity'],
+  ['prefix', 'Prefix/Suffix Bias Detector', 'Edge and section bias'],
+  ['qrpayload', 'QR Payload Integrity Exam', 'Payload length, digest and QR readiness'],
+  ['signature', 'Signature Consistency Checker', 'MAC/signature-like field consistency'],
+  ['kdf', 'KDF Strength Examiner', 'Password/KDF parameter hints'],
+  ['tokenrisk', 'Token Structure Risk Engine', 'Header/payload/signature section risk'],
+  ['verdict', 'Hashcod Final Verdict Engine', 'Weighted global verdict'],
+];
+
+const cryptoExamBytes = (text) => Array.from(new TextEncoder().encode(String(text || '')));
+const cryptoExamMean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+const cryptoExamVar = (arr) => {
+  const m = cryptoExamMean(arr);
+  return arr.length ? arr.reduce((sum, v) => sum + (v - m) ** 2, 0) / arr.length : 0;
+};
+const cryptoExamClamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, Number.isFinite(n) ? n : 0));
+const cryptoExamBits = (bytes) => bytes.flatMap(b => Array.from({ length: 8 }, (_, i) => (b >> (7 - i)) & 1));
+const cryptoExamHamming = (a, b) => {
+  let x = (a ^ b) & 255;
+  let n = 0;
+  while (x) { n += x & 1; x >>= 1; }
+  return n;
+};
+const cryptoExamRankGF2 = (rows) => {
+  const a = rows.slice();
+  let rank = 0;
+  for (let bit = 31; bit >= 0; bit--) {
+    const pivot = a.findIndex((v, i) => i >= rank && ((v >>> bit) & 1));
+    if (pivot === -1) continue;
+    [a[rank], a[pivot]] = [a[pivot], a[rank]];
+    for (let i = 0; i < a.length; i++) if (i !== rank && ((a[i] >>> bit) & 1)) a[i] ^= a[rank];
+    rank++;
+  }
+  return rank;
+};
+const cryptoExamEditDistance = (a, b) => {
+  a = String(a || ''); b = String(b || '');
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let last = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const old = prev[j];
+      prev[j] = a[i - 1] === b[j - 1] ? last : Math.min(last, prev[j], prev[j - 1]) + 1;
+      last = old;
+    }
+  }
+  return prev[b.length] || 0;
+};
+const cryptoExamAnalyze = async (text, rowMeta = {}) => {
+  const value = String(text || '');
+  const bytes = cryptoExamBytes(value || 'hashcod-empty');
+  const bits = cryptoExamBits(bytes);
+  const digest = await digestHex(value);
+  const mutated = bytes.slice();
+  if (mutated.length) mutated[0] ^= 1;
+  const mutatedDigest = await digestHex(String.fromCharCode(...mutated.slice(0, 4096)));
+  const digestBytes = (hex) => Array.from(hex.match(/../g) || [], h => parseInt(h, 16));
+  const d1 = digestBytes(digest);
+  const d2 = digestBytes(mutatedDigest);
+  const avalancheRatio = d1.length ? d1.reduce((sum, b, i) => sum + cryptoExamHamming(b, d2[i] || 0), 0) / (d1.length * 8) : 0;
+  const counts = Array(256).fill(0);
+  bytes.forEach(b => { counts[b]++; });
+  const expected = bytes.length / 256 || 1;
+  const chi = counts.reduce((sum, c) => sum + ((c - expected) ** 2) / expected, 0);
+  const entropy = byteEntropy(bytes);
+  const maxProb = Math.max(...counts) / Math.max(1, bytes.length);
+  const minEntropy = maxProb > 0 ? -Math.log2(maxProb) : 0;
+  const ones = bits.reduce((a, b) => a + b, 0);
+  const bitBalance = bits.length ? ones / bits.length : 0;
+  let runs = 1;
+  let longestRun = 1;
+  let currentRun = 1;
+  for (let i = 1; i < bits.length; i++) {
+    if (bits[i] !== bits[i - 1]) { runs++; currentRun = 1; }
+    else { currentRun++; longestRun = Math.max(longestRun, currentRun); }
+  }
+  const autocorrs = [1, 2, 4, 8, 16].map(lag => {
+    let same = 0;
+    for (let i = 0; i + lag < bytes.length; i++) if (bytes[i] === bytes[i + lag]) same++;
+    return bytes.length > lag ? same / (bytes.length - lag) : 0;
+  });
+  const serialPairs = bytes.slice(1).map((b, i) => [bytes[i], b]);
+  const serialCorr = serialPairs.length ? (() => {
+    const xs = serialPairs.map(p => p[0]);
+    const ys = serialPairs.map(p => p[1]);
+    const mx = cryptoExamMean(xs), my = cryptoExamMean(ys);
+    const cov = cryptoExamMean(xs.map((x, i) => (x - mx) * (ys[i] - my)));
+    const sx = Math.sqrt(cryptoExamVar(xs)), sy = Math.sqrt(cryptoExamVar(ys));
+    return sx && sy ? cov / (sx * sy) : 0;
+  })() : 0;
+  const chunks = Array.from({ length: Math.ceil(bytes.length / 32) }, (_, i) => bytes.slice(i * 32, i * 32 + 32)).filter(Boolean);
+  const chunkEntropies = chunks.map(chunk => byteEntropy(chunk));
+  const chunkVariance = cryptoExamVar(chunkEntropies);
+  const collisionBits = Math.max(1, Math.min(512, Math.round(entropy * Math.max(1, bytes.length))));
+  const keyspaceBits = Math.log2(Math.max(2, new Set(value).size || 2)) * Math.max(1, value.length);
+  const modPrimeScores = [3, 5, 7, 11, 17, 31].map(p => {
+    const buckets = Array(p).fill(0);
+    bytes.forEach(b => { buckets[b % p]++; });
+    return cryptoExamVar(buckets);
+  });
+  const primeBlocks = [];
+  for (let i = 0; i < bytes.length; i += 4) {
+    const n = (((bytes[i] || 0) << 24) >>> 0) + ((bytes[i + 1] || 0) << 16) + ((bytes[i + 2] || 0) << 8) + (bytes[i + 3] || 0);
+    if (n > 1) primeBlocks.push(n);
+  }
+  const isSmallPrimeLike = (n) => {
+    if (n < 2) return false;
+    for (const p of [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31]) if (n !== p && n % p === 0) return false;
+    return true;
+  };
+  const matrixSize = Math.max(4, Math.min(16, Math.ceil(Math.sqrt(bytes.length || 1))));
+  const matrix = Array.from({ length: matrixSize }, (_, y) => Array.from({ length: matrixSize }, (_, x) => bytes[(y * matrixSize + x) % bytes.length] || 0));
+  const rowMeans = matrix.map(row => cryptoExamMean(row));
+  const colMeans = matrix[0].map((_, x) => cryptoExamMean(matrix.map(row => row[x])));
+  const diagA = cryptoExamMean(matrix.map((row, i) => row[i]));
+  const diagB = cryptoExamMean(matrix.map((row, i) => row[matrixSize - 1 - i]));
+  const rankRows = matrix.slice(0, 16).map(row => row.slice(0, 4).reduce((n, b, i) => n | ((b & 255) << (i * 8)), 0) >>> 0);
+  const rank = cryptoExamRankGF2(rankRows);
+  const lweResiduals = bytes.map((b, i) => ((b - ((i * 73 + 41) % 257)) + 257) % 257);
+  const fourier = Array.from({ length: Math.min(24, bytes.length) }, (_, k) => {
+    let re = 0, im = 0;
+    bytes.slice(0, 128).forEach((b, n) => {
+      const a = 2 * Math.PI * k * n / Math.max(1, Math.min(128, bytes.length));
+      re += b * Math.cos(a);
+      im -= b * Math.sin(a);
+    });
+    return Math.sqrt(re * re + im * im);
+  });
+  const spectralBand = fourier.slice(1);
+  const spectralPeakRatio = spectralBand.length ? Math.max(...spectralBand) / Math.max(1, cryptoExamMean(spectralBand)) : 0;
+  const haar = [];
+  for (let step = 1; step <= 16; step *= 2) {
+    let total = 0, n = 0;
+    for (let i = 0; i + step < bytes.length; i += step * 2) {
+      total += Math.abs(cryptoExamMean(bytes.slice(i, i + step)) - cryptoExamMean(bytes.slice(i + step, i + step * 2)));
+      n++;
+    }
+    haar.push(n ? total / n : 0);
+  }
+  const ngrams = new Set();
+  for (let i = 0; i + 3 < value.length; i++) ngrams.add(value.slice(i, i + 4));
+  const segments = value.split(/[.:_\-|/]+/).filter(Boolean).slice(0, 12);
+  const avgEdit = segments.length > 1 ? cryptoExamMean(segments.slice(1).map((s, i) => cryptoExamEditDistance(segments[i], s) / Math.max(1, Math.max(segments[i].length, s.length)))) : 1;
+  const prefix = value.slice(0, Math.min(12, value.length));
+  const suffix = value.slice(-Math.min(12, value.length));
+  const edgeBias = prefix && suffix ? cryptoExamEditDistance(prefix, suffix) / Math.max(prefix.length, suffix.length) : 1;
+  const hasJwtShape = value.split('.').length === 3;
+  const hasDigestShape = /^[a-f0-9]{32,}$/i.test(value.replace(/[^a-f0-9]/gi, ''));
+  const riskBase = cryptoExamClamp((8 - entropy) * 9 + Math.abs(bitBalance - 0.5) * 120 + Math.abs(serialCorr) * 35 + Math.min(22, chi / 180));
+  const metrics = { entropy, minEntropy, bitBalance, runs, longestRun, chi, avalancheRatio, serialCorr, chunkVariance, collisionBits, keyspaceBits, rank, matrixSize, digest };
+  const mk = (key, score, detail) => {
+    const [id, title, math] = CRYPTO_EXAM_NAMES.find(item => item[0] === key) || [key, key, ''];
+    const status = score >= 82 ? 'CLEAR' : score >= 62 ? 'WATCHLIST' : score >= 38 ? 'HIGH RISK' : 'CRITICAL';
+    return { id, title, math, score: Math.round(cryptoExamClamp(score)), status, detail };
+  };
+  const tests = [
+    mk('entropy', entropy / 8 * 100, `H=${entropy.toFixed(4)} bits/byte, minH=${minEntropy.toFixed(4)}`),
+    mk('avalanche', 100 - Math.abs(avalancheRatio - 0.5) * 180, `digest flip ratio=${(avalancheRatio * 100).toFixed(2)}%`),
+    mk('chi', 100 - Math.min(100, Math.abs(chi - 255) / 7), `chi-square=${chi.toFixed(2)} df=255`),
+    mk('runs', 100 - Math.min(100, Math.abs(runs - bits.length / 2) / Math.max(1, bits.length / 2) * 120 + Math.max(0, longestRun - 24)), `runs=${runs}, longest=${longestRun}`),
+    mk('autocorr', 100 - Math.min(100, Math.max(...autocorrs) * 900), `max lag equality=${Math.max(...autocorrs).toFixed(5)}`),
+    mk('serial', 100 - Math.min(100, Math.abs(serialCorr) * 180), `serial r=${serialCorr.toFixed(5)}`),
+    mk('bitfreq', 100 - Math.abs(bitBalance - 0.5) * 200, `ones=${(bitBalance * 100).toFixed(2)}%`),
+    mk('nistmini', 100 - riskBase * 0.72, `frequency/runs/serial proxy risk=${riskBase.toFixed(2)}`),
+    mk('practrand', 100 - Math.min(100, chunkVariance * 22), `chunk entropy variance=${chunkVariance.toFixed(4)}`),
+    mk('collision', cryptoExamClamp(collisionBits / 256 * 100), `estimated effective collision bits=${collisionBits}`),
+    mk('preimage', cryptoExamClamp(collisionBits / 384 * 100), `preimage work proxy≈2^${collisionBits}`),
+    mk('bruteforce', cryptoExamClamp(keyspaceBits / 256 * 100), `symbol keyspace≈2^${Math.round(keyspaceBits)}`),
+    mk('keyspace', cryptoExamClamp(keyspaceBits / 192 * 100), `unique symbols=${new Set(value).size}, chars=${value.length}`),
+    mk('modulo', 100 - Math.min(100, cryptoExamMean(modPrimeScores) * 3), `mod-prime variance=${cryptoExamMean(modPrimeScores).toFixed(4)}`),
+    mk('prime', cryptoExamClamp(100 - Math.abs((primeBlocks.filter(isSmallPrimeLike).length / Math.max(1, primeBlocks.length)) - 0.25) * 160), `prime-like blocks=${primeBlocks.filter(isSmallPrimeLike).length}/${primeBlocks.length}`),
+    mk('matrix', 100 - Math.min(100, cryptoExamVar(rowMeans) / 9 + cryptoExamVar(colMeans) / 9 + Math.abs(diagA - diagB) / 2), `matrix=${matrixSize}x${matrixSize}, diagΔ=${Math.abs(diagA - diagB).toFixed(3)}`),
+    mk('linear', cryptoExamClamp(rank / Math.max(1, rankRows.length) * 100), `independent GF(2) rows=${rank}/${rankRows.length}`),
+    mk('rank', cryptoExamClamp(rank / Math.min(16, matrixSize) * 100), `rank=${rank}`),
+    mk('lattice', 100 - Math.min(100, cryptoExamVar(lweResiduals) / 120), `LWE residual variance=${cryptoExamVar(lweResiduals).toFixed(2)}`),
+    mk('fourier', 100 - Math.min(100, spectralPeakRatio * 12), `spectral peak ratio=${spectralPeakRatio.toFixed(3)}`),
+    mk('wavelet', 100 - Math.min(100, Math.max(...haar) / 2.8), `max Haar contrast=${Math.max(...haar).toFixed(3)}`),
+    mk('compress', cryptoExamClamp((ngrams.size / Math.max(1, value.length - 3)) * 100), `4-gram uniqueness=${ngrams.size}/${Math.max(1, value.length - 3)}`),
+    mk('hamming', 100 - Math.abs(cryptoExamMean(bytes.slice(1).map((b, i) => cryptoExamHamming(bytes[i], b))) - 4) * 22, `avg adjacent hamming=${cryptoExamMean(bytes.slice(1).map((b, i) => cryptoExamHamming(bytes[i], b))).toFixed(3)}`),
+    mk('edit', cryptoExamClamp(avgEdit * 100), `avg segment edit distance=${avgEdit.toFixed(3)}`),
+    mk('prefix', cryptoExamClamp(edgeBias * 100), `prefix/suffix distance=${edgeBias.toFixed(3)}`),
+    mk('qrpayload', cryptoExamClamp((value.length > 12 ? 35 : 0) + (value.length < 1800 ? 35 : 10) + (digest ? 30 : 0)), `payload length=${value.length}, qr=${value.length < 1800 ? 'ready' : 'large'}`),
+    mk('signature', cryptoExamClamp((hasDigestShape ? 42 : 0) + (/[A-Za-z0-9_-]{24,}/.test(value) ? 32 : 0) + (value.includes('=') || hasJwtShape ? 26 : 12)), `digest-like=${hasDigestShape}, token-shape=${hasJwtShape}`),
+    mk('kdf', cryptoExamClamp((/argon|scrypt|bcrypt|pbkdf|salt|nonce|iter/i.test(value) ? 55 : 18) + Math.min(45, entropy * 5.5)), `KDF hints=${/argon|scrypt|bcrypt|pbkdf|salt|nonce|iter/i.test(value)}`),
+    mk('tokenrisk', 100 - Math.min(100, (segments.length > 1 ? 12 : 0) + riskBase * 0.55), `sections=${segments.length}, jwt=${hasJwtShape}`),
+  ];
+  const avgScore = cryptoExamMean(tests.map(t => t.score));
+  const criticals = tests.filter(t => t.status === 'CRITICAL').length;
+  const highs = tests.filter(t => t.status === 'HIGH RISK').length;
+  const finalScore = cryptoExamClamp(avgScore - criticals * 3 - highs * 1.4);
+  const finalStatus = finalScore >= 82 ? 'CLEAR' : finalScore >= 62 ? 'WATCHLIST' : finalScore >= 38 ? 'HIGH RISK' : 'CRITICAL';
+  tests.push({ id: 'verdict', title: 'Hashcod Final Verdict Engine', math: 'Weighted global verdict', score: Math.round(finalScore), status: finalStatus, detail: `avg=${avgScore.toFixed(2)}, critical=${criticals}, high=${highs}` });
+  return {
+    id: `HCEX-${digest.slice(0, 12).toUpperCase()}`,
+    createdAt: new Date().toISOString(),
+    source: { id: rowMeta.id || '', idx: rowMeta.idx || '', type: rowMeta.type || '', chars: value.length, bytes: bytes.length },
+    digest,
+    metrics,
+    finalScore: Math.round(finalScore),
+    finalStatus,
+    tests,
+  };
+};
+
+const CryptoExamSuiteDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const sources = useMemo(() => [...(rows || []), ...(outputRows || [])].filter(row => row?.value), [rows, outputRows]);
+  const [sourceId, setSourceId] = useState('');
+  const [manual, setManual] = useState('');
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (open && !sourceId && sources[0]?.id) setSourceId(sources[0].id);
+  }, [open, sources, sourceId]);
+  if (!open) return null;
+  const selected = sources.find(row => String(row.id) === String(sourceId)) || sources[0] || null;
+  const analyze = async () => {
+    const text = manual.trim() || selected?.value || '';
+    if (!text) {
+      notify?.(L('No hay code para examinar.', 'There is no code to examine.'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const next = await cryptoExamAnalyze(text, selected || {});
+      setResult(next);
+      notify?.(L('30 examenes criptograficos completados.', '30 cryptographic exams completed.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const exportJson = () => result && triggerDownload(`Hashcod-CryptoExam-${result.id}-${tsStamp()}.json`, JSON.stringify({ hashcod_crypto_exam: result }, null, 2), 'application/json;charset=utf-8');
+  const exportTxt = () => {
+    if (!result) return;
+    const body = [
+      'Hashcod Crypto Exam Suite',
+      `ID: ${result.id}`,
+      `Status: ${result.finalStatus}`,
+      `Score: ${result.finalScore}/100`,
+      `Digest: ${result.digest}`,
+      '',
+      ...result.tests.map((test, i) => `${String(i + 1).padStart(2, '0')}. ${test.title}\n   ${test.status} | ${test.score}/100 | ${test.detail}\n   Math: ${test.math}`),
+    ].join('\n');
+    triggerDownload(`Hashcod-CryptoExam-${result.id}-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
+  };
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg complexdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h">
+          <div className="complex-head">
+            <span className="complex-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoExam}} />
+            <div>
+              <h2>Crypto Exam Suite</h2>
+              <p>{L('30 examenes matematicos para evaluar entropia, patrones, reticulos, tokens, firmas y veredicto final.', '30 mathematical exams for entropy, patterns, lattices, tokens, signatures, and final verdict.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </div>
+        <div className="complex-body">
+          <aside className="complex-side">
+            <label><span>{L('Code de la base/output', 'Database/output code')}</span>
+              <select value={sourceId || selected?.id || ''} onChange={e => setSourceId(e.target.value)}>
+                {sources.map(row => <option key={row.id} value={row.id}>{String(row.idx || '').padStart(3, '0')} | {row.primitiveLabel || row.type}</option>)}
+              </select>
+            </label>
+            <label><span>{L('Entrada manual opcional', 'Optional manual input')}</span>
+              <textarea value={manual} onChange={e => setManual(e.target.value)} placeholder={L('Pega un token, hash, API key o code...', 'Paste a token, hash, API key, or code...')} />
+            </label>
+            <button onClick={analyze} disabled={busy}>{busy ? '...' : L('Ejecutar 30 examenes', 'Run 30 exams')}</button>
+            <button onClick={exportJson} disabled={!result}>JSON</button>
+            <button onClick={exportTxt} disabled={!result}>TXT</button>
+            {result && (
+              <div className="complex-score">
+                <span>{L('Veredicto final', 'Final verdict')}</span>
+                <b>{result.finalStatus}</b>
+                <em>{result.finalScore}/100</em>
+              </div>
+            )}
+          </aside>
+          <main className="complex-main">
+            {!result ? (
+              <div className="complex-empty">{L('Ejecuta el examen para ver las 30 pruebas.', 'Run the exam to see the 30 tests.')}</div>
+            ) : (
+              <>
+                <div className="complex-grid">
+                  <div><span>ID</span><b>{result.id}</b></div>
+                  <div><span>SHA-256</span><b>{result.digest.slice(0, 24)}...</b></div>
+                  <div><span>Entropy</span><b>{result.metrics.entropy.toFixed(4)}</b></div>
+                  <div><span>Bytes</span><b>{result.source.bytes}</b></div>
+                </div>
+                <div className="complex-list">
+                  {result.tests.map((test, index) => (
+                    <article key={test.id}>
+                      <header><b>{String(index + 1).padStart(2, '0')} · {test.title}</b><span>{test.status} · {test.score}/100</span></header>
+                      <p>{test.detail}</p>
+                      <small>{test.math}</small>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
           </main>
         </div>
       </section>
@@ -14510,6 +14844,7 @@ const App = () => {
   const [clientVaultOpen, setClientVaultOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
+  const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
   const [securitySuiteTool, setSecuritySuiteTool] = useState('tokenInspector');
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
@@ -15353,6 +15688,7 @@ const App = () => {
   const openClientVault = () => setClientVaultOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
+  const openCryptoExam = () => setCryptoExamOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
     setSecuritySuiteTool(toolKey);
     setSecuritySuiteOpen(true);
@@ -15654,6 +15990,12 @@ const App = () => {
     { label: language === 'es' ? 'Kernels circular / cuadrado / anillo' : 'Circle / square / ring kernels', onClick: openPivotKernel },
     { label: language === 'es' ? 'Detectar centros de patron en codes' : 'Detect pattern centers in codes', onClick: openPivotKernel },
   ];
+  const cryptoExamItems = [
+    { label: language === 'es' ? 'Abrir Crypto Exam Suite' : 'Open Crypto Exam Suite', onClick: openCryptoExam },
+    { label: language === 'es' ? '30 examenes matematicos por code' : '30 mathematical exams per code', onClick: openCryptoExam },
+    { label: language === 'es' ? 'Entropia, NIST mini, reticulos, Fourier y veredicto' : 'Entropy, NIST mini, lattices, Fourier, and verdict', onClick: openCryptoExam },
+    { label: language === 'es' ? 'Exportar reporte JSON / TXT' : 'Export JSON / TXT report', onClick: openCryptoExam },
+  ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
     { label: language === 'es' ? 'Crear manifiesto receptor' : 'Create receiver manifest', onClick: openHos },
@@ -15851,7 +16193,7 @@ const App = () => {
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
         quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
-        pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel,
+        pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel, cryptoexam: openCryptoExam, examen: openCryptoExam, examenes: openCryptoExam, exams: openCryptoExam,
         tokeninspector: () => openSecuritySuite('tokenInspector'), token: () => openSecuritySuite('tokenInspector'), inspector: () => openSecuritySuite('tokenInspector'),
         licenseshield: () => openSecuritySuite('licenseShield'), shield: () => openSecuritySuite('licenseShield'),
         evidencevault: () => openSecuritySuite('evidenceVault'), evidence: () => openSecuritySuite('evidenceVault'),
@@ -16027,6 +16369,8 @@ const App = () => {
       mercado: { open: openLaunchCenter, label: 'Hashcod Launch Center', verbs: ['checklist','legal','seguridad','ventas','produccion','exportar','help'] },
       pivot: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
       kernel: { open: openPivotKernel, label: 'Pivot Kernel Crypto Lab', verbs: ['analyze','circle','square','ring','peaks','entropy','png','json','report','help'] },
+      cryptoexam: { open: openCryptoExam, label: 'Hashcod Crypto Exam Suite', verbs: ['30','entropy','nist','lattice','fourier','wavelet','verdict','json','txt'] },
+      examenes: { open: openCryptoExam, label: 'Hashcod Crypto Exam Suite', verbs: ['30','entropia','nist','reticulos','fourier','veredicto','json','txt'] },
       securitysuite: { open: () => openSecuritySuite('riskEngine'), label: 'Hashcod Security Suite', verbs: ['token','license','evidence','scanner','qr','ticket','fingerprint','benchmark','password','integrity','api','report','vault','learning','risk'] },
       tokeninspector: { open: () => openSecuritySuite('tokenInspector'), label: 'Hashcod Token Inspector', verbs: ['jwt','api-key','license','entropy','risk','report'] },
       licenseshield: { open: () => openSecuritySuite('licenseShield'), label: 'Hashcod License Shield', verbs: ['issue','sign','verify','offline','device','qr'] },
@@ -16069,7 +16413,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -16113,6 +16457,7 @@ const App = () => {
       <HashcodClientVaultDialog open={clientVaultOpen} onClose={() => setClientVaultOpen(false)} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
+      <CryptoExamSuiteDialog open={cryptoExamOpen} onClose={() => setCryptoExamOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodSecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
@@ -16175,6 +16520,7 @@ const App = () => {
             <MenuButton label="CLIENT VAULT" icon={TOP_MENU_ICONS.clientVault} iconOnly items={clientVaultItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openClientVault} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
+            <MenuButton label="CRYPTO EXAM" icon={TOP_MENU_ICONS.cryptoExam} iconOnly items={cryptoExamItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoExam} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
@@ -16306,6 +16652,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setPivotKernelOpen(true)} title={language === 'es' ? 'Pivot Kernel Crypto Lab' : 'Pivot Kernel Crypto Lab'} aria-label={language === 'es' ? 'Pivot Kernel Crypto Lab' : 'Pivot Kernel Crypto Lab'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pivotKernel}} />
                 <b>Pivot</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setCryptoExamOpen(true)} title={language === 'es' ? 'Crypto Exam Suite' : 'Crypto Exam Suite'} aria-label={language === 'es' ? 'Crypto Exam Suite' : 'Crypto Exam Suite'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoExam}} />
+                <b>Exams</b>
               </button>
               {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
                 <button type="button" className="bottom-tool-icon" key={tool.key} onClick={() => openSecuritySuite(tool.key)} title={tool.title} aria-label={tool.title}>
