@@ -3023,9 +3023,6 @@ const TicketForgeDialog = ({ open, onClose, rows, notify, language }) => {
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 44px "Segoe UI", Arial, sans-serif';
     ctx.fillText('Hashcod', 170, 148);
-    ctx.fillStyle = '#A3A3A3';
-    ctx.font = '700 14px "IBM Plex Mono", monospace';
-    ctx.fillText('opencriptG function ticket', 170, 176);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 42px Georgia, serif';
     ctx.fillText(t.title.slice(0, 34), 106, 230);
@@ -3056,7 +3053,6 @@ const TicketForgeDialog = ({ open, onClose, rows, notify, language }) => {
     ctx.font = '600 14px "IBM Plex Mono", monospace';
     ctx.fillText(`ISSUED ${t.issuedAt}`, 106, 552);
     ctx.fillText(`FINGERPRINT ${t.fingerprint.slice(0, 32)}`, 106, 586);
-    ctx.fillText('HASHCOD BEFORE OPENCRIPTG', 720, 552);
     ctx.fillText('HASHCOD TICKET FORGE', 720, 586);
     return canvas;
   };
@@ -8451,7 +8447,6 @@ const QrVaultDialog = ({ open, onClose, rows, t, language }) => {
     ctx.fillText('Hashcod', 72, 47);
     ctx.fillStyle = '#6e7280';
     ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
-    ctx.fillText('opencriptG QR', 72, 68);
     ctx.fillText(mode === 'bundle' ? t('qrPacketLabel').toUpperCase() : (payloadStyle === 'raw' ? t('qrRawLabel').toUpperCase() : t('qrPacketLabel').toUpperCase()), 28, 94);
     ctx.fillStyle = '#090909';
     ctx.font = '700 30px "IBM Plex Mono", "Courier New", monospace';
@@ -15042,9 +15037,6 @@ const App = () => {
       ctx.fillStyle = '#111111';
       ctx.font = '700 13px "Segoe UI", Arial, sans-serif';
       ctx.fillText('Hashcod', pad + 34, qrCanvas.height + pad + 64);
-      ctx.fillStyle = '#777777';
-      ctx.font = '600 9px "IBM Plex Mono", "Courier New", monospace';
-      ctx.fillText('opencriptG credential', pad + 34, qrCanvas.height + pad + 78);
       const a = document.createElement('a');
       a.href = out.toDataURL('image/png');
       a.download = `Hashcod-qr-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
@@ -15153,7 +15145,6 @@ const App = () => {
         .brand{font-size:11px;letter-spacing:.28em;color:#7d7d78;text-transform:uppercase;margin-bottom:6px;}
         .logo{display:flex;align-items:center;gap:8px;border-bottom:1px solid #d6d6d0;padding-bottom:8px;margin-bottom:10px;}
         .logo strong{font-size:15px;letter-spacing:.08em;text-transform:none;}
-        .logo small{font-size:9px;color:#777;letter-spacing:.18em;text-transform:uppercase;}
         .k{font-size:10px;color:#8f8678;letter-spacing:.24em;text-transform:uppercase;margin:10px 0 4px;}
         .v{font-size:12px;line-height:1.45;word-break:break-word;}
         .code{font-size:14px;line-height:1.45;font-weight:600;word-break:break-all;border:1px solid #dbdbd5;padding:8px;background:#fcfcfa;}
@@ -15165,8 +15156,8 @@ const App = () => {
         .pel{width:22px;height:22px;display:inline-flex;color:#111;}
         @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
       </style></head><body><div class="ticket">
-        <div class="brand">Hashcod · opencriptG ticket</div>
-        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>Hashcod</strong><small>opencriptG</small></div>
+        <div class="brand">Hashcod ticket</div>
+        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>Hashcod</strong></div>
         <div class="k">${safe(titleText)}</div>
         <div class="k">${safe(language === 'es' ? 'Índice' : 'Index')}</div><div class="v">${safe(String(row.idx).padStart(3,'0'))}</div>
         <div class="k">${safe(language === 'es' ? 'Primitiva' : 'Primitive')}</div><div class="v">${safe(type?.label || row.primitiveLabel || row.type)}</div>
@@ -15180,7 +15171,7 @@ const App = () => {
         <div class="k">${safe(language === 'es' ? 'No lo uses para' : 'Avoid')}</div><div class="note">${safe(profile.avoid)}</div>
         <div class="k">${safe(language === 'es' ? 'Code generado' : 'Generated code')}</div><div class="code">${codeWrapped}</div>
         <div class="qr"><img src="${qrUrl}" alt="QR" /></div>
-        <div class="foot">Hashcod · opencriptG · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
+        <div class="foot">Hashcod · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
       </div><script>window.onload=()=>setTimeout(()=>window.print(),220);<\/script></body></html>`;
       w.document.open();
       w.document.write(html);
