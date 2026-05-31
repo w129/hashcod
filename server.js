@@ -29,7 +29,11 @@ const sessions = new Map();
 const adminPanelSessions = new Map();
 const securityKingSessions = new Map();
 const platformGateSessions = new Map();
+const privateEntrySessions = new Map();
 const oauthStates = new Map();
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const PRIVATE_MODE = String(process.env.HASHCOD_PRIVATE_MODE || (IS_PRODUCTION ? '1' : '0')).toLowerCase() !== '0';
+const PRIVATE_ENTRY_KEY = String(process.env.HASHCOD_PRIVATE_ENTRY_KEY || '');
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
 const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
 const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
@@ -868,6 +872,95 @@ function makePlatformGateSession(req, expiresAt) {
     expiresAt,
   });
   return { sid, expiresAt };
+}
+
+function makePrivateEntrySession(req) {
+  const sid = b64url(crypto.randomBytes(32));
+  privateEntrySessions.set(sid, {
+    createdAt: Date.now(),
+    lastSeenAt: Date.now(),
+    ip: clientIp(req),
+    userAgent: safeText(req.headers['user-agent'], 180),
+    expiresAt: Date.now() + 1000 * 60 * 60 * 4,
+  });
+  return { sid };
+}
+
+function getPrivateEntrySession(req) {
+  if (!PRIVATE_MODE) return { bypass: true };
+  const sid = parseCookies(req).hashcod_private_entry;
+  const session = sid && privateEntrySessions.get(sid);
+  if (!session || session.expiresAt < Date.now()) {
+    if (sid) privateEntrySessions.delete(sid);
+    return null;
+  }
+  session.lastSeenAt = Date.now();
+  return { sid, session };
+}
+
+function verifyPrivateEntryKey(key) {
+  const received = crypto.createHash('sha256').update(String(key || '')).digest();
+  const expected = crypto.createHash('sha256').update(PRIVATE_ENTRY_KEY).digest();
+  return PRIVATE_ENTRY_KEY.length >= 24 && crypto.timingSafeEqual(received, expected);
+}
+
+function privateEntryPage(message = '') {
+  const status = PRIVATE_ENTRY_KEY.length >= 24
+    ? message
+    : 'Private deployment is locked. Configure HASHCOD_PRIVATE_ENTRY_KEY in Render.';
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Q+7LkMK05 | Private Entry</title>
+  <style>
+    :root{color-scheme:light;--ink:#111;--muted:#646464;--grid:#dedede;--paper:#fff;--bg:#f5f5f2}
+    *{box-sizing:border-box}body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px;font-family:Consolas,"Courier New",monospace;color:var(--ink)}
+    main{min-height:100vh;display:grid;place-items:center;padding:24px}.panel{width:min(720px,100%);background:var(--paper);border:1px solid #cfcfcf;box-shadow:18px 18px 0 rgba(0,0,0,.08)}
+    header{padding:28px 30px 20px;border-bottom:1px solid var(--grid)}.brand{font-size:12px;letter-spacing:4px;color:var(--muted)}h1{margin:10px 0 6px;font:700 44px/1 Arial,sans-serif}p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+    form{padding:24px 30px 30px}.label{display:block;margin-bottom:8px;font-size:11px;letter-spacing:3px;color:var(--muted)}input,button{width:100%;height:54px;border:1px solid #222;background:#fff;padding:0 14px;font:14px Consolas,monospace}button{margin-top:12px;background:#111;color:#fff;letter-spacing:3px;font-weight:700;cursor:pointer}.message{min-height:22px;margin-top:13px;color:#8f1d1d;font-size:12px}
+  </style>
+</head>
+<body><main><section class="panel"><header><div class="brand">Q+7LkMK05 PRIVATE NODE</div><h1>Restricted Entry</h1><p>The platform interface is withheld until the server validates an authorized private-entry key.</p></header><form id="entry"><label class="label" for="key">PRIVATE ENTRY KEY</label><input id="key" type="password" autocomplete="current-password" required><button type="submit">UNLOCK PRIVATE NODE</button><div class="message" id="message">${status}</div></form></section></main>
+<script>
+document.getElementById('entry').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const message = document.getElementById('message');
+  message.textContent = 'Validating...';
+  const response = await fetch('/api/private-entry/unlock', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:document.getElementById('key').value})});
+  const result = await response.json().catch(() => ({}));
+  if (response.ok && result.ok) location.replace('/');
+  else message.textContent = result.error === 'private_entry_not_configured' ? 'Private entry is not configured in Render.' : 'Access denied.';
+});
+</script></body></html>`;
+}
+
+function handlePrivateEntry(req, res) {
+  const route = (req.url || '').split('?')[0];
+  if (route === '/api/private-entry/status' && req.method === 'GET') {
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, privateMode: PRIVATE_MODE, unlocked: !!getPrivateEntrySession(req), configured: PRIVATE_ENTRY_KEY.length >= 24 }));
+    return;
+  }
+  if (route === '/api/private-entry/unlock' && req.method === 'POST') {
+    readJsonBody(req, 8 * 1024).then(body => {
+      if (PRIVATE_ENTRY_KEY.length < 24) {
+        audit('private_entry.not_configured', { ip: clientIp(req) });
+        send(res, 503, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_not_configured' }));
+        return;
+      }
+      if (!verifyPrivateEntryKey(body.key)) {
+        audit('private_entry.denied', { ip: clientIp(req) });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_denied' }));
+        return;
+      }
+      const session = makePrivateEntrySession(req);
+      audit('private_entry.unlocked', { ip: clientIp(req) });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_private_entry=${encodeURIComponent(session.sid)}; ${cookieOptions(req, 60 * 60 * 4)}` }, JSON.stringify({ ok: true }));
+    }).catch(() => send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' })));
+    return;
+  }
+  send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'not_found' }));
 }
 
 function getPlatformGateSession(req) {
@@ -2293,6 +2386,25 @@ const server = http.createServer((req, res) => {
   if (enforceHttps(req, res)) return;
   if (!rateLimit(req, res)) return;
   const routePath = (req.url || '').split('?')[0];
+
+  if (routePath.startsWith('/api/private-entry/')) {
+    handlePrivateEntry(req, res);
+    return;
+  }
+
+  if (routePath === '/private-entry') {
+    send(res, 200, { 'Content-Type': MIME['.html'] }, privateEntryPage());
+    return;
+  }
+
+  if (!getPrivateEntrySession(req)) {
+    if (routePath.startsWith('/api/')) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_required' }));
+      return;
+    }
+    send(res, 302, { Location: '/private-entry' }, '');
+    return;
+  }
 
   if (routePath.startsWith('/api/platform-gate/')) {
     handlePlatformGate(req, res);
