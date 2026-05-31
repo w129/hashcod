@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hashcod - Cryptographic Platform</title>
+  <title>HSG2818 - Cryptographic Platform</title>
 
   <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
   <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=hashcod-icon-1" />
 
-  <link rel="stylesheet" href="app/styles.css?v=codec-pro-1" />
+  <link rel="stylesheet" href="app/styles.css?v=hsg2818-brand-1" />
   <link rel="stylesheet" href="app/vault.css?v=v12-siphash-2" />
   <link rel="stylesheet" href="app/tour.css?v=enterprise-tour-1" />
   <style>
@@ -18,10 +18,10 @@
 <body>
   <script>
     window.addEventListener('error', function(e){
-      console.error('[Hashcod]', e.message, e.error || '');
+      console.error('[HSG2818]', e.message, e.error || '');
       var root = document.getElementById('root');
       if(root && !root.dataset.mounted){
-        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt=""><div>Hashcod <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
+        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt=""><div>HSG2818 <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
       }
     });
   </script>
@@ -30,7 +30,7 @@
       <div class="instant-boot-card">
         <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
         <div>
-          <b>Hashcod</b>
+          <b>HSG2818</b>
           <span>Opening secure platform...</span>
         </div>
       </div>
@@ -43,23 +43,23 @@
 
   <!-- Data layer -->
   <script src="data/icons.js?v=container-icons-1"></script>
-  <script src="data/catalog.js"></script>
+  <script src="data/catalog.js?v=hsg2818-brand-1"></script>
   <script src="data/generators.js"></script>
 
   <!-- Security core -->
   <script src="app/security.js"></script>
-  <script src="app/enterprise.js?v=enterprise-production-1"></script>
+  <script src="app/enterprise.js?v=hsg2818-brand-1"></script>
 
   <!-- Tweaks shell -->
-  <script src="app/build/tweaks-panel.js?v=fast-start-1"></script>
+  <script src="app/build/tweaks-panel.js?v=hsg2818-brand-1"></script>
 
   <!-- App -->
-  <script src="app/build/tech-info.js?v=fast-start-1"></script>
-  <script src="app/build/vault.js?v=fast-start-1"></script>
-  <script src="app/build/tour.js?v=fast-start-1"></script>
-  <script src="app/build/app.js?v=fast-start-1"></script>
+  <script src="app/build/tech-info.js?v=hsg2818-brand-1"></script>
+  <script src="app/build/vault.js?v=hsg2818-brand-1"></script>
+  <script src="app/build/tour.js?v=hsg2818-brand-1"></script>
+  <script src="app/build/app.js?v=hsg2818-brand-1"></script>
 
-  <script src="app/build/root.js?v=fast-start-1"></script>
+  <script src="app/build/root.js?v=hsg2818-brand-1"></script>
   <script async src="vendor/qrcode.min.js?v=1.0.0"></script>
   <script async src="vendor/html2canvas.min.js?v=1.4.1"></script>
 </body>

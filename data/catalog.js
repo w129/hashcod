@@ -1432,7 +1432,7 @@ window.OCG_CATALOG = [
     id: 'apex_crypto_300',
     label: 'APEX Crypto Codes 300',
     icon: 'cube',
-    desc: 'Three hundred rare, high-grade Hashcod cryptographic code packets beyond the previous 1418-code catalog.',
+    desc: 'Three hundred rare, high-grade HSG2818 cryptographic code packets beyond the previous 1418-code catalog.',
     types: Array.from({ length: 300 }, (_, i) => {
       const n = i + 1;
       const fam = families[i % families.length];
@@ -1448,13 +1448,13 @@ window.OCG_CATALOG = [
         entropy: fam[6],
         space: '2^768+',
         std: fam[3],
-        about: `Hashcod APEX code ${String(n).padStart(3, '0')}: ${fam[2]} for ${tier[1]}, with OCG-APEX prefix, payload, salt, nonce, route, policy id, HMAC binding, SHA-512/SHA-256 digest material, timestamp and checksum. New APEX ID family not present in the previous 1418-code set.`,
+        about: `HSG2818 APEX code ${String(n).padStart(3, '0')}: ${fam[2]} for ${tier[1]}, with OCG-APEX prefix, payload, salt, nonce, route, policy id, HMAC binding, SHA-512/SHA-256 digest material, timestamp and checksum. New APEX ID family not present in the previous 1418-code set.`,
       };
     }),
   });
 })();
 
-(function addHashcodAdvancedCodes8282() {
+(function addHSG2818AdvancedCodes8282() {
   const HASHCOD_ADVANCED_TOTAL = 8282;
   const profiles = [
     ['PQC-KEM', 'intercambio de claves post-cuantico', 'post-quantum key encapsulation', 'key', '896 bits'],
@@ -1495,9 +1495,9 @@ window.OCG_CATALOG = [
 
   window.OCG_CATALOG.push({
     id: 'hashcod_advanced_8282',
-    label: 'Hashcod Advanced Codes 8282',
+    label: 'HSG2818 Advanced Codes 8282',
     icon: 'container',
-    desc: 'Eight thousand two hundred eighty-two advanced Hashcod cryptographic code families. Combined with the base, NEO and APEX families, the platform reaches 10,000 total codes.',
+    desc: 'Eight thousand two hundred eighty-two advanced HSG2818 cryptographic code families. Combined with the base, NEO and APEX families, the platform reaches 10,000 total codes.',
     types: Array.from({ length: HASHCOD_ADVANCED_TOTAL }, (_, i) => {
       const n = i + 1;
       const profile = profiles[(n - 1) % profiles.length];
@@ -1512,14 +1512,14 @@ window.OCG_CATALOG = [
         engine: `${profile[0]} - HMAC-SHA256 + SHA-512 + SHA-256 binding + salt/nonce`,
         entropy: profile[4],
         space: '2^640+',
-        std: `Hashcod ${profile[0]} profile`,
-        about: `${name}: ${profile[1]}. Generates a sealed Hashcod packet with payload, salt, nonce, route, HMAC binding, SHA-512 digest, SHA-256 binding, timestamp and checksum while preserving the practical purpose of the selected cryptographic family.`,
+        std: `HSG2818 ${profile[0]} profile`,
+        about: `${name}: ${profile[1]}. Generates a sealed HSG2818 packet with payload, salt, nonce, route, HMAC binding, SHA-512 digest, SHA-256 binding, timestamp and checksum while preserving the practical purpose of the selected cryptographic family.`,
       };
     }),
   });
 })();
 
-(function finalizeHashcodVariantNames() {
+(function finalizeHSG2818VariantNames() {
   let variantIndex = 0;
   (window.OCG_CATALOG || []).forEach((category) => {
     (category.types || []).forEach((type) => {
@@ -1529,7 +1529,7 @@ window.OCG_CATALOG = [
 
       type.originalLabel = originalLabel;
       type.hashcodVariant = `HCV-${variantNumber}`;
-      type.label = `Hashcod Variant ${variantNumber} - ${originalLabel}`;
+      type.label = `HSG2818 Variant ${variantNumber} - ${originalLabel}`;
     });
   });
 })();

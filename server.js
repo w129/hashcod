@@ -1,4 +1,4 @@
-// Hashcod local server — no external npm packages required.
+// HSG2818 local server — no external npm packages required.
 // Run: npm start
 const http = require('http');
 const https = require('https');
@@ -230,7 +230,7 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(AUDIT_FILE, 'audit', stamp),
       backupFileIfExists(ACCESS_HISTORY_FILE, 'access-history', stamp),
     ].filter(Boolean).map(file => path.basename(file));
-    fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
+    fs.writeFileSync(manifest, JSON.stringify({ app: 'HSG2818', createdAt: new Date().toISOString(), reason, files }, null, 2));
     audit('backup.automatic', { reason, files: files.length });
   } catch {
     // Backups are best-effort and must not block critical writes.
@@ -392,7 +392,7 @@ function requestJson(urlString, { method = 'GET', headers = {}, body = '' } = {}
       method,
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'Hashcod-OIDC/1.0',
+        'User-Agent': 'HSG2818-OIDC/1.0',
         ...headers,
         ...(body ? { 'Content-Length': Buffer.byteLength(body) } : {}),
       },
@@ -1021,7 +1021,7 @@ async function handleSecurityKing(req, res) {
       users: securityUserRows(db),
       accessRequests: requests,
       audit: auditRows,
-      policy: 'Hashcod does not reveal user passwords. It stores protected password hashes and audit evidence only.',
+      policy: 'HSG2818 does not reveal user passwords. It stores protected password hashes and audit evidence only.',
     }));
     return;
   }
@@ -1030,7 +1030,7 @@ async function handleSecurityKing(req, res) {
     const db = readAuthDb();
     const auditRows = decorateAuditRows(await readSecurityAuditRows(1000), db);
     const payload = {
-      app: 'Hashcod',
+      app: 'HSG2818',
       exportedAt: new Date().toISOString(),
       storage: pgReady ? 'render-postgres+encrypted-file-cache' : 'encrypted-file-cache',
       users: securityUserRows(db),
@@ -1643,7 +1643,7 @@ function enqueuePhoneNotification({ title, body, actor, type, codeType, codeInde
   const db = readSmsGatewayDb();
   const row = {
     id: `note_${Date.now().toString(36)}_${b64url(crypto.randomBytes(6))}`,
-    title: safeText(title, 140) || 'Hashcod notification',
+    title: safeText(title, 140) || 'HSG2818 notification',
     body: safeText(body, 900),
     actor: safeText(actor, 120),
     type: safeText(type, 40) || 'platform',
@@ -1780,7 +1780,7 @@ async function handleSmsGateway(req, res) {
       const secret = b64url(crypto.randomBytes(32));
       const device = {
         id: `gw_${Date.now().toString(36)}_${b64url(crypto.randomBytes(5))}`,
-        name: safeText(body.name, 80) || 'Hashcod Android Gateway',
+        name: safeText(body.name, 80) || 'HSG2818 Android Gateway',
         secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
         status: 'ONLINE',
         createdAt: new Date().toISOString(),
@@ -1866,7 +1866,7 @@ async function handlePhoneOs(req, res) {
       const secret = b64url(crypto.randomBytes(32));
       const device = {
         id: `phone_${Date.now().toString(36)}_${b64url(crypto.randomBytes(5))}`,
-        name: safeText(body.name, 80) || 'Hashcod Phone OS',
+        name: safeText(body.name, 80) || 'HSG2818 Phone OS',
         secretHash: crypto.createHash('sha256').update(secret).digest('hex'),
         status: 'ONLINE',
         createdAt: new Date().toISOString(),
@@ -1883,7 +1883,7 @@ async function handlePhoneOs(req, res) {
       const auth = requireAuth(req, res, 'viewer');
       if (!auth) return;
       const note = enqueuePhoneNotification({
-        title: body.title || 'Hashcod code saved',
+        title: body.title || 'HSG2818 code saved',
         body: body.body || body.value || '',
         actor: auth.user.id,
         type: body.type || 'code',
@@ -2093,10 +2093,10 @@ async function handleCryptoAiChat(req, res) {
       return;
     }
     const systemPrompt = [
-      'You are Hashcod Crypto AI, a specialized assistant for cryptographic codes, tokenization payloads, key handling, encoding formats, QR/export formats, HNS/HOS/HCP flows, and security review.',
+      'You are HSG2818 Crypto AI, a specialized assistant for cryptographic codes, tokenization payloads, key handling, encoding formats, QR/export formats, HNS/HOS/HCP flows, and security review.',
       'Give practical, safe, production-minded answers. Do not invent impossible cryptographic guarantees. Warn when a request would expose secrets or misuse keys.',
-      `Internal Hashcod model name: ${provider.hashModel}.`,
-      codeContext ? `Current Hashcod code context:\n${codeContext}` : '',
+      `Internal HSG2818 model name: ${provider.hashModel}.`,
+      codeContext ? `Current HSG2818 code context:\n${codeContext}` : '',
     ].filter(Boolean).join('\n\n');
     let answer = '';
     if (provider.id === 'openai') {
@@ -2201,7 +2201,7 @@ async function translateChunkEsEn(chunk) {
     return result.body?.translatedText || result.body?.translation || result.body?.text || '';
   }
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=es%7Cen`;
-  const result = await requestJson(url, { headers: { 'User-Agent': 'Hashcod-Translator/1.0' } });
+  const result = await requestJson(url, { headers: { 'User-Agent': 'HSG2818-Translator/1.0' } });
   return result?.responseData?.translatedText || '';
 }
 
@@ -2238,7 +2238,7 @@ function enterpriseManifest() {
   const catalogPath = path.join(ROOT, 'data', 'catalog.js');
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
   return JSON.stringify({
-    app: 'Hashcod',
+    app: 'HSG2818',
     profile: 'enterprise-production-baseline',
     servedAt: new Date().toISOString(),
     host: HOST,
@@ -2388,7 +2388,7 @@ const server = http.createServer((req, res) => {
 async function startServer() {
   server.listen(PORT, HOST, () => {
     console.log('----------------------------------------');
-    console.log(' Hashcod servidor iniciado');
+    console.log(' HSG2818 servidor iniciado');
     console.log(` URL: http://${HOST}:${PORT}`);
     console.log(' Auth storage: encrypted file cache; Render PostgreSQL connecting in background');
     console.log(' Para cerrar: Ctrl + C');
@@ -2398,10 +2398,10 @@ async function startServer() {
   try {
     await initRenderDatabase();
     await bootstrapAuthDbFromRender();
-    console.log(' Hashcod Render PostgreSQL conectado');
+    console.log(' HSG2818 Render PostgreSQL conectado');
   } catch (err) {
     audit('db.render.start_failed', { error: safeText(err.message, 160) });
-    console.warn('[Hashcod] Render database unavailable, using encrypted file cache:', err.message);
+    console.warn('[HSG2818] Render database unavailable, using encrypted file cache:', err.message);
   }
 }
 

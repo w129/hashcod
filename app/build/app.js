@@ -84,10 +84,10 @@ const I18N = {
     replayTour: 'Replay tour',
     openHelp: 'Open help',
     shortcuts: 'Shortcuts',
-    aboutApp: 'About Hashcod',
-    helpTitle: 'Hashcod Help',
+    aboutApp: 'About HSG2818',
+    helpTitle: 'HSG2818 Help',
     helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
-    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved Hashcod session.',
+    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved HSG2818 session.',
     helpGenerateDesc: 'Generate the selected primitive, change batch size quickly, copy results, or clear the output.',
     helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
     helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
@@ -221,10 +221,10 @@ const I18N = {
     replayTour: 'Repetir tour',
     openHelp: 'Abrir ayuda',
     shortcuts: 'Atajos',
-    aboutApp: 'Acerca de Hashcod',
-    helpTitle: 'Ayuda de Hashcod',
+    aboutApp: 'Acerca de HSG2818',
+    helpTitle: 'Ayuda de HSG2818',
     helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
-    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de Hashcod.',
+    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de HSG2818.',
     helpGenerateDesc: 'Genera la primitiva seleccionada, cambia el tamaño del lote rápidamente, copia resultados o limpia la salida.',
     helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
     helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
@@ -358,10 +358,10 @@ const I18N = {
     replayTour: 'ツアーを再生',
     openHelp: 'ヘルプを開く',
     shortcuts: 'ショートカット',
-    aboutApp: 'Hashcodについて',
-    helpTitle: 'Hashcod ヘルプ',
+    aboutApp: 'HSG2818について',
+    helpTitle: 'HSG2818 ヘルプ',
     helpSubtitle: '開発者とサイバーセキュリティ作業向けのローカル暗号値ジェネレーター。',
-    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのHashcodセッションを読み込みます。',
+    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのHSG2818セッションを読み込みます。',
     helpGenerateDesc: '選択したプリミティブを生成し、バッチサイズを素早く変更し、結果をコピーまたは出力を消去します。',
     helpExportDesc: '用途に応じて生成値をMarkdown、TXT、JSON、CSVとしてエクスポートします。',
     helpViewDesc: '表示密度の変更、検索フォーカス、最新結果への移動、ガイドツアーの再生を行います。',
@@ -1715,7 +1715,7 @@ const AdaptiveToolCard = ({
   }, React.createElement("div", null, React.createElement("span", null, L('Entradas', 'Inputs')), React.createElement("b", null, p.inputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Salidas', 'Outputs')), React.createElement("b", null, p.outputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Seguridad', 'Security')), React.createElement("b", null, p.security)), React.createElement("div", null, React.createElement("span", null, L('Funcion ideal', 'Best fit')), React.createElement("b", null, p.action))));
 };
 const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z"/><path fill="currentColor" d="M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z"/></svg>';
-const drawHashcodCanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
+const drawHSG2818CanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
   const line = Math.max(2, size * 0.075);
   const frameX = x + size * 0.08;
   const frameY = y + size * 0.1;
@@ -1742,8 +1742,8 @@ const drawHashcodCanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
   ctx.restore();
 };
 const hashcodDownloadBrand = () => ({
-  name: 'Hashcod',
-  platform: 'Hashcod - Cryptographic Platform',
+  name: 'HSG2818',
+  platform: 'HSG2818 - Cryptographic Platform',
   logo_svg: HASHCOD_DOWNLOAD_LOGO_SVG,
   generated_at: new Date().toISOString()
 });
@@ -1755,7 +1755,7 @@ const brandDownloadText = (filename, text, mime = '') => {
   const brand = hashcodDownloadBrand();
   if (lowerName.endsWith('.ocg.pack') || raw.startsWith('HASHCOD-OCG-PACK/1')) {
     if (/^brand_logo_svg=/m.test(raw)) return raw;
-    return raw.replace(/^(HASHCOD-OCG-PACK\/1\s*)/m, `$1brand_name=Hashcod\nbrand_platform=Hashcod - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`);
+    return raw.replace(/^(HASHCOD-OCG-PACK\/1\s*)/m, `$1brand_name=HSG2818\nbrand_platform=HSG2818 - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`);
   }
   if (lowerMime.includes('json') || lowerName.endsWith('.json') || raw.trim().startsWith('{')) {
     try {
@@ -1775,27 +1775,27 @@ const brandDownloadText = (filename, text, mime = '') => {
     }
   }
   if (lowerName.endsWith('.js') || lowerMime.includes('javascript')) {
-    return ['/* HASHCOD_DOWNLOAD_BRAND', ' * Name: Hashcod', ' * Platform: Hashcod - Cryptographic Platform', ` * Generated: ${brand.generated_at}`, ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, ' */', raw].join('\n');
+    return ['/* HASHCOD_DOWNLOAD_BRAND', ' * Name: HSG2818', ' * Platform: HSG2818 - Cryptographic Platform', ` * Generated: ${brand.generated_at}`, ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, ' */', raw].join('\n');
   }
   if (lowerMime.includes('html') || lowerName.endsWith('.html')) {
-    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>Hashcod</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
+    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
     if (/<body[^>]*>/i.test(raw)) return raw.replace(/<body([^>]*)>/i, `<body$1>${badge}`);
     return `${badge}\n${raw}`;
   }
   if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || lowerMime.includes('yaml')) {
-    return ['hashcod_brand:', '  name: Hashcod', '  platform: Hashcod - Cryptographic Platform', `  generated_at: ${brand.generated_at}`, `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, '---', raw].join('\n');
+    return ['hashcod_brand:', '  name: HSG2818', '  platform: HSG2818 - Cryptographic Platform', `  generated_at: ${brand.generated_at}`, `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, '---', raw].join('\n');
   }
   if (lowerName.endsWith('.csv') || lowerMime.includes('csv')) {
-    return ['# HASHCOD_DOWNLOAD_BRAND', '# name,Hashcod', '# platform,Hashcod - Cryptographic Platform', `# generated_at,${brand.generated_at}`, `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, raw].join('\n');
+    return ['# HASHCOD_DOWNLOAD_BRAND', '# name,HSG2818', '# platform,HSG2818 - Cryptographic Platform', `# generated_at,${brand.generated_at}`, `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, raw].join('\n');
   }
   const textLike = lowerMime.includes('text') || lowerMime.includes('markdown') || lowerName.endsWith('.md') || lowerName.endsWith('.txt') || lowerName.endsWith('.log') || lowerName.endsWith('.pack') || lowerName.endsWith('.license') || lowerName.endsWith('.pem');
   if (!textLike) return raw;
-  return ['HASHCOD_DOWNLOAD_BRAND', 'Name: Hashcod', 'Platform: Hashcod - Cryptographic Platform', `Generated: ${brand.generated_at}`, `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, '', raw].join('\n');
+  return ['HASHCOD_DOWNLOAD_BRAND', 'Name: HSG2818', 'Platform: HSG2818 - Cryptographic Platform', `Generated: ${brand.generated_at}`, `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, '', raw].join('\n');
 };
 const HASHCOD_LAW_LOG_KEY = 'hashcod_law_audit_v1';
 const HASHCOD_LAW_SETTINGS_KEY = 'hashcod_law_settings_v1';
 const HASHCOD_LAW_MAX_EVENTS = 700;
-const readHashcodLawLog = () => {
+const readHSG2818LawLog = () => {
   try {
     const parsed = safeJsonParse(localStorage.getItem(HASHCOD_LAW_LOG_KEY), []);
     return Array.isArray(parsed) ? parsed : [];
@@ -1803,12 +1803,12 @@ const readHashcodLawLog = () => {
     return [];
   }
 };
-const writeHashcodLawLog = rows => {
+const writeHSG2818LawLog = rows => {
   try {
     localStorage.setItem(HASHCOD_LAW_LOG_KEY, JSON.stringify((rows || []).slice(0, HASHCOD_LAW_MAX_EVENTS)));
   } catch {}
 };
-const readHashcodLawSettings = () => {
+const readHSG2818LawSettings = () => {
   try {
     const saved = safeJsonParse(localStorage.getItem(HASHCOD_LAW_SETTINGS_KEY), {});
     return {
@@ -1827,9 +1827,9 @@ const readHashcodLawSettings = () => {
     };
   }
 };
-const writeHashcodLawSettings = settings => {
+const writeHSG2818LawSettings = settings => {
   const next = {
-    ...readHashcodLawSettings(),
+    ...readHSG2818LawSettings(),
     ...(settings || {})
   };
   try {
@@ -1879,22 +1879,22 @@ const hashcodLawAssessPayload = ({
   };
 };
 const hashcodLawRecord = event => {
-  const settings = readHashcodLawSettings();
+  const settings = readHSG2818LawSettings();
   if (!settings.keepAudit) return event;
   try {
-    const rows = readHashcodLawLog();
+    const rows = readHSG2818LawLog();
     const next = [event, ...rows].slice(0, HASHCOD_LAW_MAX_EVENTS);
-    writeHashcodLawLog(next);
+    writeHSG2818LawLog(next);
     window.dispatchEvent(new CustomEvent('hashcod-law-event', {
       detail: event
     }));
   } catch (err) {
-    console.warn('Hashcod Law audit failed', err);
+    console.warn('HSG2818 Law audit failed', err);
   }
   return event;
 };
 const hashcodLawShouldBlock = event => {
-  const settings = readHashcodLawSettings();
+  const settings = readHSG2818LawSettings();
   if (settings.mode !== 'strict') return false;
   return settings.blockDanger && event.danger || settings.blockSecretLeak && event.secretLeak;
 };
@@ -1950,7 +1950,7 @@ const brandPngBlob = async blob => {
     if (icon) ctx.drawImage(icon, left, top, iconSize, iconSize);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = `700 ${Math.max(13, Math.round(footer * 0.28))}px Arial, Helvetica, sans-serif`;
-    ctx.fillText('Hashcod', left + iconSize + 10, image.height + Math.round(footer * 0.45));
+    ctx.fillText('HSG2818', left + iconSize + 10, image.height + Math.round(footer * 0.45));
     ctx.fillStyle = '#A3A3A3';
     ctx.font = `500 ${Math.max(9, Math.round(footer * 0.2))}px Arial, Helvetica, sans-serif`;
     ctx.fillText('Cryptographic Platform', left + iconSize + 10, image.height + Math.round(footer * 0.72));
@@ -2071,7 +2071,7 @@ const makeContainerPortManifest = (container, state = emptyContainerPort()) => {
   const Ep = Math.min(1, Math.max(0, Qd / capacity));
   const FPC = (Qd + Qc + Qs) * Ep / (Te + To + Ta + Tl);
   return {
-    platform: 'Hashcod',
+    platform: 'HSG2818',
     type: 'HASHCOD-CODE-CONTAINER/1',
     formula: 'FPC = ((Qd + Qc + Qs) x Ep) / (Te + To + Ta + Tl)',
     ihAlgorithm: 'HMAC-SHA3-256',
@@ -2276,7 +2276,7 @@ const rowToMarkdown = row => {
     type
   } = findTypeMeta(row.type);
   const date = new Date(row.ts || Date.now()).toISOString();
-  const lines = [`# Hashcod — Generated value · v12`, ``, `- **Index:** ${String(row.idx).padStart(3, '0')}`, `- **Primitive:** ${type ? type.label : row.type}`, `- **Category:** ${cat ? cat.label : '—'}`, `- **Standard:** ${type ? type.std : '—'}`, `- **Length:** ${row.value.length} characters`, `- **Generated:** ${date}`, ``, `## Value`, ``, '```', row.value, '```', ``, `---`, `_opencriptG · Hashcod Cryptographic Generator v12 · diktatcart® 2026_`, ``];
+  const lines = [`# HSG2818 — Generated value · v12`, ``, `- **Index:** ${String(row.idx).padStart(3, '0')}`, `- **Primitive:** ${type ? type.label : row.type}`, `- **Category:** ${cat ? cat.label : '—'}`, `- **Standard:** ${type ? type.std : '—'}`, `- **Length:** ${row.value.length} characters`, `- **Generated:** ${date}`, ``, `## Value`, ``, '```', row.value, '```', ``, `---`, `_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`, ``];
   return lines.join('\n');
 };
 const rowToLog = (row, language = 'en') => {
@@ -2343,7 +2343,7 @@ const yamlScalar = value => {
 const yamlBlock = (value, indent = '    ') => String(value ?? '').split(/\r?\n/).map(line => `${indent}${line}`).join('\n');
 const rowToYaml = (row, language = 'en') => {
   const data = rowToJsonObject(row, language);
-  return ['platform: Hashcod', `version: ${yamlScalar(data.version)}`, `export_format: ${yamlScalar('yaml')}`, `exported_at: ${yamlScalar(data.exported_at)}`, 'code:', `  index: ${yamlScalar(data.code.index)}`, `  row_id: ${data.code.row_id == null ? 'null' : yamlScalar(data.code.row_id)}`, `  type_id: ${yamlScalar(data.code.type_id)}`, `  primitive: ${yamlScalar(data.code.primitive)}`, `  category: ${data.code.category == null ? 'null' : yamlScalar(data.code.category)}`, `  category_id: ${data.code.category_id == null ? 'null' : yamlScalar(data.code.category_id)}`, `  standard: ${data.code.standard == null ? 'null' : yamlScalar(data.code.standard)}`, `  generated_at: ${yamlScalar(data.code.generated_at)}`, `  length: ${data.code.length}`, '  value: |', yamlBlock(data.code.value), 'security_profile:', `  posture: ${yamlScalar(data.security_profile.posture)}`, `  use_for: ${yamlScalar(data.security_profile.use_for)}`, `  avoid: ${yamlScalar(data.security_profile.avoid)}`, 'audit:', `  source: ${yamlScalar(data.audit.source)}`, `  note: ${yamlScalar(data.audit.note)}`, ''].join('\n');
+  return ['platform: HSG2818', `version: ${yamlScalar(data.version)}`, `export_format: ${yamlScalar('yaml')}`, `exported_at: ${yamlScalar(data.exported_at)}`, 'code:', `  index: ${yamlScalar(data.code.index)}`, `  row_id: ${data.code.row_id == null ? 'null' : yamlScalar(data.code.row_id)}`, `  type_id: ${yamlScalar(data.code.type_id)}`, `  primitive: ${yamlScalar(data.code.primitive)}`, `  category: ${data.code.category == null ? 'null' : yamlScalar(data.code.category)}`, `  category_id: ${data.code.category_id == null ? 'null' : yamlScalar(data.code.category_id)}`, `  standard: ${data.code.standard == null ? 'null' : yamlScalar(data.code.standard)}`, `  generated_at: ${yamlScalar(data.code.generated_at)}`, `  length: ${data.code.length}`, '  value: |', yamlBlock(data.code.value), 'security_profile:', `  posture: ${yamlScalar(data.security_profile.posture)}`, `  use_for: ${yamlScalar(data.security_profile.use_for)}`, `  avoid: ${yamlScalar(data.security_profile.avoid)}`, 'audit:', `  source: ${yamlScalar(data.audit.source)}`, `  note: ${yamlScalar(data.audit.note)}`, ''].join('\n');
 };
 const zipCrc32 = bytes => {
   let crc = 0xffffffff;
@@ -2430,7 +2430,7 @@ const rowUsageGuide = (row, language = 'en') => {
   } = findTypeMeta(row.type);
   const profile = ticketProfileForRow(row, language);
   const L = (es, en) => language === 'es' ? es : en;
-  return [L('HASHCOD CODE - GUIA DE USO', 'HASHCOD CODE - USAGE GUIDE'), '==========================', '', `${L('Tipo', 'Type')}: ${type ? type.label : row.type}`, `${L('Categoria', 'Category')}: ${cat ? cat.label : 'N/A'}`, `${L('Estandar / perfil', 'Standard / profile')}: ${type ? type.std || type.badge || 'N/A' : 'N/A'}`, `${L('Longitud', 'Length')}: ${String(row.value || '').length} ch`, '', L('COMO SE USA', 'HOW TO USE IT'), L('- Guardalo como material sensible y controla quien puede verlo.', '- Store it as sensitive material and control who can read it.'), L('- Usalo solo para el proposito del tipo de code generado.', '- Use it only for the purpose of the generated code type.'), L('- Registra version, emisor, fecha, rotacion y revocacion cuando vaya a produccion.', '- Record version, issuer, date, rotation, and revocation when moving to production.'), L('- Si se usa como secreto real, mantenlo fuera del frontend publico y de logs visibles.', '- If used as a real secret, keep it out of public frontend code and visible logs.'), '', L('APLICACIONES', 'APPLICATIONS'), `- ${profile.useFor}`, L('- QR Vault, certificados, auditoria local, tickets, vaults y paquetes de transporte.', '- QR Vault, certificates, local audit, tickets, vaults, and transport packets.'), L('- Integracion con backend, KMS/HSM o bases de datos seguras segun el tipo.', '- Backend, KMS/HSM, or secure database integration depending on the type.'), '', L('NO HACER', 'DO NOT'), `- ${profile.avoid}`, L('- No lo publiques en screenshots, repositorios o chats publicos.', '- Do not publish it in screenshots, repositories, or public chats.'), L('- No asumas que el formato visual reemplaza cifrado, HMAC o politicas de acceso.', '- Do not assume the visible format replaces encryption, HMAC, or access policy.'), '', L('CODE', 'CODE'), String(row.value || ''), ''].join('\n');
+  return [L('HSG2818 CODE - GUIA DE USO', 'HSG2818 CODE - USAGE GUIDE'), '==========================', '', `${L('Tipo', 'Type')}: ${type ? type.label : row.type}`, `${L('Categoria', 'Category')}: ${cat ? cat.label : 'N/A'}`, `${L('Estandar / perfil', 'Standard / profile')}: ${type ? type.std || type.badge || 'N/A' : 'N/A'}`, `${L('Longitud', 'Length')}: ${String(row.value || '').length} ch`, '', L('COMO SE USA', 'HOW TO USE IT'), L('- Guardalo como material sensible y controla quien puede verlo.', '- Store it as sensitive material and control who can read it.'), L('- Usalo solo para el proposito del tipo de code generado.', '- Use it only for the purpose of the generated code type.'), L('- Registra version, emisor, fecha, rotacion y revocacion cuando vaya a produccion.', '- Record version, issuer, date, rotation, and revocation when moving to production.'), L('- Si se usa como secreto real, mantenlo fuera del frontend publico y de logs visibles.', '- If used as a real secret, keep it out of public frontend code and visible logs.'), '', L('APLICACIONES', 'APPLICATIONS'), `- ${profile.useFor}`, L('- QR Vault, certificados, auditoria local, tickets, vaults y paquetes de transporte.', '- QR Vault, certificates, local audit, tickets, vaults, and transport packets.'), L('- Integracion con backend, KMS/HSM o bases de datos seguras segun el tipo.', '- Backend, KMS/HSM, or secure database integration depending on the type.'), '', L('NO HACER', 'DO NOT'), `- ${profile.avoid}`, L('- No lo publiques en screenshots, repositorios o chats publicos.', '- Do not publish it in screenshots, repositories, or public chats.'), L('- No asumas que el formato visual reemplaza cifrado, HMAC o politicas de acceso.', '- Do not assume the visible format replaces encryption, HMAC, or access policy.'), '', L('CODE', 'CODE'), String(row.value || ''), ''].join('\n');
 };
 const rowToZipBlob = (row, language = 'en') => makeZipBlob([{
   name: 'code.txt',
@@ -2457,7 +2457,7 @@ const rowToOcgPack = (row, language = 'en') => {
   const json = rowToJsonObject(row, language);
   const payload = btoa(unescape(encodeURIComponent(JSON.stringify(json))));
   const checksum = fnv1aHex(payload);
-  return ['HASHCOD-OCG-PACK/1', `created_at=${new Date().toISOString()}`, `platform=Hashcod`, `format=ocg.pack`, `only_opens_with=Hashcod Platform`, `checksum_fnv1a=${checksum}`, 'payload_encoding=base64url-json', '', '[PAYLOAD]', payload.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''), '', '[END_HASHCOD_OCG_PACK]', ''].join('\n');
+  return ['HASHCOD-OCG-PACK/1', `created_at=${new Date().toISOString()}`, `platform=HSG2818`, `format=ocg.pack`, `only_opens_with=HSG2818 Platform`, `checksum_fnv1a=${checksum}`, 'payload_encoding=base64url-json', '', '[PAYLOAD]', payload.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''), '', '[END_HASHCOD_OCG_PACK]', ''].join('\n');
 };
 const htmlEscape = (value = '') => String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const rowToPixelNoteHtml = (row, note = '', language = 'en') => {
@@ -2469,14 +2469,14 @@ const rowToPixelNoteHtml = (row, note = '', language = 'en') => {
   const noteText = String(note || '').trim() || (language === 'es' ? 'Sin nota del usuario.' : 'No user note.');
   const index = String(row?.idx || 0).padStart(3, '0');
   const primitive = type ? type.label : row?.type || 'code';
-  const category = cat ? cat.label : 'Hashcod';
+  const category = cat ? cat.label : 'HSG2818';
   const generated = new Date(row?.ts || Date.now()).toISOString();
   return `<!doctype html>
 <html lang="${language === 'es' ? 'es' : 'en'}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hashcod Pixel Note ${htmlEscape(index)}</title>
+<title>HSG2818 Pixel Note ${htmlEscape(index)}</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#d9d9d1;color:#111;font-family:"Courier New",ui-monospace,monospace;image-rendering:pixelated}.grid{min-height:100vh;padding:24px;background:linear-gradient(#c7c7bf 1px,transparent 1px),linear-gradient(90deg,#c7c7bf 1px,transparent 1px);background-size:16px 16px}.card{max-width:920px;margin:0 auto;background:#fff;border:4px solid #111;box-shadow:12px 12px 0 #111}.head{display:grid;grid-template-columns:96px 1fr;border-bottom:4px solid #111}.seal{display:grid;place-items:center;border-right:4px solid #111;background:#111;color:#fff;font-size:42px;font-weight:900}.title{padding:20px}.k{font-size:10px;letter-spacing:.34em;color:#666;text-transform:uppercase}.title h1{margin:8px 0 0;font-size:34px;line-height:1;text-transform:uppercase}.meta{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:4px solid #111}.meta div{padding:12px;border-right:2px solid #111}.meta div:last-child{border-right:0}.meta b{display:block;margin-top:6px;font-size:12px;word-break:break-word}.code{padding:20px;border-bottom:4px solid #111}.code pre{margin:0;white-space:pre-wrap;word-break:break-all;line-height:1.55;font-size:13px;background:#f6f6f1;border:2px solid #111;padding:14px}.note{padding:20px;background:repeating-linear-gradient(0deg,#fff,#fff 23px,#e9e9e2 24px)}.note h2{margin:0 0 12px;font-size:20px;text-transform:uppercase}.note p{white-space:pre-wrap;margin:0;line-height:1.65;font-size:14px}.foot{border-top:4px solid #111;padding:12px 20px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}@media(max-width:700px){.head,.meta{grid-template-columns:1fr}.seal{min-height:82px;border-right:0;border-bottom:4px solid #111}.meta div{border-right:0;border-bottom:2px solid #111}.meta div:last-child{border-bottom:0}.title h1{font-size:28px}.grid{padding:14px}.card{box-shadow:7px 7px 0 #111}}
 </style>
@@ -2484,11 +2484,11 @@ const rowToPixelNoteHtml = (row, note = '', language = 'en') => {
 <body>
 <main class="grid">
   <section class="card">
-    <header class="head"><div class="seal">#</div><div class="title"><span class="k">HASHCOD PIXEL NOTE</span><h1>${htmlEscape(primitive)}</h1></div></header>
+    <header class="head"><div class="seal">#</div><div class="title"><span class="k">HSG2818 PIXEL NOTE</span><h1>${htmlEscape(primitive)}</h1></div></header>
     <div class="meta"><div><span class="k">Index</span><b>${htmlEscape(index)}</b></div><div><span class="k">Category</span><b>${htmlEscape(category)}</b></div><div><span class="k">Type</span><b>${htmlEscape(row?.type || 'code')}</b></div><div><span class="k">Generated</span><b>${htmlEscape(generated)}</b></div></div>
     <div class="code"><span class="k">Generated code</span><pre>${htmlEscape(code)}</pre></div>
     <div class="note"><h2>Nota del usuario</h2><p>${htmlEscape(noteText)}</p></div>
-    <footer class="foot"><span>Hashcod Cryptographic Platform</span><span>diktatcart 2026</span></footer>
+    <footer class="foot"><span>HSG2818 Cryptographic Platform</span><span>diktatcart 2026</span></footer>
   </section>
 </main>
 </body>
@@ -2545,13 +2545,13 @@ const rowToSmsPayload = (row, format = 'raw', language = 'en') => {
   if (format === 'md') return rowToMarkdown(row);
   if (format === 'pack') return rowToOcgPack(row, language);
   if (format === 'iso') {
-    return ['HASHCOD SMS ISO MANIFEST', `SERIAL=${serial}`, `PRIMITIVE=${type ? type.label : row?.type}`, `TYPE_ID=${row?.type}`, `CATEGORY=${cat ? cat.label : 'n/a'}`, `STANDARD=${type ? type.std || type.badge || 'n/a' : 'n/a'}`, `LENGTH=${code.length}`, `GENERATED=${new Date(row?.ts || Date.now()).toISOString()}`, '', '[CODE]', code, '', '[END]'].join('\n');
+    return ['HSG2818 SMS ISO MANIFEST', `SERIAL=${serial}`, `PRIMITIVE=${type ? type.label : row?.type}`, `TYPE_ID=${row?.type}`, `CATEGORY=${cat ? cat.label : 'n/a'}`, `STANDARD=${type ? type.std || type.badge || 'n/a' : 'n/a'}`, `LENGTH=${code.length}`, `GENERATED=${new Date(row?.ts || Date.now()).toISOString()}`, '', '[CODE]', code, '', '[END]'].join('\n');
   }
   if (format === 'card') {
-    return ['HASHCOD VIRTUAL CODE CARD', `SERIAL=${serial}`, `VALIDATOR=${fnv1aHex(`${serial}:${code}`).toUpperCase()}`, `PRIMITIVE=${type ? type.label : row?.type}`, `USE=${ticketProfileForRow(row, language).useFor}`, '', code].join('\n');
+    return ['HSG2818 VIRTUAL CODE CARD', `SERIAL=${serial}`, `VALIDATOR=${fnv1aHex(`${serial}:${code}`).toUpperCase()}`, `PRIMITIVE=${type ? type.label : row?.type}`, `USE=${ticketProfileForRow(row, language).useFor}`, '', code].join('\n');
   }
   if (format === 'zip') {
-    return ['HASHCOD ZIP DELIVERY NOTE', `SERIAL=${serial}`, L('SMS no adjunta ZIP directamente; este mensaje contiene el payload y metadatos para reconstruir o reenviar el paquete desde Hashcod.', 'SMS cannot attach ZIP directly; this message carries the payload and metadata to rebuild or resend the package from Hashcod.'), `PRIMITIVE=${type ? type.label : row?.type}`, `FORMAT_FILES=code.txt, usage-and-applications.txt, metadata.json, metadata.yaml`, '', code].join('\n');
+    return ['HSG2818 ZIP DELIVERY NOTE', `SERIAL=${serial}`, L('SMS no adjunta ZIP directamente; este mensaje contiene el payload y metadatos para reconstruir o reenviar el paquete desde HSG2818.', 'SMS cannot attach ZIP directly; this message carries the payload and metadata to rebuild or resend the package from HSG2818.'), `PRIMITIVE=${type ? type.label : row?.type}`, `FORMAT_FILES=code.txt, usage-and-applications.txt, metadata.json, metadata.yaml`, '', code].join('\n');
   }
   return code;
 };
@@ -2606,7 +2606,7 @@ const makeSimplePdfBytes = (title, lines = []) => {
 };
 const codeCardManualPdfBytes = (manifest, language = 'en') => {
   const L = (es, en) => language === 'es' ? es : en;
-  return makeSimplePdfBytes('Hashcod Virtual Code Card Manual', [L('Que es esta tarjeta', 'What this card is'), L('La tarjeta virtual representa un code generado dentro de Hashcod. Incluye un QR y una serie numerica unica para validacion visual y operativa.', 'The virtual card represents a code generated inside Hashcod. It includes a QR and a unique numeric series for visual and operational validation.'), '', L('Como funciona', 'How it works'), L('1. El QR contiene un payload corto con serial, numero de validacion y huella SHA-256 del code.', '1. The QR contains a short payload with serial, validation number, and SHA-256 fingerprint of the code.'), L('2. El numero de validacion se deriva de la huella del code, el tipo y el indice de generacion.', '2. The validation number is derived from the code fingerprint, type, and generation index.'), L('3. El archivo manifest.json conserva los metadatos completos del paquete descargado.', '3. The manifest.json file preserves the full metadata for the downloaded package.'), '', L('Para que sirve', 'What it is for'), L('Sirve para entregar un code como credencial virtual, ticket interno, comprobante de emision, tarjeta de vault o referencia de auditoria.', 'It is useful for delivering a code as a virtual credential, internal ticket, issuance proof, vault card, or audit reference.'), '', `SERIAL: ${manifest.serial}`, `VALIDATION_NUMBER: ${manifest.validation_number}`, `CODE_SHA256: ${manifest.code_sha256}`, `PRIMITIVE: ${manifest.primitive}`, `CREATED_AT: ${manifest.created_at}`, '', L('Aviso', 'Notice'), L('Esta tarjeta no reemplaza cifrado, firma digital, control de acceso ni custodia segura. Trata el code como material sensible.', 'This card does not replace encryption, digital signature, access control, or secure custody. Treat the code as sensitive material.')]);
+  return makeSimplePdfBytes('HSG2818 Virtual Code Card Manual', [L('Que es esta tarjeta', 'What this card is'), L('La tarjeta virtual representa un code generado dentro de HSG2818. Incluye un QR y una serie numerica unica para validacion visual y operativa.', 'The virtual card represents a code generated inside HSG2818. It includes a QR and a unique numeric series for visual and operational validation.'), '', L('Como funciona', 'How it works'), L('1. El QR contiene un payload corto con serial, numero de validacion y huella SHA-256 del code.', '1. The QR contains a short payload with serial, validation number, and SHA-256 fingerprint of the code.'), L('2. El numero de validacion se deriva de la huella del code, el tipo y el indice de generacion.', '2. The validation number is derived from the code fingerprint, type, and generation index.'), L('3. El archivo manifest.json conserva los metadatos completos del paquete descargado.', '3. The manifest.json file preserves the full metadata for the downloaded package.'), '', L('Para que sirve', 'What it is for'), L('Sirve para entregar un code como credencial virtual, ticket interno, comprobante de emision, tarjeta de vault o referencia de auditoria.', 'It is useful for delivering a code as a virtual credential, internal ticket, issuance proof, vault card, or audit reference.'), '', `SERIAL: ${manifest.serial}`, `VALIDATION_NUMBER: ${manifest.validation_number}`, `CODE_SHA256: ${manifest.code_sha256}`, `PRIMITIVE: ${manifest.primitive}`, `CREATED_AT: ${manifest.created_at}`, '', L('Aviso', 'Notice'), L('Esta tarjeta no reemplaza cifrado, firma digital, control de acceso ni custodia segura. Trata el code como material sensible.', 'This card does not replace encryption, digital signature, access control, or secure custody. Treat the code as sensitive material.')]);
 };
 const allRowsToMarkdown = rows => {
   if (!rows.length) return '';
@@ -2616,7 +2616,7 @@ const allRowsToMarkdown = rows => {
     groups[r.type].push(r);
   });
   const now = new Date().toISOString();
-  const out = [`# Hashcod — Generated values export · v12`, ``, `- **Exported:** ${now}`, `- **Total values:** ${rows.length}`, `- **Distinct primitives:** ${Object.keys(groups).length}`, ``, `---`, ``];
+  const out = [`# HSG2818 — Generated values export · v12`, ``, `- **Exported:** ${now}`, `- **Total values:** ${rows.length}`, `- **Distinct primitives:** ${Object.keys(groups).length}`, ``, `---`, ``];
   Object.keys(groups).forEach(typeId => {
     const {
       cat,
@@ -2642,7 +2642,7 @@ const allRowsToMarkdown = rows => {
     out.push(``);
   });
   out.push(`---`);
-  out.push(`_opencriptG · Hashcod Cryptographic Generator v12 · diktatcart® 2026_`);
+  out.push(`_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`);
   out.push(``);
   return out.join('\n');
 };
@@ -2751,7 +2751,7 @@ const makeIsoDirectoryRecord = (extent, size, flags, name, date = new Date()) =>
 const rowToIsoImage = (row, language = 'en') => {
   const SECTOR = 2048;
   const now = new Date();
-  const readme = brandDownloadText('README.txt', rowToTxt(row, language) + '\n\nISO_EXPORT=Hashcod generated-code image\n', 'text/plain;charset=utf-8');
+  const readme = brandDownloadText('README.txt', rowToTxt(row, language) + '\n\nISO_EXPORT=HSG2818 generated-code image\n', 'text/plain;charset=utf-8');
   const fileBytes = new TextEncoder().encode(readme);
   const rootSector = 20;
   const fileSector = 21;
@@ -2801,8 +2801,8 @@ const rowToIsoImage = (row, language = 'en') => {
   iso[pvd] = 1;
   writeAscii(pvd + 1, 'CD001', 5);
   iso[pvd + 6] = 1;
-  writeAscii(pvd + 8, 'HASHCOD', 32);
-  writeAscii(pvd + 40, `HASHCOD_${String(row.idx || 0).padStart(3, '0')}`, 32);
+  writeAscii(pvd + 8, 'HSG2818', 32);
+  writeAscii(pvd + 40, `HSG2818_${String(row.idx || 0).padStart(3, '0')}`, 32);
   write32Both(pvd + 80, totalSectors);
   write16Both(pvd + 120, 1);
   write16Both(pvd + 124, 1);
@@ -2812,9 +2812,9 @@ const rowToIsoImage = (row, language = 'en') => {
   write32BE(pvd + 148, 19);
   const rootRecord = makeIsoDirectoryRecord(rootSector, SECTOR, 2, 0, now);
   iso.set(rootRecord, pvd + 156);
-  writeAscii(pvd + 318, 'HASHCOD GENERATED CODE ISO', 128);
-  writeAscii(pvd + 446, 'HASHCOD', 128);
-  writeAscii(pvd + 574, 'HASHCOD BROWSER ISO BUILDER', 128);
+  writeAscii(pvd + 318, 'HSG2818 GENERATED CODE ISO', 128);
+  writeAscii(pvd + 446, 'HSG2818', 128);
+  writeAscii(pvd + 574, 'HSG2818 BROWSER ISO BUILDER', 128);
   writeAscii(pvd + 702, 'README.TXT', 128);
   const dt = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, '0')}${String(now.getUTCDate()).padStart(2, '0')}${String(now.getUTCHours()).padStart(2, '0')}${String(now.getUTCMinutes()).padStart(2, '0')}${String(now.getUTCSeconds()).padStart(2, '0')}00`;
   writeAscii(pvd + 813, dt, 16, '0');
@@ -3150,7 +3150,7 @@ const OutputCard = ({
   })), React.createElement("button", {
     className: "oc-act oc-act-pack",
     onClick: downloadPack,
-    title: language === 'es' ? 'Descargar paquete Hashcod OCG (.ocg.pack)' : 'Download Hashcod OCG package (.ocg.pack)'
+    title: language === 'es' ? 'Descargar paquete HSG2818 OCG (.ocg.pack)' : 'Download HSG2818 OCG package (.ocg.pack)'
   }, React.createElement("span", {
     dangerouslySetInnerHTML: {
       __html: OCG_PACK_STONE_ICON
@@ -3861,7 +3861,7 @@ const TicketForgeDialog = ({
 }) => {
   const L = (es, en) => language === 'es' ? es : en;
   const [form, setForm] = useState({
-    title: 'Hashcod Function Ticket',
+    title: 'HSG2818 Function Ticket',
     functionName: 'issue_token',
     codeId: '',
     params: 'scope=enterprise\nexpires=2026-12-31\nformat=ocg.pack',
@@ -3902,7 +3902,7 @@ const TicketForgeDialog = ({
     const ticketHash = await digestHex(seed);
     const next = {
       id: `HTK-${ticketHash.slice(0, 8).toUpperCase()}-${ticketHash.slice(8, 14).toUpperCase()}`,
-      title: form.title || 'Hashcod Function Ticket',
+      title: form.title || 'HSG2818 Function Ticket',
       functionName: form.functionName || 'custom_function',
       issuedAt,
       status: 'ACTIVE',
@@ -3917,7 +3917,7 @@ const TicketForgeDialog = ({
       params,
       note: form.note || '',
       fingerprint: ticketHash,
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       version: 'ticket-forge-v1'
     };
     setTicket(next);
@@ -3939,10 +3939,10 @@ const TicketForgeDialog = ({
     ctx.setLineDash([]);
     ctx.fillStyle = '#1A1A1A';
     ctx.fillRect(76, 92, canvas.width - 152, 536);
-    drawHashcodCanvasLogo(ctx, 106, 112, 48, '#F5F5F5');
+    drawHSG2818CanvasLogo(ctx, 106, 112, 48, '#F5F5F5');
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 44px "Segoe UI", Arial, sans-serif';
-    ctx.fillText('Hashcod', 170, 148);
+    ctx.fillText('HSG2818', 170, 148);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 42px Georgia, serif';
     ctx.fillText(t.title.slice(0, 34), 106, 230);
@@ -3973,13 +3973,13 @@ const TicketForgeDialog = ({
     ctx.font = '600 14px "IBM Plex Mono", monospace';
     ctx.fillText(`ISSUED ${t.issuedAt}`, 106, 552);
     ctx.fillText(`FINGERPRINT ${t.fingerprint.slice(0, 32)}`, 106, 586);
-    ctx.fillText('HASHCOD TICKET FORGE', 720, 586);
+    ctx.fillText('HSG2818 TICKET FORGE', 720, 586);
     return canvas;
   };
   const downloadYaml = async () => {
     const t = ticket || (await buildTicket());
     if (!t) return;
-    triggerDownload(`Hashcod-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.yaml`, ticketYaml(t), 'application/x-yaml;charset=utf-8');
+    triggerDownload(`HSG2818-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.yaml`, ticketYaml(t), 'application/x-yaml;charset=utf-8');
   };
   const downloadImage = async type => {
     const t = ticket || (await buildTicket());
@@ -3987,7 +3987,7 @@ const TicketForgeDialog = ({
     const mime = type === 'jpg' ? 'image/jpeg' : 'image/png';
     const canvas = drawTicketCanvas(t, mime);
     canvas.toBlob(blob => {
-      if (blob) triggerBlobDownload(`Hashcod-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.${type}`, blob);
+      if (blob) triggerBlobDownload(`HSG2818-Ticket-${sanitizeFilename(t.id)}-${tsStamp()}.${type}`, blob);
     }, mime, 0.94);
   };
   return React.createElement("div", {
@@ -4116,7 +4116,7 @@ const LatticeLweLabDialog = ({
       seedLabel: cfg.seedLabel
     }));
     const next = {
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       tool: 'LWE Lattice Lab',
       formula: 'b = A*s + e mod q',
       issuedAt,
@@ -4145,11 +4145,11 @@ const LatticeLweLabDialog = ({
   const resultYaml = r => ['hashcod_lwe_lattice:', `  platform: ${yamlScalar(r.platform)}`, `  tool: ${yamlScalar(r.tool)}`, `  formula: ${yamlScalar(r.formula)}`, `  issued_at: ${yamlScalar(r.issuedAt)}`, '  parameters:', `    m: ${r.parameters.m}`, `    n: ${r.parameters.n}`, `    q: ${r.parameters.q}`, `    error_radius: ${r.parameters.errorRadius}`, `    seed_label: ${yamlScalar(r.parameters.seedLabel)}`, '  public_key:', `    A: ${JSON.stringify(r.publicKey.A)}`, `    b: ${JSON.stringify(r.publicKey.b)}`, '  secret_material:', `    s: ${JSON.stringify(r.secret.s)}`, `    e: ${JSON.stringify(r.secret.e)}`, `  security_note: ${yamlScalar(r.securityNote)}`, `  fingerprint: ${yamlScalar(r.fingerprint)}`].join('\n');
   const exportJson = () => {
     if (!result) return;
-    triggerDownload(`Hashcod-LWE-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-LWE-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
   };
   const exportYaml = () => {
     if (!result) return;
-    triggerDownload(`Hashcod-LWE-${tsStamp()}.yaml`, resultYaml(result), 'application/x-yaml;charset=utf-8');
+    triggerDownload(`HSG2818-LWE-${tsStamp()}.yaml`, resultYaml(result), 'application/x-yaml;charset=utf-8');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -4493,7 +4493,7 @@ const UserLoungeDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.userLounge
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Sala de estar Hashcod', 'Hashcod User Lounge')), React.createElement("p", null, L('Cuatro juegos pixelados, dificiles y locales para descansar sin salir de la plataforma.', 'Four hard local pixel games for resting without leaving the platform.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Sala de estar HSG2818', 'HSG2818 User Lounge')), React.createElement("p", null, L('Cuatro juegos pixelados, dificiles y locales para descansar sin salir de la plataforma.', 'Four hard local pixel games for resting without leaving the platform.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -4622,8 +4622,8 @@ const CodeLibraryDialog = ({
   };
   const downloadCurrent = () => {
     if (!current) return;
-    const body = ['# Hashcod Crypto Code Library', '', `- Index: ${current.globalIndex} / ${rows.length}`, `- ID: ${current.type.id}`, `- Name: ${current.type.label}`, `- Category: ${getCategoryLabel(current.cat, language)}`, `- Standard: ${current.type.std || current.type.badge || 'N/A'}`, `- Engine: ${current.type.engine || 'Generated secure material'}`, `- Entropy: ${current.type.entropy || 'N/A'}`, `- Search space: ${current.type.space || 'N/A'}`, '', '## Purpose', current.type.about || current.cat.desc || '', '', '## Use', current.profile.useFor, '', '## Avoid', current.profile.avoid, '', '## Example', '```bash', buildExample(current), '```'].join('\n');
-    triggerDownload(`Hashcod-library-${sanitizeFilename(current.type.id)}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    const body = ['# HSG2818 Crypto Code Library', '', `- Index: ${current.globalIndex} / ${rows.length}`, `- ID: ${current.type.id}`, `- Name: ${current.type.label}`, `- Category: ${getCategoryLabel(current.cat, language)}`, `- Standard: ${current.type.std || current.type.badge || 'N/A'}`, `- Engine: ${current.type.engine || 'Generated secure material'}`, `- Entropy: ${current.type.entropy || 'N/A'}`, `- Search space: ${current.type.space || 'N/A'}`, '', '## Purpose', current.type.about || current.cat.desc || '', '', '## Use', current.profile.useFor, '', '## Avoid', current.profile.avoid, '', '## Example', '```bash', buildExample(current), '```'].join('\n');
+    triggerDownload(`HSG2818-library-${sanitizeFilename(current.type.id)}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -4640,7 +4640,7 @@ const CodeLibraryDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.codeLibrary
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Biblioteca de codes criptograficos', 'Cryptographic Code Library')), React.createElement("p", null, L('Catalogo generado desde el schema real de Hashcod: que son, para que sirven y como aplicarlos.', 'Catalog generated from the real Hashcod schema: what each code is for and how to apply it.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Biblioteca de codes criptograficos', 'Cryptographic Code Library')), React.createElement("p", null, L('Catalogo generado desde el schema real de HSG2818: que son, para que sirven y como aplicarlos.', 'Catalog generated from the real HSG2818 schema: what each code is for and how to apply it.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -4690,7 +4690,7 @@ docs: generated from catalog schema`)), React.createElement("section", {
   }, React.createElement("span", null, L('Ejemplo de uso', 'Usage example')), React.createElement("pre", null, buildExample(current))))))));
 };
 const CRYPTO_IDE_STORAGE_KEY = 'hashcod_crypto_ide_files_v1';
-const CRYPTO_IDE_STARTER = `// Hashcod Crypto IDE
+const CRYPTO_IDE_STARTER = `// HSG2818 Crypto IDE
 // Ejecuta JavaScript local con helpers criptograficos.
 
 const key = randomHex(32);
@@ -4727,7 +4727,7 @@ const CryptoIdeDialog = ({
   const [activeId, setActiveId] = useState(() => files[0]?.id);
   const [log, setLog] = useState([{
     kind: 'sys',
-    text: 'Hashcod Crypto IDE ready. Helpers: print, sha256, randomBytes, randomHex, base64url, digestCode.'
+    text: 'HSG2818 Crypto IDE ready. Helpers: print, sha256, randomBytes, randomHex, base64url, digestCode.'
   }]);
   const [running, setRunning] = useState(false);
   const active = files.find(f => f.id === activeId) || files[0];
@@ -4812,7 +4812,7 @@ const CryptoIdeDialog = ({
       setRunning(false);
     }
   };
-  const exportFile = () => triggerDownload(`Hashcod-IDE-${sanitizeFilename(active.name || 'crypto-lab.js')}`, active.code || '', 'text/javascript;charset=utf-8');
+  const exportFile = () => triggerDownload(`HSG2818-IDE-${sanitizeFilename(active.name || 'crypto-lab.js')}`, active.code || '', 'text/javascript;charset=utf-8');
   return React.createElement("div", {
     className: "dlg-back",
     onClick: onClose
@@ -4828,7 +4828,7 @@ const CryptoIdeDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.cryptoIde
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Hashcod Crypto IDE', 'Hashcod Crypto IDE')), React.createElement("p", null, L('IDE local inspirado en Thonny: archivos, editor, consola, analisis y snippets criptograficos.', 'Local IDE inspired by Thonny: files, editor, console, analysis, and cryptographic snippets.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('HSG2818 Crypto IDE', 'HSG2818 Crypto IDE')), React.createElement("p", null, L('IDE local inspirado en Thonny: archivos, editor, consola, analisis y snippets criptograficos.', 'Local IDE inspired by Thonny: files, editor, console, analysis, and cryptographic snippets.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -4882,7 +4882,7 @@ const CryptoIdeDialog = ({
     className: row.kind
   }, "[", row.kind, "] ", row.text)))))));
 };
-const LAW_VALIDATION_GROUPS = [['identity', 'Identidad del paquete'], ['brand', 'Marca Hashcod'], ['format', 'Formato y sintaxis'], ['crypto', 'Material criptografico'], ['entropy', 'Entropia y aleatoriedad'], ['integrity', 'Integridad y checksums'], ['antiFraud', 'Antifraude'], ['download', 'Descarga y evidencia'], ['metadata', 'Metadatos'], ['timestamp', 'Tiempo y version'], ['transport', 'Transporte'], ['privacy', 'Privacidad'], ['policy', 'Politicas'], ['catalog', 'Catalogo'], ['container', 'Contenedor'], ['qr', 'QR y tarjeta'], ['session', 'Sesion'], ['audit', 'Auditoria'], ['interoperability', 'Interoperabilidad'], ['resilience', 'Resiliencia'], ['law', 'Ley operativa Hashcod']];
+const LAW_VALIDATION_GROUPS = [['identity', 'Identidad del paquete'], ['brand', 'Marca HSG2818'], ['format', 'Formato y sintaxis'], ['crypto', 'Material criptografico'], ['entropy', 'Entropia y aleatoriedad'], ['integrity', 'Integridad y checksums'], ['antiFraud', 'Antifraude'], ['download', 'Descarga y evidencia'], ['metadata', 'Metadatos'], ['timestamp', 'Tiempo y version'], ['transport', 'Transporte'], ['privacy', 'Privacidad'], ['policy', 'Politicas'], ['catalog', 'Catalogo'], ['container', 'Contenedor'], ['qr', 'QR y tarjeta'], ['session', 'Sesion'], ['audit', 'Auditoria'], ['interoperability', 'Interoperabilidad'], ['resilience', 'Resiliencia'], ['law', 'Ley operativa HSG2818']];
 const lawEntropyScore = (text = '') => {
   const value = String(text || '');
   if (!value) return 0;
@@ -4925,7 +4925,7 @@ const lawCandidateMetrics = async item => {
     hexRuns,
     b64Runs,
     jsonOk,
-    hasBrand: /HASHCOD|hashcod_brand|Hashcod - Cryptographic Platform/i.test(value),
+    hasBrand: /HASHCOD|hashcod_brand|HSG2818 - Cryptographic Platform/i.test(value),
     hasLogo: /logo_svg|<svg|HASHCOD_DOWNLOAD_LOGO/i.test(value),
     hasPacket: /^(HASHCOD|OCG-|HC-|HASHCOD-OCG-PACK|HCARD1)/m.test(value.trim()),
     hasPayload: /PAYLOAD=|payload|VALUE=|Value|code_sha256/i.test(value),
@@ -4976,7 +4976,7 @@ const buildLawValidators = () => LAW_VALIDATION_GROUPS.flatMap(([group, title], 
       case 12:
         return group === 'container' ? /PACK|CONTAINER|BOX|IH=|payload_encoding/i.test(m.value) || m.length > 80 : true;
       case 13:
-        return group === 'catalog' ? /HC-|OCG-|Hashcod Variant|TYPE=|FAMILY=/i.test(m.value) || !!m.type : true;
+        return group === 'catalog' ? /HC-|OCG-|HSG2818 Variant|TYPE=|FAMILY=/i.test(m.value) || !!m.type : true;
       case 14:
         return m.uniqueRatio > 0.03 && m.uniqueRatio < 0.98;
       case 15:
@@ -4998,7 +4998,7 @@ const buildLawValidators = () => LAW_VALIDATION_GROUPS.flatMap(([group, title], 
     run: check
   };
 }));
-const HashcodLawDialog = ({
+const HSG2818LawDialog = ({
   open,
   onClose,
   rows = [],
@@ -5010,8 +5010,8 @@ const HashcodLawDialog = ({
   const [manual, setManual] = useState('');
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [auditLog, setAuditLog] = useState(() => readHashcodLawLog());
-  const [settings, setSettings] = useState(() => readHashcodLawSettings());
+  const [auditLog, setAuditLog] = useState(() => readHSG2818LawLog());
+  const [settings, setSettings] = useState(() => readHSG2818LawSettings());
   const validators = useMemo(() => buildLawValidators(), []);
   const sources = useMemo(() => {
     const fromRows = [...(outputRows || []), ...(rows || [])].slice(0, 240).map((row, i) => ({
@@ -5031,8 +5031,8 @@ const HashcodLawDialog = ({
     return [...manualItems, ...fromRows].filter(item => String(item.value || '').trim());
   }, [rows, outputRows, manual, language]);
   useEffect(() => {
-    const refreshAudit = () => setAuditLog(readHashcodLawLog());
-    const refreshSettings = () => setSettings(readHashcodLawSettings());
+    const refreshAudit = () => setAuditLog(readHSG2818LawLog());
+    const refreshSettings = () => setSettings(readHSG2818LawSettings());
     window.addEventListener('hashcod-law-event', refreshAudit);
     window.addEventListener('hashcod-law-settings', refreshSettings);
     refreshAudit();
@@ -5081,7 +5081,7 @@ const HashcodLawDialog = ({
         score,
         digest
       });
-      notify?.(L(`Hashcod Law completo: ${score}%`, `Hashcod Law complete: ${score}%`));
+      notify?.(L(`HSG2818 Law completo: ${score}%`, `HSG2818 Law complete: ${score}%`));
     } finally {
       setBusy(false);
     }
@@ -5094,28 +5094,28 @@ const HashcodLawDialog = ({
   };
   const exportReport = () => {
     if (!result) return;
-    triggerDownload(`Hashcod-Law-report-${tsStamp()}.json`, JSON.stringify({
+    triggerDownload(`HSG2818-Law-report-${tsStamp()}.json`, JSON.stringify({
       hashcod_law: result
     }, null, 2), 'application/json;charset=utf-8');
   };
   const exportTxt = () => {
     if (!result) return;
-    const body = ['HASHCOD LAW VALIDATION REPORT', `Generated: ${result.at}`, `Score: ${result.score}%`, `Systems: ${result.checks.length}`, `Pass: ${result.passed}`, `Warn: ${result.warned}`, `Fail: ${result.failed}`, `Digest: ${result.digest}`, '', ...result.checks.map(c => `${c.id} | ${c.status.toUpperCase()} | ${c.title} | ${c.passed}/${c.total}`)].join('\n');
-    triggerDownload(`Hashcod-Law-report-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
+    const body = ['HSG2818 LAW VALIDATION REPORT', `Generated: ${result.at}`, `Score: ${result.score}%`, `Systems: ${result.checks.length}`, `Pass: ${result.passed}`, `Warn: ${result.warned}`, `Fail: ${result.failed}`, `Digest: ${result.digest}`, '', ...result.checks.map(c => `${c.id} | ${c.status.toUpperCase()} | ${c.title} | ${c.passed}/${c.total}`)].join('\n');
+    triggerDownload(`HSG2818-Law-report-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
   };
   const setLawMode = mode => {
-    setSettings(writeHashcodLawSettings({
+    setSettings(writeHSG2818LawSettings({
       mode
     }));
-    notify?.(mode === 'strict' ? L('Hashcod Law en modo estricto', 'Hashcod Law strict mode') : L('Hashcod Law en modo monitor', 'Hashcod Law monitor mode'));
+    notify?.(mode === 'strict' ? L('HSG2818 Law en modo estricto', 'HSG2818 Law strict mode') : L('HSG2818 Law en modo monitor', 'HSG2818 Law monitor mode'));
   };
   const clearAudit = () => {
-    writeHashcodLawLog([]);
+    writeHSG2818LawLog([]);
     setAuditLog([]);
-    notify?.(L('Auditoria Hashcod Law limpiada', 'Hashcod Law audit cleared'));
+    notify?.(L('Auditoria HSG2818 Law limpiada', 'HSG2818 Law audit cleared'));
   };
   const exportAudit = () => {
-    triggerDownload(`Hashcod-Law-audit-${tsStamp()}.json`, JSON.stringify({
+    triggerDownload(`HSG2818-Law-audit-${tsStamp()}.json`, JSON.stringify({
       hashcod_law_audit: auditLog,
       settings
     }, null, 2), 'application/json;charset=utf-8');
@@ -5137,7 +5137,7 @@ const HashcodLawDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.hashcodLaw
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Hashcod Law', 'Hashcod Law')), React.createElement("p", null, L('Ley operativa antifraude: 420 sistemas de validacion para codes generados y artefactos descargados.', 'Anti-fraud operational law: 420 validation systems for generated codes and downloaded artifacts.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('HSG2818 Law', 'HSG2818 Law')), React.createElement("p", null, L('Ley operativa antifraude: 420 sistemas de validacion para codes generados y artefactos descargados.', 'Anti-fraud operational law: 420 validation systems for generated codes and downloaded artifacts.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -5187,7 +5187,7 @@ const HashcodLawDialog = ({
     className: event.status
   }, React.createElement("b", null, event.action), React.createElement("span", null, event.filename || event.meta?.typeId || event.meta?.mode || 'platform'), React.createElement("em", null, event.passed, "/", event.total), React.createElement("small", null, new Date(event.at).toLocaleString())))), !result ? React.createElement("div", {
     className: "lawdlg-empty"
-  }, L('Ejecuta Hashcod Law para crear un reporte criptografico antifraude.', 'Run Hashcod Law to create an anti-fraud cryptographic report.')) : React.createElement(React.Fragment, null, React.createElement("div", {
+  }, L('Ejecuta HSG2818 Law para crear un reporte criptografico antifraude.', 'Run HSG2818 Law to create an anti-fraud cryptographic report.')) : React.createElement(React.Fragment, null, React.createElement("div", {
     className: "lawdlg-score"
   }, React.createElement("div", null, React.createElement("span", null, L('Puntuacion', 'Score')), React.createElement("b", null, result.score, "%")), React.createElement("div", null, React.createElement("span", null, "PASS"), React.createElement("b", null, result.passed)), React.createElement("div", null, React.createElement("span", null, "WARN"), React.createElement("b", null, result.warned)), React.createElement("div", null, React.createElement("span", null, "FAIL"), React.createElement("b", null, result.failed))), React.createElement("div", {
     className: "lawdlg-digest"
@@ -5203,17 +5203,17 @@ const HashcodLawDialog = ({
   }, React.createElement("b", null, check.id), React.createElement("span", null, check.title), React.createElement("em", null, check.passed, "/", check.total)))))))));
 };
 const HASHCOD_LICENSE_FACTORY_KEY = 'hashcod_license_factory_records_v1';
-const HASHCOD_LICENSE_FAMILIES = [['HCL-SOFT', 'Software Source License', 'codigo fuente, apps, IDEs y librerias'], ['HCL-API', 'API Access License', 'endpoints, integraciones y llaves API'], ['HCL-DATA', 'Dataset License', 'datasets, tablas, entrenamientos y archivos'], ['HCL-AI', 'AI Model License', 'modelos, prompts, agentes y pesos'], ['HCL-TOKEN', 'Token Utility License', 'tokens, unidades, credits y vaults'], ['HCL-MEDIA', 'Media Asset License', 'imagenes, video, audio y publicaciones'], ['HCL-BRAND', 'Brand Evidence License', 'nombres, logos, slogans e identidad'], ['HCL-PATTERN', 'Pattern Method License', 'metodos, formulas y patrones'], ['HCL-HNS', 'HNS Namespace License', 'rutas hns, dominios internos y aliases'], ['HCL-DEVICE', 'Device Pairing License', 'PC, phone, gateways y dispositivos'], ['HCL-CONTAINER', 'Container Port License', 'contenedores, cajas e IH'], ['HCL-EDU', 'Education License', 'cursos, guias, academias y tutoriales'], ['HCL-COMM', 'Commercial Use License', 'ventas, revendedores y operaciones'], ['HCL-ENTERPRISE', 'Enterprise Site License', 'equipos, sedes y departamentos'], ['HCL-RESEARCH', 'Research License', 'laboratorios, pruebas y publicaciones'], ['HCL-OEM', 'OEM Embed License', 'embebidos, marca blanca y fabricantes'], ['HCL-SECURITY', 'Security Audit License', 'auditorias, pentest y evidencia'], ['HCL-CLOUD', 'Cloud Deployment License', 'SaaS, Render, cloud y servidores'], ['HCL-CREATOR', 'Creator Royalty License', 'creadores, royalties y afiliados'], ['HCL-CUSTOM', 'Custom Hashcod License', 'cualquier activo especializado']];
-const HASHCOD_LICENSE_MODES = [['PERSONAL', 'uso personal no transferible', 'sin sublicencia, sin reventa'], ['TEAM', 'uso por equipo interno', 'limite por miembros declarados'], ['COMMERCIAL', 'uso comercial controlado', 'mantener atribucion Hashcod'], ['ENTERPRISE', 'uso empresarial amplio', 'auditoria y logs requeridos'], ['OEM', 'integracion en producto propio', 'no remover sellos tecnicos'], ['SaaS', 'explotacion como servicio', 'no entregar codigo fuente salvo pacto'], ['RESEARCH', 'investigacion y prueba', 'sin produccion publica'], ['EDUCATION', 'clases y entrenamiento', 'no venta directa del material'], ['EXCLUSIVE', 'exclusividad privada', 'territorio y periodo definidos'], ['NONEXCLUSIVE', 'uso no exclusivo', 'Hashcod puede emitir usos similares'], ['TRIAL', 'prueba temporal', 'expira sin renovacion automatica'], ['ROYALTY', 'royalty por uso/venta', 'declaracion periodica de ingresos'], ['OPEN-USE', 'uso abierto con condiciones', 'sin garantia legal exclusiva'], ['CONFIDENTIAL', 'uso bajo confidencialidad', 'no divulgar activo ni claves'], ['API-SCOPE', 'uso limitado por scopes', 'revocable por abuso o fuga'], ['DERIVATIVE', 'permite derivados controlados', 'derivados deben citar origen'], ['DISTRIBUTION', 'distribucion empaquetada', 'conservar licencia y hashes'], ['ARCHIVAL', 'evidencia y archivo', 'solo prueba documental'], ['GOV-READY', 'paquete para tramite externo', 'no sustituye autoridad oficial'], ['CUSTOM', 'terminos personalizados', 'requiere clausulas anexas']];
-const buildHashcodLicenseCatalog = () => HASHCOD_LICENSE_FAMILIES.flatMap((family, familyIndex) => HASHCOD_LICENSE_MODES.map((mode, modeIndex) => {
+const HASHCOD_LICENSE_FAMILIES = [['HCL-SOFT', 'Software Source License', 'codigo fuente, apps, IDEs y librerias'], ['HCL-API', 'API Access License', 'endpoints, integraciones y llaves API'], ['HCL-DATA', 'Dataset License', 'datasets, tablas, entrenamientos y archivos'], ['HCL-AI', 'AI Model License', 'modelos, prompts, agentes y pesos'], ['HCL-TOKEN', 'Token Utility License', 'tokens, unidades, credits y vaults'], ['HCL-MEDIA', 'Media Asset License', 'imagenes, video, audio y publicaciones'], ['HCL-BRAND', 'Brand Evidence License', 'nombres, logos, slogans e identidad'], ['HCL-PATTERN', 'Pattern Method License', 'metodos, formulas y patrones'], ['HCL-HNS', 'HNS Namespace License', 'rutas hns, dominios internos y aliases'], ['HCL-DEVICE', 'Device Pairing License', 'PC, phone, gateways y dispositivos'], ['HCL-CONTAINER', 'Container Port License', 'contenedores, cajas e IH'], ['HCL-EDU', 'Education License', 'cursos, guias, academias y tutoriales'], ['HCL-COMM', 'Commercial Use License', 'ventas, revendedores y operaciones'], ['HCL-ENTERPRISE', 'Enterprise Site License', 'equipos, sedes y departamentos'], ['HCL-RESEARCH', 'Research License', 'laboratorios, pruebas y publicaciones'], ['HCL-OEM', 'OEM Embed License', 'embebidos, marca blanca y fabricantes'], ['HCL-SECURITY', 'Security Audit License', 'auditorias, pentest y evidencia'], ['HCL-CLOUD', 'Cloud Deployment License', 'SaaS, Render, cloud y servidores'], ['HCL-CREATOR', 'Creator Royalty License', 'creadores, royalties y afiliados'], ['HCL-CUSTOM', 'Custom HSG2818 License', 'cualquier activo especializado']];
+const HASHCOD_LICENSE_MODES = [['PERSONAL', 'uso personal no transferible', 'sin sublicencia, sin reventa'], ['TEAM', 'uso por equipo interno', 'limite por miembros declarados'], ['COMMERCIAL', 'uso comercial controlado', 'mantener atribucion HSG2818'], ['ENTERPRISE', 'uso empresarial amplio', 'auditoria y logs requeridos'], ['OEM', 'integracion en producto propio', 'no remover sellos tecnicos'], ['SaaS', 'explotacion como servicio', 'no entregar codigo fuente salvo pacto'], ['RESEARCH', 'investigacion y prueba', 'sin produccion publica'], ['EDUCATION', 'clases y entrenamiento', 'no venta directa del material'], ['EXCLUSIVE', 'exclusividad privada', 'territorio y periodo definidos'], ['NONEXCLUSIVE', 'uso no exclusivo', 'HSG2818 puede emitir usos similares'], ['TRIAL', 'prueba temporal', 'expira sin renovacion automatica'], ['ROYALTY', 'royalty por uso/venta', 'declaracion periodica de ingresos'], ['OPEN-USE', 'uso abierto con condiciones', 'sin garantia legal exclusiva'], ['CONFIDENTIAL', 'uso bajo confidencialidad', 'no divulgar activo ni claves'], ['API-SCOPE', 'uso limitado por scopes', 'revocable por abuso o fuga'], ['DERIVATIVE', 'permite derivados controlados', 'derivados deben citar origen'], ['DISTRIBUTION', 'distribucion empaquetada', 'conservar licencia y hashes'], ['ARCHIVAL', 'evidencia y archivo', 'solo prueba documental'], ['GOV-READY', 'paquete para tramite externo', 'no sustituye autoridad oficial'], ['CUSTOM', 'terminos personalizados', 'requiere clausulas anexas']];
+const buildHSG2818LicenseCatalog = () => HASHCOD_LICENSE_FAMILIES.flatMap((family, familyIndex) => HASHCOD_LICENSE_MODES.map((mode, modeIndex) => {
   const n = familyIndex * HASHCOD_LICENSE_MODES.length + modeIndex + 1;
   const level = ['L1', 'L2', 'L3', 'L4', 'L5'][n % 5];
-  const rights = ['usar', n % 2 ? 'copiar internamente' : 'ejecutar en produccion', n % 3 ? 'descargar certificados' : 'integrar con sistemas externos', n % 4 ? 'crear evidencia Hashcod' : 'emitir derivados auditados'];
-  const restrictions = [mode[2], 'no retirar marca Hashcod de documentos emitidos', 'no presentar esta licencia como registro gubernamental', n % 2 ? 'mantener hashes y seriales de verificacion' : 'activar auditoria si se comparte con terceros'];
+  const rights = ['usar', n % 2 ? 'copiar internamente' : 'ejecutar en produccion', n % 3 ? 'descargar certificados' : 'integrar con sistemas externos', n % 4 ? 'crear evidencia HSG2818' : 'emitir derivados auditados'];
+  const restrictions = [mode[2], 'no retirar marca HSG2818 de documentos emitidos', 'no presentar esta licencia como registro gubernamental', n % 2 ? 'mantener hashes y seriales de verificacion' : 'activar auditoria si se comparte con terceros'];
   return {
     id: `HCL-${String(n).padStart(4, '0')}`,
     family: family[0],
-    title: `Hashcod ${family[1]} ${mode[0]}`,
+    title: `HSG2818 ${family[1]} ${mode[0]}`,
     assetClass: family[2],
     mode: mode[0],
     grant: mode[1],
@@ -5225,8 +5225,8 @@ const buildHashcodLicenseCatalog = () => HASHCOD_LICENSE_FAMILIES.flatMap((famil
     summary: `${family[1]} para ${family[2]} con ${mode[1]}.`
   };
 }));
-const HASHCOD_LICENSE_CATALOG_400 = buildHashcodLicenseCatalog();
-const readHashcodLicenseRecords = () => {
+const HASHCOD_LICENSE_CATALOG_400 = buildHSG2818LicenseCatalog();
+const readHSG2818LicenseRecords = () => {
   try {
     const rows = safeJsonParse(localStorage.getItem(HASHCOD_LICENSE_FACTORY_KEY), []);
     return Array.isArray(rows) ? rows : [];
@@ -5234,15 +5234,15 @@ const readHashcodLicenseRecords = () => {
     return [];
   }
 };
-const writeHashcodLicenseRecords = rows => {
+const writeHSG2818LicenseRecords = rows => {
   try {
     localStorage.setItem(HASHCOD_LICENSE_FACTORY_KEY, JSON.stringify((rows || []).slice(0, 2500)));
   } catch {}
 };
 const yamlValue = value => JSON.stringify(String(value ?? ''));
-const hashcodLicenseToText = license => ['HASHCOD PRIVATE LICENSE', `ID: ${license.id}`, `Serial: ${license.serial}`, `Template: ${license.template.id} - ${license.template.title}`, `Holder: ${license.holder}`, `Asset: ${license.asset}`, `Scope: ${license.scope}`, `Term: ${license.term}`, `Jurisdiction: ${license.jurisdiction}`, `Issued: ${license.issuedAt}`, `Hash: ${license.hash}`, '', 'RIGHTS', ...license.template.rights.map(item => `- ${item}`), '', 'RESTRICTIONS', ...license.template.restrictions.map(item => `- ${item}`), '', 'NOTICE', license.notice].join('\n');
+const hashcodLicenseToText = license => ['HSG2818 PRIVATE LICENSE', `ID: ${license.id}`, `Serial: ${license.serial}`, `Template: ${license.template.id} - ${license.template.title}`, `Holder: ${license.holder}`, `Asset: ${license.asset}`, `Scope: ${license.scope}`, `Term: ${license.term}`, `Jurisdiction: ${license.jurisdiction}`, `Issued: ${license.issuedAt}`, `Hash: ${license.hash}`, '', 'RIGHTS', ...license.template.rights.map(item => `- ${item}`), '', 'RESTRICTIONS', ...license.template.restrictions.map(item => `- ${item}`), '', 'NOTICE', license.notice].join('\n');
 const hashcodLicenseToYaml = license => ['hashcod_license:', `  id: ${yamlValue(license.id)}`, `  serial: ${yamlValue(license.serial)}`, `  holder: ${yamlValue(license.holder)}`, `  asset: ${yamlValue(license.asset)}`, `  scope: ${yamlValue(license.scope)}`, `  term: ${yamlValue(license.term)}`, `  jurisdiction: ${yamlValue(license.jurisdiction)}`, `  issued_at: ${yamlValue(license.issuedAt)}`, `  hash: ${yamlValue(license.hash)}`, '  template:', `    id: ${yamlValue(license.template.id)}`, `    title: ${yamlValue(license.template.title)}`, `    family: ${yamlValue(license.template.family)}`, `    mode: ${yamlValue(license.template.mode)}`, `    level: ${yamlValue(license.template.level)}`, '  rights:', ...license.template.rights.map(item => `    - ${yamlValue(item)}`), '  restrictions:', ...license.template.restrictions.map(item => `    - ${yamlValue(item)}`), `  notice: ${yamlValue(license.notice)}`].join('\n');
-const HashcodLicenseFactoryDialog = ({
+const HSG2818LicenseFactoryDialog = ({
   open,
   onClose,
   notify,
@@ -5250,14 +5250,14 @@ const HashcodLicenseFactoryDialog = ({
   rows = []
 }) => {
   const L = (es, en) => language === 'es' ? es : en;
-  const [records, setRecords] = useState(() => readHashcodLicenseRecords());
+  const [records, setRecords] = useState(() => readHSG2818LicenseRecords());
   const [query, setQuery] = useState('');
   const [templateId, setTemplateId] = useState('HCL-0001');
   const [holder, setHolder] = useState('');
   const [asset, setAsset] = useState('');
   const [scope, setScope] = useState('');
   const [term, setTerm] = useState('12 meses');
-  const [jurisdiction, setJurisdiction] = useState('Private Hashcod ecosystem');
+  const [jurisdiction, setJurisdiction] = useState('Private HSG2818 ecosystem');
   const selectedTemplate = useMemo(() => HASHCOD_LICENSE_CATALOG_400.find(item => item.id === templateId) || HASHCOD_LICENSE_CATALOG_400[0], [templateId]);
   const filteredTemplates = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -5266,12 +5266,12 @@ const HashcodLicenseFactoryDialog = ({
   }, [query]);
   useEffect(() => {
     if (!open) return;
-    setRecords(readHashcodLicenseRecords());
+    setRecords(readHSG2818LicenseRecords());
   }, [open]);
   if (!open) return null;
   const saveRecords = next => {
     setRecords(next);
-    writeHashcodLicenseRecords(next);
+    writeHSG2818LicenseRecords(next);
   };
   const issueLicense = async () => {
     const issuedAt = new Date().toISOString();
@@ -5285,12 +5285,12 @@ const HashcodLicenseFactoryDialog = ({
       asset: asset.trim() || selectedTemplate.assetClass,
       scope: scope.trim() || selectedTemplate.grant,
       term: term.trim() || '12 meses',
-      jurisdiction: jurisdiction.trim() || 'Private Hashcod ecosystem',
+      jurisdiction: jurisdiction.trim() || 'Private HSG2818 ecosystem',
       issuedAt,
       sourceCodeHash: source ? (await digestHex(source)).toUpperCase() : '',
       template: selectedTemplate,
       hash,
-      notice: 'Licencia privada generada por Hashcod. No sustituye asesoria legal, registro oficial, ONAPI, ONDA, contrato notarial ni autoridad competente.',
+      notice: 'Licencia privada generada por HSG2818. No sustituye asesoria legal, registro oficial, ONAPI, ONDA, contrato notarial ni autoridad competente.',
       brand: hashcodDownloadBrand()
     };
     saveRecords([license, ...records]);
@@ -5302,7 +5302,7 @@ const HashcodLicenseFactoryDialog = ({
         templateId: selectedTemplate.id
       }
     }));
-    notify?.(L('Licencia Hashcod emitida', 'Hashcod license issued'));
+    notify?.(L('Licencia HSG2818 emitida', 'HSG2818 license issued'));
   };
   const downloadJson = license => triggerDownload(`${license.id}.json`, JSON.stringify({
     hashcod_license: license
@@ -5321,7 +5321,7 @@ const HashcodLicenseFactoryDialog = ({
     ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 58px Georgia, serif';
-    ctx.fillText('Hashcod License', 72, 126);
+    ctx.fillText('HSG2818 License', 72, 126);
     ctx.font = '700 24px Consolas, monospace';
     ctx.fillText(license.id, 74, 178);
     ctx.fillStyle = '#A3A3A3';
@@ -5331,13 +5331,13 @@ const HashcodLicenseFactoryDialog = ({
     canvas.toBlob(blob => blob && triggerBlobDownload(`${license.id}.png`, blob), 'image/png');
   };
   const exportCatalog = () => {
-    triggerDownload(`Hashcod-400-license-catalog-${tsStamp()}.json`, JSON.stringify({
+    triggerDownload(`HSG2818-400-license-catalog-${tsStamp()}.json`, JSON.stringify({
       total: HASHCOD_LICENSE_CATALOG_400.length,
       licenses: HASHCOD_LICENSE_CATALOG_400
     }, null, 2), 'application/json;charset=utf-8');
   };
   const exportRecords = () => {
-    triggerDownload(`Hashcod-issued-licenses-${tsStamp()}.json`, JSON.stringify({
+    triggerDownload(`HSG2818-issued-licenses-${tsStamp()}.json`, JSON.stringify({
       total: records.length,
       records
     }, null, 2), 'application/json;charset=utf-8');
@@ -5357,7 +5357,7 @@ const HashcodLicenseFactoryDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.hashcodLicenseFactory
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Hashcod License Factory', 'Hashcod License Factory')), React.createElement("p", null, L('Crea licencias privadas Hashcod especializadas: 400 plantillas distintas para software, IA, API, marcas, datos, tokens y cualquier activo.', 'Create specialized private Hashcod licenses: 400 distinct templates for software, AI, API, brands, data, tokens and any asset.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('HSG2818 License Factory', 'HSG2818 License Factory')), React.createElement("p", null, L('Crea licencias privadas HSG2818 especializadas: 400 plantillas distintas para software, IA, API, marcas, datos, tokens y cualquier activo.', 'Create specialized private HSG2818 licenses: 400 distinct templates for software, AI, API, brands, data, tokens and any asset.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -5372,7 +5372,7 @@ const HashcodLicenseFactoryDialog = ({
     value: query,
     onChange: e => setQuery(e.target.value),
     placeholder: "API, AI, OEM, token..."
-  })), React.createElement("label", null, React.createElement("span", null, L('Plantilla Hashcod', 'Hashcod template')), React.createElement("select", {
+  })), React.createElement("label", null, React.createElement("span", null, L('Plantilla HSG2818', 'HSG2818 template')), React.createElement("select", {
     value: templateId,
     onChange: e => setTemplateId(e.target.value)
   }, filteredTemplates.map(item => React.createElement("option", {
@@ -5434,7 +5434,7 @@ const HASHCOD_LAUNCH_CHECKS = [{
   id: 'product-core',
   group: 'Producto',
   title: 'Producto principal definido',
-  detail: 'Hashcod debe explicar en una frase que resuelve: generar, certificar, organizar y transportar codes criptograficos.'
+  detail: 'HSG2818 debe explicar en una frase que resuelve: generar, certificar, organizar y transportar codes criptograficos.'
 }, {
   id: 'product-demo',
   group: 'Producto',
@@ -5504,7 +5504,7 @@ const HASHCOD_LAUNCH_CHECKS = [{
   id: 'legal-disclaimer',
   group: 'Legal',
   title: 'Aviso de evidencia',
-  detail: 'Hashcod conserva evidencia tecnica; no reemplaza registro oficial ante autoridad competente.'
+  detail: 'HSG2818 conserva evidencia tecnica; no reemplaza registro oficial ante autoridad competente.'
 }, {
   id: 'legal-contract',
   group: 'Legal',
@@ -5541,7 +5541,7 @@ const HASHCOD_LAUNCH_CHECKS = [{
   title: 'Release notes',
   detail: 'Cambios, riesgos, migraciones y version publicado en cada deploy.'
 }];
-const readHashcodLaunchState = () => {
+const readHSG2818LaunchState = () => {
   try {
     const raw = localStorage.getItem(HASHCOD_LAUNCH_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
@@ -5550,22 +5550,22 @@ const readHashcodLaunchState = () => {
     return {};
   }
 };
-const writeHashcodLaunchState = state => {
+const writeHSG2818LaunchState = state => {
   try {
     localStorage.setItem(HASHCOD_LAUNCH_KEY, JSON.stringify(state));
   } catch {}
 };
-const launchDocHeader = title => [`# ${title}`, '', `Brand: ${hashcodDownloadBrand().name}`, `Generated: ${new Date().toISOString()}`, 'Platform: Hashcod Cryptographic Platform v12', ''].join('\n');
-const HashcodLaunchCenterDialog = ({
+const launchDocHeader = title => [`# ${title}`, '', `Brand: ${hashcodDownloadBrand().name}`, `Generated: ${new Date().toISOString()}`, 'Platform: HSG2818 Cryptographic Platform v12', ''].join('\n');
+const HSG2818LaunchCenterDialog = ({
   open,
   onClose,
   notify,
   language
 }) => {
   const L = (es, en) => language === 'es' ? es : en;
-  const [state, setState] = useState(() => readHashcodLaunchState());
+  const [state, setState] = useState(() => readHSG2818LaunchState());
   useEffect(() => {
-    if (open) setState(readHashcodLaunchState());
+    if (open) setState(readHSG2818LaunchState());
   }, [open]);
   if (!open) return null;
   const completed = HASHCOD_LAUNCH_CHECKS.filter(item => state[item.id]).length;
@@ -5582,7 +5582,7 @@ const HashcodLaunchCenterDialog = ({
       updatedAt: new Date().toISOString()
     };
     setState(next);
-    writeHashcodLaunchState(next);
+    writeHSG2818LaunchState(next);
   };
   const downloadReadiness = () => {
     const payload = {
@@ -5603,11 +5603,11 @@ const HashcodLaunchCenterDialog = ({
         score: pct
       }
     }));
-    triggerDownload(`Hashcod-market-readiness-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-market-readiness-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
     notify?.(L('Readiness exportado', 'Readiness exported'));
   };
   const downloadLegalPack = () => {
-    const body = launchDocHeader('Hashcod Legal Starter Pack') + ['Aviso: este paquete es operativo y no sustituye asesoria legal profesional.', '', '## Terminos minimos', '- El usuario declara que tiene derecho a subir, procesar y certificar los archivos.', '- Hashcod conserva evidencia tecnica: fecha, hash, expediente, auditoria y certificado.', '- Hashcod no promete registro oficial de marca, patente, obra ni propiedad exclusiva.', '- El usuario acepta uso responsable de codes criptograficos y no abuso de la plataforma.', '', '## Privacidad minima', '- Recolectar solo datos necesarios: nombre, correo, telefono, contrato y evidencia.', '- Proteger datos sensibles con control de acceso, logs y cifrado en reposo cuando aplique.', '- Permitir solicitud de exportacion y eliminacion segun ley aplicable.', '', '## Aviso para certificados', 'Este certificado no sustituye el registro oficial ante ONAPI, ONDA u otra autoridad competente. Su funcion es conservar evidencia tecnica y documental sobre fecha, autoria declarada, archivos depositados y existencia del proyecto al momento de emision.'].join('\n');
+    const body = launchDocHeader('HSG2818 Legal Starter Pack') + ['Aviso: este paquete es operativo y no sustituye asesoria legal profesional.', '', '## Terminos minimos', '- El usuario declara que tiene derecho a subir, procesar y certificar los archivos.', '- HSG2818 conserva evidencia tecnica: fecha, hash, expediente, auditoria y certificado.', '- HSG2818 no promete registro oficial de marca, patente, obra ni propiedad exclusiva.', '- El usuario acepta uso responsable de codes criptograficos y no abuso de la plataforma.', '', '## Privacidad minima', '- Recolectar solo datos necesarios: nombre, correo, telefono, contrato y evidencia.', '- Proteger datos sensibles con control de acceso, logs y cifrado en reposo cuando aplique.', '- Permitir solicitud de exportacion y eliminacion segun ley aplicable.', '', '## Aviso para certificados', 'Este certificado no sustituye el registro oficial ante ONAPI, ONDA u otra autoridad competente. Su funcion es conservar evidencia tecnica y documental sobre fecha, autoria declarada, archivos depositados y existencia del proyecto al momento de emision.'].join('\n');
     hashcodLawRecord(hashcodLawAssessPayload({
       action: 'launch:center:legal-pack',
       text: body,
@@ -5615,11 +5615,11 @@ const HashcodLaunchCenterDialog = ({
         type: 'legal'
       }
     }));
-    triggerDownload(`Hashcod-legal-starter-pack-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    triggerDownload(`HSG2818-legal-starter-pack-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
     notify?.(L('Paquete legal descargado', 'Legal pack downloaded'));
   };
   const downloadPitchPack = () => {
-    const body = launchDocHeader('Hashcod Commercial Pitch Pack') + ['## One-liner', 'Hashcod es una plataforma enterprise para crear, validar, guardar, transportar y certificar codes criptograficos con evidencia, auditoria y herramientas operativas.', '', '## Problema que resuelve', '- Equipos sin orden para claves, evidencias y formatos criptograficos.', '- Dificultad para demostrar fecha, integridad y trazabilidad de proyectos.', '- Necesidad de enviar codes a telefono, contenedores, tickets, licencias y certificados.', '', '## Oferta inicial', '- Setup privado de plataforma.', '- Generacion avanzada y base de datos de codes.', '- Certificados, licencias, Phone OS, HNS Browser y auditoria.', '- Soporte enterprise y personalizacion por contrato.', '', '## Demo recomendada', 'Login -> contrato -> generar code -> guardar en DB -> certificado -> contenedor -> enviar a Phone OS -> exportar evidencia.'].join('\n');
+    const body = launchDocHeader('HSG2818 Commercial Pitch Pack') + ['## One-liner', 'HSG2818 es una plataforma enterprise para crear, validar, guardar, transportar y certificar codes criptograficos con evidencia, auditoria y herramientas operativas.', '', '## Problema que resuelve', '- Equipos sin orden para claves, evidencias y formatos criptograficos.', '- Dificultad para demostrar fecha, integridad y trazabilidad de proyectos.', '- Necesidad de enviar codes a telefono, contenedores, tickets, licencias y certificados.', '', '## Oferta inicial', '- Setup privado de plataforma.', '- Generacion avanzada y base de datos de codes.', '- Certificados, licencias, Phone OS, HNS Browser y auditoria.', '- Soporte enterprise y personalizacion por contrato.', '', '## Demo recomendada', 'Login -> contrato -> generar code -> guardar en DB -> certificado -> contenedor -> enviar a Phone OS -> exportar evidencia.'].join('\n');
     hashcodLawRecord(hashcodLawAssessPayload({
       action: 'launch:center:pitch-pack',
       text: body,
@@ -5627,11 +5627,11 @@ const HashcodLaunchCenterDialog = ({
         type: 'sales'
       }
     }));
-    triggerDownload(`Hashcod-commercial-pitch-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    triggerDownload(`HSG2818-commercial-pitch-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
     notify?.(L('Pitch descargado', 'Pitch downloaded'));
   };
   const downloadSecurityPlan = () => {
-    const body = launchDocHeader('Hashcod Production Security Plan') + ['## Render environment variables', '- DATABASE_URL', '- HASHCOD_SECRET', '- PLATFORM_GATE_TOKEN_HASH', '- PLATFORM_GATE_KEY_HASH', '- OAuth client IDs and secrets, if enabled', '- SMS provider credentials, if enabled', '', '## Required controls', '- HTTPS only', '- Cookies HttpOnly, Secure and SameSite', '- CSRF tokens for mutations', '- Argon2id/bcrypt/scrypt/PBKDF2 password hashing', '- Rate limit by user and IP', '- Audit log for admin actions', '- Backups and restore drill', '- CSP, X-Content-Type-Options and frame protection', '- Secrets out of source code', '- Manual security review before paid customers'].join('\n');
+    const body = launchDocHeader('HSG2818 Production Security Plan') + ['## Render environment variables', '- DATABASE_URL', '- HASHCOD_SECRET', '- PLATFORM_GATE_TOKEN_HASH', '- PLATFORM_GATE_KEY_HASH', '- OAuth client IDs and secrets, if enabled', '- SMS provider credentials, if enabled', '', '## Required controls', '- HTTPS only', '- Cookies HttpOnly, Secure and SameSite', '- CSRF tokens for mutations', '- Argon2id/bcrypt/scrypt/PBKDF2 password hashing', '- Rate limit by user and IP', '- Audit log for admin actions', '- Backups and restore drill', '- CSP, X-Content-Type-Options and frame protection', '- Secrets out of source code', '- Manual security review before paid customers'].join('\n');
     hashcodLawRecord(hashcodLawAssessPayload({
       action: 'launch:center:security-plan',
       text: body,
@@ -5639,7 +5639,7 @@ const HashcodLaunchCenterDialog = ({
         type: 'security'
       }
     }));
-    triggerDownload(`Hashcod-security-plan-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    triggerDownload(`HSG2818-security-plan-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
     notify?.(L('Plan de seguridad descargado', 'Security plan downloaded'));
   };
   return React.createElement("div", {
@@ -5657,7 +5657,7 @@ const HashcodLaunchCenterDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.launchCenter
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Hashcod Launch Center', 'Hashcod Launch Center')), React.createElement("p", null, L('Centro de salida al mercado: producto, produccion, seguridad, legal, comercial y calidad en una sola vista.', 'Go-to-market center: product, production, security, legal, commercial and quality in one view.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('HSG2818 Launch Center', 'HSG2818 Launch Center')), React.createElement("p", null, L('Centro de salida al mercado: producto, produccion, seguridad, legal, comercial y calidad en una sola vista.', 'Go-to-market center: product, production, security, legal, commercial and quality in one view.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -5688,7 +5688,7 @@ const HashcodLaunchCenterDialog = ({
     className: "launch-main"
   }, React.createElement("section", {
     className: "launch-brief"
-  }, React.createElement("article", null, React.createElement("span", null, "01"), React.createElement("b", null, L('Vender claro', 'Sell clearly')), React.createElement("p", null, L('Hashcod debe vender evidencia, control, certificados y transporte seguro de codes, no solo generacion.', 'Hashcod should sell evidence, control, certificates and secure code transport, not only generation.'))), React.createElement("article", null, React.createElement("span", null, "02"), React.createElement("b", null, L('Operar serio', 'Operate seriously')), React.createElement("p", null, L('PostgreSQL, backups, monitoreo, legal pack, seguridad y soporte antes de clientes pagos.', 'PostgreSQL, backups, monitoring, legal pack, security and support before paid customers.'))), React.createElement("article", null, React.createElement("span", null, "03"), React.createElement("b", null, L('Demo compacta', 'Compact demo')), React.createElement("p", null, L('Un flujo de 3 minutos debe demostrar todo el valor enterprise.', 'A 3-minute flow should prove the full enterprise value.')))), React.createElement("section", {
+  }, React.createElement("article", null, React.createElement("span", null, "01"), React.createElement("b", null, L('Vender claro', 'Sell clearly')), React.createElement("p", null, L('HSG2818 debe vender evidencia, control, certificados y transporte seguro de codes, no solo generacion.', 'HSG2818 should sell evidence, control, certificates and secure code transport, not only generation.'))), React.createElement("article", null, React.createElement("span", null, "02"), React.createElement("b", null, L('Operar serio', 'Operate seriously')), React.createElement("p", null, L('PostgreSQL, backups, monitoreo, legal pack, seguridad y soporte antes de clientes pagos.', 'PostgreSQL, backups, monitoring, legal pack, security and support before paid customers.'))), React.createElement("article", null, React.createElement("span", null, "03"), React.createElement("b", null, L('Demo compacta', 'Compact demo')), React.createElement("p", null, L('Un flujo de 3 minutos debe demostrar todo el valor enterprise.', 'A 3-minute flow should prove the full enterprise value.')))), React.createElement("section", {
     className: "launch-checks"
   }, Object.entries(groups).map(([group, items]) => React.createElement("div", {
     className: "launch-group",
@@ -5901,7 +5901,7 @@ const pivotProfessionalVerdict = ({
     rule: 'weightedScore < 35 AND cloudMean <= 28 AND entropy >= 4.2'
   };
 };
-const hashcodAnalysisSpecText = () => ['# Hashcod Cryptographic Analysis Specification', '', 'Version: HCAS-1.0', 'Scope: reproducible byte-level analysis for generated codes, files, tokens and structured payloads.', '', '## Inputs', '- Input bytes are UTF-8 encoded from the selected code or manual payload.', '- Bytes are mixed with a deterministic digest-derived salt before matrix mapping, then mapped into an N x N matrix.', '- Samples below 16 bytes are marked INVALID SAMPLE.', '', '## Core formulas', '- Entropy H = -sum(p_i * log2(p_i)) for all byte values 0..255.', '- Circle-square delta = average(abs(mean(circle_kernel) - mean(square_kernel))).', '- Ring delta = average(abs(mean(ring_kernel) - mean(circle_kernel))).', '- Diagonal symmetry = max(0, 100 - abs(diagonal_A_mean - diagonal_B_mean) / 255 * 100).', '- Cloud score = round(100 * clamp(intensity_extremity * 0.10 + smoothness * 0.30 + low_variance_patch * 0.46 + neighbor_repeat * 0.14)).', '- Clear byte ratio = count(cloud_score <= 38) / matrix_cells.', '- Radar balance = ascending_gradient_total / descending_gradient_total.', '- Band concentration = max concentration of the top 24 peaks by row and by column; both horizontal and vertical bands are penalized.', '- Pivot risk = clamp(round((peak_score / 128) * 46 + (8 - entropy) * 7 + symmetry_penalty + cloud_penalty + balance_penalty + band_penalty), 0, 100).', '', '## Professional verdict scale', '- CLEAR: no strong pattern detected. Not a formal proof of cryptographic security.', '- WATCHLIST: moderate signals; review source, length, format and randomness.', '- STRUCTURED / REVIEW: marked structure detected; compare against expected format and standards.', '- HIGH RISK: strong repetitive or structured signal.', '- CRITICAL: entropy < 2.5, risk >= 92, or clearRatio < 0.18 combined with entropy < 4.5 or peak_score > 9.0.', '- INVALID SAMPLE: insufficient or corrupt sample.', '', '## Required comparisons', '- Normal text, images, ZIP-like payloads, SHA-256 hashes, AES/ChaCha-like output, CSPRNG bytes, weak passwords, strong passwords, JWTs, UUIDs, fake API keys and repetitive data.', '', '## Limits', '- This lab does not replace NIST STS, Dieharder, TestU01 or PractRand.', '- A visual map can reveal patterns, but cannot prove an algorithm secure by itself.', '- Hashcod should integrate established primitives and audit outputs honestly instead of relying on secret algorithms.'].join('\n');
+const hashcodAnalysisSpecText = () => ['# HSG2818 Cryptographic Analysis Specification', '', 'Version: HCAS-1.0', 'Scope: reproducible byte-level analysis for generated codes, files, tokens and structured payloads.', '', '## Inputs', '- Input bytes are UTF-8 encoded from the selected code or manual payload.', '- Bytes are mixed with a deterministic digest-derived salt before matrix mapping, then mapped into an N x N matrix.', '- Samples below 16 bytes are marked INVALID SAMPLE.', '', '## Core formulas', '- Entropy H = -sum(p_i * log2(p_i)) for all byte values 0..255.', '- Circle-square delta = average(abs(mean(circle_kernel) - mean(square_kernel))).', '- Ring delta = average(abs(mean(ring_kernel) - mean(circle_kernel))).', '- Diagonal symmetry = max(0, 100 - abs(diagonal_A_mean - diagonal_B_mean) / 255 * 100).', '- Cloud score = round(100 * clamp(intensity_extremity * 0.10 + smoothness * 0.30 + low_variance_patch * 0.46 + neighbor_repeat * 0.14)).', '- Clear byte ratio = count(cloud_score <= 38) / matrix_cells.', '- Radar balance = ascending_gradient_total / descending_gradient_total.', '- Band concentration = max concentration of the top 24 peaks by row and by column; both horizontal and vertical bands are penalized.', '- Pivot risk = clamp(round((peak_score / 128) * 46 + (8 - entropy) * 7 + symmetry_penalty + cloud_penalty + balance_penalty + band_penalty), 0, 100).', '', '## Professional verdict scale', '- CLEAR: no strong pattern detected. Not a formal proof of cryptographic security.', '- WATCHLIST: moderate signals; review source, length, format and randomness.', '- STRUCTURED / REVIEW: marked structure detected; compare against expected format and standards.', '- HIGH RISK: strong repetitive or structured signal.', '- CRITICAL: entropy < 2.5, risk >= 92, or clearRatio < 0.18 combined with entropy < 4.5 or peak_score > 9.0.', '- INVALID SAMPLE: insufficient or corrupt sample.', '', '## Required comparisons', '- Normal text, images, ZIP-like payloads, SHA-256 hashes, AES/ChaCha-like output, CSPRNG bytes, weak passwords, strong passwords, JWTs, UUIDs, fake API keys and repetitive data.', '', '## Limits', '- This lab does not replace NIST STS, Dieharder, TestU01 or PractRand.', '- A visual map can reveal patterns, but cannot prove an algorithm secure by itself.', '- HSG2818 should integrate established primitives and audit outputs honestly instead of relying on secret algorithms.'].join('\n');
 const deterministicHex = (seed, bytes = 32) => {
   let state = seed >>> 0;
   const out = [];
@@ -5911,7 +5911,7 @@ const deterministicHex = (seed, bytes = 32) => {
   }
   return out.join('');
 };
-const buildHashcodBenchmarkSamples = () => {
+const buildHSG2818BenchmarkSamples = () => {
   const samples = [];
   const add = (type, name, value, expected) => samples.push({
     index: samples.length + 1,
@@ -5925,7 +5925,7 @@ const buildHashcodBenchmarkSamples = () => {
   ['123456', 'password', 'qwerty2026', 'adminadmin', 'letmein', 'emil12345', 'hashcod', '00000000', 'abcabcabc', 'dragon2026'].forEach((v, i) => add('weak-password', `weak-password-${i + 1}`, v.repeat(12), 'HIGH RISK'));
   Array.from({
     length: 10
-  }, (_, i) => add('plain-text', `plain-text-${i + 1}`, `Hashcod technical text sample ${i}. Modular algebra, entropy, matrix kernels and audit limits must be documented before market release. `.repeat(3), 'STRUCTURED / REVIEW'));
+  }, (_, i) => add('plain-text', `plain-text-${i + 1}`, `HSG2818 technical text sample ${i}. Modular algebra, entropy, matrix kernels and audit limits must be documented before market release. `.repeat(3), 'STRUCTURED / REVIEW'));
   Array.from({
     length: 10
   }, (_, i) => add('uuid', `uuid-${i + 1}`, `${deterministicHex(1000 + i, 4)}-${deterministicHex(2000 + i, 2)}-${deterministicHex(3000 + i, 2)}-${deterministicHex(4000 + i, 2)}-${deterministicHex(5000 + i, 6)}`, 'WATCHLIST'));
@@ -6019,7 +6019,7 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
   return {
     id: `HPK-${digest.slice(0, 10).toUpperCase()}`,
     createdAt: new Date().toISOString(),
-    algorithm: 'Hashcod Pivot Kernel Crypto Lab',
+    algorithm: 'HSG2818 Pivot Kernel Crypto Lab',
     sourceLength: source.length,
     byteLength: bytes.length,
     size,
@@ -6046,7 +6046,7 @@ const analyzePivotKernel = async (text, radiusValue, sizeValue) => {
     peaks: top
   };
 };
-const HashcodPivotKernelDialog = ({
+const HSG2818PivotKernelDialog = ({
   open,
   onClose,
   rows = [],
@@ -6129,17 +6129,17 @@ const HashcodPivotKernelDialog = ({
       setBusy(false);
     }
   };
-  const downloadJson = () => result && triggerDownload(`Hashcod-PivotKernel-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  const downloadJson = () => result && triggerDownload(`HSG2818-PivotKernel-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
   const downloadReport = () => {
     if (!result) return;
-    const body = ['# Hashcod Pivot Kernel Crypto Lab', '', `ID: ${result.id}`, `Verdict: ${result.verdict}`, `Verdict rule: ${result.verdictRule}`, `Verdict meaning: ${result.verdictMeaning}`, `Pivot risk: ${result.pivotRisk}/100`, `Entropy: ${result.entropy} bits/byte`, `Circle-square delta: ${result.avgCircleSquareDelta}`, `Ring delta: ${result.avgRingDelta}`, `Diagonal symmetry: ${result.diagonalSymmetry}%`, `Cloud score mean: ${result.cloudScoreMean}`, `Clear byte ratio: ${result.clearByteRatio}`, `Radar ASC/DESC balance: ${result.radarAscDescBalance}`, `Horizontal band concentration: ${result.horizontalBandConcentration}`, `Vertical band concentration: ${result.verticalBandConcentration}`, `Band penalty: ${result.bandPenalty}`, `Digest: ${result.digest}`, '', '## Top kernel peaks', ...result.peaks.map((p, i) => `${i + 1}. x=${p.x} y=${p.y} score=${p.score} diff=${p.diff} ring=${p.ring}`), '', '## Method', 'Inspired by circular center-pivot detection: bytes are mapped into a matrix, then circle, square and ring kernels are compared to detect structured centers inside a cryptographic code.', '', '## Cloud score layer', 'Inspired by simpleCloudScore: bright, overly smooth and low-variance byte zones are scored as clouded/suspicious. Values <=20 are treated as clear bytes.', '', '## Sentinel-style radar layer', 'Inspired by Sentinel-1 filtering: adjacent byte gradients are separated into VV/VH ascending and descending composites to expose directional imbalance.', '', '## Professional limits', 'This report is a reproducible analysis layer, not a replacement for NIST STS, Dieharder, TestU01, PractRand or external cryptographic review.'].join('\n');
-    triggerDownload(`Hashcod-PivotKernel-report-${result.id}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
+    const body = ['# HSG2818 Pivot Kernel Crypto Lab', '', `ID: ${result.id}`, `Verdict: ${result.verdict}`, `Verdict rule: ${result.verdictRule}`, `Verdict meaning: ${result.verdictMeaning}`, `Pivot risk: ${result.pivotRisk}/100`, `Entropy: ${result.entropy} bits/byte`, `Circle-square delta: ${result.avgCircleSquareDelta}`, `Ring delta: ${result.avgRingDelta}`, `Diagonal symmetry: ${result.diagonalSymmetry}%`, `Cloud score mean: ${result.cloudScoreMean}`, `Clear byte ratio: ${result.clearByteRatio}`, `Radar ASC/DESC balance: ${result.radarAscDescBalance}`, `Horizontal band concentration: ${result.horizontalBandConcentration}`, `Vertical band concentration: ${result.verticalBandConcentration}`, `Band penalty: ${result.bandPenalty}`, `Digest: ${result.digest}`, '', '## Top kernel peaks', ...result.peaks.map((p, i) => `${i + 1}. x=${p.x} y=${p.y} score=${p.score} diff=${p.diff} ring=${p.ring}`), '', '## Method', 'Inspired by circular center-pivot detection: bytes are mapped into a matrix, then circle, square and ring kernels are compared to detect structured centers inside a cryptographic code.', '', '## Cloud score layer', 'Inspired by simpleCloudScore: bright, overly smooth and low-variance byte zones are scored as clouded/suspicious. Values <=20 are treated as clear bytes.', '', '## Sentinel-style radar layer', 'Inspired by Sentinel-1 filtering: adjacent byte gradients are separated into VV/VH ascending and descending composites to expose directional imbalance.', '', '## Professional limits', 'This report is a reproducible analysis layer, not a replacement for NIST STS, Dieharder, TestU01, PractRand or external cryptographic review.'].join('\n');
+    triggerDownload(`HSG2818-PivotKernel-report-${result.id}-${tsStamp()}.md`, body, 'text/markdown;charset=utf-8');
   };
-  const downloadSpec = () => triggerDownload(`Hashcod-Cryptographic-Analysis-Specification-${tsStamp()}.md`, hashcodAnalysisSpecText(), 'text/markdown;charset=utf-8');
+  const downloadSpec = () => triggerDownload(`HSG2818-Cryptographic-Analysis-Specification-${tsStamp()}.md`, hashcodAnalysisSpecText(), 'text/markdown;charset=utf-8');
   const runBenchmark = async () => {
     setBenchBusy(true);
     try {
-      const samples = buildHashcodBenchmarkSamples();
+      const samples = buildHSG2818BenchmarkSamples();
       const rows = [];
       for (const sample of samples) {
         const analysis = await analyzePivotKernel(sample.value, 4, 24);
@@ -6156,17 +6156,17 @@ const HashcodPivotKernelDialog = ({
         });
       }
       setBenchmark(rows);
-      notify?.(L('Benchmark Hashcod de 100 muestras completado', 'Hashcod 100-sample benchmark complete'));
+      notify?.(L('Benchmark HSG2818 de 100 muestras completado', 'HSG2818 100-sample benchmark complete'));
     } finally {
       setBenchBusy(false);
     }
   };
-  const downloadBenchmarkJson = () => benchmark.length && triggerDownload(`Hashcod-benchmark-100-${tsStamp()}.json`, JSON.stringify(benchmark, null, 2), 'application/json;charset=utf-8');
-  const downloadBenchmarkCsv = () => benchmark.length && triggerDownload(`Hashcod-benchmark-100-${tsStamp()}.csv`, benchmarkToCsv(benchmark), 'text/csv;charset=utf-8');
+  const downloadBenchmarkJson = () => benchmark.length && triggerDownload(`HSG2818-benchmark-100-${tsStamp()}.json`, JSON.stringify(benchmark, null, 2), 'application/json;charset=utf-8');
+  const downloadBenchmarkCsv = () => benchmark.length && triggerDownload(`HSG2818-benchmark-100-${tsStamp()}.csv`, benchmarkToCsv(benchmark), 'text/csv;charset=utf-8');
   const downloadPng = () => {
     const canvas = canvasRef.current;
     if (!canvas || !result) return;
-    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-PivotKernel-map-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+    canvas.toBlob(blob => blob && triggerBlobDownload(`HSG2818-PivotKernel-map-${result.id}-${tsStamp()}.png`, blob), 'image/png');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -6453,7 +6453,7 @@ const AuthGate = ({
     className: "authgate"
   }, React.createElement("div", {
     className: "authbox"
-  }, React.createElement("h1", null, "Hashcod"), React.createElement("p", null, "Loading secure session...")));
+  }, React.createElement("h1", null, "HSG2818"), React.createElement("p", null, "Loading secure session...")));
   if (!platformGate.unlocked) {
     return React.createElement("div", {
       className: "authgate"
@@ -6468,7 +6468,7 @@ const AuthGate = ({
       dangerouslySetInnerHTML: {
         __html: TOP_MENU_ICONS.hashcodLaw
       }
-    })), React.createElement("span", null, "HASHCOD PLATFORM GATE"), React.createElement("h1", null, "Access Token"), React.createElement("p", null, "La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de Hashcod.")), React.createElement("aside", {
+    })), React.createElement("span", null, "HSG2818 PLATFORM GATE"), React.createElement("h1", null, "Access Token"), React.createElement("p", null, "La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de HSG2818.")), React.createElement("aside", {
       className: "auth-handshake",
       "aria-label": "Platform gate checks"
     }, React.createElement("b", null, "GATE CHECK"), React.createElement("span", null, React.createElement("i", null), " SHA-256 server compare"), React.createElement("span", null, React.createElement("i", null), " Access key required"), React.createElement("span", null, React.createElement("i", null), " Expiration check"), React.createElement("span", null, React.createElement("i", null), " HttpOnly gate cookie"), React.createElement("span", null, React.createElement("i", null), " API routes locked"))), React.createElement("textarea", {
@@ -6490,7 +6490,7 @@ const AuthGate = ({
       autoComplete: "off"
     }), error && React.createElement("em", null, error), notice && React.createElement("em", {
       className: "ok"
-    }, notice), React.createElement("button", null, "Unlock Hashcod")));
+    }, notice), React.createElement("button", null, "Unlock HSG2818")));
   }
   if (auth.user) {
     return React.createElement(React.Fragment, null, React.createElement("div", {
@@ -6664,7 +6664,7 @@ const AuthGate = ({
     dangerouslySetInnerHTML: {
       __html: ADMIN_PANEL_ICON
     }
-  })), React.createElement("span", null, "HASHCOD IDENTITY PLATFORM"), React.createElement("h1", null, mode === 'setup' ? 'Create Admin' : mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'), React.createElement("p", null, mode === 'setup' ? 'Crea el primer administrador con password hasheada por scrypt y sesion segura.' : mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y permisos.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contrasena.' : 'Sesion segura con cookie HttpOnly, CSRF, rate limiting, OAuth 2.0 y roles.')), React.createElement("aside", {
+  })), React.createElement("span", null, "HSG2818 IDENTITY PLATFORM"), React.createElement("h1", null, mode === 'setup' ? 'Create Admin' : mode === 'request' ? 'Request Access' : mode === 'check' ? 'Check Access' : mode === 'recover' ? 'Recover' : 'Login'), React.createElement("p", null, mode === 'setup' ? 'Crea el primer administrador con password hasheada por scrypt y sesion segura.' : mode === 'request' ? 'Colocate en lista de espera. El sistema genera Blowfish ID y serial; el admin decide acceso, rol y permisos.' : mode === 'check' ? 'Verifica si el admin ya te dio permiso. Usa tu correo, serial y clave deseada.' : mode === 'recover' ? 'Usa tu recovery code para cambiar la contrasena.' : 'Sesion segura con cookie HttpOnly, CSRF, rate limiting, OAuth 2.0 y roles.')), React.createElement("aside", {
     className: "auth-handshake",
     "aria-label": "Login security handshake"
   }, React.createElement("b", null, "SESSION HANDSHAKE"), React.createElement("span", null, React.createElement("i", null), " HTTP-only cookie"), React.createElement("span", null, React.createElement("i", null), " CSRF token ready"), React.createElement("span", null, React.createElement("i", null), " Rate limit guard"), React.createElement("span", null, React.createElement("i", null), " Server identity check"))), React.createElement("div", {
@@ -6775,7 +6775,7 @@ const BillingContractGate = ({
     className: "authgate pixel-auth"
   }, React.createElement("div", {
     className: "authbox pixel-authbox"
-  }, React.createElement("h1", null, "Hashcod"), React.createElement("p", null, "Loading contract gate...")));
+  }, React.createElement("h1", null, "HSG2818"), React.createElement("p", null, "Loading contract gate...")));
   if (!required) return children;
   const submit = async e => {
     e.preventDefault();
@@ -6808,7 +6808,7 @@ const BillingContractGate = ({
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS.brand(34)
     }
-  })), React.createElement("span", null, "HASHCOD CONTRACT BILLING GATE"), React.createElement("h1", null, "Contrato de acceso"), React.createElement("p", null, "Antes de entrar, registra tus datos de contrato interno y presupuesto autorizado. Esto no procesa pagos automaticamente."), React.createElement("div", {
+  })), React.createElement("span", null, "HSG2818 CONTRACT BILLING GATE"), React.createElement("h1", null, "Contrato de acceso"), React.createElement("p", null, "Antes de entrar, registra tus datos de contrato interno y presupuesto autorizado. Esto no procesa pagos automaticamente."), React.createElement("div", {
     className: "contractgrid"
   }, React.createElement("input", {
     value: form.fullName,
@@ -6878,7 +6878,7 @@ const BillingContractGate = ({
       ...form,
       acceptedTerms: e.target.checked
     })
-  }), React.createElement("span", null, "Acepto registrar estos datos para contrato interno, cobro futuro y control de acceso de Hashcod.")), error && React.createElement("em", null, error), notice && React.createElement("em", {
+  }), React.createElement("span", null, "Acepto registrar estos datos para contrato interno, cobro futuro y control de acceso de HSG2818.")), error && React.createElement("em", null, error), notice && React.createElement("em", {
     className: "ok"
   }, notice), React.createElement("button", null, "Firmar contrato y entrar"), React.createElement("small", {
     className: "contract-legal"
@@ -7208,7 +7208,7 @@ const SmsSendDialog = ({
     }
   };
   const downloadPayload = () => {
-    const name = `Hashcod-SMS-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${format}-${tsStamp()}.txt`;
+    const name = `HSG2818-SMS-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${format}-${tsStamp()}.txt`;
     triggerDownload(name, payload, 'text/plain;charset=utf-8');
     notify?.(L('Payload SMS descargado', 'SMS payload downloaded'));
   };
@@ -7244,7 +7244,7 @@ const SmsSendDialog = ({
         throw new Error(data.detail || data.error || 'sms_failed');
       }
       if (data.queued) {
-        setStatus(L(`SMS en cola para Hashcod Android Gateway. Abre /gateway.html en el Android conectado. ID: ${data.id}`, `SMS queued for Hashcod Android Gateway. Open /gateway.html on the connected Android. ID: ${data.id}`));
+        setStatus(L(`SMS en cola para HSG2818 Android Gateway. Abre /gateway.html en el Android conectado. ID: ${data.id}`, `SMS queued for HSG2818 Android Gateway. Open /gateway.html on the connected Android. ID: ${data.id}`));
         notify?.(L('SMS puesto en cola del gateway Android', 'SMS queued for Android gateway'));
         return;
       }
@@ -7265,7 +7265,7 @@ const SmsSendDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, L('Enviar code por SMS', 'Send code by SMS')), React.createElement("p", null, L('Elige el formato, coloca el telefono y Hashcod abre la app SMS del dispositivo con el payload listo.', 'Choose the format, enter the phone number, and Hashcod opens the device SMS app with the payload ready.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, L('Enviar code por SMS', 'Send code by SMS')), React.createElement("p", null, L('Elige el formato, coloca el telefono y HSG2818 abre la app SMS del dispositivo con el payload listo.', 'Choose the format, enter the phone number, and HSG2818 opens the device SMS app with the payload ready.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("form", {
@@ -7319,7 +7319,7 @@ const PixelNoteDialog = ({
   const download = e => {
     e.preventDefault();
     const html = rowToPixelNoteHtml(row, note, language);
-    const name = `Hashcod-PixelNote-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${tsStamp()}.html`;
+    const name = `HSG2818-PixelNote-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${tsStamp()}.html`;
     triggerDownload(name, html, 'text/html;charset=utf-8');
     notify?.(L('Nota pixel descargada', 'Pixel note downloaded'));
     onClose?.();
@@ -7389,18 +7389,18 @@ const HashNameSystemDialog = ({
   };
   const exportJson = () => {
     const payload = {
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       tool: 'HNS',
       namespace,
       mode,
       createdAt: new Date().toISOString(),
       items
     };
-    triggerDownload(`Hashcod-HNS-${sanitizeFilename(namespace)}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-HNS-${sanitizeFilename(namespace)}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
   };
   const exportZone = () => {
     const zone = items.map((item, i) => `${String(i + 1).padStart(3, '0')} ${item.alias} ${item.hns} SHA256=${item.digest}`).join('\n');
-    triggerDownload(`Hashcod-HNS-zone-${sanitizeFilename(namespace)}-${tsStamp()}.hns.txt`, zone, 'text/plain;charset=utf-8');
+    triggerDownload(`HSG2818-HNS-zone-${sanitizeFilename(namespace)}-${tsStamp()}.hns.txt`, zone, 'text/plain;charset=utf-8');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -7486,7 +7486,7 @@ const HashOperativeSystemDialog = ({
       });
     }
     const next = {
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       tool: 'HOS',
       description: 'Hash Operative System receiver-control manifest',
       createdAt: new Date().toISOString(),
@@ -7497,7 +7497,7 @@ const HashOperativeSystemDialog = ({
     setManifest(next);
     notify?.(L('HOS creo el manifiesto operativo.', 'HOS created the operative manifest.'));
   };
-  const exportManifest = () => manifest && triggerDownload(`Hashcod-HOS-${sanitizeFilename(receiver)}-${tsStamp()}.hos.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+  const exportManifest = () => manifest && triggerDownload(`HSG2818-HOS-${sanitizeFilename(receiver)}-${tsStamp()}.hos.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
   const copyManifest = () => {
     navigator.clipboard?.writeText(JSON.stringify(manifest || {}, null, 2));
     notify?.(L('Manifiesto HOS copiado.', 'HOS manifest copied.'));
@@ -7569,7 +7569,7 @@ const HashCommandPromptingDialog = ({
   }, [open]);
   if (!open) return null;
   const build = async () => {
-    const lines = ['# Hashcod HCP - Hash Command Prompting', `# pattern=${pattern}`, `# mode=${mode}`, `# created=${new Date().toISOString()}`, ''];
+    const lines = ['# HSG2818 HCP - Hash Command Prompting', `# pattern=${pattern}`, `# mode=${mode}`, `# created=${new Date().toISOString()}`, ''];
     for (const [i, row] of source.entries()) {
       const sig = await digestHex(`${pattern}|${mode}|${row.type}|${row.value}`, 'SHA-256');
       lines.push(`hcp sc --seq ${String(i + 1).padStart(3, '0')} --primitive ${row.type} --pattern "${pattern}" --digest ${sig.slice(0, 24)} --mode ${mode}`);
@@ -7578,7 +7578,7 @@ const HashCommandPromptingDialog = ({
     setScript(next);
     notify?.(L('HCP genero comandos por patrones.', 'HCP generated pattern commands.'));
   };
-  const exportScript = () => triggerDownload(`Hashcod-HCP-${sanitizeFilename(mode)}-${tsStamp()}.hcp.txt`, script, 'text/plain;charset=utf-8');
+  const exportScript = () => triggerDownload(`HSG2818-HCP-${sanitizeFilename(mode)}-${tsStamp()}.hcp.txt`, script, 'text/plain;charset=utf-8');
   const copyScript = () => {
     navigator.clipboard?.writeText(script);
     notify?.(L('HCP copiado.', 'HCP copied.'));
@@ -7640,7 +7640,7 @@ const HnsBrowserDialog = ({
   const [phone, setPhone] = useState(() => localStorage.getItem('hashcod_hns_gateway_phone') || '');
   const [terminal, setTerminal] = useState(() => [{
     kind: 'sys',
-    text: 'Hashcod HNS Browser CLI ready. Commands: open <hns://...>, resolve, packet, send-gateway, notify-phone, clear'
+    text: 'HSG2818 HNS Browser CLI ready. Commands: open <hns://...>, resolve, packet, send-gateway, notify-phone, clear'
   }]);
   const [record, setRecord] = useState(null);
   const [packet, setPacket] = useState(null);
@@ -7745,7 +7745,7 @@ const HnsBrowserDialog = ({
     if (echo) push(`packet built ${next.routeId} nonce=${nonce}`, 'ok');
     return next;
   };
-  const packetText = (p = packet) => p ? `HASHCOD HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nCODE: ${p.codeValue || p.matchedCode?.valuePreview || ''}\nTIME: ${p.createdAt}` : '';
+  const packetText = (p = packet) => p ? `HSG2818 HNS CONTROL\nURL: ${p.url}\nROUTE: ${p.routeId}\nACTION: ${p.action}\nNONCE: ${p.nonce}\nDIGEST: ${p.digest}\nMATCH: ${p.matchedCode ? `${p.matchedCode.idx}|${p.matchedCode.type}` : 'synthetic'}\nCODE: ${p.codeValue || p.matchedCode?.valuePreview || ''}\nTIME: ${p.createdAt}` : '';
   const makePhoneBrowserRow = (inputRecord = record) => {
     if (inputRecord?.matchedCode?.value) {
       return {
@@ -7776,7 +7776,7 @@ const HnsBrowserDialog = ({
     if (format === 'raw') {
       return `${base || ''}\n\nHNS: ${hnsUrl}\nROUTE: ${route}`;
     }
-    return ['HASHCOD PHONE BROWSER PAYLOAD', `FORMAT: ${format.toUpperCase()}`, `HNS: ${hnsUrl}`, `ROUTE: ${route}`, `ACTION: PHONE_BROWSER_OPEN`, `MATCH: ${row ? `${row.idx}|${row.type}` : 'hns-control'}`, `TIME: ${new Date().toISOString()}`, '', base || control || '', '', '--- HNS CONTROL ---', control || `URL: ${hnsUrl}\nROUTE: ${route}\nACTION: PHONE_BROWSER_OPEN`].join('\n');
+    return ['HSG2818 PHONE BROWSER PAYLOAD', `FORMAT: ${format.toUpperCase()}`, `HNS: ${hnsUrl}`, `ROUTE: ${route}`, `ACTION: PHONE_BROWSER_OPEN`, `MATCH: ${row ? `${row.idx}|${row.type}` : 'hns-control'}`, `TIME: ${new Date().toISOString()}`, '', base || control || '', '', '--- HNS CONTROL ---', control || `URL: ${hnsUrl}\nROUTE: ${route}\nACTION: PHONE_BROWSER_OPEN`].join('\n');
   };
   const openDatabaseCode = async () => {
     const value = codeSourceValue.trim();
@@ -7824,7 +7824,7 @@ const HnsBrowserDialog = ({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: 'Hashcod database code',
+          title: 'HSG2818 database code',
           body: packetText(p),
           type: 'hns-control',
           codeType: nextRecord.matchedCode.type,
@@ -7861,7 +7861,7 @@ const HnsBrowserDialog = ({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: `Hashcod ${phoneFormat.toUpperCase()} code`,
+          title: `HSG2818 ${phoneFormat.toUpperCase()} code`,
           body: payload,
           type: 'phone-browser-code',
           codeType: nextRecord.matchedCode?.type || nextRecord.name || 'hns-code',
@@ -7936,7 +7936,7 @@ const HnsBrowserDialog = ({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: 'Hashcod HNS control',
+          title: 'HSG2818 HNS control',
           body: packetText(p),
           type: 'hns-control',
           codeType: p.name,
@@ -8165,7 +8165,7 @@ const CryptoAiDialog = ({
   const [status, setStatus] = useState('');
   const [messages, setMessages] = useState(() => [{
     role: 'assistant',
-    content: L('Soy Hashcod Crypto AI. Puedo analizar codes, explicar formatos, revisar payloads HNS/HOS/HCP, proponer tokenizacion y detectar riesgos de seguridad.', 'I am Hashcod Crypto AI. I can analyze codes, explain formats, review HNS/HOS/HCP payloads, propose tokenization, and detect security risks.')
+    content: L('Soy HSG2818 Crypto AI. Puedo analizar codes, explicar formatos, revisar payloads HNS/HOS/HCP, proponer tokenizacion y detectar riesgos de seguridad.', 'I am HSG2818 Crypto AI. I can analyze codes, explain formats, review HNS/HOS/HCP payloads, propose tokenization, and detect security risks.')
   }]);
   const selectedCode = useMemo(() => source.find(row => String(row.id || row.idx || row.value) === selectedCodeId) || source[0] || null, [source, selectedCodeId]);
   useEffect(() => {
@@ -8257,7 +8257,7 @@ const CryptoAiDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.cryptoAi
     }
-  }), React.createElement("div", null, React.createElement("h2", null, "Hashcod Crypto AI"), React.createElement("p", null, L('Chat IA especializado en codes criptograficos, tokenizacion, formatos, HNS, seguridad y produccion.', 'AI chat specialized in cryptographic codes, tokenization, formats, HNS, security, and production.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, "HSG2818 Crypto AI"), React.createElement("p", null, L('Chat IA especializado en codes criptograficos, tokenizacion, formatos, HNS, seguridad y produccion.', 'AI chat specialized in cryptographic codes, tokenization, formats, HNS, security, and production.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -8272,7 +8272,7 @@ const CryptoAiDialog = ({
     value: item.id
   }, item.name, " / ", item.hashModel)))), React.createElement("div", {
     className: "cryptoai-model-card"
-  }, React.createElement("span", null, L('Modelo Hashcod', 'Hashcod model')), React.createElement("b", null, profile.hashModel), React.createElement("em", null, L('Nombre interno segun API elegida', 'Internal name by selected API'))), React.createElement("label", null, React.createElement("span", null, L('API key del usuario', 'User API key')), React.createElement("input", {
+  }, React.createElement("span", null, L('Modelo HSG2818', 'HSG2818 model')), React.createElement("b", null, profile.hashModel), React.createElement("em", null, L('Nombre interno segun API elegida', 'Internal name by selected API'))), React.createElement("label", null, React.createElement("span", null, L('API key del usuario', 'User API key')), React.createElement("input", {
     type: "password",
     value: apiKey,
     onChange: e => setApiKey(e.target.value),
@@ -8455,7 +8455,7 @@ const CryptoTranslatorDialog = ({
   };
   const loadSelectedCode = () => {
     if (!selectedRow) return;
-    const body = [`Code seleccionado: ${String(selectedRow.idx || '').padStart(3, '0')} | ${selectedRow.type || 'Hashcod code'}`, `Valor: ${selectedRow.value}`, `Necesito explicarlo en ingles para documentacion tecnica y uso seguro.`].join('\n');
+    const body = [`Code seleccionado: ${String(selectedRow.idx || '').padStart(3, '0')} | ${selectedRow.type || 'HSG2818 code'}`, `Valor: ${selectedRow.value}`, `Necesito explicarlo en ingles para documentacion tecnica y uso seguro.`].join('\n');
     setInput(body);
     setOutput('');
     notify?.(L('Code cargado en el traductor', 'Code loaded into translator'));
@@ -8471,12 +8471,12 @@ const CryptoTranslatorDialog = ({
   };
   const exportTxt = () => {
     if (!output.trim()) return;
-    triggerDownload(`hashcod-translator-es-en-${tsStamp()}.txt`, `Hashcod Crypto Translator ES -> EN\n\nSOURCE\n${input}\n\nTRANSLATION\n${output}\n\nProtected segments: ${stats.protectedCount}\nConfidence: ${stats.confidence}%`, 'text/plain;charset=utf-8');
+    triggerDownload(`hashcod-translator-es-en-${tsStamp()}.txt`, `HSG2818 Crypto Translator ES -> EN\n\nSOURCE\n${input}\n\nTRANSLATION\n${output}\n\nProtected segments: ${stats.protectedCount}\nConfidence: ${stats.confidence}%`, 'text/plain;charset=utf-8');
   };
   const exportJson = () => {
     if (!output.trim()) return;
     triggerDownload(`hashcod-translator-es-en-${tsStamp()}.json`, JSON.stringify({
-      tool: 'Hashcod Crypto Translator ES -> EN',
+      tool: 'HSG2818 Crypto Translator ES -> EN',
       engine: 'Local glossary + crypto segment protector inspired by Argos offline flow',
       source: input,
       translation: output,
@@ -8597,7 +8597,7 @@ const ContainerPortDialog = ({
   };
   const exportManifest = () => {
     if (!activeContainer) return;
-    triggerDownload(`Hashcod-Code-Container-${activeContainer.id}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-Code-Container-${activeContainer.id}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
     notify?.(L('Manifiesto del contenedor descargado', 'Container manifest downloaded'));
   };
   const removeLast = async () => {
@@ -8623,14 +8623,14 @@ const ContainerPortDialog = ({
   const sendPhone = async () => {
     if (!activeContainer) return;
     try {
-      const body = ['HASHCOD CONTAINER PORT', `URL: hns://www.hashcod.sec/container/${activeContainer.id}`, `ROUTE: CONTAINER-PORT-${String(activeContainer.ih || '').slice(0, 12).toUpperCase()}`, 'ACTION: PHONE_BROWSER_CONTAINER_OPEN', `IH: ${activeContainer.ih}`, `ALGORITHM: HMAC-SHA3-256`, `BOXES: ${manifest.boxesTotal}/${CONTAINER_PORT_BOXES_PER_CONTAINER}`, `CODES: ${manifest.codesTotal}/${manifest.capacity}`, `FPC: ${manifest.metrics.FPC}`, `FORMULA: ${manifest.formula}`, '', JSON.stringify(manifest, null, 2)].join('\n');
+      const body = ['HSG2818 CONTAINER PORT', `URL: hns://www.hashcod.sec/container/${activeContainer.id}`, `ROUTE: CONTAINER-PORT-${String(activeContainer.ih || '').slice(0, 12).toUpperCase()}`, 'ACTION: PHONE_BROWSER_CONTAINER_OPEN', `IH: ${activeContainer.ih}`, `ALGORITHM: HMAC-SHA3-256`, `BOXES: ${manifest.boxesTotal}/${CONTAINER_PORT_BOXES_PER_CONTAINER}`, `CODES: ${manifest.codesTotal}/${manifest.capacity}`, `FPC: ${manifest.metrics.FPC}`, `FORMULA: ${manifest.formula}`, '', JSON.stringify(manifest, null, 2)].join('\n');
       const res = await authFetch('/api/phone-os/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: 'Hashcod Code Container',
+          title: 'HSG2818 Code Container',
           body,
           type: 'hashcod-container-port',
           codeType: 'container-port',
@@ -8854,7 +8854,7 @@ const DerivativesLabDialog = ({
   };
   const exportJson = () => {
     const manifest = {
-      tool: 'Hashcod Derivatives Lab',
+      tool: 'HSG2818 Derivatives Lab',
       algorithm,
       domain,
       salt,
@@ -8866,11 +8866,11 @@ const DerivativesLabDialog = ({
       } : null,
       results
     };
-    triggerDownload(`Hashcod-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
   };
   const exportTxt = () => {
     const text = results.map(row => row.value).join('\n');
-    triggerDownload(`Hashcod-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.txt`, text, 'text/plain;charset=utf-8');
+    triggerDownload(`HSG2818-Derivatives-${sanitizeFilename(source?.type || 'code')}-${tsStamp()}.txt`, text, 'text/plain;charset=utf-8');
   };
   const copyAll = () => {
     navigator.clipboard?.writeText(results.map(row => row.value).join('\n'));
@@ -9109,7 +9109,7 @@ const UniversalFileViewerDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.fileViewer
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Visualizador Universal de Archivos', 'Universal File Viewer')), React.createElement("p", null, L('Sube cualquier archivo: Hashcod lo visualiza si el navegador lo soporta y muestra metadatos, SHA-256 y vista hexadecimal para binarios.', 'Upload any file: Hashcod previews browser-supported types and shows metadata, SHA-256, and hex view for binaries.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Visualizador Universal de Archivos', 'Universal File Viewer')), React.createElement("p", null, L('Sube cualquier archivo: HSG2818 lo visualiza si el navegador lo soporta y muestra metadatos, SHA-256 y vista hexadecimal para binarios.', 'Upload any file: HSG2818 previews browser-supported types and shows metadata, SHA-256, and hex view for binaries.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -9223,7 +9223,7 @@ const ComplexEntropyMapDialog = ({
     return {
       id: `HC-CMPLX-${checksumHex(bytes)}`,
       createdAt: new Date().toISOString(),
-      source: row ? `${String(row.idx || '000').padStart(3, '0')} | ${row.primitiveLabel || row.type || 'Hashcod code'}` : 'manual-input',
+      source: row ? `${String(row.idx || '000').padStart(3, '0')} | ${row.primitiveLabel || row.type || 'HSG2818 code'}` : 'manual-input',
       length: bytes.length,
       points,
       radial,
@@ -9296,7 +9296,7 @@ const ComplexEntropyMapDialog = ({
     });
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '18px "Codec Pro", "Segoe UI", Arial, sans-serif';
-    ctx.fillText('Hashcod Complex Entropy Map', 26, 34);
+    ctx.fillText('HSG2818 Complex Entropy Map', 26, 34);
     ctx.font = '12px "Codec Pro", "Segoe UI", Arial, sans-serif';
     ctx.fillStyle = '#A3A3A3';
     ctx.fillText(`${analysis.id} | ${analysis.verdict} | risk ${analysis.metrics.risk}/100 | entropy ${analysis.metrics.entropy}`, 26, 55);
@@ -9324,17 +9324,17 @@ const ComplexEntropyMapDialog = ({
   const exportJson = () => {
     if (!result) return;
     const payload = {
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       tool: 'Complex Entropy Map',
       ...result,
       points: result.points.slice(0, 1200)
     };
-    triggerDownload(`Hashcod-ComplexEntropy-${result.id}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-ComplexEntropy-${result.id}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
   };
   const exportPng = () => {
     if (!result) return;
     drawComplexMap(result);
-    canvasRef.current?.toBlob(blob => blob && triggerBlobDownload(`Hashcod-ComplexEntropy-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+    canvasRef.current?.toBlob(blob => blob && triggerBlobDownload(`HSG2818-ComplexEntropy-${result.id}-${tsStamp()}.png`, blob), 'image/png');
   };
   const fillFromSelected = () => setManual(selectedRow?.value || '');
   return React.createElement("div", {
@@ -9365,7 +9365,7 @@ const ComplexEntropyMapDialog = ({
   }, sourceRows.length ? sourceRows.map(row => React.createElement("option", {
     key: String(row.id || row.idx || row.value),
     value: String(row.id || row.idx || row.value)
-  }, String(row.idx || '000').padStart(3, '0'), " | ", row.primitiveLabel || row.type || 'Hashcod code')) : React.createElement("option", {
+  }, String(row.idx || '000').padStart(3, '0'), " | ", row.primitiveLabel || row.type || 'HSG2818 code')) : React.createElement("option", {
     value: ""
   }, L('Sin codes guardados', 'No saved codes')))), React.createElement("label", null, React.createElement("span", null, L('Entrada manual opcional', 'Optional manual input')), React.createElement("textarea", {
     value: manual,
@@ -9403,7 +9403,7 @@ const ComplexEntropyMapDialog = ({
     height: "780"
   })))));
 };
-const CRYPTO_EXAM_NAMES = [['entropy', 'Entropy Examiner', 'Shannon/min-entropy and byte distribution'], ['avalanche', 'Avalanche Test Lab', 'Digest bit diffusion after a one-bit mutation'], ['chi', 'Chi-Square Randomness Test', 'Uniform byte distribution distance'], ['runs', 'Runs Test Analyzer', 'Binary run balance and long-run pressure'], ['autocorr', 'Autocorrelation Scanner', 'Lag correlation across byte stream'], ['serial', 'Serial Correlation Lab', 'Dependence between adjacent bytes'], ['bitfreq', 'Bit Frequency Examiner', 'Zero/one bit balance'], ['nistmini', 'NIST Mini Suite', 'Frequency, runs, serial and block proxy'], ['practrand', 'PractRand Style Monitor', 'Progressive chunk bias monitor'], ['collision', 'Collision Risk Estimator', 'Birthday-bound collision pressure'], ['preimage', 'Preimage Resistance Estimator', 'Estimated preimage work factor'], ['bruteforce', 'Brute Force Cost Calculator', 'Keyspace and attack-cost approximation'], ['keyspace', 'Keyspace Visualizer', 'Symbol-space size and effective bits'], ['modulo', 'Modulo Pattern Detector', 'Residue distribution over prime moduli'], ['prime', 'Prime Structure Inspector', 'Prime-like integer block structure'], ['matrix', 'Matrix Byte Mapper', 'Row, column and diagonal balance'], ['linear', 'Linear Dependence Test', 'GF(2) row dependence pressure'], ['rank', 'Rank Test Lab', 'Binary matrix rank over GF(2)'], ['lattice', 'Lattice Noise Examiner', 'LWE-style residual noise profile'], ['fourier', 'Fourier Pattern Scanner', 'Periodic energy in frequency domain'], ['wavelet', 'Wavelet Structure Analyzer', 'Multi-scale Haar contrast'], ['compress', 'Compression Resistance Test', 'Repetition/compressibility proxy'], ['hamming', 'Hamming Distance Lab', 'Block-to-block Hamming spread'], ['edit', 'Edit Distance Token Test', 'Token segment edit similarity'], ['prefix', 'Prefix/Suffix Bias Detector', 'Edge and section bias'], ['qrpayload', 'QR Payload Integrity Exam', 'Payload length, digest and QR readiness'], ['signature', 'Signature Consistency Checker', 'MAC/signature-like field consistency'], ['kdf', 'KDF Strength Examiner', 'Password/KDF parameter hints'], ['tokenrisk', 'Token Structure Risk Engine', 'Header/payload/signature section risk'], ['verdict', 'Hashcod Final Verdict Engine', 'Weighted global verdict']];
+const CRYPTO_EXAM_NAMES = [['entropy', 'Entropy Examiner', 'Shannon/min-entropy and byte distribution'], ['avalanche', 'Avalanche Test Lab', 'Digest bit diffusion after a one-bit mutation'], ['chi', 'Chi-Square Randomness Test', 'Uniform byte distribution distance'], ['runs', 'Runs Test Analyzer', 'Binary run balance and long-run pressure'], ['autocorr', 'Autocorrelation Scanner', 'Lag correlation across byte stream'], ['serial', 'Serial Correlation Lab', 'Dependence between adjacent bytes'], ['bitfreq', 'Bit Frequency Examiner', 'Zero/one bit balance'], ['nistmini', 'NIST Mini Suite', 'Frequency, runs, serial and block proxy'], ['practrand', 'PractRand Style Monitor', 'Progressive chunk bias monitor'], ['collision', 'Collision Risk Estimator', 'Birthday-bound collision pressure'], ['preimage', 'Preimage Resistance Estimator', 'Estimated preimage work factor'], ['bruteforce', 'Brute Force Cost Calculator', 'Keyspace and attack-cost approximation'], ['keyspace', 'Keyspace Visualizer', 'Symbol-space size and effective bits'], ['modulo', 'Modulo Pattern Detector', 'Residue distribution over prime moduli'], ['prime', 'Prime Structure Inspector', 'Prime-like integer block structure'], ['matrix', 'Matrix Byte Mapper', 'Row, column and diagonal balance'], ['linear', 'Linear Dependence Test', 'GF(2) row dependence pressure'], ['rank', 'Rank Test Lab', 'Binary matrix rank over GF(2)'], ['lattice', 'Lattice Noise Examiner', 'LWE-style residual noise profile'], ['fourier', 'Fourier Pattern Scanner', 'Periodic energy in frequency domain'], ['wavelet', 'Wavelet Structure Analyzer', 'Multi-scale Haar contrast'], ['compress', 'Compression Resistance Test', 'Repetition/compressibility proxy'], ['hamming', 'Hamming Distance Lab', 'Block-to-block Hamming spread'], ['edit', 'Edit Distance Token Test', 'Token segment edit similarity'], ['prefix', 'Prefix/Suffix Bias Detector', 'Edge and section bias'], ['qrpayload', 'QR Payload Integrity Exam', 'Payload length, digest and QR readiness'], ['signature', 'Signature Consistency Checker', 'MAC/signature-like field consistency'], ['kdf', 'KDF Strength Examiner', 'Password/KDF parameter hints'], ['tokenrisk', 'Token Structure Risk Engine', 'Header/payload/signature section risk'], ['verdict', 'HSG2818 Final Verdict Engine', 'Weighted global verdict']];
 const cryptoExamBytes = text => Array.from(new TextEncoder().encode(String(text || '')));
 const cryptoExamMean = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 const cryptoExamVar = arr => {
@@ -9610,7 +9610,7 @@ const cryptoExamAnalyze = async (text, rowMeta = {}) => {
   const finalStatus = finalScore >= 82 ? 'CLEAR' : finalScore >= 62 ? 'WATCHLIST' : finalScore >= 38 ? 'HIGH RISK' : 'CRITICAL';
   tests.push({
     id: 'verdict',
-    title: 'Hashcod Final Verdict Engine',
+    title: 'HSG2818 Final Verdict Engine',
     math: 'Weighted global verdict',
     score: Math.round(finalScore),
     status: finalStatus,
@@ -9667,13 +9667,13 @@ const CryptoExamSuiteDialog = ({
       setBusy(false);
     }
   };
-  const exportJson = () => result && triggerDownload(`Hashcod-CryptoExam-${result.id}-${tsStamp()}.json`, JSON.stringify({
+  const exportJson = () => result && triggerDownload(`HSG2818-CryptoExam-${result.id}-${tsStamp()}.json`, JSON.stringify({
     hashcod_crypto_exam: result
   }, null, 2), 'application/json;charset=utf-8');
   const exportTxt = () => {
     if (!result) return;
-    const body = ['Hashcod Crypto Exam Suite', `ID: ${result.id}`, `Status: ${result.finalStatus}`, `Score: ${result.finalScore}/100`, `Digest: ${result.digest}`, '', ...result.tests.map((test, i) => `${String(i + 1).padStart(2, '0')}. ${test.title}\n   ${test.status} | ${test.score}/100 | ${test.detail}\n   Math: ${test.math}`)].join('\n');
-    triggerDownload(`Hashcod-CryptoExam-${result.id}-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
+    const body = ['HSG2818 Crypto Exam Suite', `ID: ${result.id}`, `Status: ${result.finalStatus}`, `Score: ${result.finalScore}/100`, `Digest: ${result.digest}`, '', ...result.tests.map((test, i) => `${String(i + 1).padStart(2, '0')}. ${test.title}\n   ${test.status} | ${test.score}/100 | ${test.detail}\n   Math: ${test.math}`)].join('\n');
+    triggerDownload(`HSG2818-CryptoExam-${result.id}-${tsStamp()}.txt`, body, 'text/plain;charset=utf-8');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -9772,7 +9772,7 @@ const geometricCodeBuild = async (source, size = 13, mode = 'radial') => {
   const id = `HC-GEO-${digest.slice(0, 12).toUpperCase()}`;
   return {
     id,
-    type: 'Hashcod Geometric Code',
+    type: 'HSG2818 Geometric Code',
     mode,
     size: n,
     sourceType: source?.type || 'database-code',
@@ -9823,7 +9823,7 @@ const GeometricCodeDialog = ({
     });
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 18px Codec Pro, Consolas, monospace';
-    ctx.fillText('Hashcod Geometric Code', pad, canvas.height - 42);
+    ctx.fillText('HSG2818 Geometric Code', pad, canvas.height - 42);
     ctx.fillStyle = '#A3A3A3';
     ctx.font = '12px Codec Pro, Consolas, monospace';
     ctx.fillText(`${result.id} · ${result.mode} · ${result.sourceSha256.slice(0, 24)}`, pad, canvas.height - 20);
@@ -9853,12 +9853,12 @@ const GeometricCodeDialog = ({
     }, 'geometric-code');
     notify?.(L('Code geometrico guardado en la base de datos.', 'Geometric code saved to database.', '幾何学コードをデータベースに保存しました。'));
   };
-  const downloadTxt = () => result && triggerDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.txt`, result.value, 'text/plain;charset=utf-8');
-  const downloadJson = () => result && triggerDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
+  const downloadTxt = () => result && triggerDownload(`HSG2818-Geometric-${result.id}-${tsStamp()}.txt`, result.value, 'text/plain;charset=utf-8');
+  const downloadJson = () => result && triggerDownload(`HSG2818-Geometric-${result.id}-${tsStamp()}.json`, JSON.stringify(result, null, 2), 'application/json;charset=utf-8');
   const downloadPng = () => {
     const canvas = canvasRef.current;
     if (!canvas || !result) return;
-    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-Geometric-${result.id}-${tsStamp()}.png`, blob), 'image/png');
+    canvas.toBlob(blob => blob && triggerBlobDownload(`HSG2818-Geometric-${result.id}-${tsStamp()}.png`, blob), 'image/png');
   };
   return React.createElement("div", {
     className: "dlg-back",
@@ -9888,7 +9888,7 @@ const GeometricCodeDialog = ({
   }, sources.length ? sources.map((row, i) => React.createElement("option", {
     key: row.id || i,
     value: String(row.id || row.copiedAt || i)
-  }, String(row.idx || i).padStart(3, '0'), " | ", row.type || 'Hashcod code')) : React.createElement("option", null, L('Sin codes guardados', 'No saved codes', '保存済みコードなし')))), React.createElement("label", null, React.createElement("span", null, L('Geometria', 'Geometry', 'ジオメトリ')), React.createElement("select", {
+  }, String(row.idx || i).padStart(3, '0'), " | ", row.type || 'HSG2818 code')) : React.createElement("option", null, L('Sin codes guardados', 'No saved codes', '保存済みコードなし')))), React.createElement("label", null, React.createElement("span", null, L('Geometria', 'Geometry', 'ジオメトリ')), React.createElement("select", {
     value: mode,
     onChange: e => setMode(e.target.value)
   }, React.createElement("option", {
@@ -10121,7 +10121,7 @@ const GraphLabDialog = ({
     drawGraph();
     const a = document.createElement('a');
     a.href = canvasRef.current.toDataURL('image/png');
-    a.download = `Hashcod-GraphLab-${tsStamp()}.png`;
+    a.download = `HSG2818-GraphLab-${tsStamp()}.png`;
     a.click();
   };
   const uint = str => new Uint8Array([...str].map(ch => ch.charCodeAt(0)));
@@ -10167,7 +10167,7 @@ const GraphLabDialog = ({
     });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `Hashcod-GraphLab-${tsStamp()}.pdf`;
+    a.download = `HSG2818-GraphLab-${tsStamp()}.pdf`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 500);
   };
@@ -10295,7 +10295,7 @@ const CodeDesktopDialog = ({
     type
   } = findTypeMeta(row?.type);
   const manifest = {
-    platform: 'Hashcod',
+    platform: 'HSG2818',
     desktop: 'code-tool-desktop',
     version: 'v12',
     selectedCode: {
@@ -10314,7 +10314,7 @@ const CodeDesktopDialog = ({
     notify?.(L('Code copiado desde Desktop', 'Code copied from Desktop'));
   };
   const exportManifest = () => {
-    triggerDownload(`Hashcod-CodeDesktop-${sanitizeFilename(row?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    triggerDownload(`HSG2818-CodeDesktop-${sanitizeFilename(row?.type || 'code')}-${tsStamp()}.json`, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
     notify?.(L('Manifest del Desktop descargado', 'Desktop manifest downloaded'));
   };
   return React.createElement("div", {
@@ -10369,7 +10369,7 @@ const CodeGuiCmdDialog = ({
     setCmd('analyze');
     setLog([{
       kind: 'sys',
-      text: 'Hashcod Code GUI CMD ready. Commands: analyze, sha256, entropy, charset, split, base64, hex, fromhex, reverse, upper, lower, restore, export, copy.'
+      text: 'HSG2818 Code GUI CMD ready. Commands: analyze, sha256, entropy, charset, split, base64, hex, fromhex, reverse, upper, lower, restore, export, copy.'
     }]);
     setMetrics(null);
   }, [open, row?.id]);
@@ -10488,7 +10488,7 @@ const CodeGuiCmdDialog = ({
     }
     if (action === 'export') {
       const payload = {
-        tool: 'Hashcod Code GUI CMD',
+        tool: 'HSG2818 Code GUI CMD',
         row: {
           id: row?.id,
           idx: row?.idx,
@@ -10498,7 +10498,7 @@ const CodeGuiCmdDialog = ({
         value,
         exportedAt: new Date().toISOString()
       };
-      triggerDownload(`Hashcod-CodeGUI-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+      triggerDownload(`HSG2818-CodeGUI-${sanitizeFilename(row?.type || 'code')}-${String(row?.idx || 0).padStart(3, '0')}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
       push('GUI CMD export downloaded.', 'ok');
       return;
     }
@@ -10534,7 +10534,7 @@ const CodeGuiCmdDialog = ({
     className: "codegui-side"
   }, React.createElement("div", {
     className: "codegui-id"
-  }, React.createElement("span", null, L('Code activo', 'Active code')), React.createElement("b", null, row ? `${String(row.idx).padStart(3, '0')} | ${type?.label || row.type}` : '---'), React.createElement("em", null, cat ? getCategoryLabel(cat, language) : 'Hashcod')), React.createElement("div", {
+  }, React.createElement("span", null, L('Code activo', 'Active code')), React.createElement("b", null, row ? `${String(row.idx).padStart(3, '0')} | ${type?.label || row.type}` : '---'), React.createElement("em", null, cat ? getCategoryLabel(cat, language) : 'HSG2818')), React.createElement("div", {
     className: "codegui-metrics"
   }, React.createElement("div", null, React.createElement("span", null, "Chars"), React.createElement("b", null, value.length)), React.createElement("div", null, React.createElement("span", null, "Bytes"), React.createElement("b", null, byteLength)), React.createElement("div", null, React.createElement("span", null, "Unique"), React.createElement("b", null, uniqueChars)), React.createElement("div", null, React.createElement("span", null, "Entropy"), React.createElement("b", null, entropyBits().toFixed(1)))), React.createElement("div", {
     className: "codegui-fast"
@@ -10869,10 +10869,10 @@ const QrVaultDialog = ({
     ctx.fillRect(10, 10, cardW, cardH);
     ctx.strokeStyle = '#cfcfcf';
     ctx.strokeRect(10.5, 10.5, cardW - 1, cardH - 1);
-    drawHashcodCanvasLogo(ctx, 28, 24, 34, '#090909');
+    drawHSG2818CanvasLogo(ctx, 28, 24, 34, '#090909');
     ctx.fillStyle = '#090909';
     ctx.font = '700 20px "Segoe UI", Arial, sans-serif';
-    ctx.fillText('Hashcod', 72, 47);
+    ctx.fillText('HSG2818', 72, 47);
     ctx.fillStyle = '#6e7280';
     ctx.font = '500 12px "IBM Plex Mono", "Courier New", monospace';
     ctx.fillText(mode === 'bundle' ? t('qrPacketLabel').toUpperCase() : payloadStyle === 'raw' ? t('qrRawLabel').toUpperCase() : t('qrPacketLabel').toUpperCase(), 28, 94);
@@ -10922,7 +10922,7 @@ const QrVaultDialog = ({
       const exportCanvas = await drawQrExportCard(item, qrCanvas);
       const a = document.createElement('a');
       a.href = exportCanvas.toDataURL('image/png');
-      a.download = `Hashcod-QR-${sanitizeFilename(item.title || 'opencriptG-qr-card')}-${tsStamp()}.png`;
+      a.download = `HSG2818-QR-${sanitizeFilename(item.title || 'opencriptG-qr-card')}-${tsStamp()}.png`;
       a.click();
     } finally {
       setExportBusyId('');
@@ -11097,7 +11097,7 @@ const IvoryIdeaVaultDialog = ({
     problem: '',
     description: '',
     operation: '',
-    relatedModule: 'Hashcod',
+    relatedModule: 'HSG2818',
     category: 'Productividad criptográfica',
     difficulty: 'Media',
     monetization: '',
@@ -11160,7 +11160,7 @@ const IvoryIdeaVaultDialog = ({
     const qrUrl = await getQrDataUrl();
     const codeValue = selectedRow?.value || '';
     const codePreview = safe(codeValue).replace(/(.{1,96})/g, '$1<br/>');
-    const clause = L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a Hashcod/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate Hashcod/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.');
+    const clause = L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a HSG2818/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate HSG2818/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.');
     return `<!doctype html><html><head><meta charset="utf-8"><title>${safe(ideaId)}</title><style>
       @page{size:A4;margin:14mm}
       body{margin:0;background:#f4f4f1;color:#111;font-family:"IBM Plex Mono","Courier New",monospace}
@@ -11211,8 +11211,8 @@ const IvoryIdeaVaultDialog = ({
           <div class="box wide"><b>${L('Code de base de datos usado para QR', 'Database code used for QR')}</b><div class="code">${codePreview || '—'}</div></div>
         </div>
         <div class="clause">${safe(clause)}</div>
-        <div class="sign"><div class="line">${L('Firma del colaborador', 'Collaborator signature')}<br/>${safe(form.signature || '')}</div><div class="line">${L('Revisión Hashcod', 'Hashcod review')}<br/>${safe(form.reviewer || '')}</div></div>
-        <div class="footer">Hashcod · diktatcart · RNC 402-0936929-3 · ${new Date().toLocaleString()}</div>
+        <div class="sign"><div class="line">${L('Firma del colaborador', 'Collaborator signature')}<br/>${safe(form.signature || '')}</div><div class="line">${L('Revisión HSG2818', 'HSG2818 review')}<br/>${safe(form.reviewer || '')}</div></div>
+        <div class="footer">HSG2818 · diktatcart · RNC 402-0936929-3 · ${new Date().toLocaleString()}</div>
       </div></section>${printMode ? '<script>window.onload=()=>setTimeout(()=>window.print(),250);</script>' : ''}</body></html>`;
   };
   const persistHistory = next => {
@@ -11416,12 +11416,12 @@ const IvoryIdeaVaultDialog = ({
   })), React.createElement("label", null, React.createElement("span", null, L('Firma del colaborador', 'Collaborator signature')), React.createElement("input", {
     value: form.signature,
     onChange: e => update('signature', e.target.value)
-  })), React.createElement("label", null, React.createElement("span", null, L('Revisión Hashcod', 'Hashcod review')), React.createElement("input", {
+  })), React.createElement("label", null, React.createElement("span", null, L('Revisión HSG2818', 'HSG2818 review')), React.createElement("input", {
     value: form.reviewer,
     onChange: e => update('reviewer', e.target.value)
   }))), React.createElement("div", {
     className: "ivory-clause"
-  }, L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a Hashcod/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate Hashcod/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.')), React.createElement("div", {
+  }, L('Al enviar esta idea, el colaborador declara que la propuesta es original o que tiene derecho a compartirla. La recepción de la idea no obliga a HSG2818/diktatcart a implementarla, pagarla o reconocer comisión, salvo aprobación expresa por escrito o registro interno aprobado.', 'By submitting this idea, the collaborator declares that the proposal is original or that they have the right to share it. Receipt of the idea does not obligate HSG2818/diktatcart to implement it, pay for it, or recognize commission, unless expressly approved in writing or by approved internal record.')), React.createElement("div", {
     className: "ivory-actions"
   }, React.createElement("button", {
     className: "dbdlg-btn",
@@ -11774,7 +11774,7 @@ const OCGCodeUnitsDialog = ({
       "'": '&#39;'
     })[s] || s);
     const rows = billScanRows(u).map(([k, v]) => `<tr><th>${safe(k)}</th><td>${safe(v)}</td></tr>`).join('');
-    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(u?.billId || 'OCG')}</title><style>body{margin:0;background:#f3f3f1;color:#111;font-family:ui-monospace,Consolas,monospace}.c{margin:10px;border:2px solid #111;background:#fff}.h{display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #111;padding:12px;gap:12px}.b{letter-spacing:.24em;color:#777;font-size:10px}.v{font:700 52px Georgia}.id{font-weight:900;font-size:17px;word-break:break-all}.t{border:1px solid #111;padding:3px 6px;display:inline-block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-top:1px solid #ddd;padding:7px;text-align:left;vertical-align:top;word-break:break-all}th{width:122px;color:#777;font-size:10px;letter-spacing:.12em;background:#f7f7f4}td{font-size:12px}.f{border-top:1px solid #111;padding:9px;color:#555;font-size:11px}</style></head><body><div class="c"><div class="h"><div><div class="b">OPENCRIPTG</div><div class="v">${safe(u?.value)}</div><div class="t">OCG COIN</div></div><div><div class="id">${safe(u?.billId || u?.serial)}</div><p>Billete digital interno verificable dentro de Hashcod/diktatcart.</p><div class="t">${safe(u?.status)}</div></div></div><table>${rows}</table><div class="f">Unidad interna privada. No es moneda de curso legal, inversión, depósito ni criptomoneda pública.</div></div></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safe(u?.billId || 'OCG')}</title><style>body{margin:0;background:#f3f3f1;color:#111;font-family:ui-monospace,Consolas,monospace}.c{margin:10px;border:2px solid #111;background:#fff}.h{display:grid;grid-template-columns:92px 1fr;border-bottom:1px solid #111;padding:12px;gap:12px}.b{letter-spacing:.24em;color:#777;font-size:10px}.v{font:700 52px Georgia}.id{font-weight:900;font-size:17px;word-break:break-all}.t{border:1px solid #111;padding:3px 6px;display:inline-block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-top:1px solid #ddd;padding:7px;text-align:left;vertical-align:top;word-break:break-all}th{width:122px;color:#777;font-size:10px;letter-spacing:.12em;background:#f7f7f4}td{font-size:12px}.f{border-top:1px solid #111;padding:9px;color:#555;font-size:11px}</style></head><body><div class="c"><div class="h"><div><div class="b">OPENCRIPTG</div><div class="v">${safe(u?.value)}</div><div class="t">OCG COIN</div></div><div><div class="id">${safe(u?.billId || u?.serial)}</div><p>Billete digital interno verificable dentro de HSG2818/diktatcart.</p><div class="t">${safe(u?.status)}</div></div></div><table>${rows}</table><div class="f">Unidad interna privada. No es moneda de curso legal, inversión, depósito ni criptomoneda pública.</div></div></body></html>`;
   };
   const billScanPayload = u => {
     if (!u) return '';
@@ -11811,7 +11811,7 @@ const OCGCodeUnitsDialog = ({
     const matrix = buildMatrix();
     const header = `OCG-COIN.v12.${value}.${randB64(22).slice(0, 34)}`;
     const type = 'INTERNAL-ECOSYSTEM-CODE-COIN';
-    const use = 'private internal Hashcod/diktatcart ecosystem unit';
+    const use = 'private internal HSG2818/diktatcart ecosystem unit';
     const base = [value, ownerDid.trim(), ownerName.trim(), serial, billId, basePayload, salt, nonce, route, vector, matrix, chainPrev, issued, OCG_COIN_SEAL].join('|');
     const unitHash = (await makeLongHash(base)).toUpperCase();
     const chainHash = (await makeLongHash([chainPrev, unitHash, serial, issued, OCG_COIN_SEAL].join('|'))).toUpperCase();
@@ -12071,7 +12071,7 @@ const OCGCodeUnitsDialog = ({
     const ok = raw === expected && stored.status === 'ACTIVE' && secureEqual(stored.unitHash, recalculatedUnitHash) && secureEqual(stored.chainHash, recalculatedChainHash) && secureEqual(stored.signature, recalculatedSignature) && lines.CHECK === stored.check;
     setVerifyResult({
       ok,
-      text: ok ? L('Moneda válida, activa, no alterada y emitida dentro de Hashcod.', 'Valid active coin, unmodified and issued inside Hashcod.') : L('Moneda alterada, usada, bloqueada, incompleta o fuera de la cadena interna.', 'Coin altered, used, blocked, incomplete, or outside the internal chain.')
+      text: ok ? L('Moneda válida, activa, no alterada y emitida dentro de HSG2818.', 'Valid active coin, unmodified and issued inside HSG2818.') : L('Moneda alterada, usada, bloqueada, incompleta o fuera de la cadena interna.', 'Coin altered, used, blocked, incomplete, or outside the internal chain.')
     });
   };
   const transferSelected = async () => {
@@ -12114,7 +12114,7 @@ const OCGCodeUnitsDialog = ({
   };
   const useSelected = () => {
     if (!selected || selected.status !== 'ACTIVE') return;
-    const usedFor = note.trim() || 'Hashcod internal ecosystem operation';
+    const usedFor = note.trim() || 'HSG2818 internal ecosystem operation';
     saveHistory(history.map(u => u.id === selected.id ? {
       ...u,
       status: 'USED',
@@ -12127,7 +12127,7 @@ const OCGCodeUnitsDialog = ({
         for: usedFor
       }]
     } : u));
-    notify && notify(L('Moneda usada dentro del ecosistema Hashcod.', 'Coin used inside the Hashcod ecosystem.'));
+    notify && notify(L('Moneda usada dentro del ecosistema HSG2818.', 'Coin used inside the HSG2818 ecosystem.'));
   };
   const removeSelected = () => {
     if (!selected) return;
@@ -12148,7 +12148,7 @@ const OCGCodeUnitsDialog = ({
     const payload = safe(unitPlain(selected));
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safe(selected.billId || selected.serial)}</title><style>
       body{margin:0;background:#efefec;color:#111;font-family:'IBM Plex Mono','Courier New',monospace}.page{width:900px;margin:24px auto;background:#f7f7f4;border:2px solid #111;padding:32px}.brand{letter-spacing:.32em;color:#777;text-transform:uppercase}.title{font-size:42px;letter-spacing:.12em;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 260px;gap:24px}.box{border:1px solid #d4d4d4;padding:16px;background:#fff}.k{color:#777;font-size:11px;letter-spacing:.22em;text-transform:uppercase}.v{font-size:16px;margin:6px 0 14px}.code{white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.45}.foot{margin-top:24px;border-top:1px solid #ccc;padding-top:12px;color:#666;font-size:11px}@media print{body{background:#fff}.page{margin:0;width:auto;border:1px solid #000}}
-    </style></head><body><div class="page"><div class="brand">opencriptG · OCG Code Coin Bill</div><div class="title">OCG ${selected.value}</div><div class="grid"><div class="box"><div class="k">Billete digital</div><div class="v">${selected.billId || selected.serial}</div><div class="k">Serial</div><div class="v">${selected.serial}</div><div class="k">Owner DID</div><div class="v">${selected.ownerDid || 'UNASSIGNED'}</div><div class="k">Status</div><div class="v">${selected.status}</div><div class="k">Fingerprint</div><div class="v">${selected.fingerprint || selected.check}</div><div class="k">Check</div><div class="v">${selected.check}</div></div><div class="box"><div id="qr"></div></div></div><div class="box" style="margin-top:18px"><div class="k">Code Coin</div><div class="code">${payload}</div></div><div class="foot">Moneda digital interna de uso privado dentro de Hashcod/diktatcart. No es moneda de curso legal, no representa inversión pública, depósito ni promesa financiera.</div></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(unitPlain(selected))},width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setTimeout(()=>print(),500)<\/script></body></html>`);
+    </style></head><body><div class="page"><div class="brand">opencriptG · OCG Code Coin Bill</div><div class="title">OCG ${selected.value}</div><div class="grid"><div class="box"><div class="k">Billete digital</div><div class="v">${selected.billId || selected.serial}</div><div class="k">Serial</div><div class="v">${selected.serial}</div><div class="k">Owner DID</div><div class="v">${selected.ownerDid || 'UNASSIGNED'}</div><div class="k">Status</div><div class="v">${selected.status}</div><div class="k">Fingerprint</div><div class="v">${selected.fingerprint || selected.check}</div><div class="k">Check</div><div class="v">${selected.check}</div></div><div class="box"><div id="qr"></div></div></div><div class="box" style="margin-top:18px"><div class="k">Code Coin</div><div class="code">${payload}</div></div><div class="foot">Moneda digital interna de uso privado dentro de HSG2818/diktatcart. No es moneda de curso legal, no representa inversión pública, depósito ni promesa financiera.</div></div><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script><script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(unitPlain(selected))},width:240,height:240,correctLevel:QRCode.CorrectLevel.M});setTimeout(()=>print(),500)<\/script></body></html>`);
     w.document.close();
   };
   const filtered = history.filter(u => {
@@ -12164,7 +12164,7 @@ const OCGCodeUnitsDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, "OCG Code Coins"), React.createElement("p", null, L('Sistema interno para crear, verificar, transferir, usar y certificar monedas 5 / 10 / 25 / 50 dentro de Hashcod/diktatcart.', 'Internal system to create, verify, transfer, use, and certify 5 / 10 / 25 / 50 coins inside Hashcod/diktatcart.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, "OCG Code Coins"), React.createElement("p", null, L('Sistema interno para crear, verificar, transferir, usar y certificar monedas 5 / 10 / 25 / 50 dentro de HSG2818/diktatcart.', 'Internal system to create, verify, transfer, use, and certify 5 / 10 / 25 / 50 coins inside HSG2818/diktatcart.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("div", {
@@ -12179,7 +12179,7 @@ const OCGCodeUnitsDialog = ({
     onClick: () => setValue(v)
   }, React.createElement("b", null, v), React.createElement("span", null, v === 5 ? L('Micro moneda', 'Micro coin') : v === 10 ? L('Moneda base', 'Base coin') : v === 25 ? L('Moneda avanzada', 'Advanced coin') : L('Moneda premium', 'Premium coin')), React.createElement("small", null, v === 5 ? L('Uso ligero', 'Light use') : v === 10 ? L('Acciones internas', 'Internal actions') : v === 25 ? L('Herramientas y certificados', 'Tools and certificates') : L('Licencias y módulos especiales', 'Licenses and special modules'))))), React.createElement("div", {
     className: "ocgu-wallet-proof"
-  }, React.createElement("span", null, L('Solo funciona dentro del ecosistema Hashcod/diktatcart.', 'Works only inside the Hashcod/diktatcart ecosystem.')), React.createElement("span", null, L('No es moneda de curso legal, inversión, depósito ni criptomoneda pública.', 'Not legal tender, investment, deposit, or public cryptocurrency.')), React.createElement("span", null, L('Cada unidad se valida por DID, serial, QR, hash, nonce, salt, route, estado e historial.', 'Each unit is validated by DID, serial, QR, hash, nonce, salt, route, status, and history.')))), React.createElement("div", {
+  }, React.createElement("span", null, L('Solo funciona dentro del ecosistema HSG2818/diktatcart.', 'Works only inside the HSG2818/diktatcart ecosystem.')), React.createElement("span", null, L('No es moneda de curso legal, inversión, depósito ni criptomoneda pública.', 'Not legal tender, investment, deposit, or public cryptocurrency.')), React.createElement("span", null, L('Cada unidad se valida por DID, serial, QR, hash, nonce, salt, route, estado e historial.', 'Each unit is validated by DID, serial, QR, hash, nonce, salt, route, status, and history.')))), React.createElement("div", {
     className: "ocgu-layout"
   }, React.createElement("section", {
     className: "ocgu-panel"
@@ -12236,7 +12236,7 @@ const OCGCodeUnitsDialog = ({
     className: selected.status === 'ACTIVE' ? 'good' : 'bad'
   }, selected.status)), React.createElement("div", null, React.createElement("span", null, "CHECK"), React.createElement("strong", null, selected.check))), React.createElement("div", {
     className: "ocgu-unit-card"
-  }, React.createElement("div", null, React.createElement("span", null, L('Uso', 'Use')), React.createElement("b", null, selected.use)), React.createElement("div", null, React.createElement("span", null, L('Propietario', 'Owner')), React.createElement("b", null, selected.ownerDid || 'UNASSIGNED')), React.createElement("div", null, React.createElement("span", null, L('Red interna', 'Internal network')), React.createElement("b", null, "Hashcod / diktatcart")), React.createElement("div", null, React.createElement("span", null, "Bill ID"), React.createElement("b", null, selected.billId || '—')), React.createElement("div", null, React.createElement("span", null, "Unit Hash"), React.createElement("b", null, selected.unitHash ? selected.unitHash.slice(0, 24) + '…' : '—')), React.createElement("div", null, React.createElement("span", null, "Chain Hash"), React.createElement("b", null, selected.chainHash ? selected.chainHash.slice(0, 24) + '…' : '—')), React.createElement("div", null, React.createElement("span", null, L('Última actualización', 'Last update')), React.createElement("b", null, selected.updatedAt ? new Date(selected.updatedAt).toLocaleString() : '—'))), React.createElement("div", {
+  }, React.createElement("div", null, React.createElement("span", null, L('Uso', 'Use')), React.createElement("b", null, selected.use)), React.createElement("div", null, React.createElement("span", null, L('Propietario', 'Owner')), React.createElement("b", null, selected.ownerDid || 'UNASSIGNED')), React.createElement("div", null, React.createElement("span", null, L('Red interna', 'Internal network')), React.createElement("b", null, "HSG2818 / diktatcart")), React.createElement("div", null, React.createElement("span", null, "Bill ID"), React.createElement("b", null, selected.billId || '—')), React.createElement("div", null, React.createElement("span", null, "Unit Hash"), React.createElement("b", null, selected.unitHash ? selected.unitHash.slice(0, 24) + '…' : '—')), React.createElement("div", null, React.createElement("span", null, "Chain Hash"), React.createElement("b", null, selected.chainHash ? selected.chainHash.slice(0, 24) + '…' : '—')), React.createElement("div", null, React.createElement("span", null, L('Última actualización', 'Last update')), React.createElement("b", null, selected.updatedAt ? new Date(selected.updatedAt).toLocaleString() : '—'))), React.createElement("div", {
     className: "ocgu-code"
   }, React.createElement("pre", null, unitPlain(selected)), React.createElement(OCGUnitsQR, {
     payload: billScanPayload(selected),
@@ -12258,7 +12258,7 @@ const OCGCodeUnitsDialog = ({
   }, L('Vista escaneo', 'Scan view')), React.createElement("button", {
     onClick: useSelected,
     disabled: selected.status !== 'ACTIVE'
-  }, L('Usar en Hashcod', 'Use in Hashcod')), React.createElement("button", {
+  }, L('Usar en HSG2818', 'Use in HSG2818')), React.createElement("button", {
     onClick: blockSelected
   }, selected.status === 'ACTIVE' ? L('Bloquear', 'Block') : L('Activar', 'Activate')), React.createElement("button", {
     onClick: removeSelected
@@ -13626,7 +13626,7 @@ const PandoraSpreadsheetDialog = ({
         A1: L('Empresa', 'Company'),
         B1: 'diktatcart',
         A2: L('Reporte', 'Report'),
-        B2: 'Hashcod Suite',
+        B2: 'HSG2818 Suite',
         A4: L('Producto', 'Product'),
         B4: L('Ventas', 'Sales'),
         C4: L('Costo', 'Cost'),
@@ -13818,7 +13818,7 @@ const PandoraSpreadsheetDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, "P - ANDORA"), React.createElement("p", null, L('Libro de celdas ultra avanzado para Hashcod. Incluye hojas visuales, fórmulas financieras, filtros, combinación de celdas, múltiples gráficos, impresión y plantillas empresariales.', 'Ultra-advanced workbook for Hashcod. Includes visual sheets, financial formulas, filters, cell merging, multiple charts, printing, and business templates.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, "P - ANDORA"), React.createElement("p", null, L('Libro de celdas ultra avanzado para HSG2818. Incluye hojas visuales, fórmulas financieras, filtros, combinación de celdas, múltiples gráficos, impresión y plantillas empresariales.', 'Ultra-advanced workbook for HSG2818. Includes visual sheets, financial formulas, filters, cell merging, multiple charts, printing, and business templates.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("div", {
@@ -14126,7 +14126,7 @@ const PandoraSpreadsheetDialog = ({
     onClick: () => applyTemplate('finance')
   }, React.createElement("strong", null, L('Finanzas / préstamos', 'Finance / loans')), React.createElement("p", null, L('PMT, FV y ROI listos para usar.', 'PMT, FV, and ROI ready to use.'))))), React.createElement("div", {
     className: "padlg-footnote plus"
-  }, React.createElement("span", null, L('Versión ultra: hojas visuales, fórmulas financieras, plantillas empresariales, impresión y múltiples gráficos.', 'Ultra version: visual sheets, financial formulas, business templates, printing, and multiple charts.')), React.createElement("b", null, L('Integrado con la base de datos de Hashcod', 'Integrated with the Hashcod database')))))));
+  }, React.createElement("span", null, L('Versión ultra: hojas visuales, fórmulas financieras, plantillas empresariales, impresión y múltiples gráficos.', 'Ultra version: visual sheets, financial formulas, business templates, printing, and multiple charts.')), React.createElement("b", null, L('Integrado con la base de datos de HSG2818', 'Integrated with the HSG2818 database')))))));
 };
 const DEFAULT_OSDG_CARGO = `[workspace]
 resolver = "2"
@@ -14143,7 +14143,7 @@ members = [
 
 [workspace.package]
 version = "0.1.0"
-authors = ["Hashcod integration team"]
+authors = ["HSG2818 integration team"]
 edition = "2021"
 publish = false
 rust-version = "1.83.0"
@@ -14373,7 +14373,7 @@ const OSDGRestDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, "OSDG -rest"), React.createElement("p", null, L('Cifrador y desbloqueador de archivos para Hashcod. Usa una key visible tomada de la base de datos y una nonce oculta que el usuario final necesita para acceder al archivo.', 'File encryptor and unlocker for Hashcod. It uses a visible key from the database and a hidden nonce required by the receiver to access the file.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, "OSDG -rest"), React.createElement("p", null, L('Cifrador y desbloqueador de archivos para HSG2818. Usa una key visible tomada de la base de datos y una nonce oculta que el usuario final necesita para acceder al archivo.', 'File encryptor and unlocker for HSG2818. It uses a visible key from the database and a hidden nonce required by the receiver to access the file.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), !accepted && React.createElement("div", {
@@ -14506,7 +14506,7 @@ const OSDGRestDialog = ({
     className: "textdlg-panel-k"
   }, L('Estado', 'Status')), React.createElement("p", null, status || L('Listo. Selecciona un archivo para cifrar o desbloquear.', 'Ready. Select a file to encrypt or unlock.')), encryptedText && React.createElement("details", null, React.createElement("summary", null, L('Vista técnica del contenedor', 'Technical container preview')), React.createElement("pre", null, encryptedText.slice(0, 1800))))))));
 };
-const DEFAULT_MARKDOWN_DOC = ['# Hashcod Markdown Desk', '', 'Markdown editor with live preview.', '', '## Features', '', '- Live split view', '- Code blocks', '- Tables', '- Quotes', '- Checklists', '- Export to Markdown or HTML', '', '```js', 'const platform = "Hashcod";', 'console.log(platform);', '```', '', '> Structured for reading instead of scrolling.', '', '| Module | Status |', '|---|---|', '| QR Vault | ready |', '| Text Lab | ready |', '| OSDG -rest | ready |'].join('\n');
+const DEFAULT_MARKDOWN_DOC = ['# HSG2818 Markdown Desk', '', 'Markdown editor with live preview.', '', '## Features', '', '- Live split view', '- Code blocks', '- Tables', '- Quotes', '- Checklists', '- Export to Markdown or HTML', '', '```js', 'const platform = "HSG2818";', 'console.log(platform);', '```', '', '> Structured for reading instead of scrolling.', '', '| Module | Status |', '|---|---|', '| QR Vault | ready |', '| Text Lab | ready |', '| OSDG -rest | ready |'].join('\n');
 const MarkdownDeskDialog = ({
   open,
   onClose,
@@ -14682,7 +14682,7 @@ const MarkdownDeskDialog = ({
     notify && notify(L('Markdown descargado', 'Markdown downloaded'));
   };
   const exportHtml = () => {
-    const doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title || 'Hashcod document') + '</title><style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.6;color:#111}pre{background:#f3f3f3;padding:14px;overflow:auto}code{background:#eee;padding:2px 5px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px}blockquote{border-left:3px solid #111;padding-left:14px;color:#555}</style></head><body>' + html + '</body></html>';
+    const doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtml(title || 'HSG2818 document') + '</title><style>body{font-family:Arial,sans-serif;max-width:920px;margin:40px auto;line-height:1.6;color:#111}pre{background:#f3f3f3;padding:14px;overflow:auto}code{background:#eee;padding:2px 5px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px}blockquote{border-left:3px solid #111;padding-left:14px;color:#555}</style></head><body>' + html + '</body></html>';
     triggerDownload((title || 'opencriptg-doc').replace(/\.md$/i, '') + '.html', doc, 'text/html;charset=utf-8');
     notify && notify(L('HTML descargado', 'HTML downloaded'));
   };
@@ -14700,7 +14700,7 @@ const MarkdownDeskDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, "MARKDOWN DESK"), React.createElement("p", null, L('Editor Markdown dividido: escribe a la izquierda y visualiza a la derecha con estilo Hashcod.', 'Split Markdown editor: write on the left and preview on the right with Hashcod styling.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, "MARKDOWN DESK"), React.createElement("p", null, L('Editor Markdown dividido: escribe a la izquierda y visualiza a la derecha con estilo HSG2818.', 'Split Markdown editor: write on the left and preview on the right with HSG2818 styling.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("div", {
@@ -14932,7 +14932,7 @@ const MarketNotesDialog = ({
     const indexClass = parts.index < 0 ? 'neg' : parts.index > 0 ? 'pos' : 'neu';
     const codesHtml = getCodeList(note).map((code, idx) => `<div class="code-line"><b>${String(idx + 1).padStart(2, '0')}</b>${escapeHtml(code)}</div>`).join('') || escapeHtml(L('Sin code agregado', 'No code attached'));
     return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(note.title)}</title><style>
-    *{box-sizing:border-box} body{margin:0;background:#ece8df;font-family:Arial,Helvetica,sans-serif;color:#0b0b0b;padding:38px} .card{max-width:860px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:12px 12px 0 #111;padding:34px} .k{font:12px monospace;letter-spacing:4px;color:#777;text-transform:uppercase}.kuz{border:1px solid #111;background:#f7f7f7;padding:14px;margin:14px 0 16px}.kuz span{display:block;font:11px monospace;letter-spacing:3px;color:#777;text-transform:uppercase;margin-bottom:8px}.kuz b{display:block;font:13px monospace;word-break:break-all;letter-spacing:1px}.title{font-size:42px;line-height:1;margin:10px 0 18px;font-weight:800}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.box{border:1px solid #111;padding:14px;background:#fafafa}.box span{display:block;font:11px monospace;letter-spacing:2px;color:#777;text-transform:uppercase;margin-bottom:8px}.idx{font-size:36px;font-weight:900;font-family:monospace}.idx.neg{color:#b00020}.idx.pos{color:#008a3d}.idx.neu{color:#111}.formula{border:1px solid #111;background:#f7f7f7;padding:14px;margin:16px 0;font-family:monospace;line-height:1.55}.code{font-family:monospace;word-break:break-all;font-size:12px}.code-line{border-bottom:1px solid #ddd;padding:8px 0;display:grid;grid-template-columns:38px 1fr;gap:10px}.text{border-top:1px solid #ccc;margin-top:20px;padding-top:20px;white-space:pre-wrap;line-height:1.6}.foot{margin-top:30px;font:11px monospace;color:#777;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #111;margin:0;max-width:none}.printbtn{display:none}}</style></head><body><button class="printbtn" onclick="window.print()" style="margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase">${L('Guardar como PDF', 'Save as PDF')}</button><section class="card"><div class="k">sequence - A · Hashcod</div><div class="kuz"><span>Kuznyechik Key · 256-bit</span><b>${escapeHtml(note.kuzKey || generateKuznyechikKey())}</b></div><h1 class="title">${escapeHtml(note.title)}</h1><div class="meta"><div class="box"><span>${L('Índice', 'Index')}</span><b class="idx ${indexClass}">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes', 'Codes')}</span><b>${parts.codeCount}</b></div><div class="box"><span>${L('Similitudes', 'Similarities')}</span><b>${parts.similarity}</b></div><div class="box"><span>${L('Base', 'Base')}</span><b>${parts.base}</b></div></div><div class="formula">I = -ABS((codes / similitudes) × (base - 0.428))<br/>I = -ABS((${parts.codeCount} / ${parts.similarity}) × (${parts.base} - 0.428)) = <b class="idx ${indexClass}" style="font-size:22px">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes moneda', 'Currency codes')}</span><div class="code">${codesHtml}</div></div><div class="text">${escapeHtml(note.text || L('Nota vacía', 'Empty note'))}</div><div class="foot">Built by diktatcart · sequence - A</div></section></body></html>`;
+    *{box-sizing:border-box} body{margin:0;background:#ece8df;font-family:Arial,Helvetica,sans-serif;color:#0b0b0b;padding:38px} .card{max-width:860px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:12px 12px 0 #111;padding:34px} .k{font:12px monospace;letter-spacing:4px;color:#777;text-transform:uppercase}.kuz{border:1px solid #111;background:#f7f7f7;padding:14px;margin:14px 0 16px}.kuz span{display:block;font:11px monospace;letter-spacing:3px;color:#777;text-transform:uppercase;margin-bottom:8px}.kuz b{display:block;font:13px monospace;word-break:break-all;letter-spacing:1px}.title{font-size:42px;line-height:1;margin:10px 0 18px;font-weight:800}.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.box{border:1px solid #111;padding:14px;background:#fafafa}.box span{display:block;font:11px monospace;letter-spacing:2px;color:#777;text-transform:uppercase;margin-bottom:8px}.idx{font-size:36px;font-weight:900;font-family:monospace}.idx.neg{color:#b00020}.idx.pos{color:#008a3d}.idx.neu{color:#111}.formula{border:1px solid #111;background:#f7f7f7;padding:14px;margin:16px 0;font-family:monospace;line-height:1.55}.code{font-family:monospace;word-break:break-all;font-size:12px}.code-line{border-bottom:1px solid #ddd;padding:8px 0;display:grid;grid-template-columns:38px 1fr;gap:10px}.text{border-top:1px solid #ccc;margin-top:20px;padding-top:20px;white-space:pre-wrap;line-height:1.6}.foot{margin-top:30px;font:11px monospace;color:#777;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.card{box-shadow:none;border:1px solid #111;margin:0;max-width:none}.printbtn{display:none}}</style></head><body><button class="printbtn" onclick="window.print()" style="margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase">${L('Guardar como PDF', 'Save as PDF')}</button><section class="card"><div class="k">sequence - A · HSG2818</div><div class="kuz"><span>Kuznyechik Key · 256-bit</span><b>${escapeHtml(note.kuzKey || generateKuznyechikKey())}</b></div><h1 class="title">${escapeHtml(note.title)}</h1><div class="meta"><div class="box"><span>${L('Índice', 'Index')}</span><b class="idx ${indexClass}">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes', 'Codes')}</span><b>${parts.codeCount}</b></div><div class="box"><span>${L('Similitudes', 'Similarities')}</span><b>${parts.similarity}</b></div><div class="box"><span>${L('Base', 'Base')}</span><b>${parts.base}</b></div></div><div class="formula">I = -ABS((codes / similitudes) × (base - 0.428))<br/>I = -ABS((${parts.codeCount} / ${parts.similarity}) × (${parts.base} - 0.428)) = <b class="idx ${indexClass}" style="font-size:22px">${parts.index >= 0 ? '+' : ''}${parts.index}</b></div><div class="box"><span>${L('Codes moneda', 'Currency codes')}</span><div class="code">${codesHtml}</div></div><div class="text">${escapeHtml(note.text || L('Nota vacía', 'Empty note'))}</div><div class="foot">Built by diktatcart · sequence - A</div></section></body></html>`;
   };
   const downloadPdf = note => {
     if (!note) return;
@@ -15112,7 +15112,7 @@ const CodeCertificateDialog = ({
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [licenseType, setLicenseType] = useState('Uso personal no exclusivo');
-  const [scope, setScope] = useState('Uso privado dentro del ecosistema Hashcod');
+  const [scope, setScope] = useState('Uso privado dentro del ecosistema HSG2818');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [includeFullCode, setIncludeFullCode] = useState(false);
@@ -15161,7 +15161,7 @@ const CodeCertificateDialog = ({
     return {
       id,
       codeId: selectedRow.id || selectedRow.idx || 'N/A',
-      codeType: selectedRow.type || selectedRow.primitive || 'Hashcod Code',
+      codeType: selectedRow.type || selectedRow.primitive || 'HSG2818 Code',
       codeValue: includeFullCode ? codeValue : maskCode(codeValue),
       fullCodeStored: includeFullCode,
       codeHash,
@@ -15171,7 +15171,7 @@ const CodeCertificateDialog = ({
       scope,
       price: price.trim(),
       notes: notes.trim(),
-      issuer: 'diktatcart / Hashcod',
+      issuer: 'diktatcart / HSG2818',
       issuerRnc: '402-0936929-3',
       status: 'Activo',
       issuedAt,
@@ -15195,10 +15195,10 @@ const CodeCertificateDialog = ({
   };
   const certificateHtml = cert => {
     const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=hashcod-icon-1';
-    const legal = L('Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema Hashcod operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de Hashcod.', 'This private certificate states that the identified code was generated or registered inside the Hashcod ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private Hashcod verification.');
+    const legal = L('Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema HSG2818 operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de HSG2818.', 'This private certificate states that the identified code was generated or registered inside the HSG2818 ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private HSG2818 verification.');
     const rowsHtml = [['ID', cert.id], [L('Titular', 'Holder'), cert.buyerName], ['Email', cert.buyerEmail || '—'], [L('Tipo de licencia', 'License type'), cert.licenseType], [L('Alcance', 'Scope'), cert.scope], [L('Code ID', 'Code ID'), cert.codeId], [L('Tipo de code', 'Code type'), cert.codeType], [L('Code visible', 'Visible code'), cert.codeValue], ['SHA-256 CODE', cert.codeHash], ['SHA-256 CERT', cert.certificateHash], [L('Emitido total', 'Issued total'), new Date(cert.issuedAt).toLocaleString()], ['RNC diktatcart', cert.issuerRnc], [L('Estado', 'Status'), cert.status], [L('Precio / referencia', 'Price / reference'), cert.price || '—']].map(([a, b]) => '<div class="row"><span>' + escapeHtmlLocal(a) + '</span><b>' + escapeHtmlLocal(b) + '</b></div>').join('');
     const notesHtml = cert.notes ? '<div class="notes"><span>NOTAS</span><p>' + escapeHtmlLocal(cert.notes) + '</p></div>' : '';
-    return '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtmlLocal(cert.id) + '</title><style>' + '*{box-sizing:border-box}body{margin:0;background:#ece8df;color:#0a0a0a;font-family:Arial,Helvetica,sans-serif;padding:30px}.printbtn{margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase}.cert{max-width:980px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:14px 14px 0 #111;padding:34px}.top{display:grid;grid-template-columns:100px 1fr;gap:22px;align-items:center;border-bottom:2px solid #111;padding-bottom:22px}.logo{width:92px;height:92px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}.k{font:12px monospace;letter-spacing:4px;text-transform:uppercase;color:#666}.title{font-size:48px;line-height:1;margin:8px 0 0;font-weight:900;letter-spacing:1px}.serial{border:1px solid #111;padding:12px 14px;margin:22px 0;background:#f7f7f7;font-family:monospace;word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{border:1px solid #d7d7d7;padding:12px;min-height:70px}.row span,.notes span,.legal span{display:block;font:10px monospace;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:8px}.row b{font:12px monospace;word-break:break-all}.notes,.legal{border:1px solid #111;padding:16px;margin-top:16px}.notes p,.legal p{margin:0;line-height:1.55}.seal{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:26px;border-top:1px solid #111;padding-top:18px}.sig{font:12px monospace;letter-spacing:2px;text-transform:uppercase}.rnc{font:14px monospace;font-weight:800}.stamp{border:2px solid #111;padding:14px 22px;font:12px monospace;letter-spacing:3px;text-transform:uppercase;transform:rotate(-2deg)}@media print{body{background:#fff;padding:0}.printbtn{display:none}.cert{box-shadow:none;margin:0;max-width:none;border:1px solid #111}}' + '</style></head><body><button class="printbtn" onclick="window.print()">' + escapeHtmlLocal(L('Guardar como PDF', 'Save as PDF')) + '</button><section class="cert"><div class="top"><img class="logo" src="' + logoUrl + '"/><div><div class="k">Hashcod · diktatcart · RNC 402-0936929-3</div><h1 class="title">' + escapeHtmlLocal(L('Certificado Privado de Code', 'Private Code Certificate')) + '</h1></div></div><div class="serial">' + escapeHtmlLocal(cert.id) + '</div><div class="grid">' + rowsHtml + '</div>' + notesHtml + '<div class="legal"><span>' + escapeHtmlLocal(L('Aviso legal', 'Legal notice')) + '</span><p>' + escapeHtmlLocal(legal) + '</p></div><div class="seal"><div><div class="sig">Emitido total por diktatcart / Hashcod</div><div class="rnc">RNC: 402-0936929-3</div></div><div class="stamp">CERTIFICADO PRIVADO</div></div></section></body></html>';
+    return '<!doctype html><html><head><meta charset="utf-8"><title>' + escapeHtmlLocal(cert.id) + '</title><style>' + '*{box-sizing:border-box}body{margin:0;background:#ece8df;color:#0a0a0a;font-family:Arial,Helvetica,sans-serif;padding:30px}.printbtn{margin:0 0 18px;padding:12px 18px;border:1px solid #111;background:#111;color:#fff;letter-spacing:2px;text-transform:uppercase}.cert{max-width:980px;margin:0 auto;background:#fff;border:2px solid #111;box-shadow:14px 14px 0 #111;padding:34px}.top{display:grid;grid-template-columns:100px 1fr;gap:22px;align-items:center;border-bottom:2px solid #111;padding-bottom:22px}.logo{width:92px;height:92px;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}.k{font:12px monospace;letter-spacing:4px;text-transform:uppercase;color:#666}.title{font-size:48px;line-height:1;margin:8px 0 0;font-weight:900;letter-spacing:1px}.serial{border:1px solid #111;padding:12px 14px;margin:22px 0;background:#f7f7f7;font-family:monospace;word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{border:1px solid #d7d7d7;padding:12px;min-height:70px}.row span,.notes span,.legal span{display:block;font:10px monospace;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:8px}.row b{font:12px monospace;word-break:break-all}.notes,.legal{border:1px solid #111;padding:16px;margin-top:16px}.notes p,.legal p{margin:0;line-height:1.55}.seal{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:26px;border-top:1px solid #111;padding-top:18px}.sig{font:12px monospace;letter-spacing:2px;text-transform:uppercase}.rnc{font:14px monospace;font-weight:800}.stamp{border:2px solid #111;padding:14px 22px;font:12px monospace;letter-spacing:3px;text-transform:uppercase;transform:rotate(-2deg)}@media print{body{background:#fff;padding:0}.printbtn{display:none}.cert{box-shadow:none;margin:0;max-width:none;border:1px solid #111}}' + '</style></head><body><button class="printbtn" onclick="window.print()">' + escapeHtmlLocal(L('Guardar como PDF', 'Save as PDF')) + '</button><section class="cert"><div class="top"><img class="logo" src="' + logoUrl + '"/><div><div class="k">HSG2818 · diktatcart · RNC 402-0936929-3</div><h1 class="title">' + escapeHtmlLocal(L('Certificado Privado de Code', 'Private Code Certificate')) + '</h1></div></div><div class="serial">' + escapeHtmlLocal(cert.id) + '</div><div class="grid">' + rowsHtml + '</div>' + notesHtml + '<div class="legal"><span>' + escapeHtmlLocal(L('Aviso legal', 'Legal notice')) + '</span><p>' + escapeHtmlLocal(legal) + '</p></div><div class="seal"><div><div class="sig">Emitido total por diktatcart / HSG2818</div><div class="rnc">RNC: 402-0936929-3</div></div><div class="stamp">CERTIFICADO PRIVADO</div></div></section></body></html>';
   };
   const printCertificate = cert => {
     const win = window.open('', '_blank', 'width=1100,height=900');
@@ -15286,16 +15286,16 @@ const CodeCertificateDialog = ({
     className: "certdlg-logo-wrap"
   }, React.createElement("img", {
     src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
-    alt: "Hashcod"
+    alt: "HSG2818"
   })), React.createElement("div", {
     className: "certdlg-k"
-  }, "OPENCRIPTG \xB7 DIKTATCART \xB7 RNC 402-0936929-3"), React.createElement("h3", null, L('Certificado Privado de Code', 'Private Code Certificate')), React.createElement("p", null, L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema Hashcod.', 'Private document for authenticity, issuance, and use license inside the Hashcod ecosystem.')), activeCert ? React.createElement("div", {
+  }, "OPENCRIPTG \xB7 DIKTATCART \xB7 RNC 402-0936929-3"), React.createElement("h3", null, L('Certificado Privado de Code', 'Private Code Certificate')), React.createElement("p", null, L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema HSG2818.', 'Private document for authenticity, issuance, and use license inside the HSG2818 ecosystem.')), activeCert ? React.createElement("div", {
     className: "certdlg-certbox"
   }, React.createElement("div", null, React.createElement("span", null, "ID"), React.createElement("b", null, activeCert.id)), React.createElement("div", null, React.createElement("span", null, L('Titular', 'Holder')), React.createElement("b", null, activeCert.buyerName)), React.createElement("div", null, React.createElement("span", null, "CODE HASH"), React.createElement("b", null, activeCert.codeHash.slice(0, 28), "...")), React.createElement("div", null, React.createElement("span", null, L('Estado', 'Status')), React.createElement("b", null, activeCert.status))) : React.createElement("div", {
     className: "dbdlg-empty"
   }, L('Crea un certificado para ver la vista previa.', 'Create a certificate to see the preview.')), React.createElement("div", {
     className: "certdlg-legal-mini"
-  }, L('Este certificado no es gubernamental, bancario ni notarial. Es una emisión privada de diktatcart/Hashcod basada en sus registros internos.', 'This certificate is not governmental, banking, or notarial. It is a private issuance by diktatcart/Hashcod based on internal records.'))), React.createElement("section", {
+  }, L('Este certificado no es gubernamental, bancario ni notarial. Es una emisión privada de diktatcart/HSG2818 basada en sus registros internos.', 'This certificate is not governmental, banking, or notarial. It is a private issuance by diktatcart/HSG2818 based on internal records.'))), React.createElement("section", {
     className: "textdlg-panel"
   }, React.createElement("div", {
     className: "textdlg-panel-k"
@@ -16940,7 +16940,7 @@ const DeskWorkbenchDialog = ({
     id: 'slot-3',
     title: 'Module 03',
     type: L('Reservado', 'Reserved'),
-    note: L('Diseñado para crecer con Hashcod.', 'Designed to grow with Hashcod.')
+    note: L('Diseñado para crecer con HSG2818.', 'Designed to grow with HSG2818.')
   }, {
     id: 'slot-4',
     title: 'Module 04',
@@ -17045,7 +17045,7 @@ const DeskWorkbenchDialog = ({
   }, {
     key: 'certificates',
     title: L('Certificados', 'Certificates'),
-    desc: L('Crea certificados privados de code con RNC y diseño Hashcod.', 'Create private code certificates with RNC and Hashcod design.'),
+    desc: L('Crea certificados privados de code con RNC y diseño HSG2818.', 'Create private code certificates with RNC and HSG2818 design.'),
     action: onOpenCertificates
   }, {
     key: 'ivory',
@@ -17091,7 +17091,7 @@ const DeskWorkbenchDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, deskTitle || 'Desk'), React.createElement("p", null, L('Espacio central de trabajo para Hashcod. Aquí podrás ir agregando herramientas nuevas más adelante, con accesos rápidos y zonas reservadas.', 'Central workspace for Hashcod. Here you can keep adding new tools later, with shortcuts and reserved zones.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, deskTitle || 'Desk'), React.createElement("p", null, L('Espacio central de trabajo para HSG2818. Aquí podrás ir agregando herramientas nuevas más adelante, con accesos rápidos y zonas reservadas.', 'Central workspace for HSG2818. Here you can keep adding new tools later, with shortcuts and reserved zones.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("div", {
@@ -17230,7 +17230,7 @@ const CommandManualDialog = ({
     const w = window.open('', '_blank', 'width=1200,height=900');
     if (!w) return;
     w.document.open();
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Hashcod Command Form</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:34px;letter-spacing:6px;text-transform:uppercase;}h2{font-size:13px;letter-spacing:4px;text-transform:uppercase;border-top:2px solid #111;padding-top:18px;margin-top:28px;}table{width:100%;border-collapse:collapse;margin-top:10px;}td{border:1px solid #ddd;padding:10px;vertical-align:top;font-size:12px;}code{font-family:Consolas,monospace;font-weight:700;}button{padding:10px 18px;margin-bottom:20px;}@media print{button{display:none;}}</style></head><body><button onclick="window.print()">Guardar como PDF</button><h1>Hashcod Command Form</h1><p>Formulario de comandos del modo IDE/CMD. Rango principal: code001-code619.</p>${rows}<h2>Catálogo numerado code001-code619</h2><table><tr><td><b>Comando</b></td><td><b>Nombre</b></td><td><b>ID técnico</b></td><td><b>Categoría</b></td></tr>${catalogRows}</table></body></html>`);
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>HSG2818 Command Form</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:34px;letter-spacing:6px;text-transform:uppercase;}h2{font-size:13px;letter-spacing:4px;text-transform:uppercase;border-top:2px solid #111;padding-top:18px;margin-top:28px;}table{width:100%;border-collapse:collapse;margin-top:10px;}td{border:1px solid #ddd;padding:10px;vertical-align:top;font-size:12px;}code{font-family:Consolas,monospace;font-weight:700;}button{padding:10px 18px;margin-bottom:20px;}@media print{button{display:none;}}</style></head><body><button onclick="window.print()">Guardar como PDF</button><h1>HSG2818 Command Form</h1><p>Formulario de comandos del modo IDE/CMD. Rango principal: code001-code619.</p>${rows}<h2>Catálogo numerado code001-code619</h2><table><tr><td><b>Comando</b></td><td><b>Nombre</b></td><td><b>ID técnico</b></td><td><b>Categoría</b></td></tr>${catalogRows}</table></body></html>`);
     w.document.close();
   };
   if (!open) return null;
@@ -17242,7 +17242,7 @@ const CommandManualDialog = ({
     onClick: e => e.stopPropagation()
   }, React.createElement("div", {
     className: "dlg-h"
-  }, React.createElement("div", null, React.createElement("h2", null, L('Formulario de comandos', 'Command form')), React.createElement("p", null, L('Guía completa para manejar Hashcod por comandos dentro del modo IDE/CMD.', 'Complete guide to control Hashcod through commands inside IDE/CMD mode.'))), React.createElement("button", {
+  }, React.createElement("div", null, React.createElement("h2", null, L('Formulario de comandos', 'Command form')), React.createElement("p", null, L('Guía completa para manejar HSG2818 por comandos dentro del modo IDE/CMD.', 'Complete guide to control HSG2818 through commands inside IDE/CMD mode.'))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "\xD7")), React.createElement("div", {
@@ -17443,7 +17443,7 @@ ocg report security
 ocg audit legal
 open <module>`)))));
 };
-const HASHCOD_SECURITY_SUITE_TOOLS = [['tokenInspector', 'Hashcod Token Inspector', 'Analiza JWT, API keys, licencias, seriales, QR payloads y tokens de sesion.'], ['licenseShield', 'Hashcod License Shield', 'Crea y verifica licencias firmadas por usuario, dispositivo y expiracion.'], ['evidenceVault', 'Hashcod Evidence Vault', 'Deposita evidencia digital con SHA-256, timestamp, autor, firma y QR payload.'], ['secureTab', 'Hashcod Secure Tab', 'Reemplaza secretos encontrados en codigo por referencias de vault seguro.'], ['secretScanner', 'Hashcod Secret Scanner', 'Encuentra API keys, JWT, private keys, passwords, .env y URLs sensibles.'], ['qrVerifier', 'Hashcod QR Verifier', 'Crea y valida paquetes QR con digest, estado, timestamp e historial local.'], ['ticketGuard', 'Hashcod TicketGuard', 'Emite tickets verificables con QR payload, estado, firma y registro de uso.'], ['codeFingerprint', 'Hashcod Code Fingerprint', 'Genera huella digital de proyectos por archivos, hashes y posibles secretos.'], ['cryptoBenchmark', 'Hashcod Crypto Benchmark Lab', 'Compara salidas SHA, JWT, CSPRNG, UUID, texto y datos repetitivos.'], ['passwordEntropy', 'Hashcod Password Entropy Lab', 'Analiza contrasenas localmente sin guardarlas y da recomendaciones.'], ['fileIntegrity', 'Hashcod File Integrity Monitor', 'Crea snapshots de archivos y detecta cambios por SHA-256.'], ['apiTrust', 'Hashcod API Trust Score', 'Evalua HTTPS, CORS visible, headers y forma de URL de una API.'], ['reportVerifier', 'Hashcod Report Verifier', 'Verifica reportes, digest, QR payloads y evidencias guardadas en la plataforma.'], ['developerVault', 'Hashcod Developer Vault', 'Guarda secretos cifrados con AES-GCM derivado de passphrase local.'], ['cryptoLearning', 'Hashcod Crypto Learning Lab', 'Modulos educativos con demos rapidas de entropia, hash, firma y tokens.'], ['riskEngine', 'Hashcod Risk Engine', 'Motor comun de risk score, entropy, pattern, cloud, band y veredicto.']].map(([key, title, desc]) => ({
+const HASHCOD_SECURITY_SUITE_TOOLS = [['tokenInspector', 'HSG2818 Token Inspector', 'Analiza JWT, API keys, licencias, seriales, QR payloads y tokens de sesion.'], ['licenseShield', 'HSG2818 License Shield', 'Crea y verifica licencias firmadas por usuario, dispositivo y expiracion.'], ['evidenceVault', 'HSG2818 Evidence Vault', 'Deposita evidencia digital con SHA-256, timestamp, autor, firma y QR payload.'], ['secureTab', 'HSG2818 Secure Tab', 'Reemplaza secretos encontrados en codigo por referencias de vault seguro.'], ['secretScanner', 'HSG2818 Secret Scanner', 'Encuentra API keys, JWT, private keys, passwords, .env y URLs sensibles.'], ['qrVerifier', 'HSG2818 QR Verifier', 'Crea y valida paquetes QR con digest, estado, timestamp e historial local.'], ['ticketGuard', 'HSG2818 TicketGuard', 'Emite tickets verificables con QR payload, estado, firma y registro de uso.'], ['codeFingerprint', 'HSG2818 Code Fingerprint', 'Genera huella digital de proyectos por archivos, hashes y posibles secretos.'], ['cryptoBenchmark', 'HSG2818 Crypto Benchmark Lab', 'Compara salidas SHA, JWT, CSPRNG, UUID, texto y datos repetitivos.'], ['passwordEntropy', 'HSG2818 Password Entropy Lab', 'Analiza contrasenas localmente sin guardarlas y da recomendaciones.'], ['fileIntegrity', 'HSG2818 File Integrity Monitor', 'Crea snapshots de archivos y detecta cambios por SHA-256.'], ['apiTrust', 'HSG2818 API Trust Score', 'Evalua HTTPS, CORS visible, headers y forma de URL de una API.'], ['reportVerifier', 'HSG2818 Report Verifier', 'Verifica reportes, digest, QR payloads y evidencias guardadas en la plataforma.'], ['developerVault', 'HSG2818 Developer Vault', 'Guarda secretos cifrados con AES-GCM derivado de passphrase local.'], ['cryptoLearning', 'HSG2818 Crypto Learning Lab', 'Modulos educativos con demos rapidas de entropia, hash, firma y tokens.'], ['riskEngine', 'HSG2818 Risk Engine', 'Motor comun de risk score, entropy, pattern, cloud, band y veredicto.']].map(([key, title, desc]) => ({
   key,
   title,
   desc,
@@ -17517,7 +17517,7 @@ const quoteStandardPremium = type => {
   if (/deprecated|broken|legacy interop only/i.test(text)) return 0.62;
   if (/NIST|FIPS|RFC|ISO|SP 800|IETF|W3C|IEEE/i.test(text)) return 1.22;
   if (/post-quantum|zero-knowledge|homomorphic|threshold|identity-based|attribute-based/i.test(text)) return 1.38;
-  if (/Hashcod/i.test(text)) return 1.16;
+  if (/HSG2818/i.test(text)) return 1.16;
   return 1.0;
 };
 const quoteRarityPremium = (index, categoryId) => {
@@ -17558,9 +17558,9 @@ const quoteMoney = amount => `${Number(amount || 0).toLocaleString('en-US', {
 })} USD`;
 const HASHCOD_INVOICES_STORAGE = 'hashcod_billing_invoices_v1';
 const HASHCOD_QUOTE_PAGE_SIZE = 250;
-const readHashcodInvoices = () => safeJsonParse(localStorage.getItem(HASHCOD_INVOICES_STORAGE) || '[]', []);
-const writeHashcodInvoices = rows => localStorage.setItem(HASHCOD_INVOICES_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
-const makeHashcodDocId = prefix => {
+const readHSG2818Invoices = () => safeJsonParse(localStorage.getItem(HASHCOD_INVOICES_STORAGE) || '[]', []);
+const writeHSG2818Invoices = rows => localStorage.setItem(HASHCOD_INVOICES_STORAGE, JSON.stringify((rows || []).slice(0, 500)));
+const makeHSG2818DocId = prefix => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const tail = Math.random().toString(36).slice(2, 7).toUpperCase();
   return `HC-${prefix}-${date}-${tail}`;
@@ -17600,7 +17600,7 @@ const fileToDataUrl = file => new Promise((resolve, reject) => {
   reader.onerror = reject;
   reader.readAsDataURL(file);
 });
-const HashcodClientVaultDialog = ({
+const HSG2818ClientVaultDialog = ({
   open,
   onClose,
   language,
@@ -17656,7 +17656,7 @@ const HashcodClientVaultDialog = ({
       images,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      source: 'Hashcod Client Credential Vault'
+      source: 'HSG2818 Client Credential Vault'
     };
     const next = [record, ...records];
     setRecords(next);
@@ -17680,11 +17680,11 @@ const HashcodClientVaultDialog = ({
         dataUrl: img.dataUrl
       })) || []
     };
-    triggerDownload(`Hashcod-client-${sanitizeFilename(record.token)}.json`, JSON.stringify({
+    triggerDownload(`HSG2818-client-${sanitizeFilename(record.token)}.json`, JSON.stringify({
       hashcod_client_credential: safe
     }, null, 2), 'application/json;charset=utf-8');
   };
-  const exportAll = () => triggerDownload(`Hashcod-client-vault-${tsStamp()}.json`, JSON.stringify({
+  const exportAll = () => triggerDownload(`HSG2818-client-vault-${tsStamp()}.json`, JSON.stringify({
     total: records.length,
     records
   }, null, 2), 'application/json;charset=utf-8');
@@ -17802,7 +17802,7 @@ const HashcodClientVaultDialog = ({
     className: "client-empty"
   }, L('No hay registros que coincidan.', 'No matching records.')))))));
 };
-const HashcodBillingTimerDialog = ({
+const HSG2818BillingTimerDialog = ({
   open,
   onClose,
   language,
@@ -17883,7 +17883,7 @@ const HashcodBillingTimerDialog = ({
     ctx.strokeRect(72, 70, 1056, 580);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '900 42px Segoe UI, Arial, sans-serif';
-    ctx.fillText('Hashcod Billing Timer', 126, 142);
+    ctx.fillText('HSG2818 Billing Timer', 126, 142);
     ctx.font = '600 18px Cascadia Mono, Consolas, monospace';
     ctx.fillStyle = '#A3A3A3';
     ctx.fillText('0.05 USD PER 10 SECONDS | PNG RECEIPT', 128, 178);
@@ -17902,8 +17902,8 @@ const HashcodBillingTimerDialog = ({
     ctx.fillStyle = '#F5F5F5';
     ctx.fillRect(128, 590, 280, 2);
     ctx.font = '600 16px Cascadia Mono, Consolas, monospace';
-    ctx.fillText('HASHCOD CRYPTOGRAPHIC PLATFORM', 128, 622);
-    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-billing-timer-${tsStamp()}.png`, blob), 'image/png');
+    ctx.fillText('HSG2818 CRYPTOGRAPHIC PLATFORM', 128, 622);
+    canvas.toBlob(blob => blob && triggerBlobDownload(`HSG2818-billing-timer-${tsStamp()}.png`, blob), 'image/png');
   };
   if (!open) return null;
   return React.createElement("div", {
@@ -17950,7 +17950,7 @@ const HashcodBillingTimerDialog = ({
     onClick: exportTimer
   }, L('Descargar PNG', 'Download PNG'))))));
 };
-const HashcodQuoteSystemDialog = ({
+const HSG2818QuoteSystemDialog = ({
   open,
   onClose,
   catalog = [],
@@ -17970,9 +17970,9 @@ const HashcodQuoteSystemDialog = ({
   const [invoiceDueDays, setInvoiceDueDays] = useState(15);
   const [paymentMethod, setPaymentMethod] = useState('Bank transfer / cash / card');
   const [invoiceNotes, setInvoiceNotes] = useState('');
-  const [quoteId, setQuoteId] = useState(() => makeHashcodDocId('QTE'));
-  const [invoiceId, setInvoiceId] = useState(() => makeHashcodDocId('INV'));
-  const [invoices, setInvoices] = useState(() => readHashcodInvoices());
+  const [quoteId, setQuoteId] = useState(() => makeHSG2818DocId('QTE'));
+  const [invoiceId, setInvoiceId] = useState(() => makeHSG2818DocId('INV'));
+  const [invoices, setInvoices] = useState(() => readHSG2818Invoices());
   const [codePage, setCodePage] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
@@ -18002,7 +18002,7 @@ const HashcodQuoteSystemDialog = ({
     }));
   }, [catalog]);
   const toolRows = useMemo(() => {
-    const baseTools = [['Generator Engine', 'Genera lotes de codes criptograficos con metadatos.', 149, 899], ['Database Vault', 'Guarda, busca y reutiliza codes copiados.', 79, 499], ['QR Vault', 'QR verificables, paquetes y payloads.', 69, 399], ['Export Suite', 'TXT, JSON, CSV, YAML, ISO, ZIP, OCG.PACK, PNG.', 49, 299], ['Code GUI / CMD', 'Editor y consola especializada por code.', 129, 799], ['Certificates', 'Certificados con ID, hash, QR y titular.', 119, 699], ['BASEMAT', 'Entropia, colisiones, Shamir, Merkle, lattice y primos.', 159, 999], ['Container Port', 'Cajas de 10 codes y contenedores de 100 cajas.', 189, 1200], ['Crypto AI', 'Chat IA criptografico por API del usuario.', 199, 1299], ['HNS Browser', 'Browser CLI/GUI para hns:// y Phone OS.', 159, 999], ['Complex Entropy Map', 'Mapa complejo, entropia, cuadrantes y riesgo.', 129, 799], ['Quote System', 'Cotizaciones Hashcod con tabla y calculadora.', 99, 499]];
+    const baseTools = [['Generator Engine', 'Genera lotes de codes criptograficos con metadatos.', 149, 899], ['Database Vault', 'Guarda, busca y reutiliza codes copiados.', 79, 499], ['QR Vault', 'QR verificables, paquetes y payloads.', 69, 399], ['Export Suite', 'TXT, JSON, CSV, YAML, ISO, ZIP, OCG.PACK, PNG.', 49, 299], ['Code GUI / CMD', 'Editor y consola especializada por code.', 129, 799], ['Certificates', 'Certificados con ID, hash, QR y titular.', 119, 699], ['BASEMAT', 'Entropia, colisiones, Shamir, Merkle, lattice y primos.', 159, 999], ['Container Port', 'Cajas de 10 codes y contenedores de 100 cajas.', 189, 1200], ['Crypto AI', 'Chat IA criptografico por API del usuario.', 199, 1299], ['HNS Browser', 'Browser CLI/GUI para hns:// y Phone OS.', 159, 999], ['Complex Entropy Map', 'Mapa complejo, entropia, cuadrantes y riesgo.', 129, 799], ['Quote System', 'Cotizaciones HSG2818 con tabla y calculadora.', 99, 499]];
     const securityTools = HASHCOD_SECURITY_SUITE_TOOLS.map((tool, i) => [tool.title, tool.desc, 179 + i % 4 * 15, 1200 + i % 5 * 90]);
     return [...baseTools, ...securityTools].map(([name, purpose, monthly, setup], index) => ({
       id: `tool-${index + 1}`,
@@ -18052,7 +18052,7 @@ const HashcodQuoteSystemDialog = ({
       id: `${row.id}-${Date.now()}`,
       kind: 'tool',
       name: row.name,
-      ref: 'Hashcod tool/service',
+      ref: 'HSG2818 tool/service',
       unit: row.suggested,
       qty: 1,
       pack: 1,
@@ -18075,7 +18075,7 @@ const HashcodQuoteSystemDialog = ({
     id: activeDocId,
     type: docType,
     status: docType === 'invoice' ? invoiceStatus : 'proposal',
-    customer: customer.trim() || 'Hashcod customer',
+    customer: customer.trim() || 'HSG2818 customer',
     customerTaxId: customerTaxId.trim(),
     customerEmail: customerEmail.trim(),
     customerPhone: customerPhone.trim(),
@@ -18084,7 +18084,7 @@ const HashcodQuoteSystemDialog = ({
     notes: invoiceNotes.trim(),
     createdAt: new Date().toISOString(),
     dueAt: docType === 'invoice' ? dueAt : null,
-    sourcePdfs: ['Hashcod-10000-code-pricing.pdf', 'Hashcod-tools-pricing-and-code-differences.pdf'],
+    sourcePdfs: ['HSG2818-10000-code-pricing.pdf', 'HSG2818-tools-pricing-and-code-differences.pdf'],
     items,
     totals: {
       subtotal,
@@ -18096,11 +18096,11 @@ const HashcodQuoteSystemDialog = ({
     }
   };
   const docLabel = docType === 'invoice' ? L('Factura', 'Invoice') : L('Cotizacion', 'Quote');
-  const exportJson = () => triggerDownload(`Hashcod-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.json`, JSON.stringify(quote, null, 2), 'application/json;charset=utf-8');
+  const exportJson = () => triggerDownload(`HSG2818-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.json`, JSON.stringify(quote, null, 2), 'application/json;charset=utf-8');
   const exportCsv = () => {
     const rows = [['type', 'name', 'reference', 'unit_price_usd', 'quantity', 'line_total_usd', 'note'], ...items.map(item => [item.kind, item.name, item.ref, item.unit, item.qty, (item.unit * item.qty).toFixed(2), item.note])];
     const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-    triggerDownload(`Hashcod-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.csv`, csv, 'text/csv;charset=utf-8');
+    triggerDownload(`HSG2818-${docType === 'invoice' ? 'Invoice' : 'Quote'}-${quote.id}.csv`, csv, 'text/csv;charset=utf-8');
   };
   const saveInvoice = statusOverride => {
     if (!items.length) {
@@ -18119,12 +18119,12 @@ const HashcodQuoteSystemDialog = ({
     setDocType('invoice');
     setInvoiceStatus(saved.status);
     setInvoices(next);
-    writeHashcodInvoices(next);
-    notify?.(L('Factura guardada en Hashcod Billing.', 'Invoice saved in Hashcod Billing.'));
+    writeHSG2818Invoices(next);
+    notify?.(L('Factura guardada en HSG2818 Billing.', 'Invoice saved in HSG2818 Billing.'));
   };
   const loadInvoice = row => {
     setDocType('invoice');
-    setInvoiceId(row.id || makeHashcodDocId('INV'));
+    setInvoiceId(row.id || makeHSG2818DocId('INV'));
     setCustomer(row.customer || '');
     setCustomerTaxId(row.customerTaxId || '');
     setCustomerEmail(row.customerEmail || '');
@@ -18140,21 +18140,21 @@ const HashcodQuoteSystemDialog = ({
   };
   const newInvoice = () => {
     setDocType('invoice');
-    setInvoiceId(makeHashcodDocId('INV'));
+    setInvoiceId(makeHSG2818DocId('INV'));
     setInvoiceStatus('draft');
   };
   const newQuote = () => {
     setDocType('quote');
-    setQuoteId(makeHashcodDocId('QTE'));
+    setQuoteId(makeHSG2818DocId('QTE'));
   };
   const printQuote = () => {
     const logo = window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(46) : '';
     const lineRows = items.map(item => `<tr><td>${escapeHtmlStrict(item.kind)}</td><td>${escapeHtmlStrict(item.name)}<small>${escapeHtmlStrict(item.ref)}</small></td><td>${escapeHtmlStrict(item.note)}</td><td>${quoteMoney(item.unit)}</td><td>${item.qty}</td><td>${quoteMoney(item.unit * item.qty)}</td></tr>`).join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${quote.id}</title><style>
-      body{margin:0;background:#f4f4f4;color:#111;font-family:"Segoe UI",Arial,sans-serif;padding:32px}.sheet{max-width:980px;margin:0 auto;background:#fff;border:1px solid #111;box-shadow:10px 10px 0 #ccc}.head{display:flex;gap:16px;align-items:center;padding:24px;border-bottom:4px solid #111}.logo{width:54px;height:54px;display:grid;place-items:center}.logo svg{width:54px;height:54px}h1{margin:0;font-size:32px}.k{font:11px monospace;letter-spacing:3px;text-transform:uppercase;color:#555}.meta,.totals{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ccc}.meta div,.totals div{padding:14px;border-right:1px solid #ddd}.meta span,.totals span{display:block;font:10px monospace;letter-spacing:2px;color:#777;text-transform:uppercase}.meta b,.totals b{display:block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left;font-size:12px}th{font:10px monospace;letter-spacing:2px;text-transform:uppercase;background:#111;color:#fff}small{display:block;color:#777;margin-top:4px}.foot{padding:18px;font:11px monospace;color:#555;line-height:1.55}.print{margin:0 0 16px;padding:12px 18px;background:#111;color:#fff;border:0;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.print{display:none}.sheet{box-shadow:none;max-width:none}}</style></head><body><button class="print" onclick="window.print()">Guardar como PDF</button><section class="sheet"><div class="head"><div class="logo">${logo}</div><div><div class="k">Hashcod quotation system</div><h1>${quote.id}</h1></div></div><div class="meta"><div><span>Cliente</span><b>${escapeHtmlStrict(quote.customer)}</b></div><div><span>Fecha</span><b>${new Date(quote.createdAt).toLocaleString()}</b></div><div><span>Items</span><b>${items.length}</b></div><div><span>Moneda</span><b>USD</b></div></div><table><thead><tr><th>Tipo</th><th>Producto</th><th>Nota</th><th>Unidad</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${lineRows || '<tr><td colspan="6">Sin items</td></tr>'}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${quoteMoney(subtotal)}</b></div><div><span>Descuento</span><b>${Number(discount) || 0}% / ${quoteMoney(discountValue)}</b></div><div><span>Impuesto</span><b>${Number(tax) || 0}% / ${quoteMoney(taxValue)}</b></div><div><span>Total</span><b>${quoteMoney(total)}</b></div></div><div class="foot">Base: Hashcod-10000-code-pricing.pdf y Hashcod-tools-pricing-and-code-differences.pdf. Estos precios son modelo comercial sugerido de Hashcod; no son asesoría financiera ni valoración legal.</div></section></body></html>`;
+      body{margin:0;background:#f4f4f4;color:#111;font-family:"Segoe UI",Arial,sans-serif;padding:32px}.sheet{max-width:980px;margin:0 auto;background:#fff;border:1px solid #111;box-shadow:10px 10px 0 #ccc}.head{display:flex;gap:16px;align-items:center;padding:24px;border-bottom:4px solid #111}.logo{width:54px;height:54px;display:grid;place-items:center}.logo svg{width:54px;height:54px}h1{margin:0;font-size:32px}.k{font:11px monospace;letter-spacing:3px;text-transform:uppercase;color:#555}.meta,.totals{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #ccc}.meta div,.totals div{padding:14px;border-right:1px solid #ddd}.meta span,.totals span{display:block;font:10px monospace;letter-spacing:2px;color:#777;text-transform:uppercase}.meta b,.totals b{display:block;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left;font-size:12px}th{font:10px monospace;letter-spacing:2px;text-transform:uppercase;background:#111;color:#fff}small{display:block;color:#777;margin-top:4px}.foot{padding:18px;font:11px monospace;color:#555;line-height:1.55}.print{margin:0 0 16px;padding:12px 18px;background:#111;color:#fff;border:0;letter-spacing:2px;text-transform:uppercase}@media print{body{background:#fff;padding:0}.print{display:none}.sheet{box-shadow:none;max-width:none}}</style></head><body><button class="print" onclick="window.print()">Guardar como PDF</button><section class="sheet"><div class="head"><div class="logo">${logo}</div><div><div class="k">HSG2818 quotation system</div><h1>${quote.id}</h1></div></div><div class="meta"><div><span>Cliente</span><b>${escapeHtmlStrict(quote.customer)}</b></div><div><span>Fecha</span><b>${new Date(quote.createdAt).toLocaleString()}</b></div><div><span>Items</span><b>${items.length}</b></div><div><span>Moneda</span><b>USD</b></div></div><table><thead><tr><th>Tipo</th><th>Producto</th><th>Nota</th><th>Unidad</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${lineRows || '<tr><td colspan="6">Sin items</td></tr>'}</tbody></table><div class="totals"><div><span>Subtotal</span><b>${quoteMoney(subtotal)}</b></div><div><span>Descuento</span><b>${Number(discount) || 0}% / ${quoteMoney(discountValue)}</b></div><div><span>Impuesto</span><b>${Number(tax) || 0}% / ${quoteMoney(taxValue)}</b></div><div><span>Total</span><b>${quoteMoney(total)}</b></div></div><div class="foot">Base: HSG2818-10000-code-pricing.pdf y HSG2818-tools-pricing-and-code-differences.pdf. Estos precios son modelo comercial sugerido de HSG2818; no son asesoría financiera ni valoración legal.</div></section></body></html>`;
     const win = window.open('', '_blank', 'width=1060,height=900');
     if (!win) return;
-    const printableHtml = html.replace('Hashcod quotation system', `Hashcod ${docLabel} system`).replace('<div><span>Items</span><b>', `<div><span>Estado</span><b>${escapeHtmlStrict(quote.status)}</b><small>${docType === 'invoice' ? `Vence: ${new Date(quote.dueAt).toLocaleDateString()}` : ''}</small></div><div><span>Items</span><b>`).replace('<div><span>Moneda</span><b>USD</b></div></div><table>', `<div><span>Moneda</span><b>USD</b></div></div><div class="foot">Cliente fiscal: ${escapeHtmlStrict(quote.customerTaxId || '-')} | Email: ${escapeHtmlStrict(quote.customerEmail || '-')} | Telefono: ${escapeHtmlStrict(quote.customerPhone || '-')} | Direccion: ${escapeHtmlStrict(quote.customerAddress || '-')} | Pago: ${escapeHtmlStrict(quote.paymentMethod || '-')}</div><table>`);
+    const printableHtml = html.replace('HSG2818 quotation system', `HSG2818 ${docLabel} system`).replace('<div><span>Items</span><b>', `<div><span>Estado</span><b>${escapeHtmlStrict(quote.status)}</b><small>${docType === 'invoice' ? `Vence: ${new Date(quote.dueAt).toLocaleDateString()}` : ''}</small></div><div><span>Items</span><b>`).replace('<div><span>Moneda</span><b>USD</b></div></div><table>', `<div><span>Moneda</span><b>USD</b></div></div><div class="foot">Cliente fiscal: ${escapeHtmlStrict(quote.customerTaxId || '-')} | Email: ${escapeHtmlStrict(quote.customerEmail || '-')} | Telefono: ${escapeHtmlStrict(quote.customerPhone || '-')} | Direccion: ${escapeHtmlStrict(quote.customerAddress || '-')} | Pago: ${escapeHtmlStrict(quote.paymentMethod || '-')}</div><table>`);
     win.document.open();
     win.document.write(printableHtml);
     win.document.close();
@@ -18182,7 +18182,7 @@ const HashcodQuoteSystemDialog = ({
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(42) : TOP_MENU_ICONS.quoteSystem
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Cotizaciones y Facturacion Hashcod', 'Hashcod Quotes and Billing')), React.createElement("p", null, L('Calcula precios, emite facturas, guarda registros y descarga documentos con logo Hashcod.', 'Calculate prices, issue invoices, save records and download Hashcod-branded documents.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Cotizaciones y Facturacion HSG2818', 'HSG2818 Quotes and Billing')), React.createElement("p", null, L('Calcula precios, emite facturas, guarda registros y descarga documentos con logo HSG2818.', 'Calculate prices, issue invoices, save records and download HSG2818-branded documents.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -18268,10 +18268,10 @@ const HashcodQuoteSystemDialog = ({
     className: mode === 'tools' ? 'on' : '',
     onClick: () => setMode('tools')
   }, L('Herramientas', 'Tools')), React.createElement("a", {
-    href: "/exports/Hashcod-10000-code-pricing.pdf",
+    href: "/exports/HSG2818-10000-code-pricing.pdf",
     download: true
   }, "PDF codes"), React.createElement("a", {
-    href: "/exports/Hashcod-tools-pricing-and-code-differences.pdf",
+    href: "/exports/HSG2818-tools-pricing-and-code-differences.pdf",
     download: true
   }, "PDF tools")), React.createElement("div", {
     className: "quote-shell"
@@ -18371,7 +18371,7 @@ const securitySecretFindings = text => {
       kind,
       sample: String(match).slice(0, 90),
       risk: /PRIVATE|PASSWORD|DATABASE|SECRET/.test(kind) ? 'HIGH' : 'WATCHLIST',
-      recommendation: 'Move to Hashcod Developer Vault or environment variables; rotate if public.'
+      recommendation: 'Move to HSG2818 Developer Vault or environment variables; rotate if public.'
     }));
   });
   return findings;
@@ -18415,7 +18415,7 @@ const estimatePasswordReport = password => {
     recommendations: [value.length < 16 ? 'Use at least 16 characters.' : 'Length is acceptable.', bits < 80 ? 'Prefer a passphrase with random words and symbols.' : 'Entropy estimate is strong.', 'Do not store this password; this lab processes it locally only.']
   };
 };
-const HashcodSecuritySuiteDialog = ({
+const HSG2818SecuritySuiteDialog = ({
   open,
   activeTool,
   onSelectTool,
@@ -18456,7 +18456,7 @@ const HashcodSecuritySuiteDialog = ({
         tool: currentTool.key
       }
     }));
-    notify?.(L('Registro guardado en la suite Hashcod', 'Record saved in Hashcod suite'));
+    notify?.(L('Registro guardado en la suite HSG2818', 'Record saved in HSG2818 suite'));
     return record;
   };
   const run = async () => {
@@ -18507,7 +18507,7 @@ const HashcodSecuritySuiteDialog = ({
       const packageHash = await digestHex(`${value}:${JSON.stringify(fileRows)}:${aux}`);
       payload = {
         ...payload,
-        author: aux || 'Hashcod user',
+        author: aux || 'HSG2818 user',
         evidenceId: `HCE-${packageHash.slice(0, 12).toUpperCase()}`,
         files: fileRows,
         textSha256: await digestHex(value),
@@ -18519,7 +18519,7 @@ const HashcodSecuritySuiteDialog = ({
       const findings = securitySecretFindings(value);
       let rewritten = value;
       findings.forEach((finding, index) => {
-        rewritten = rewritten.replace(finding.sample, `HashcodVault.get("${finding.kind}_${String(index + 1).padStart(2, '0')}")`);
+        rewritten = rewritten.replace(finding.sample, `HSG2818Vault.get("${finding.kind}_${String(index + 1).padStart(2, '0')}")`);
       });
       payload = {
         ...payload,
@@ -18557,7 +18557,7 @@ const HashcodSecuritySuiteDialog = ({
       const id = `HCT-${(await digestHex(`${aux}:${value}:${Date.now()}`)).slice(0, 12).toUpperCase()}`;
       const body = {
         id,
-        holder: aux || 'Hashcod Holder',
+        holder: aux || 'HSG2818 Holder',
         code: value.slice(0, 500),
         issuedAt: new Date().toISOString(),
         status: 'ACTIVE'
@@ -18584,7 +18584,7 @@ const HashcodSecuritySuiteDialog = ({
       };
     } else if (currentTool.key === 'cryptoBenchmark') {
       const results = [];
-      for (const sample of buildHashcodBenchmarkSamples().slice(0, 24)) {
+      for (const sample of buildHSG2818BenchmarkSamples().slice(0, 24)) {
         const analysis = await analyzePivotKernel(sample.value, 4, 24);
         results.push({
           name: sample.name,
@@ -18719,10 +18719,10 @@ const HashcodSecuritySuiteDialog = ({
     setResult(payload);
     saveRecord(payload);
   };
-  const exportResult = () => result && triggerDownload(`Hashcod-${currentTool.key}-${tsStamp()}.json`, JSON.stringify({
+  const exportResult = () => result && triggerDownload(`HSG2818-${currentTool.key}-${tsStamp()}.json`, JSON.stringify({
     hashcod_security_suite: result
   }, null, 2), 'application/json;charset=utf-8');
-  const exportYaml = () => result && triggerDownload(`Hashcod-${currentTool.key}-${tsStamp()}.yaml`, Object.entries(result).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join('\n'), 'text/yaml;charset=utf-8');
+  const exportYaml = () => result && triggerDownload(`HSG2818-${currentTool.key}-${tsStamp()}.yaml`, Object.entries(result).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join('\n'), 'text/yaml;charset=utf-8');
   return React.createElement("div", {
     className: "dlg-back",
     onClick: onClose
@@ -18756,7 +18756,7 @@ const HashcodSecuritySuiteDialog = ({
     dangerouslySetInnerHTML: {
       __html: tool.icon
     }
-  }), React.createElement("b", null, tool.title.replace('Hashcod ', ''))))), React.createElement("main", {
+  }), React.createElement("b", null, tool.title.replace('HSG2818 ', ''))))), React.createElement("main", {
     className: "hsec-main"
   }, React.createElement("section", {
     className: "hsec-form"
@@ -18769,7 +18769,7 @@ const HashcodSecuritySuiteDialog = ({
   }, React.createElement("label", null, React.createElement("span", null, L('Autor / usuario / nombre / snapshot', 'Author / user / name / snapshot')), React.createElement("input", {
     value: aux,
     onChange: e => setAux(e.target.value),
-    placeholder: "Hashcod user"
+    placeholder: "HSG2818 user"
   })), React.createElement("label", null, React.createElement("span", null, L('Clave local opcional', 'Optional local key')), React.createElement("input", {
     value: passphrase,
     onChange: e => setPassphrase(e.target.value),
@@ -18866,8 +18866,8 @@ const App = () => {
   const [userLoungeOpen, setUserLoungeOpen] = useState(false);
   const [codeLibraryOpen, setCodeLibraryOpen] = useState(false);
   const [cryptoIdeOpen, setCryptoIdeOpen] = useState(false);
-  const [hashcodLawOpen, setHashcodLawOpen] = useState(false);
-  const [hashcodLicensesOpen, setHashcodLicensesOpen] = useState(false);
+  const [hashcodLawOpen, setHSG2818LawOpen] = useState(false);
+  const [hashcodLicensesOpen, setHSG2818LicensesOpen] = useState(false);
   const [quoteSystemOpen, setQuoteSystemOpen] = useState(false);
   const [billingTimerOpen, setBillingTimerOpen] = useState(false);
   const [clientVaultOpen, setClientVaultOpen] = useState(false);
@@ -18901,7 +18901,7 @@ const App = () => {
   const [cmdLog, setCmdLog] = useState(() => [{
     kind: 'sys',
     prompt: 'boot',
-    text: 'Hashcod IDE CMD inicializado. Escribe help para ver comandos.'
+    text: 'HSG2818 IDE CMD inicializado. Escribe help para ver comandos.'
   }, {
     kind: 'sys',
     prompt: 'boot',
@@ -18942,7 +18942,7 @@ const App = () => {
       const {
         type
       } = findTypeMeta(row.type);
-      const title = reason === 'saved' ? 'Hashcod code saved' : 'Hashcod code ready';
+      const title = reason === 'saved' ? 'HSG2818 code saved' : 'HSG2818 code ready';
       const body = `${String(row.idx || '').padStart(3, '0')} | ${type ? type.label : row.type}\n${window.OCG_GEN.display(row.value, 240)}`;
       const res = await authFetch('/api/phone-os/send', {
         method: 'POST',
@@ -18986,7 +18986,7 @@ const App = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          title: 'Hashcod code saved',
+          title: 'HSG2818 code saved',
           body: `${String(first.idx || '').padStart(3, '0')} | ${first.type}\n${window.OCG_GEN.display(first.value, 220)}${items.length > 1 ? `\n+${items.length - 1} more` : ''}`,
           type: `saved:${mode}`,
           codeType: first.type,
@@ -19224,7 +19224,7 @@ const App = () => {
     if (!planAllows('export', language === 'es' ? 'Descargar ISO requiere Starter o superior.' : 'ISO download requires Starter or higher.')) return;
     try {
       const iso = rowToIsoImage(row, language);
-      const name = `Hashcod-ISO-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.iso`;
+      const name = `HSG2818-ISO-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.iso`;
       triggerBlobDownload(name, new Blob([iso], {
         type: 'application/x-iso9660-image'
       }));
@@ -19237,7 +19237,7 @@ const App = () => {
   const downloadRowYaml = row => {
     if (!planAllows('export', language === 'es' ? 'Descargar YAML requiere Starter o superior.' : 'YAML download requires Starter or higher.')) return;
     const yaml = rowToYaml(row, language);
-    const name = `Hashcod-yaml-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.yaml`;
+    const name = `HSG2818-yaml-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.yaml`;
     triggerDownload(name, yaml, 'application/x-yaml;charset=utf-8');
     notify(language === 'es' ? 'YAML descargado' : 'YAML downloaded');
   };
@@ -19245,7 +19245,7 @@ const App = () => {
     if (!planAllows('export', language === 'es' ? 'Descargar ZIP requiere Starter o superior.' : 'ZIP download requires Starter or higher.')) return;
     try {
       const zip = rowToZipBlob(row, language);
-      const name = `Hashcod-ZIP-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
+      const name = `HSG2818-ZIP-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
       triggerBlobDownload(name, zip);
       notify(language === 'es' ? 'ZIP descargado' : 'ZIP downloaded');
     } catch (err) {
@@ -19256,7 +19256,7 @@ const App = () => {
   const downloadRowPack = row => {
     if (!planAllows('export', language === 'es' ? 'Descargar OCG Pack requiere Starter o superior.' : 'OCG Pack download requires Starter or higher.')) return;
     const pack = rowToOcgPack(row, language);
-    const name = `Hashcod-Pack-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.ocg.pack`;
+    const name = `HSG2818-Pack-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.ocg.pack`;
     triggerDownload(name, pack, 'application/vnd.hashcod.ocg-pack;charset=utf-8');
     notify(language === 'es' ? 'OCG Pack descargado' : 'OCG Pack downloaded');
   };
@@ -19317,7 +19317,7 @@ const App = () => {
     const serial = `HCARD-${seedHash.slice(0, 4)}-${seedHash.slice(4, 8)}-${seedHash.slice(8, 12)}`;
     const validation = `${digits.slice(0, 6)}-${digits.slice(6, 12)}-${digits.slice(12, 18)}`;
     const manifest = {
-      platform: 'Hashcod',
+      platform: 'HSG2818',
       format: 'virtual-code-card',
       version: 'v12',
       serial,
@@ -19350,7 +19350,7 @@ const App = () => {
     ctx.strokeRect(70, 120, 660, 410);
     ctx.fillStyle = '#111';
     ctx.font = '700 22px "Inter", Arial, sans-serif';
-    ctx.fillText('Hashcod Virtual Code Card', 70, 82);
+    ctx.fillText('HSG2818 Virtual Code Card', 70, 82);
     ctx.font = '600 12px "IBM Plex Mono", "Courier New", monospace';
     ctx.fillStyle = '#777';
     ctx.fillText('PRIVATE CODE CREDENTIAL | QR VALIDATION', 70, 104);
@@ -19386,7 +19386,7 @@ const App = () => {
     ctx.fillStyle = '#777';
     ctx.font = '600 11px "IBM Plex Mono", "Courier New", monospace';
     ctx.fillText(`INDEX ${manifest.generated_index} | ${manifest.type_id}`, 70, 590);
-    ctx.fillText('Generated inside Hashcod | Treat as sensitive material', 70, 614);
+    ctx.fillText('Generated inside HSG2818 | Treat as sensitive material', 70, 614);
     return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   };
   const downloadRowCodeCard = async row => {
@@ -19414,7 +19414,7 @@ const App = () => {
         name: 'validation.txt',
         content: `SERIAL=${manifest.serial}\nVALIDATION_NUMBER=${manifest.validation_number}\nCODE_SHA256=${manifest.code_sha256}\nQR_PAYLOAD=${qrPayload}\n`
       }]);
-      const name = `Hashcod-CodeCard-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
+      const name = `HSG2818-CodeCard-${sanitizeFilename(row.type)}-${String(row.idx).padStart(3, '0')}-${tsStamp()}.zip`;
       triggerBlobDownload(name, zip);
       notify(language === 'es' ? 'Tarjeta virtual descargada' : 'Virtual code card downloaded');
     } catch (err) {
@@ -19448,13 +19448,13 @@ const App = () => {
       ctx.font = '600 10px "IBM Plex Mono", "Courier New", monospace';
       const display = window.OCG_GEN.display(row.value, 42);
       ctx.fillText(display, pad, qrCanvas.height + pad + 34);
-      drawHashcodCanvasLogo(ctx, pad, qrCanvas.height + pad + 48, 24, '#111111');
+      drawHSG2818CanvasLogo(ctx, pad, qrCanvas.height + pad + 48, 24, '#111111');
       ctx.fillStyle = '#111111';
       ctx.font = '700 13px "Segoe UI", Arial, sans-serif';
-      ctx.fillText('Hashcod', pad + 34, qrCanvas.height + pad + 64);
+      ctx.fillText('HSG2818', pad + 34, qrCanvas.height + pad + 64);
       const a = document.createElement('a');
       a.href = out.toDataURL('image/png');
-      a.download = `Hashcod-qr-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
+      a.download = `HSG2818-qr-${sanitizeFilename((row.type || 'code') + '-' + String(row.idx).padStart(3, '0'))}-${tsStamp()}.png`;
       a.click();
     } catch (err) {
       console.error(err);
@@ -19569,8 +19569,8 @@ const App = () => {
         .pel{width:22px;height:22px;display:inline-flex;color:#111;}
         @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
       </style></head><body><div class="ticket">
-        <div class="brand">Hashcod ticket</div>
-        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>Hashcod</strong></div>
+        <div class="brand">HSG2818 ticket</div>
+        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong></div>
         <div class="k">${safe(titleText)}</div>
         <div class="k">${safe(language === 'es' ? 'Índice' : 'Index')}</div><div class="v">${safe(String(row.idx).padStart(3, '0'))}</div>
         <div class="k">${safe(language === 'es' ? 'Primitiva' : 'Primitive')}</div><div class="v">${safe(type?.label || row.primitiveLabel || row.type)}</div>
@@ -19584,7 +19584,7 @@ const App = () => {
         <div class="k">${safe(language === 'es' ? 'No lo uses para' : 'Avoid')}</div><div class="note">${safe(profile.avoid)}</div>
         <div class="k">${safe(language === 'es' ? 'Code generado' : 'Generated code')}</div><div class="code">${codeWrapped}</div>
         <div class="qr"><img src="${qrUrl}" alt="QR" /></div>
-        <div class="foot">Hashcod · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
+        <div class="foot">HSG2818 · diktatcart® 2026<br/>${safe(language === 'es' ? 'Ticket interno de referencia visual del material generado.' : 'Internal visual reference ticket for generated material.')}</div>
       </div><script>window.onload=()=>setTimeout(()=>window.print(),220);<\/script></body></html>`;
       w.document.open();
       w.document.write(html);
@@ -19814,7 +19814,7 @@ const App = () => {
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
   const openLatticeLab = () => setLatticeLabOpen(true);
-  const openHashcodLicenses = () => setHashcodLicensesOpen(true);
+  const openHSG2818Licenses = () => setHSG2818LicensesOpen(true);
   const openQuoteSystem = () => setQuoteSystemOpen(true);
   const openBillingTimer = () => setBillingTimerOpen(true);
   const openClientVault = () => setClientVaultOpen(true);
@@ -20366,16 +20366,16 @@ const App = () => {
   }];
   const hashcodLicenseItems = [{
     label: language === 'es' ? 'Abrir License Factory' : 'Open License Factory',
-    onClick: openHashcodLicenses
+    onClick: openHSG2818Licenses
   }, {
-    label: language === 'es' ? '400 plantillas Hashcod' : '400 Hashcod templates',
-    onClick: openHashcodLicenses
+    label: language === 'es' ? '400 plantillas HSG2818' : '400 HSG2818 templates',
+    onClick: openHSG2818Licenses
   }, {
     label: language === 'es' ? 'Emitir JSON / YAML / TXT / PNG' : 'Issue JSON / YAML / TXT / PNG',
-    onClick: openHashcodLicenses
+    onClick: openHSG2818Licenses
   }];
   const quoteSystemItems = [{
-    label: language === 'es' ? 'Abrir facturacion y cotizador Hashcod' : 'Open Hashcod billing and quote system',
+    label: language === 'es' ? 'Abrir facturacion y cotizador HSG2818' : 'Open HSG2818 billing and quote system',
     onClick: openQuoteSystem
   }, {
     label: language === 'es' ? 'Tabla de 10,000 codes con precios' : '10,000-code pricing table',
@@ -20663,7 +20663,7 @@ const App = () => {
           meta: {
             salt,
             nonce,
-            engine: 'Hashcod CMD Advanced Generator'
+            engine: 'HSG2818 CMD Advanced Generator'
           }
         });
         seen.add(value);
@@ -20764,11 +20764,11 @@ const App = () => {
         complexmap: openComplexEntropy,
         'complex-map': openComplexEntropy,
         shredder: openComplexEntropy,
-        licenses: openHashcodLicenses,
-        licensefactory: openHashcodLicenses,
-        hclic: openHashcodLicenses,
-        copyright: openHashcodLicenses,
-        licencias: openHashcodLicenses,
+        licenses: openHSG2818Licenses,
+        licensefactory: openHSG2818Licenses,
+        hclic: openHSG2818Licenses,
+        copyright: openHSG2818Licenses,
+        licencias: openHSG2818Licenses,
         quote: openQuoteSystem,
         quotes: openQuoteSystem,
         quotation: openQuoteSystem,
@@ -20892,7 +20892,7 @@ const App = () => {
       return;
     }
     if (cmd === 'version' || cmd === 'about') {
-      pushCmd('Hashcod IDE/CMD · v12 · SipHash-2-4 Gate · 1000 Command System · local-first cryptographic code workstation.', 'sys');
+      pushCmd('HSG2818 IDE/CMD · v12 · SipHash-2-4 Gate · 1000 Command System · local-first cryptographic code workstation.', 'sys');
       return;
     }
     if (cmd === 'lang') {
@@ -21270,63 +21270,63 @@ const App = () => {
         verbs: ['analyze', 'bytes', 'plane', 'risk', 'png', 'json']
       },
       licenses: {
-        open: openHashcodLicenses,
-        label: 'Hashcod License Factory',
+        open: openHSG2818Licenses,
+        label: 'HSG2818 License Factory',
         verbs: ['issue', 'catalog', 'json', 'yaml', 'png', 'txt', 'copyright', 'template', 'help']
       },
       licencias: {
-        open: openHashcodLicenses,
-        label: 'Hashcod License Factory',
+        open: openHSG2818Licenses,
+        label: 'HSG2818 License Factory',
         verbs: ['emitir', 'catalogo', 'json', 'yaml', 'png', 'txt', 'copyright', 'plantilla', 'help']
       },
       quote: {
         open: openQuoteSystem,
-        label: 'Hashcod Billing System',
+        label: 'HSG2818 Billing System',
         verbs: ['price', 'codes', 'tools', 'invoice', 'billing', 'discount', 'tax', 'pdf', 'json', 'csv', 'customer']
       },
       cotizacion: {
         open: openQuoteSystem,
-        label: 'Hashcod Billing System',
+        label: 'HSG2818 Billing System',
         verbs: ['precio', 'codes', 'herramientas', 'factura', 'facturacion', 'descuento', 'impuesto', 'pdf', 'json', 'csv', 'cliente']
       },
       factura: {
         open: openQuoteSystem,
-        label: 'Hashcod Billing System',
+        label: 'HSG2818 Billing System',
         verbs: ['emitir', 'guardar', 'cliente', 'impuesto', 'vencimiento', 'pdf', 'json', 'csv']
       },
       timer: {
         open: openBillingTimer,
-        label: 'Hashcod Billing Timer',
+        label: 'HSG2818 Billing Timer',
         verbs: ['start', 'pause', 'resume', 'stop', 'usd', '10s', 'seconds', 'png']
       },
       cronometro: {
         open: openBillingTimer,
-        label: 'Hashcod Billing Timer',
+        label: 'HSG2818 Billing Timer',
         verbs: ['activar', 'pausar', 'continuar', 'parar', 'usd', '10s', 'segundos', 'png']
       },
       clientvault: {
         open: openClientVault,
-        label: 'Hashcod Client Credential Vault',
+        label: 'HSG2818 Client Credential Vault',
         verbs: ['client', 'credential', 'token', 'jpg', 'record', 'export']
       },
       clientes: {
         open: openClientVault,
-        label: 'Hashcod Client Credential Vault',
+        label: 'HSG2818 Client Credential Vault',
         verbs: ['cliente', 'credencial', 'token', 'jpg', 'registro', 'exportar']
       },
       launch: {
         open: openLaunchCenter,
-        label: 'Hashcod Launch Center',
+        label: 'HSG2818 Launch Center',
         verbs: ['checklist', 'readiness', 'legal', 'security', 'pitch', 'production', 'market', 'export', 'help']
       },
       market: {
         open: openLaunchCenter,
-        label: 'Hashcod Launch Center',
+        label: 'HSG2818 Launch Center',
         verbs: ['checklist', 'readiness', 'legal', 'security', 'pitch', 'production', 'export', 'help']
       },
       mercado: {
         open: openLaunchCenter,
-        label: 'Hashcod Launch Center',
+        label: 'HSG2818 Launch Center',
         verbs: ['checklist', 'legal', 'seguridad', 'ventas', 'produccion', 'exportar', 'help']
       },
       pivot: {
@@ -21341,107 +21341,107 @@ const App = () => {
       },
       cryptoexam: {
         open: openCryptoExam,
-        label: 'Hashcod Crypto Exam Suite',
+        label: 'HSG2818 Crypto Exam Suite',
         verbs: ['30', 'entropy', 'nist', 'lattice', 'fourier', 'wavelet', 'verdict', 'json', 'txt']
       },
       examenes: {
         open: openCryptoExam,
-        label: 'Hashcod Crypto Exam Suite',
+        label: 'HSG2818 Crypto Exam Suite',
         verbs: ['30', 'entropia', 'nist', 'reticulos', 'fourier', 'veredicto', 'json', 'txt']
       },
       geometric: {
         open: openGeometricCode,
-        label: 'Hashcod Geometric Code Lab',
+        label: 'HSG2818 Geometric Code Lab',
         verbs: ['database', 'ascii', 'png', 'json', 'radial', 'spiral', 'lattice']
       },
       geometrico: {
         open: openGeometricCode,
-        label: 'Hashcod Geometric Code Lab',
+        label: 'HSG2818 Geometric Code Lab',
         verbs: ['base', 'ascii', 'png', 'json', 'radial', 'espiral', 'lattice']
       },
       securitysuite: {
         open: () => openSecuritySuite('riskEngine'),
-        label: 'Hashcod Security Suite',
+        label: 'HSG2818 Security Suite',
         verbs: ['token', 'license', 'evidence', 'scanner', 'qr', 'ticket', 'fingerprint', 'benchmark', 'password', 'integrity', 'api', 'report', 'vault', 'learning', 'risk']
       },
       tokeninspector: {
         open: () => openSecuritySuite('tokenInspector'),
-        label: 'Hashcod Token Inspector',
+        label: 'HSG2818 Token Inspector',
         verbs: ['jwt', 'api-key', 'license', 'entropy', 'risk', 'report']
       },
       licenseshield: {
         open: () => openSecuritySuite('licenseShield'),
-        label: 'Hashcod License Shield',
+        label: 'HSG2818 License Shield',
         verbs: ['issue', 'sign', 'verify', 'offline', 'device', 'qr']
       },
       evidencevault: {
         open: () => openSecuritySuite('evidenceVault'),
-        label: 'Hashcod Evidence Vault',
+        label: 'HSG2818 Evidence Vault',
         verbs: ['seal', 'sha256', 'timestamp', 'qr', 'certificate']
       },
       securetab: {
         open: () => openSecuritySuite('secureTab'),
-        label: 'Hashcod Secure Tab',
+        label: 'HSG2818 Secure Tab',
         verbs: ['rewrite', 'vault', 'env', 'secrets']
       },
       secretscanner: {
         open: () => openSecuritySuite('secretScanner'),
-        label: 'Hashcod Secret Scanner',
+        label: 'HSG2818 Secret Scanner',
         verbs: ['scan', 'api-key', 'jwt', 'private-key', 'env']
       },
       qrverifier: {
         open: () => openSecuritySuite('qrVerifier'),
-        label: 'Hashcod QR Verifier',
+        label: 'HSG2818 QR Verifier',
         verbs: ['create', 'verify', 'digest', 'history']
       },
       ticketguard: {
         open: () => openSecuritySuite('ticketGuard'),
-        label: 'Hashcod TicketGuard',
+        label: 'HSG2818 TicketGuard',
         verbs: ['ticket', 'qr', 'activate', 'history']
       },
       codefingerprint: {
         open: () => openSecuritySuite('codeFingerprint'),
-        label: 'Hashcod Code Fingerprint',
+        label: 'HSG2818 Code Fingerprint',
         verbs: ['project', 'hashes', 'changes', 'secrets']
       },
       cryptobenchmark: {
         open: () => openSecuritySuite('cryptoBenchmark'),
-        label: 'Hashcod Crypto Benchmark Lab',
+        label: 'HSG2818 Crypto Benchmark Lab',
         verbs: ['sha', 'aes', 'chacha', 'csprng', 'compare']
       },
       passwordentropy: {
         open: () => openSecuritySuite('passwordEntropy'),
-        label: 'Hashcod Password Entropy Lab',
+        label: 'HSG2818 Password Entropy Lab',
         verbs: ['entropy', 'pattern', 'bruteforce', 'recommend']
       },
       fileintegrity: {
         open: () => openSecuritySuite('fileIntegrity'),
-        label: 'Hashcod File Integrity Monitor',
+        label: 'HSG2818 File Integrity Monitor',
         verbs: ['snapshot', 'compare', 'alert', 'report']
       },
       apitrust: {
         open: () => openSecuritySuite('apiTrust'),
-        label: 'Hashcod API Trust Score',
+        label: 'HSG2818 API Trust Score',
         verbs: ['https', 'cors', 'headers', 'rate-limit']
       },
       reportverifier: {
         open: () => openSecuritySuite('reportVerifier'),
-        label: 'Hashcod Report Verifier',
+        label: 'HSG2818 Report Verifier',
         verbs: ['id', 'digest', 'qr', 'authentic']
       },
       developervault: {
         open: () => openSecuritySuite('developerVault'),
-        label: 'Hashcod Developer Vault',
+        label: 'HSG2818 Developer Vault',
         verbs: ['encrypt', 'secrets', 'aes-gcm', 'pbkdf2']
       },
       cryptolearning: {
         open: () => openSecuritySuite('cryptoLearning'),
-        label: 'Hashcod Crypto Learning Lab',
+        label: 'HSG2818 Crypto Learning Lab',
         verbs: ['entropy', 'hash', 'aes', 'signature', 'token']
       },
       riskengine: {
         open: () => openSecuritySuite('riskEngine'),
-        label: 'Hashcod Risk Engine',
+        label: 'HSG2818 Risk Engine',
         verbs: ['score', 'entropy', 'pattern', 'cloud', 'verdict']
       },
       hos: {
@@ -21481,7 +21481,7 @@ const App = () => {
       return;
     }
     if (cmd === 'legal') {
-      downloadText(`opencriptG-legal-notes-${tsStamp()}.txt`, 'Hashcod legal notes: conservar licencias de terceros, avisos de copyright, y términos privados de certificados.');
+      downloadText(`opencriptG-legal-notes-${tsStamp()}.txt`, 'HSG2818 legal notes: conservar licencias de terceros, avisos de copyright, y términos privados de certificados.');
       pushCmd('Notas legales exportadas.', 'ok');
       return;
     }
@@ -21545,7 +21545,7 @@ const App = () => {
       return;
     }
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
   return React.createElement(React.Fragment, null, React.createElement(Tweaks, {
     tweaks: tweaks,
     setTweak: setTweak
@@ -21758,41 +21758,41 @@ const App = () => {
     onClose: () => setCryptoIdeOpen(false),
     notify: notify,
     language: language
-  }), React.createElement(HashcodLawDialog, {
+  }), React.createElement(HSG2818LawDialog, {
     open: hashcodLawOpen,
-    onClose: () => setHashcodLawOpen(false),
+    onClose: () => setHSG2818LawOpen(false),
     rows: copyDb,
     outputRows: output,
     notify: notify,
     language: language
-  }), React.createElement(HashcodLicenseFactoryDialog, {
+  }), React.createElement(HSG2818LicenseFactoryDialog, {
     open: hashcodLicensesOpen,
-    onClose: () => setHashcodLicensesOpen(false),
+    onClose: () => setHSG2818LicensesOpen(false),
     rows: copyDb,
     notify: notify,
     language: language
-  }), React.createElement(HashcodQuoteSystemDialog, {
+  }), React.createElement(HSG2818QuoteSystemDialog, {
     open: quoteSystemOpen,
     onClose: () => setQuoteSystemOpen(false),
     catalog: catalog,
     notify: notify,
     language: language
-  }), React.createElement(HashcodBillingTimerDialog, {
+  }), React.createElement(HSG2818BillingTimerDialog, {
     open: billingTimerOpen,
     onClose: () => setBillingTimerOpen(false),
     notify: notify,
     language: language
-  }), React.createElement(HashcodClientVaultDialog, {
+  }), React.createElement(HSG2818ClientVaultDialog, {
     open: clientVaultOpen,
     onClose: () => setClientVaultOpen(false),
     notify: notify,
     language: language
-  }), React.createElement(HashcodLaunchCenterDialog, {
+  }), React.createElement(HSG2818LaunchCenterDialog, {
     open: launchCenterOpen,
     onClose: () => setLaunchCenterOpen(false),
     notify: notify,
     language: language
-  }), React.createElement(HashcodPivotKernelDialog, {
+  }), React.createElement(HSG2818PivotKernelDialog, {
     open: pivotKernelOpen,
     onClose: () => setPivotKernelOpen(false),
     rows: copyDb,
@@ -21813,7 +21813,7 @@ const App = () => {
     notify: notify,
     language: language,
     onSaveRows: rememberCopied
-  }), React.createElement(HashcodSecuritySuiteDialog, {
+  }), React.createElement(HSG2818SecuritySuiteDialog, {
     open: securitySuiteOpen,
     activeTool: securitySuiteTool,
     onSelectTool: setSecuritySuiteTool,
@@ -21886,9 +21886,9 @@ const App = () => {
     }
   }), React.createElement("span", {
     className: "tb-name"
-  }, React.createElement("b", null, "Hashcod"), React.createElement("i", null, "Cryptographic Platform")), React.createElement("span", {
+  }, React.createElement("b", null, "HSG2818"), React.createElement("i", null, "Cryptographic Platform")), React.createElement("span", {
     className: "tb-tag"
-  }, "Hashcod Cryptographic Generator \xB7 v12")), React.createElement("nav", {
+  }, "HSG2818 Cryptographic Generator \xB7 v12")), React.createElement("nav", {
     ref: topNavRef,
     className: "tb-nav",
     onClick: e => e.stopPropagation(),
@@ -22184,13 +22184,13 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openLatticeLab
   }), React.createElement(MenuButton, {
-    label: "HASHCOD LICENSES",
+    label: "HSG2818 LICENSES",
     icon: TOP_MENU_ICONS.hashcodLicenseFactory,
     iconOnly: true,
     items: hashcodLicenseItems,
     activeMenu: activeMenu,
     setActiveMenu: setActiveMenu,
-    primaryAction: openHashcodLicenses
+    primaryAction: openHSG2818Licenses
   }), React.createElement(MenuButton, {
     label: "QUOTE SYSTEM",
     icon: TOP_MENU_ICONS.quoteSystem,
@@ -22216,7 +22216,7 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openClientVault
   }), React.createElement(MenuButton, {
-    label: "HASHCOD PLATFORM",
+    label: "HSG2818 PLATFORM",
     icon: TOP_MENU_ICONS.building,
     iconOnly: true,
     items: launchCenterItems,
@@ -22455,9 +22455,9 @@ const App = () => {
   }), React.createElement("b", null, "Crypto IDE")), React.createElement("button", {
     type: "button",
     className: "bottom-tool-icon",
-    onClick: () => setHashcodLawOpen(true),
-    title: language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law',
-    "aria-label": language === 'es' ? 'Ley antifraude Hashcod' : 'Hashcod anti-fraud law'
+    onClick: () => setHSG2818LawOpen(true),
+    title: language === 'es' ? 'Ley antifraude HSG2818' : 'HSG2818 anti-fraud law',
+    "aria-label": language === 'es' ? 'Ley antifraude HSG2818' : 'HSG2818 anti-fraud law'
   }, React.createElement("span", {
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.hashcodLaw
@@ -22465,9 +22465,9 @@ const App = () => {
   }), React.createElement("b", null, "Law")), React.createElement("button", {
     type: "button",
     className: "bottom-tool-icon",
-    onClick: () => setHashcodLicensesOpen(true),
-    title: language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory',
-    "aria-label": language === 'es' ? 'Fabrica de licencias Hashcod' : 'Hashcod license factory'
+    onClick: () => setHSG2818LicensesOpen(true),
+    title: language === 'es' ? 'Fabrica de licencias HSG2818' : 'HSG2818 license factory',
+    "aria-label": language === 'es' ? 'Fabrica de licencias HSG2818' : 'HSG2818 license factory'
   }, React.createElement("span", {
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.hashcodLicenseFactory
@@ -22523,7 +22523,7 @@ const App = () => {
     dangerouslySetInnerHTML: {
       __html: tool.icon
     }
-  }), React.createElement("b", null, tool.title.replace('Hashcod ', '').replace(' Lab', ''))))))), React.createElement("footer", {
+  }), React.createElement("b", null, tool.title.replace('HSG2818 ', '').replace(' Lab', ''))))))), React.createElement("footer", {
     className: "sf"
   }, React.createElement("span", {
     className: "sf-l"
@@ -22719,7 +22719,7 @@ const buildZeroTrustManifest = async ({
   manifest.signature = await hmacSecurityText(HASHCOD_ENTRY_KEY_HASH, manifestDigest);
   return manifest;
 };
-const HashcodSingleKeyGate = ({
+const HSG2818SingleKeyGate = ({
   children
 }) => {
   const [unlocked, setUnlocked] = useState(() => {
@@ -22809,7 +22809,7 @@ const HashcodSingleKeyGate = ({
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS.brand(42)
     }
-  }), React.createElement("span", null, "HASHCOD \u691C\u8A3C\u53EF\u80FD\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30EC\u30A4\u30E4\u30FC"), React.createElement("h1", null, "\u30BC\u30ED\u30C8\u30E9\u30B9\u30C8\u30A2\u30AF\u30BB\u30B9"), React.createElement("p", null, "\u30E6\u30FC\u30B6\u30FC\u3001\u30C8\u30FC\u30AF\u30F3\u3001\u30D5\u30A1\u30A4\u30EB\u3001API\u3001\u30BB\u30C3\u30B7\u30E7\u30F3\u306F\u65E2\u5B9A\u3067\u4FE1\u983C\u3055\u308C\u307E\u305B\u3093\u3002Hashcod \u306F\u8D77\u52D5\u524D\u306B\u74B0\u5883\u3092\u691C\u8A3C\u3057\u3001\u5165\u5834\u30DE\u30CB\u30D5\u30A7\u30B9\u30C8\u3078\u7F72\u540D\u3057\u3001\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3\u3078\u8A18\u9332\u3057\u307E\u3059\u3002")), React.createElement("aside", {
+  }), React.createElement("span", null, "HSG2818 \u691C\u8A3C\u53EF\u80FD\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30EC\u30A4\u30E4\u30FC"), React.createElement("h1", null, "\u30BC\u30ED\u30C8\u30E9\u30B9\u30C8\u30A2\u30AF\u30BB\u30B9"), React.createElement("p", null, "\u30E6\u30FC\u30B6\u30FC\u3001\u30C8\u30FC\u30AF\u30F3\u3001\u30D5\u30A1\u30A4\u30EB\u3001API\u3001\u30BB\u30C3\u30B7\u30E7\u30F3\u306F\u65E2\u5B9A\u3067\u4FE1\u983C\u3055\u308C\u307E\u305B\u3093\u3002HSG2818 \u306F\u8D77\u52D5\u524D\u306B\u74B0\u5883\u3092\u691C\u8A3C\u3057\u3001\u5165\u5834\u30DE\u30CB\u30D5\u30A7\u30B9\u30C8\u3078\u7F72\u540D\u3057\u3001\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3\u3078\u8A18\u9332\u3057\u307E\u3059\u3002")), React.createElement("aside", {
     className: "zta-panel"
   }, React.createElement("b", null, "\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30B9\u30BF\u30C3\u30AF"), React.createElement("div", {
     className: "zta-stack"
@@ -22822,12 +22822,12 @@ const HashcodSingleKeyGate = ({
     type: "password",
     value: keyText,
     onChange: e => setKeyText(e.target.value),
-    placeholder: "Hashcod \u30A2\u30AF\u30BB\u30B9\u30AD\u30FC",
+    placeholder: "HSG2818 \u30A2\u30AF\u30BB\u30B9\u30AD\u30FC",
     autoComplete: "off",
     autoFocus: true
   }), error && React.createElement("em", null, error), React.createElement("button", {
     disabled: checking || !keyText.trim()
-  }, checking ? 'ゼロトラスト検証中...' : 'Hashcodを解除')), React.createElement("section", {
+  }, checking ? 'ゼロトラスト検証中...' : 'HSG2818を解除')), React.createElement("section", {
     className: "zta-metrics",
     "aria-label": "Zero Trust status"
   }, React.createElement("div", null, React.createElement("span", null, "\u8105\u5A01\u30B9\u30B3\u30A2"), React.createElement("strong", null, threatScore, "/100"), React.createElement("small", null, threatScore >= 70 ? 'インシデント監視' : threatScore >= 35 ? '上昇中' : '制御済み')), React.createElement("div", null, React.createElement("span", null, "\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3"), React.createElement("strong", null, auditRows.length), React.createElement("small", null, auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : '起点')), React.createElement("div", null, React.createElement("span", null, "\u6697\u53F7\u30A8\u30F3\u30B8\u30F3"), React.createElement("strong", null, checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : '制限あり'), React.createElement("small", null, "SHA-256 + HMAC manifest")), React.createElement("div", null, React.createElement("span", null, "Vault\u72B6\u614B"), React.createElement("strong", null, checks.find(c => c.id === 'vault')?.ok ? '準備完了' : '制限あり'), React.createElement("small", null, "\u30ED\u30FC\u30AB\u30EB\u5C01\u5370\u30BB\u30C3\u30B7\u30E7\u30F3"))), React.createElement("section", {
@@ -22842,8 +22842,8 @@ const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hi
 const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c3.3 0 6 2.7 6 6 0 2.9-2.1 5.4-4.9 5.9l-.5 1.1H7.4l-.5-1.1C4.1 12.9 2 10.4 2 7.5c0-3.3 2.7-6 6-6Zm0 1.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 3.1 2 3.9a9.9 9.9 0 0 1 6.1-5.6A4.5 4.5 0 0 0 8 3Zm4.2 4.1a8.4 8.4 0 0 0-5.3 5 4.5 4.5 0 0 0 5.3-5Z"/></svg>`;
 const DID_BALLOON_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c2.4 0 4.4 1.8 4.6 4.2.1 1.8-.8 3.4-2.2 4.3L8.8 14H7.2l-1.6-4A4.6 4.6 0 0 1 8 1.5Zm0 1.4c-1.8 0-3.2 1.4-3.2 3.1 0 1.7 1.4 3.1 3.2 3.1s3.2-1.4 3.2-3.1C11.2 4.3 9.8 2.9 8 2.9Zm0 .8c.9.9 1.4 1.7 1.4 2.4 0 .8-.6 1.4-1.4 1.4S6.6 6.9 6.6 6.1c0-.7.5-1.5 1.4-2.4Z"/></svg>`;
 const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1 2.2 4.2v7.6L8 15l5.8-3.2V4.2L8 1Zm0 1.8 3.7 2L8 6.9 4.3 4.8 8 2.8ZM3.7 6.1l3.5 2v4.8l-3.5-2V6.1Zm8.6 0v4.8l-3.5 2V8.1l3.5-2Z"/></svg>`;
-window.HashcodApp = App;
+window.HSG2818App = App;
 window.App = () => {
-  const Platform = window.HashcodApp;
-  return React.createElement(HashcodSingleKeyGate, null, React.createElement(Platform, null));
+  const Platform = window.HSG2818App;
+  return React.createElement(HSG2818SingleKeyGate, null, React.createElement(Platform, null));
 };

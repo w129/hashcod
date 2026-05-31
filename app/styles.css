@@ -6268,7 +6268,7 @@ kbd {
   .authusers-list { padding-left: 8px; padding-right: 8px; }
 }
 
-/* Hashcod dark contrast pass */
+/* HSG2818 dark contrast pass */
 body {
   background: #0F0F0F;
   color: #F5F5F5;
@@ -6777,7 +6777,7 @@ textarea,
   font-family: 'Codec Pro', var(--ui) !important;
 }
 
-/* Hashcod light pixel interface */
+/* HSG2818 light pixel interface */
 :root {
   --bg: #ffffff;
   --bg-alt: #f4f4f2;

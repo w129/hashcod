@@ -57,7 +57,7 @@ const Root = () => {
     }, React.createElement("img", {
       src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
       alt: ""
-    }), React.createElement("div", null, "Hashcod ", React.createElement("span", null, "Cryptographic Platform"))), React.createElement("div", {
+    }), React.createElement("div", null, "HSG2818 ", React.createElement("span", null, "Cryptographic Platform"))), React.createElement("div", {
       className: "boot-text"
     }, "Enterprise gate blocked startup. Review the failed self-tests."), React.createElement("pre", {
       className: "boot-error"

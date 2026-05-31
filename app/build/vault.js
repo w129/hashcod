@@ -64,7 +64,7 @@ const SipHashGate = ({
     if (locked) return;
     if (timingSafeStr(normalized, SIPHASH_GATE_CODE)) {
       sessionStorage.setItem('ocg_v12_siphash_gate', '1');
-      setStatus('Access verified. Opening Hashcod v12...');
+      setStatus('Access verified. Opening HSG2818 v12...');
       setTimeout(() => onUnlock && onUnlock(), 180);
       return;
     }
@@ -87,7 +87,7 @@ const SipHashGate = ({
   }, React.createElement("img", {
     src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
     alt: ""
-  })), React.createElement("div", null, React.createElement("p", null, "Hashcod v12"), React.createElement("h1", null, "Private Access"), React.createElement("small", null, "Enterprise cryptographic workspace"))), React.createElement("form", {
+  })), React.createElement("div", null, React.createElement("p", null, "HSG2818 v12"), React.createElement("h1", null, "Private Access"), React.createElement("small", null, "Enterprise cryptographic workspace"))), React.createElement("form", {
     onSubmit: submit,
     className: "siphash-form"
   }, React.createElement("label", null, React.createElement("span", null, "SECURE ACCESS KEY"), React.createElement("input", {
@@ -105,9 +105,9 @@ const SipHashGate = ({
     disabled: locked || normalized.length !== 16
   }, locked ? `WAIT ${Math.ceil(remaining / 1000)}S` : 'UNLOCK V12')), React.createElement("div", {
     className: "siphash-meta"
-  }, React.createElement("div", null, React.createElement("span", null, "Protection"), React.createElement("b", null, "SipHash-2-4 gate")), React.createElement("div", null, React.createElement("span", null, "Access scope"), React.createElement("b", null, "Private v12 session")), React.createElement("div", null, React.createElement("span", null, "Workspace"), React.createElement("b", null, "Hashcod cryptographic lab"))), React.createElement("p", {
+  }, React.createElement("div", null, React.createElement("span", null, "Protection"), React.createElement("b", null, "SipHash-2-4 gate")), React.createElement("div", null, React.createElement("span", null, "Access scope"), React.createElement("b", null, "Private v12 session")), React.createElement("div", null, React.createElement("span", null, "Workspace"), React.createElement("b", null, "HSG2818 cryptographic lab"))), React.createElement("p", {
     className: `siphash-status ${status ? 'is-visible' : ''}`
-  }, status || 'Enter your private access key to continue into Hashcod v12.')));
+  }, status || 'Enter your private access key to continue into HSG2818 v12.')));
 };
 async function deriveVerifier(log, salt) {
   const keyMaterial = [ACCESS_LOG_FORMAT, log.keys?.aes256, log.keys?.sm4, log.keys?.serpent, log.issueId, salt].join('|');
@@ -124,7 +124,7 @@ function canonicalPayload(log) {
   return [log.format, log.version, log.issueId, log.createdAt, log.expiresAt, log.keys?.aes256, log.keys?.sm4, log.keys?.serpent].join('|');
 }
 function validateKeyShape(log) {
-  if (!log || log.format !== ACCESS_LOG_FORMAT || log.version !== ACCESS_LOG_VERSION) throw new Error('This is not a valid Hashcod access log.');
+  if (!log || log.format !== ACCESS_LOG_FORMAT || log.version !== ACCESS_LOG_VERSION) throw new Error('This is not a valid HSG2818 access log.');
   if (!/^[0-9A-F]{64}$/.test(log.keys?.aes256 || '')) throw new Error('AES-256 key is missing or invalid.');
   if (!/^[0-9A-F]{32}$/.test(log.keys?.sm4 || '')) throw new Error('SM4 key is missing or invalid.');
   if (!/^[0-9A-F]{64}$/.test(log.keys?.serpent || '')) throw new Error('Serpent key is missing or invalid.');
@@ -210,7 +210,7 @@ const VaultLock = ({
         createdAt,
         expiresAt,
         requiredAction: 'Upload this file in Register, then use it to Sign In.',
-        warning: 'Keep this log private. Anyone with this file can access this local Hashcod vault.',
+        warning: 'Keep this log private. Anyone with this file can access this local HSG2818 vault.',
         keys: {
           aes256: randHex(32),
           sm4: randHex(16),
@@ -233,7 +233,7 @@ const VaultLock = ({
   const downloadLog = () => {
     if (!issuedLog) return;
     const text = JSON.stringify(issuedLog, null, 2);
-    saveFile(`Hashcod-access-log-${issuedLog.issueId}.json`, text);
+    saveFile(`HSG2818-access-log-${issuedLog.issueId}.json`, text);
     setStatus('Access-key log downloaded. Upload it in Register to activate the vault.');
   };
   const registerFromLog = async () => {
@@ -317,7 +317,7 @@ const VaultLock = ({
   }, React.createElement("img", {
     src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
     alt: ""
-  }), React.createElement("div", null, React.createElement("p", null, "Hashcod enterprise access"), React.createElement("h1", null, mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'))), React.createElement("span", {
+  }), React.createElement("div", null, React.createElement("p", null, "HSG2818 enterprise access"), React.createElement("h1", null, mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'))), React.createElement("span", {
     className: `access-state ${hasProfile ? 'is-ready' : ''}`
   }, hasProfile ? 'profile armed' : 'new vault')), React.createElement("nav", {
     className: "access-tabs",

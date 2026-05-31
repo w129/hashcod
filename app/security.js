@@ -1,4 +1,4 @@
-/* Hashcod — security core
+/* HSG2818 — security core
    Pure JS module (no React). Loads before vault.jsx.
    Exposes window.OCGSecurity with:
      - timing-safe comparators
@@ -402,7 +402,7 @@
       { id: 'timing',    label: 'Timing-safe comparators', pass: true, note: 'L1 + L2 + L4 verifiers.' },
       { id: 'audit',     label: 'Audit log (ring-buffered, sanitized)', pass: true, note: `Last ${getAuditLog().length} events retained.` },
       { id: 'lockout',   label: 'Escalated lockout · progressive cooldowns', pass: true, note: `Next cooldown: ${nextCooldownLabel()}.` },
-      { id: 'mythos',   label: 'SipHash-2-4 + Mythos Gate', pass: true, note: 'Hardened local-entry profile for Hashcod v12.' },
+      { id: 'mythos',   label: 'SipHash-2-4 + Mythos Gate', pass: true, note: 'Hardened local-entry profile for HSG2818 v12.' },
       { id: 'backup',    label: 'Encrypted BIP-39 backup', pass: hasBackup(), note: hasBackup() ? 'Backup stored locally.' : 'Not yet configured.' },
       { id: 'biometric', label: 'WebAuthn platform authenticator', pass: !!getBiometric(), note: !!getBiometric() ? 'Biometric unlock enrolled.' : 'Optional — not enrolled.' },
       { id: 'offline',   label: 'Offline-first · no telemetry', pass: true, note: 'No network requests after initial load.' },

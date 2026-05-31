@@ -14,16 +14,16 @@ const PlanTourGrid = () => React.createElement("div", {
 const TOUR_STEPS = [{
   id: 'welcome',
   selector: null,
-  title: 'TOUR HASHCOD',
-  body: React.createElement(React.Fragment, null, React.createElement("p", null, "Este tour explica como funciona Hashcod en modo Enterprise: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y laboratorios avanzados."), React.createElement("p", null, "La plataforma entra siempre con el catalogo completo y las funciones productivas disponibles desde el inicio."), React.createElement(PlatformPillList, null), React.createElement("div", {
+  title: 'TOUR HSG2818',
+  body: React.createElement(React.Fragment, null, React.createElement("p", null, "Este tour explica como funciona HSG2818 en modo Enterprise: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y laboratorios avanzados."), React.createElement("p", null, "La plataforma entra siempre con el catalogo completo y las funciones productivas disponibles desde el inicio."), React.createElement(PlatformPillList, null), React.createElement("div", {
     className: "tour-meta"
-  }, React.createElement("span", null, "HASHCOD"), React.createElement("span", null, "\xB7"), React.createElement("span", null, "GUIA INTERACTIVA"), React.createElement("span", null, "\xB7"), React.createElement("span", null, "ENTERPRISE")))
+  }, React.createElement("span", null, "HSG2818"), React.createElement("span", null, "\xB7"), React.createElement("span", null, "GUIA INTERACTIVA"), React.createElement("span", null, "\xB7"), React.createElement("span", null, "ENTERPRISE")))
 }, {
   id: 'brand',
   selector: '.tb-brand',
   place: 'bottom-start',
   title: 'IDENTIDAD DE LA PLATAFORMA',
-  body: React.createElement(React.Fragment, null, React.createElement("p", null, "Hashcod es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos."), React.createElement("p", null, "No es solo un generador: es un entorno operativo con catalogo, vault, QR, certificados, formatos propietarios y herramientas internas."))
+  body: React.createElement(React.Fragment, null, React.createElement("p", null, "HSG2818 es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos."), React.createElement("p", null, "No es solo un generador: es un entorno operativo con catalogo, vault, QR, certificados, formatos propietarios y herramientas internas."))
 }, {
   id: 'enterprise-mode',
   selector: '.tb-enterprise',

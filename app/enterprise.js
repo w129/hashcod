@@ -69,10 +69,10 @@
       const id = `apex_code_${String(i).padStart(3, '0')}`;
       if (!apexIds.includes(id)) missingApex.push(id);
     }
-    const missingHashcod = [];
+    const missingHSG2818 = [];
     for (let i = 1; i <= 8282; i++) {
       const id = `hc10000_code_${String(i).padStart(5, '0')}`;
-      if (!hashcodIds.includes(id)) missingHashcod.push(id);
+      if (!hashcodIds.includes(id)) missingHSG2818.push(id);
     }
     return {
       categories: catalog.length,
@@ -83,7 +83,7 @@
       apexCount: apexIds.length,
       missingApex,
       hashcodCount: hashcodIds.length,
-      missingHashcod,
+      missingHSG2818,
     };
   }
 
@@ -128,7 +128,7 @@
       push('catalog-total-10000', catalog.primitives === 10000, `${catalog.primitives}/10000 primitives`);
       push('neo-200-complete', catalog.neoCount === 200 && catalog.missingNeo.length === 0, `${catalog.neoCount}/200`);
       push('apex-300-complete', catalog.apexCount === 300 && catalog.missingApex.length === 0, `${catalog.apexCount}/300`);
-      push('hashcod-8282-complete', catalog.hashcodCount === 8282 && catalog.missingHashcod.length === 0, `${catalog.hashcodCount}/8282`);
+      push('hashcod-8282-complete', catalog.hashcodCount === 8282 && catalog.missingHSG2818.length === 0, `${catalog.hashcodCount}/8282`);
 
       if (window.OCG_GEN && window.OCG_GEN.generate) {
         const neo = await window.OCG_GEN.generate('neo_code_200', 32, {});

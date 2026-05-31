@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hashcod Phone OS</title>
+  <title>HSG2818 Phone OS</title>
   <style>
     :root { --ink:#111; --line:#d8d8d2; --paper:#fff; --bg:#f4f4f1; --mono: ui-monospace, SFMono-Regular, Consolas, monospace; --serif: Georgia, serif; }
     * { box-sizing:border-box; }
@@ -44,7 +44,7 @@
   <main>
     <section>
       <header>
-        <span>HASHCOD PHONE OS</span>
+        <span>HSG2818 PHONE OS</span>
         <h1>PC + Phone Link</h1>
         <p>Conecta este teléfono con la plataforma. Todo code guardado o enviado desde la PC llega aquí como notificación.</p>
       </header>
@@ -63,7 +63,7 @@
           <button class="ghost" id="testBtn">Notificación local</button>
         </div>
         <div class="phone-browser hidden" id="phoneBrowser">
-          <span>HASHCOD PHONE BROWSER</span>
+          <span>HSG2818 PHONE BROWSER</span>
           <div class="browser-bar">
             <input id="browserUrl" readonly />
             <button class="ghost" id="closeBrowserBtn">Volver</button>
@@ -152,10 +152,10 @@
       try {
         const reg = await ensureServiceWorker();
         if (reg?.showNotification) {
-          await reg.showNotification(note.title || 'Hashcod', options);
+          await reg.showNotification(note.title || 'HSG2818', options);
           return true;
         }
-        new Notification(note.title || 'Hashcod', options);
+        new Notification(note.title || 'HSG2818', options);
         return true;
       } catch (err) {
         status(`Notificacion nativa no disponible en este navegador. Se muestra en la lista: ${err.message}`);
@@ -171,7 +171,7 @@
           el.className = 'openable';
           el.onclick = () => openPhoneBrowser(note);
         }
-        el.innerHTML = `<span>${note.type || 'HASHCOD'}</span><b>${note.title || 'Hashcod notification'}</b><p>${note.body || ''}</p><code>${note.value || ''}</code>`;
+        el.innerHTML = `<span>${note.type || 'HSG2818'}</span><b>${note.title || 'HSG2818 notification'}</b><p>${note.body || ''}</p><code>${note.value || ''}</code>`;
         box.prepend(el);
       });
     };
@@ -214,7 +214,7 @@
       status('Code copiado desde Phone Browser.');
     };
     $('testBtn').onclick = async () => {
-      const ok = await showNotification({ id:'local-test', title:'Hashcod Phone OS', body:'Notificacion local activa.' });
+      const ok = await showNotification({ id:'local-test', title:'HSG2818 Phone OS', body:'Notificacion local activa.' });
       if (ok) status('Notificacion local enviada.');
     };
     navigator.serviceWorker?.addEventListener('message', (event) => {

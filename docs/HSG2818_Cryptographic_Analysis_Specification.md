@@ -1,12 +1,12 @@
-# Hashcod Cryptographic Analysis Specification
+# HSG2818 Cryptographic Analysis Specification
 
 Version: HCAS-1.0
 
-Hashcod is not claiming that visual analysis proves cryptographic security. The platform uses established primitives for generation and uses the Pivot Kernel lab as an audit layer for pattern detection, reproducibility and review.
+HSG2818 is not claiming that visual analysis proves cryptographic security. The platform uses established primitives for generation and uses the Pivot Kernel lab as an audit layer for pattern detection, reproducibility and review.
 
 ## Mathematical Base
 
-Hashcod analysis depends on:
+HSG2818 analysis depends on:
 
 - Modular arithmetic: residues, modular inverses, congruences and prime fields.
 - Number theory: primes, factorization difficulty, discrete logarithms and elliptic-curve concepts.
@@ -71,11 +71,11 @@ The platform includes a 100-sample benchmark in the Pivot Kernel lab:
 - 10 structured JSON samples.
 - 10 ZIP-like binary-header samples.
 
-The benchmark compares expected verdicts against Hashcod verdicts and exports JSON or CSV.
+The benchmark compares expected verdicts against HSG2818 verdicts and exports JSON or CSV.
 
 ## External Standards
 
-Hashcod should be compared against:
+HSG2818 should be compared against:
 
 - NIST Statistical Test Suite.
 - Dieharder.
@@ -92,7 +92,7 @@ The visual radar and kernel layers are support tools, not replacements for these
 
 ## Implementation Security
 
-Production Hashcod must keep:
+Production HSG2818 must keep:
 
 - HTTPS/TLS only.
 - Secure cookies and server-side sessions.
@@ -108,13 +108,13 @@ Production Hashcod must keep:
 
 ## Honest Limits
 
-Hashcod must not claim:
+HSG2818 must not claim:
 
 - That a custom visual map proves cryptographic strength.
 - That a new private algorithm is secure without public review.
 - That generated codes replace standards like AES, SHA-3, BLAKE3, Kyber, Dilithium, SPHINCS+ or Falcon.
 
-Hashcod can claim:
+HSG2818 can claim:
 
 - Reproducible analysis.
 - Stronger documentation.

@@ -1,4 +1,4 @@
-/* Hashcod - advanced guided tour for Enterprise mode. */
+/* HSG2818 - advanced guided tour for Enterprise mode. */
 
 const { useState, useEffect, useLayoutEffect, useRef } = React;
 
@@ -21,16 +21,16 @@ const PlanTourGrid = () => (
 
 const TOUR_STEPS = [
   {
-    id: 'welcome', selector: null, title: 'TOUR HASHCOD',
+    id: 'welcome', selector: null, title: 'TOUR HSG2818',
     body: <>
-      <p>Este tour explica como funciona Hashcod en modo Enterprise: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y laboratorios avanzados.</p>
+      <p>Este tour explica como funciona HSG2818 en modo Enterprise: generacion de codes, tokenizacion local, vault, QR, certificados, formatos nuevos, herramientas visuales y laboratorios avanzados.</p>
       <p>La plataforma entra siempre con el catalogo completo y las funciones productivas disponibles desde el inicio.</p>
       <PlatformPillList />
-      <div className="tour-meta"><span>HASHCOD</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>ENTERPRISE</span></div>
+      <div className="tour-meta"><span>HSG2818</span><span>·</span><span>GUIA INTERACTIVA</span><span>·</span><span>ENTERPRISE</span></div>
     </>,
   },
   { id:'brand', selector:'.tb-brand', place:'bottom-start', title:'IDENTIDAD DE LA PLATAFORMA', body:<>
-    <p>Hashcod es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos.</p>
+    <p>HSG2818 es una suite local para crear, organizar, exportar, transportar y documentar codes criptograficos.</p>
     <p>No es solo un generador: es un entorno operativo con catalogo, vault, QR, certificados, formatos propietarios y herramientas internas.</p>
   </>},
   { id:'enterprise-mode', selector:'.tb-enterprise', place:'bottom-end', title:'ENTERPRISE SIEMPRE ACTIVO', body:<>
