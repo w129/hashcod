@@ -6776,3 +6776,623 @@ textarea,
 .tb-name b {
   font-family: 'Codec Pro', var(--ui) !important;
 }
+
+/* Hashcod light pixel interface */
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f4f4f2;
+  --bg-soft: #ededeb;
+  --card: #ffffff;
+  --line: #c9c9c5;
+  --line-2: #9f9f9a;
+  --line-3: #62625e;
+  --ink: #101010;
+  --ink-2: #242424;
+  --ink-3: #51514d;
+  --ink-4: #70706b;
+  --ink-5: #92928c;
+}
+
+html,
+body {
+  background:
+    linear-gradient(#e9e9e5 1px, transparent 1px),
+    linear-gradient(90deg, #e9e9e5 1px, transparent 1px),
+    #ffffff !important;
+  background-size: 16px 16px !important;
+  color: #101010 !important;
+}
+
+body ::selection { background:#101010 !important; color:#ffffff !important; }
+
+* {
+  border-radius: 0 !important;
+  image-rendering: pixelated;
+}
+
+.app {
+  background:transparent !important;
+  color:#101010 !important;
+}
+
+.tb,
+.sf {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#101010 !important;
+}
+
+.tb {
+  border-bottom:2px solid #101010 !important;
+  box-shadow:0 4px 0 rgba(0,0,0,.08);
+}
+
+.sf {
+  border-top:2px solid #101010 !important;
+}
+
+.tb-brand,
+.tb-tag,
+.tb-right,
+.tb-cli {
+  border-color:#c9c9c5 !important;
+}
+
+.tb-mark,
+.tb-name b,
+.tb-name i,
+.tb-n,
+.tb-n-icon,
+.tb-cli,
+.tb-clk,
+.sf,
+.sf * {
+  color:#101010 !important;
+}
+
+.tb-mark .ocg-brand-icon {
+  filter:none !important;
+}
+
+.tb-nav {
+  scrollbar-color:#101010 #ededeb !important;
+}
+
+.tb-nav::-webkit-scrollbar-track { background:#ededeb !important; }
+.tb-nav::-webkit-scrollbar-thumb { background:#101010 !important; }
+.tb-n:hover,
+.tb-n.on {
+  background:#101010 !important;
+  color:#ffffff !important;
+}
+.tb-n:hover .tb-n-icon,
+.tb-n.on .tb-n-icon { color:#ffffff !important; }
+
+.tb-dd {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border:2px solid #101010 !important;
+  box-shadow:6px 6px 0 rgba(0,0,0,.18) !important;
+}
+.tb-dd-item {
+  color:#101010 !important;
+  border-color:#deded9 !important;
+}
+.tb-dd-item:hover:not(:disabled) {
+  background:#101010 !important;
+  color:#ffffff !important;
+  border-color:#101010 !important;
+}
+
+.bcr,
+.body,
+.ed,
+.cfg,
+.main,
+.empty,
+.sb,
+.sb-search-row,
+.sb-cat-n,
+.sb-item-b,
+.side,
+.ti,
+.ti-quickcard,
+.ti-concrete,
+.ti-spec,
+.dlg,
+.dlg-h,
+.dlg-card,
+.authbox,
+.authusers-form,
+.authusers-list,
+.authusers-title,
+.authusers-security,
+.authusers-row,
+.authusers-row.wait,
+.authusers-history,
+.authusers-audit-row,
+.authusers-empty,
+.securityking-form,
+.securityking-body,
+.securityking-status,
+.securityking-summary,
+.securityking-summary span,
+.securityking-table article,
+.securityking-audit article,
+.securityking-audit code,
+.securityking-empty,
+.ticketforge-shell,
+.ticketforge-form,
+.ticketforge-preview,
+.ticketforge-preview article,
+.ticketforge-preview code,
+.ticketforge-empty,
+.lattice-shell,
+.lattice-form,
+.lattice-output,
+.lattice-note,
+.lattice-empty,
+.lattice-card,
+.lattice-metrics span,
+.lattice-grid section,
+.lattice-grid pre,
+.lattice-fingerprint,
+.assist-form,
+.assist-current,
+.assist-row,
+.sms-form,
+.sms-current,
+.sms-preview pre,
+.sms-status,
+.pixelnote-form,
+.hashsyt-form,
+.hashsyt-body,
+.hashsyt-card,
+.hashsyt-output,
+.hashsyt-row,
+.hnsb-bar,
+.hnsb-main,
+.hnsb-card,
+.hnsb-grid div,
+.hnsb-packet,
+.hnsb-dbcode,
+.hnsb-phone-format,
+.hnsb-format-selected,
+.hnsb-format-preview pre,
+.hnsb-format-status,
+.cryptoai-shell,
+.cryptoai-model-card,
+.cryptoai-note,
+.cryptoai-chat,
+.cryptoai-msg,
+.cryptoai-compose,
+.cryptoai-status,
+.container-formula,
+.container-shell,
+.container-side,
+.container-metrics div,
+.container-history div,
+.container-empty,
+.container-list button,
+.box-grid button,
+.code-grid article,
+.deriv-shell,
+.deriv-side,
+.deriv-source,
+.deriv-main,
+.deriv-toolbar,
+.deriv-empty,
+.deriv-row,
+.fileview-shell,
+.fileview-side,
+.fileview-meta div,
+.fileview-note,
+.fileview-main,
+.fileview-empty,
+.fileview-error,
+.fileview-media,
+.fileview-audio,
+.fileview-frame,
+.fileview-text,
+.graph-shell,
+.graph-side,
+.graph-symbols,
+.graph-textboard,
+.graph-symbol-grid button,
+.graph-help,
+.graph-status,
+.graph-main,
+.clicons-form,
+.clicons-list,
+.clicons-entry,
+.clicons-entry header,
+.clicons-entry pre,
+.codedesk-hero,
+.codedesk-hero > div,
+.codedesk-actions,
+.codedesk-grid,
+.codedesk-slot,
+.codegui-shell,
+.codegui-side,
+.codegui-id,
+.codegui-metrics div,
+.codegui-report div,
+.codegui-editor,
+.codegui-command,
+.plandlg-hero,
+.plandlg-card,
+.plandlg-detail > div,
+.free-nudge,
+.dbdlg,
+.qrdlg-card,
+.textdlg-main,
+.textdlg-editwrap,
+.textdlg-tabs,
+.textdlg-tab,
+.textdlg-aiout,
+.padlg-chartbox,
+.padlg-summarygrid div,
+.padlg-templatecard,
+.padlg-bottomtab,
+.rustdlg-card,
+.rustdlg-deps div,
+.rustdlg-checks p,
+.rustdlg-editor,
+.mddlg-preview,
+.mnotes-balance,
+.mnotes-item,
+.mnotes-editor-head,
+.mnotes-card-preview,
+.mnotes-metrics div,
+.mnotes-codebox,
+.mnotes-textarea,
+.mnotes-index-panel,
+.certdlg-certbox div,
+.certdlg-legal-mini,
+.cmdide,
+.cmd-panel,
+.cmdchips button,
+.cmd-btn,
+.cmd-module,
+.cmdform-row,
+.cmdform-codecatalog,
+.colorswatch,
+.formatdlg-file,
+.formatdlg-packmeta,
+.formatdlg-hero div,
+.formatdlg-preview,
+.formatdlg-headline,
+.formatdlg-code,
+.ivorydoc-preview,
+.ivory-warning,
+.ivory-clause,
+.ivory-db-panel,
+.ivory-db-search,
+.ivory-db-row,
+.ivory-db-empty,
+.ocgu-main,
+.ocgu-list,
+.ocgu-qrdata-code,
+.ocgu-qrdata-table,
+.ocgu-qrdata-plain,
+.mountain-tool-hero,
+.mountain-tool-form,
+.mountain-tool-actions,
+.mountain-tool-list,
+.mountain-tool-empty,
+.mountain-tool-row,
+.basemat-tabs,
+.basemat-tabs button,
+.basemat-main,
+.basemat-card,
+.basemat-card code,
+.complexdlg,
+.complex-head,
+.complex-side,
+.complex-main,
+.complex-note,
+.complex-grid div,
+.complex-list article,
+.geodlg-canvaswrap,
+.geodlg-output,
+.quotedlg,
+.timerdlg,
+.timer-head,
+.timer-body,
+.timer-display,
+.timer-stats div,
+.clientdlg,
+.client-head,
+.client-form,
+.client-records,
+.client-list article {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#c9c9c5 !important;
+}
+
+.body,
+.empty,
+.complex-main,
+.geodlg-canvaswrap,
+.timer-body {
+  background:
+    linear-gradient(#ededeb 1px, transparent 1px),
+    linear-gradient(90deg, #ededeb 1px, transparent 1px),
+    #ffffff !important;
+  background-size:16px 16px !important;
+}
+
+.dlg {
+  border:2px solid #101010 !important;
+  box-shadow:8px 8px 0 rgba(0,0,0,.18) !important;
+}
+
+.dlg-back {
+  background:rgba(255,255,255,.76) !important;
+  backdrop-filter:none !important;
+}
+
+.sb {
+  border-right:2px solid #101010 !important;
+}
+
+.rp {
+  border-left:2px solid #101010 !important;
+}
+
+.sb-item,
+.sb-cat-h,
+.oc,
+.ti-quickcard,
+.ti-concrete,
+.ti-spec,
+.complex-grid div,
+.complex-list article {
+  border-color:#c9c9c5 !important;
+}
+
+.sb-item:hover,
+.sb-item.on,
+.oc:hover {
+  background:#101010 !important;
+  color:#ffffff !important;
+}
+.sb-item:hover *,
+.sb-item.on * { color:#ffffff !important; }
+
+input,
+textarea,
+select,
+.cfg-inp,
+.stp,
+.cs-b,
+.authbox input,
+.authusers-form input,
+.authusers-form select,
+.authusers-row select,
+.securityking-form input,
+.securityking-toolbar input,
+.ticketforge-form input,
+.ticketforge-form select,
+.ticketforge-form textarea,
+.lattice-form input,
+.assist-form input,
+.assist-form textarea,
+.sms-form input,
+.sms-form select,
+.pixelnote-form textarea,
+.hashsyt-form input,
+.hashsyt-form select,
+.hnsb-bar input,
+.hnsb-phone input,
+.hnsb-dbcode select,
+.hnsb-dbcode textarea,
+.hnsb-phone-format select,
+.cryptoai-side input,
+.cryptoai-side select,
+.cryptoai-side textarea,
+.cryptoai-compose textarea,
+.container-times input,
+.deriv-side input,
+.deriv-side select,
+.codegui-command input,
+.mountain-tool-form input,
+.mountain-tool-actions input,
+.basemat-form textarea,
+.basemat-form input,
+.complex-side input,
+.complex-side select,
+.complex-side textarea {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border:1px solid #9f9f9a !important;
+}
+
+input::placeholder,
+textarea::placeholder { color:#92928c !important; }
+
+button,
+.assist-form button,
+.assist-list-head button,
+.assist-row button,
+.sms-actions button,
+.hashsyt-actions button,
+.hnsb-format-actions button,
+.deriv-toolbar button,
+.fileview-clear,
+.graph-symbols header button,
+.graph-textboard button,
+.graph-note-list button,
+.codedesk-actions button,
+.codegui-fast button,
+.codegui-command button,
+.dbdlg-btn,
+.textdlg-tool,
+.padlg-bottomtab,
+.deskdlg-del,
+.cmdchips button,
+.cmd-btn,
+.cmd-module,
+.colorswatch button,
+.formatdlg-code button,
+.mountain-tool-row-actions button,
+.complex-actions button,
+.timer-actions button,
+.client-save,
+.client-tools button,
+.client-list footer button {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#9f9f9a !important;
+}
+
+button:hover,
+.assist-form button:hover,
+.assist-list-head button:hover,
+.assist-row button:hover,
+.sms-actions button:hover,
+.hashsyt-actions button:hover,
+.hnsb-format-actions button:hover,
+.deriv-toolbar button:hover,
+.fileview-clear:hover,
+.graph-symbol-grid button:hover,
+.graph-symbols header button:hover,
+.graph-textboard button:hover,
+.graph-note-list button:hover,
+.codedesk-actions button:hover,
+.codegui-fast button:hover,
+.codegui-command button:hover,
+.dbdlg-btn:hover:not(:disabled),
+.textdlg-tool:hover,
+.padlg-bottomtab:hover,
+.deskdlg-del:hover,
+.cmdchips button:hover,
+.cmd-btn:hover,
+.cmd-module:hover,
+.colorswatch button:hover,
+.formatdlg-code button:hover,
+.mountain-tool-row-actions button:hover,
+.complex-actions button:hover:not(:disabled),
+.timer-actions button:hover:not(:disabled),
+.client-save:hover,
+.client-tools button:hover,
+.client-list footer button:hover {
+  background:#101010 !important;
+  color:#ffffff !important;
+  border-color:#101010 !important;
+}
+
+.btn-pri,
+.authbox button,
+.authusers-form button,
+.securityking-form button,
+.ticketforge-form button,
+.lattice-form button,
+.sms-actions button:first-child,
+.pixelnote-actions button,
+.hashsyt-form button,
+.hnsb-bar button,
+.hnsb-actions button,
+.cryptoai-actions button,
+.cryptoai-compose button,
+.container-actions button,
+.deriv-actions button,
+.fileview-upload,
+.graph-actions button,
+.graph-textboard > button,
+.osdgenc-primary,
+.osdgenc-download,
+.mnotes-plus,
+.cmdide-status b {
+  background:#101010 !important;
+  color:#ffffff !important;
+  border-color:#101010 !important;
+}
+
+.cmd-window,
+.cmd-window-bar,
+.cmd-inputbar,
+.cmd-inputbar input,
+.codegui-log,
+.hnsb-cli,
+.hnsb-cli input,
+.colorlog,
+.colorcss,
+.formatdlg-spec,
+.basemat-output,
+.mddlg-split.terminal .mddlg-pane,
+.mddlg-split.terminal .mddlg-pane-head {
+  background:#101010 !important;
+  color:#f5f5f5 !important;
+  border-color:#333333 !important;
+}
+
+.complex-title h2,
+.complex-title p,
+.complex-note,
+.complex-grid span,
+.complex-list header b,
+.complex-list header span,
+.complex-list p,
+.complex-list small,
+.timer-title h2,
+.timer-display strong,
+.timer-stats b,
+.client-title h2,
+.client-list b,
+.client-list code {
+  color:#101010 !important;
+}
+
+.complex-mark,
+.timer-mark,
+.client-mark {
+  background:#101010 !important;
+  color:#ffffff !important;
+  border-color:#101010 !important;
+}
+
+.oc,
+.ti-quickcard,
+.dlg-card,
+.complex-grid div,
+.complex-list article,
+.timer-display,
+.client-list article,
+.qrdlg-card,
+.pixelnote-current,
+.mnotes-card-preview,
+.formatdlg-hero div,
+.cryptoai-model-card,
+.fileview-main {
+  box-shadow:4px 4px 0 rgba(0,0,0,.10) !important;
+}
+
+.geodlg-canvaswrap canvas,
+.graph-main canvas,
+.pivot-canvas-wrap canvas {
+  image-rendering:pixelated !important;
+}
+
+.bottom-tools,
+.bottom-tools-rail,
+.bottom-tools-title,
+.bottom-tools-slots {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#101010 !important;
+}
+
+.bottom-tools-toggle,
+.bottom-tool-icon {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#9f9f9a !important;
+}
+.bottom-tool-icon:hover,
+.bottom-tools-toggle:hover {
+  background:#101010 !important;
+  color:#ffffff !important;
+  border-color:#101010 !important;
+}
