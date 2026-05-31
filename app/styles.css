@@ -7186,6 +7186,41 @@ body ::selection { background:#101010 !important; color:#ffffff !important; }
   color:#101010 !important;
 }
 
+/* Performance pass: keep the pixel highlight immediate and cheap to repaint. */
+.tb-nav {
+  scroll-behavior:auto !important;
+}
+
+.out {
+  contain:layout paint;
+}
+
+.oc {
+  contain:layout paint style;
+  content-visibility:auto;
+  contain-intrinsic-size:38px;
+  box-shadow:none !important;
+  transition:none !important;
+}
+
+.oc *,
+.sb-item,
+.tb-n,
+.bottom-tool-icon,
+.tb-dd-item {
+  transition:none !important;
+}
+
+.oc:hover {
+  box-shadow:inset 4px 0 0 #101010 !important;
+  transform:none !important;
+}
+
+.oc.flash,
+.oc.similar-hit {
+  animation:none !important;
+}
+
 input,
 textarea,
 select,

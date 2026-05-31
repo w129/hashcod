@@ -4,8 +4,8 @@ const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const APP_VERSION = 12;
 window.APP_VERSION = APP_VERSION;
 const MAX_GENERATION_BATCH = 100000;
-const GENERATION_CHUNK_SIZE = 500;
-const MAX_RENDERED_OUTPUT = 600;
+const GENERATION_CHUNK_SIZE = 200;
+const MAX_RENDERED_OUTPUT = 300;
 const PLAN_SIMILARITY_DENSITY = {
   free: 0.78,
   starter: 0.42,
