@@ -7153,13 +7153,38 @@ body ::selection { background:#101010 !important; color:#ffffff !important; }
 }
 
 .sb-item:hover,
-.sb-item.on,
-.oc:hover {
+.sb-item.on {
   background:#101010 !important;
   color:#ffffff !important;
 }
 .sb-item:hover *,
 .sb-item.on * { color:#ffffff !important; }
+
+.oc {
+  background:#ffffff !important;
+  outline:0 solid transparent;
+  outline-offset:-2px;
+  transition:background .08s steps(2,end), border-color .08s steps(2,end), box-shadow .08s steps(2,end), outline-width .08s steps(2,end), transform .08s steps(2,end) !important;
+}
+
+.oc:hover {
+  background:#ffffff !important;
+  color:#101010 !important;
+  border-color:#101010 !important;
+  outline:2px solid #101010;
+  outline-offset:-2px;
+  box-shadow:4px 4px 0 #c9c9c5, 7px 7px 0 rgba(16,16,16,.14) !important;
+  transform:translate(-1px,-1px);
+  position:relative;
+  z-index:2;
+}
+
+.oc:hover .oc-idx,
+.oc:hover .oc-val,
+.oc:hover .oc-meta,
+.oc:hover .oc-sim {
+  color:#101010 !important;
+}
 
 input,
 textarea,
