@@ -10320,6 +10320,16 @@ const parametricCorrelation = values => {
   }
   return leftEnergy && rightEnergy ? numerator / Math.sqrt(leftEnergy * rightEnergy) : 0;
 };
+const parametricSourceLabel = (row, index = 0) => {
+  const typeId = row?.typeId || row?.type || '';
+  const meta = typeId ? findTypeMeta(typeId) : null;
+  const primitive = row?.primitiveLabel || meta?.type?.label || typeId || 'code';
+  const numericIndex = Number(row?.idx ?? row?.id);
+  const displayIndex = Number.isFinite(numericIndex) && numericIndex > 0 ? numericIndex : index + 1;
+  const code = String(row?.value || '').replace(/\s+/g, ' ').trim();
+  const preview = code.length > 52 ? `${code.slice(0, 52)}...` : code;
+  return `${String(displayIndex).padStart(4, '0')} | ${primitive} | ${preview || 'EMPTY CODE'}`;
+};
 const buildParametricCryptoAnalysis = async row => {
   const value = String(row?.value || '');
   const bytes = Array.from(new TextEncoder().encode(value)).slice(0, 768);
@@ -10417,14 +10427,18 @@ const ParametricCryptoAnalyzerDialog = ({
       if (!row?.value || seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).slice(0, 1200);
+    }).slice(0, 1200).map((row, index) => ({
+      ...row,
+      _parametricKey: `${row?.id || row?.idx || 'code'}:${index}`,
+      _parametricLabel: parametricSourceLabel(row, index)
+    }));
   }, [rows, outputRows]);
   const [selectedId, setSelectedId] = useState('');
   const [mode, setMode] = useState('orbit');
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const activeId = selectedId || String(sources[0]?.id || '');
-  const selected = sources.find(row => String(row.id) === String(activeId)) || sources[0] || null;
+  const activeId = selectedId || String(sources[0]?._parametricKey || '');
+  const selected = sources.find(row => String(row._parametricKey) === String(activeId)) || sources[0] || null;
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -10544,9 +10558,9 @@ const ParametricCryptoAnalyzerDialog = ({
   }, !sources.length && React.createElement("option", {
     value: ""
   }, L('Base sin codes', 'No saved codes')), sources.map(row => React.createElement("option", {
-    key: `${row.id}-${row.type}`,
-    value: row.id
-  }, String(row.idx || 0).padStart(4, '0'), " | ", row.type)))), React.createElement("label", null, React.createElement("span", null, L('Vista de trayectoria', 'Trajectory view')), React.createElement("select", {
+    key: row._parametricKey,
+    value: row._parametricKey
+  }, row._parametricLabel)))), React.createElement("label", null, React.createElement("span", null, L('Vista de trayectoria', 'Trajectory view')), React.createElement("select", {
     value: mode,
     onChange: event => setMode(event.target.value)
   }, React.createElement("option", {
