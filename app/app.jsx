@@ -2496,6 +2496,7 @@ const TOP_MENU_ICONS = {
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
+  parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   complexEntropy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 22v-5"/><path d="M14 19v-2"/><path d="M18 20v-3"/><path d="M2 13h20"/><path d="M6 20v-3"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
@@ -8499,6 +8500,303 @@ const GraphLabDialog = ({ open, onClose, notify, language }) => {
           </aside>
           <main className="graph-main">
             <canvas ref={canvasRef} width="1400" height="840" />
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const parametricClamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
+const parametricEntropy = (bytes) => {
+  if (!bytes.length) return 0;
+  const counts = new Map();
+  bytes.forEach(byte => counts.set(byte, (counts.get(byte) || 0) + 1));
+  let total = 0;
+  counts.forEach(count => {
+    const p = count / bytes.length;
+    total -= p * Math.log2(p);
+  });
+  return total;
+};
+const parametricMean = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+const parametricCorrelation = (values) => {
+  if (values.length < 3) return 0;
+  const left = values.slice(0, -1);
+  const right = values.slice(1);
+  const leftMean = parametricMean(left);
+  const rightMean = parametricMean(right);
+  let numerator = 0;
+  let leftEnergy = 0;
+  let rightEnergy = 0;
+  for (let i = 0; i < left.length; i++) {
+    const a = left[i] - leftMean;
+    const b = right[i] - rightMean;
+    numerator += a * b;
+    leftEnergy += a * a;
+    rightEnergy += b * b;
+  }
+  return leftEnergy && rightEnergy ? numerator / Math.sqrt(leftEnergy * rightEnergy) : 0;
+};
+const buildParametricCryptoAnalysis = async (row) => {
+  const value = String(row?.value || '');
+  const bytes = Array.from(new TextEncoder().encode(value)).slice(0, 768);
+  if (!bytes.length) return null;
+  const normalized = bytes.map(byte => byte / 255);
+  const center = normalized.map(valuePart => valuePart - 0.5);
+  const deltas = center.map((valuePart, index) => index ? valuePart - center[index - 1] : 0);
+  const curvature = deltas.map((delta, index) => index ? delta - deltas[index - 1] : 0);
+  const windowSize = Math.max(8, Math.min(32, Math.round(Math.sqrt(bytes.length))));
+  const points = bytes.map((byte, index) => {
+    const t = bytes.length === 1 ? 0 : -2 + (index / (bytes.length - 1)) * 6;
+    const orbitX = 2 * t - 4;
+    const orbitY = 3 + t * t + center[index] * 4;
+    const theta = (index / Math.max(1, bytes.length - 1)) * Math.PI * 6 + normalized[index] * Math.PI;
+    const radius = 1.4 + normalized[index] * 4.8 + Math.abs(curvature[index]) * 2.2;
+    const start = Math.max(0, index - windowSize + 1);
+    const localEntropy = parametricEntropy(bytes.slice(start, index + 1));
+    return {
+      index,
+      t,
+      byte,
+      delta: deltas[index],
+      curvature: curvature[index],
+      localEntropy,
+      orbitX,
+      orbitY,
+      polarX: Math.cos(theta) * radius,
+      polarY: Math.sin(theta) * radius,
+    };
+  });
+  const entropy = parametricEntropy(bytes);
+  const meanDelta = parametricMean(deltas.map(Math.abs));
+  const curvatureEnergy = parametricMean(curvature.map(valuePart => valuePart * valuePart));
+  const uniqueRatio = new Set(bytes).size / bytes.length;
+  const repetitionRatio = 1 - uniqueRatio;
+  const serialCorrelation = parametricCorrelation(normalized);
+  const quadrants = [0, 0, 0, 0];
+  points.forEach(point => {
+    const quadrant = point.polarX >= 0 ? (point.polarY >= 0 ? 0 : 3) : (point.polarY >= 0 ? 1 : 2);
+    quadrants[quadrant]++;
+  });
+  const polarImbalance = quadrants.length ? (Math.max(...quadrants) - Math.min(...quadrants)) / bytes.length : 0;
+  const bands = Array.from({ length: 16 }, () => 0);
+  bytes.forEach(byte => bands[Math.min(15, Math.floor(byte / 16))]++);
+  const bandResonance = Math.max(...bands) / bytes.length;
+  const lowEntropyPenalty = Math.max(0, 6.5 - entropy) * 11;
+  const risk = Math.round(parametricClamp(
+    lowEntropyPenalty +
+    repetitionRatio * 38 +
+    Math.abs(serialCorrelation) * 26 +
+    polarImbalance * 22 +
+    Math.max(0, bandResonance - 0.12) * 120 +
+    Math.max(0, 0.035 - curvatureEnergy) * 180
+  ));
+  const verdict = entropy < 2.5 || risk >= 88
+    ? 'HIGH RISK'
+    : risk >= 62
+      ? 'STRUCTURED / REVIEW'
+      : risk >= 36
+        ? 'WATCHLIST'
+        : 'CLEAR';
+  return {
+    id: `HPA-${String(row?.idx || 0).padStart(4, '0')}-${Date.now().toString(36).toUpperCase()}`,
+    source: { id: row?.id || '', idx: row?.idx || 0, type: row?.type || 'code', length: value.length },
+    digest: (await digestHex(value)).toUpperCase(),
+    generatedAt: new Date().toISOString(),
+    byteLength: bytes.length,
+    truncated: new TextEncoder().encode(value).length > bytes.length,
+    windowSize,
+    points,
+    bands,
+    quadrants,
+    metrics: {
+      entropy: Number(entropy.toFixed(4)),
+      meanDelta: Number(meanDelta.toFixed(5)),
+      curvatureEnergy: Number(curvatureEnergy.toFixed(5)),
+      repetitionRatio: Number(repetitionRatio.toFixed(5)),
+      serialCorrelation: Number(serialCorrelation.toFixed(5)),
+      polarImbalance: Number(polarImbalance.toFixed(5)),
+      bandResonance: Number(bandResonance.toFixed(5)),
+      risk,
+      verdict,
+    },
+    processes: [
+      ['BYTE ORBIT', 'x=2t-4; y=3+t^2+byte_offset', `H=${entropy.toFixed(4)} bits/byte`],
+      ['DELTA VELOCITY', 'v_i=u_i-u_(i-1)', `mean |v|=${meanDelta.toFixed(5)}`],
+      ['DISCRETE CURVATURE', 'a_i=v_i-v_(i-1)', `energy=${curvatureEnergy.toFixed(5)}`],
+      ['POLAR DRIFT', 'r=1.4+4.8u+2.2|a|', `imbalance=${polarImbalance.toFixed(5)}`],
+      ['WINDOW ENTROPY', `Shannon H over ${windowSize}-byte windows`, `last=${points.at(-1).localEntropy.toFixed(4)}`],
+      ['BAND RESONANCE', '16 hexadecimal byte bands', `peak=${bandResonance.toFixed(5)}`],
+      ['SERIAL CORRELATION', 'corr(u_i,u_(i+1))', `corr=${serialCorrelation.toFixed(5)}`],
+    ],
+  };
+};
+
+const ParametricCryptoAnalyzerDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const canvasRef = useRef(null);
+  const sources = useMemo(() => {
+    const seen = new Set();
+    return [...(rows || []), ...(outputRows || [])].filter(row => {
+      const key = `${row?.id || ''}:${row?.type || ''}:${row?.value || ''}`;
+      if (!row?.value || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 1200);
+  }, [rows, outputRows]);
+  const [selectedId, setSelectedId] = useState('');
+  const [mode, setMode] = useState('orbit');
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const activeId = selectedId || String(sources[0]?.id || '');
+  const selected = sources.find(row => String(row.id) === String(activeId)) || sources[0] || null;
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fbfbfa';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#e3e3df';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= w; x += 36) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y <= h; y += 36) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    ctx.strokeStyle = '#7a7a74';
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.moveTo(w / 2, 0);
+    ctx.lineTo(w / 2, h);
+    ctx.stroke();
+    if (!result?.points?.length) {
+      ctx.fillStyle = '#6f6f69';
+      ctx.font = '18px "Codec Pro", Consolas, monospace';
+      ctx.fillText(L('Analiza un code para dibujar su trayectoria.', 'Analyze a code to draw its trajectory.'), 36, 58);
+      return;
+    }
+    const values = result.points.map(point => mode === 'polar'
+      ? [point.polarX, point.polarY]
+      : mode === 'entropy'
+        ? [point.index, point.localEntropy]
+        : [point.orbitX, point.orbitY]);
+    const xs = values.map(value => value[0]);
+    const ys = values.map(value => value[1]);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const px = value => 36 + ((value - minX) / Math.max(0.0001, maxX - minX)) * (w - 72);
+    const py = value => h - 36 - ((value - minY) / Math.max(0.0001, maxY - minY)) * (h - 72);
+    ctx.strokeStyle = '#d21b68';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    values.forEach(([x, y], index) => index ? ctx.lineTo(px(x), py(y)) : ctx.moveTo(px(x), py(y)));
+    ctx.stroke();
+    ctx.fillStyle = '#101010';
+    const step = Math.max(5, Math.floor(values.length / 18));
+    values.forEach(([x, y], index) => {
+      if (index % step || index === 0) return;
+      const previous = values[index - 1];
+      const angle = Math.atan2(py(y) - py(previous[1]), px(x) - px(previous[0]));
+      const cx = px(x);
+      const cy = py(y);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx - Math.cos(angle - 0.55) * 9, cy - Math.sin(angle - 0.55) * 9);
+      ctx.lineTo(cx - Math.cos(angle + 0.55) * 9, cy - Math.sin(angle + 0.55) * 9);
+      ctx.closePath();
+      ctx.fill();
+    });
+    ctx.fillStyle = '#101010';
+    ctx.font = '14px "Codec Pro", Consolas, monospace';
+    ctx.fillText(`${result.id} | ${mode.toUpperCase()} | ${result.metrics.verdict} | RISK ${result.metrics.risk}/100`, 20, 24);
+  }, [language, mode, result]);
+
+  useEffect(() => { if (open) requestAnimationFrame(draw); }, [draw, open]);
+  const analyze = async () => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      const next = await buildParametricCryptoAnalysis(selected);
+      setResult(next);
+      notify?.(L('Analisis parametrico completado', 'Parametric analysis completed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const downloadJson = () => result && triggerDownload(`HSG2818-Parametric-${result.id}-${tsStamp()}.json`, JSON.stringify({ hsg2818_parametric_analysis: result }, null, 2), 'application/json;charset=utf-8');
+  const downloadPng = () => {
+    draw();
+    canvasRef.current?.toBlob(blob => blob && triggerBlobDownload(`HSG2818-Parametric-${result?.id || 'map'}-${tsStamp()}.png`, blob), 'image/png');
+  };
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg paramdlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h param-head">
+          <div className="param-title">
+            <span className="param-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.parametricAnalyzer}} />
+            <div>
+              <h2>{L('Analizador Parametrico Criptografico', 'Parametric Cryptographic Analyzer')}</h2>
+              <p>{L('Convierte bytes guardados en trayectorias, mide estructura y compara variables nuevas.', 'Turns saved bytes into trajectories, measures structure, and compares new variables.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="param-shell">
+          <aside className="param-side">
+            <label><span>{L('Code fuente', 'Source code')}</span>
+              <select value={activeId} onChange={event => setSelectedId(event.target.value)}>
+                {!sources.length && <option value="">{L('Base sin codes', 'No saved codes')}</option>}
+                {sources.map(row => <option key={`${row.id}-${row.type}`} value={row.id}>{String(row.idx || 0).padStart(4, '0')} | {row.type}</option>)}
+              </select>
+            </label>
+            <label><span>{L('Vista de trayectoria', 'Trajectory view')}</span>
+              <select value={mode} onChange={event => setMode(event.target.value)}>
+                <option value="orbit">BYTE ORBIT</option>
+                <option value="polar">POLAR DRIFT</option>
+                <option value="entropy">WINDOW ENTROPY</option>
+              </select>
+            </label>
+            <div className="param-actions">
+              <button onClick={analyze} disabled={!selected || busy}>{busy ? L('Analizando...', 'Analyzing...') : L('Analizar code', 'Analyze code')}</button>
+              <button onClick={downloadJson} disabled={!result}>JSON</button>
+              <button onClick={downloadPng} disabled={!result}>PNG</button>
+            </div>
+            <div className="param-note">{L('Analisis heuristico reproducible. No sustituye revision criptografica externa.', 'Reproducible heuristic analysis. It does not replace external cryptographic review.')}</div>
+            {result && <div className="param-verdict"><span>{L('Veredicto', 'Verdict')}</span><b>{result.metrics.verdict}</b><em>RISK {result.metrics.risk}/100</em></div>}
+          </aside>
+          <main className="param-main">
+            <canvas ref={canvasRef} width="1280" height="520" />
+            {result ? (
+              <>
+                <div className="param-metrics">
+                  <article><span>ENTROPY</span><b>{result.metrics.entropy}</b></article>
+                  <article><span>MEAN DELTA</span><b>{result.metrics.meanDelta}</b></article>
+                  <article><span>CURVATURE</span><b>{result.metrics.curvatureEnergy}</b></article>
+                  <article><span>POLAR BALANCE</span><b>{(1 - result.metrics.polarImbalance).toFixed(4)}</b></article>
+                  <article><span>SERIAL CORR</span><b>{result.metrics.serialCorrelation}</b></article>
+                  <article><span>BAND PEAK</span><b>{result.metrics.bandResonance}</b></article>
+                </div>
+                <div className="param-data-grid">
+                  <section className="param-processes">
+                    <h3>{L('Procesos nuevos', 'New processes')}</h3>
+                    {result.processes.map(([name, formula, value]) => <article key={name}><b>{name}</b><code>{formula}</code><span>{value}</span></article>)}
+                  </section>
+                  <section className="param-table-wrap">
+                    <h3>{L('Tabla parametrica', 'Parametric table')}</h3>
+                    <table>
+                      <thead><tr><th>i</th><th>t</th><th>byte</th><th>x</th><th>y</th><th>delta</th><th>curve</th><th>H win</th></tr></thead>
+                      <tbody>{result.points.slice(0, 120).map(point => <tr key={point.index}><td>{point.index}</td><td>{point.t.toFixed(3)}</td><td>{point.byte}</td><td>{point.orbitX.toFixed(3)}</td><td>{point.orbitY.toFixed(3)}</td><td>{point.delta.toFixed(4)}</td><td>{point.curvature.toFixed(4)}</td><td>{point.localEntropy.toFixed(3)}</td></tr>)}</tbody>
+                    </table>
+                  </section>
+                </div>
+              </>
+            ) : <div className="param-empty">{L('Selecciona un code guardado y ejecuta el analisis.', 'Select a saved code and run the analysis.')}</div>}
           </main>
         </div>
       </section>
@@ -15049,6 +15347,7 @@ const App = () => {
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
+  const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [complexEntropyOpen, setComplexEntropyOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
@@ -15899,6 +16198,7 @@ const App = () => {
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
+  const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openComplexEntropy = () => setComplexEntropyOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
@@ -16160,6 +16460,12 @@ const App = () => {
     { label: language === 'es' ? 'Funciones trigonométricas y potencias' : 'Trig functions and powers', onClick: openGraphLab },
     { label: language === 'es' ? 'Descargar PDF / PNG' : 'Download PDF / PNG', onClick: openGraphLab },
   ];
+  const parametricAnalyzerItems = [
+    { label: language === 'es' ? 'Abrir analizador parametrico' : 'Open parametric analyzer', onClick: openParametricAnalyzer },
+    { label: language === 'es' ? 'Trayectoria BYTE ORBIT' : 'BYTE ORBIT trajectory', onClick: openParametricAnalyzer },
+    { label: language === 'es' ? 'Deriva polar y curvatura discreta' : 'Polar drift and discrete curvature', onClick: openParametricAnalyzer },
+    { label: language === 'es' ? 'Tabla reproducible y descarga PNG / JSON' : 'Reproducible table and PNG / JSON export', onClick: openParametricAnalyzer },
+  ];
   const complexEntropyItems = [
     { label: language === 'es' ? 'Abrir Complex Entropy Map' : 'Open Complex Entropy Map', onClick: openComplexEntropy },
     { label: language === 'es' ? 'Mapa complejo desde bytes' : 'Complex map from bytes', onClick: openComplexEntropy },
@@ -16416,6 +16722,7 @@ const App = () => {
         derivatives: openDerivativesLab, derivative: openDerivativesLab, derivadas: openDerivativesLab, derivar: openDerivativesLab, derive: openDerivativesLab, droplet: openDerivativesLab,
         fileviewer: openFileViewer, viewer: openFileViewer, visualizador: openFileViewer, files: openFileViewer, archivos: openFileViewer, 'file-viewer': openFileViewer,
         graph: openGraphLab, graphlab: openGraphLab, grafica: openGraphLab, graficadora: openGraphLab, mathgraph: openGraphLab, 'graph-lab': openGraphLab,
+        parametric: openParametricAnalyzer, parametriclab: openParametricAnalyzer, trajectory: openParametricAnalyzer, orbit: openParametricAnalyzer, 'parametric-analyzer': openParametricAnalyzer,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHSG2818Licenses, licensefactory: openHSG2818Licenses, hclic: openHSG2818Licenses, copyright: openHSG2818Licenses, licencias: openHSG2818Licenses,
         quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault,
@@ -16581,6 +16888,7 @@ const App = () => {
       visualizador: { open: openFileViewer, label: 'Universal File Viewer', verbs: ['abrir','subir','ver','pdf','imagen','video','audio','json','hex','sha256','help'] },
       graph: { open: openGraphLab, label: 'Graph Lab', verbs: ['plot','function','range','pdf','png','sin','cos','pow','help'] },
       graficadora: { open: openGraphLab, label: 'Graph Lab', verbs: ['graficar','funcion','rango','pdf','png','seno','coseno','potencia','help'] },
+      parametric: { open: openParametricAnalyzer, label: 'HSG2818 Parametric Crypto Analyzer', verbs: ['analyze','orbit','polar','curvature','entropy','trajectory','table','png','json'] },
       complexentropy: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','complex','entropy','map','quadrants','bands','png','json','risk'] },
       complexmap: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','bytes','plane','risk','png','json'] },
       licenses: { open: openHSG2818Licenses, label: 'HSG2818 License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
@@ -16643,7 +16951,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -16673,6 +16981,7 @@ const App = () => {
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
+      <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <ComplexEntropyMapDialog open={complexEntropyOpen} onClose={() => setComplexEntropyOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
@@ -16741,6 +17050,7 @@ const App = () => {
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
+            <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="COMPLEX MAP" icon={TOP_MENU_ICONS.complexEntropy} iconOnly items={complexEntropyItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openComplexEntropy} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
@@ -16893,6 +17203,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setGeometricCodeOpen(true)} title={language === 'ja' ? '幾何学コードラボ' : language === 'es' ? 'Code geometrico' : 'Geometric Code Lab'} aria-label={language === 'ja' ? '幾何学コードラボ' : language === 'es' ? 'Code geometrico' : 'Geometric Code Lab'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.geometricCode}} />
                 <b>{language === 'ja' ? '幾何学' : language === 'es' ? 'Geometrico' : 'Geometry'}</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setParametricAnalyzerOpen(true)} title={language === 'es' ? 'Analizador parametrico criptografico' : 'Parametric cryptographic analyzer'} aria-label={language === 'es' ? 'Analizador parametrico criptografico' : 'Parametric cryptographic analyzer'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.parametricAnalyzer}} />
+                <b>Parametric</b>
               </button>
               {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
                 <button type="button" className="bottom-tool-icon" key={tool.key} onClick={() => openSecuritySuite(tool.key)} title={tool.title} aria-label={tool.title}>
