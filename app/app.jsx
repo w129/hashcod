@@ -38,9 +38,9 @@ const I18N = {
     generateSelected: 'Generate selected', generate10: 'Generate 10', generate100: 'Generate 100', generate500: 'Generate 500', generate1000: 'Generate 1000',
     exportMarkdown: 'Export Markdown', exportTxt: 'Export TXT', exportJson: 'Export JSON', exportCsv: 'Export CSV',
     compactDensity: 'Compact density', comfortableDensity: 'Comfortable density', focusSearch: 'Focus search', newestOutput: 'Newest output', replayTour: 'Replay tour',
-    openHelp: 'Open help', shortcuts: 'Shortcuts', aboutApp: 'About HSG2818',
-    helpTitle: 'HSG2818 Help', helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
-    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved HSG2818 session.',
+    openHelp: 'Open help', shortcuts: 'Shortcuts', aboutApp: 'About Q+7LkMK05',
+    helpTitle: 'Q+7LkMK05 Help', helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
+    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved Q+7LkMK05 session.',
     helpGenerateDesc: 'Generate the selected primitive, change batch size quickly, copy results, or clear the output.',
     helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
     helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
@@ -66,9 +66,9 @@ const I18N = {
     generateSelected: 'Generar seleccionado', generate10: 'Generar 10', generate100: 'Generar 100', generate500: 'Generar 500', generate1000: 'Generar 1000',
     exportMarkdown: 'Exportar Markdown', exportTxt: 'Exportar TXT', exportJson: 'Exportar JSON', exportCsv: 'Exportar CSV',
     compactDensity: 'Densidad compacta', comfortableDensity: 'Densidad cómoda', focusSearch: 'Enfocar búsqueda', newestOutput: 'Salida más reciente', replayTour: 'Repetir tour',
-    openHelp: 'Abrir ayuda', shortcuts: 'Atajos', aboutApp: 'Acerca de HSG2818',
-    helpTitle: 'Ayuda de HSG2818', helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
-    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de HSG2818.',
+    openHelp: 'Abrir ayuda', shortcuts: 'Atajos', aboutApp: 'Acerca de Q+7LkMK05',
+    helpTitle: 'Ayuda de Q+7LkMK05', helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
+    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de Q+7LkMK05.',
     helpGenerateDesc: 'Genera la primitiva seleccionada, cambia el tamaño del lote rápidamente, copia resultados o limpia la salida.',
     helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
     helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
@@ -94,9 +94,9 @@ const I18N = {
     generateSelected: '選択項目を生成', generate10: '10個生成', generate100: '100個生成', generate500: '500個生成', generate1000: '1000個生成',
     exportMarkdown: 'Markdownをエクスポート', exportTxt: 'TXTをエクスポート', exportJson: 'JSONをエクスポート', exportCsv: 'CSVをエクスポート',
     compactDensity: 'コンパクト表示', comfortableDensity: '標準表示', focusSearch: '検索にフォーカス', newestOutput: '最新の出力', replayTour: 'ツアーを再生',
-    openHelp: 'ヘルプを開く', shortcuts: 'ショートカット', aboutApp: 'HSG2818について',
-    helpTitle: 'HSG2818 ヘルプ', helpSubtitle: '開発者とサイバーセキュリティ作業向けのローカル暗号値ジェネレーター。',
-    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのHSG2818セッションを読み込みます。',
+    openHelp: 'ヘルプを開く', shortcuts: 'ショートカット', aboutApp: 'Q+7LkMK05について',
+    helpTitle: 'Q+7LkMK05 ヘルプ', helpSubtitle: '開発者とサイバーセキュリティ作業向けのローカル暗号値ジェネレーター。',
+    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのQ+7LkMK05セッションを読み込みます。',
     helpGenerateDesc: '選択したプリミティブを生成し、バッチサイズを素早く変更し、結果をコピーまたは出力を消去します。',
     helpExportDesc: '用途に応じて生成値をMarkdown、TXT、JSON、CSVとしてエクスポートします。',
     helpViewDesc: '表示密度の変更、検索フォーカス、最新結果への移動、ガイドツアーの再生を行います。',
@@ -960,38 +960,45 @@ const AdaptiveToolCard = ({ toolKey, title, language, compact = false }) => {
   );
 };
 
-const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z"/><path fill="currentColor" d="M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z"/></svg>';
+const PLATFORM_DISPLAY_NAME = 'Q+7LkMK05';
+const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 16 2-2-2-2"/><path d="M12 18h4"/></svg>';
 
 const drawHSG2818CanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
   const line = Math.max(2, size * 0.075);
-  const frameX = x + size * 0.08;
-  const frameY = y + size * 0.1;
-  const frameW = size * 0.84;
-  const frameH = size * 0.58;
+  const frameX = x + size * 0.18;
+  const frameY = y + size * 0.08;
+  const frameW = size * 0.62;
+  const frameH = size * 0.84;
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = line;
   ctx.lineJoin = 'round';
-  ctx.lineCap = 'square';
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(frameX, frameY + frameH);
-  ctx.lineTo(frameX, frameY);
-  ctx.lineTo(frameX + frameW, frameY);
+  ctx.moveTo(frameX + frameW * 0.68, frameY);
+  ctx.lineTo(frameX + frameW * 0.68, frameY + frameH * 0.26);
+  ctx.lineTo(frameX + frameW, frameY + frameH * 0.26);
+  ctx.moveTo(frameX + frameW * 0.68, frameY);
+  ctx.lineTo(frameX + frameW, frameY + frameH * 0.26);
   ctx.lineTo(frameX + frameW, frameY + frameH);
+  ctx.lineTo(frameX, frameY + frameH);
+  ctx.lineTo(frameX, frameY);
+  ctx.lineTo(frameX + frameW * 0.68, frameY);
   ctx.stroke();
-  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
   ctx.beginPath();
-  ctx.moveTo(x + size * 0.5, y + size * 0.49);
-  ctx.lineTo(x + size * 0.22, y + size * 0.9);
-  ctx.lineTo(x + size * 0.78, y + size * 0.9);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(x + size * 0.32, y + size * 0.56);
+  ctx.lineTo(x + size * 0.41, y + size * 0.64);
+  ctx.lineTo(x + size * 0.32, y + size * 0.72);
+  ctx.moveTo(x + size * 0.5, y + size * 0.79);
+  ctx.lineTo(x + size * 0.66, y + size * 0.79);
+  ctx.stroke();
   ctx.restore();
 };
 
 const hashcodDownloadBrand = () => ({
-  name: 'HSG2818',
-  platform: 'HSG2818 - Cryptographic Platform',
+  name: PLATFORM_DISPLAY_NAME,
+  platform: `${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
   logo_svg: HASHCOD_DOWNLOAD_LOGO_SVG,
   generated_at: new Date().toISOString(),
 });
@@ -1007,7 +1014,7 @@ const brandDownloadText = (filename, text, mime = '') => {
     if (/^brand_logo_svg=/m.test(raw)) return raw;
     return raw.replace(
       /^(HASHCOD-OCG-PACK\/1\s*)/m,
-      `$1brand_name=HSG2818\nbrand_platform=HSG2818 - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`
+      `$1brand_name=${PLATFORM_DISPLAY_NAME}\nbrand_platform=${PLATFORM_DISPLAY_NAME} - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`
     );
   }
 
@@ -1026,8 +1033,8 @@ const brandDownloadText = (filename, text, mime = '') => {
   if (lowerName.endsWith('.js') || lowerMime.includes('javascript')) {
     return [
       '/* HASHCOD_DOWNLOAD_BRAND',
-      ' * Name: HSG2818',
-      ' * Platform: HSG2818 - Cryptographic Platform',
+      ` * Name: ${PLATFORM_DISPLAY_NAME}`,
+      ` * Platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
       ` * Generated: ${brand.generated_at}`,
       ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`,
       ' */',
@@ -1036,7 +1043,7 @@ const brandDownloadText = (filename, text, mime = '') => {
   }
 
   if (lowerMime.includes('html') || lowerName.endsWith('.html')) {
-    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
+    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>${PLATFORM_DISPLAY_NAME}</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
     if (/<body[^>]*>/i.test(raw)) return raw.replace(/<body([^>]*)>/i, `<body$1>${badge}`);
     return `${badge}\n${raw}`;
   }
@@ -1044,8 +1051,8 @@ const brandDownloadText = (filename, text, mime = '') => {
   if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || lowerMime.includes('yaml')) {
     return [
       'hashcod_brand:',
-      '  name: HSG2818',
-      '  platform: HSG2818 - Cryptographic Platform',
+      `  name: ${PLATFORM_DISPLAY_NAME}`,
+      `  platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
       `  generated_at: ${brand.generated_at}`,
       `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`,
       '---',
@@ -1056,8 +1063,8 @@ const brandDownloadText = (filename, text, mime = '') => {
   if (lowerName.endsWith('.csv') || lowerMime.includes('csv')) {
     return [
       '# HASHCOD_DOWNLOAD_BRAND',
-      '# name,HSG2818',
-      '# platform,HSG2818 - Cryptographic Platform',
+      `# name,${PLATFORM_DISPLAY_NAME}`,
+      `# platform,${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
       `# generated_at,${brand.generated_at}`,
       `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`,
       raw,
@@ -1076,8 +1083,8 @@ const brandDownloadText = (filename, text, mime = '') => {
 
   return [
     'HASHCOD_DOWNLOAD_BRAND',
-    'Name: HSG2818',
-    'Platform: HSG2818 - Cryptographic Platform',
+    `Name: ${PLATFORM_DISPLAY_NAME}`,
+    `Platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
     `Generated: ${brand.generated_at}`,
     `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`,
     '',
@@ -1233,7 +1240,7 @@ const brandPngBlob = async (blob) => {
     if (icon) ctx.drawImage(icon, left, top, iconSize, iconSize);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = `700 ${Math.max(13, Math.round(footer * 0.28))}px Arial, Helvetica, sans-serif`;
-    ctx.fillText('HSG2818', left + iconSize + 10, image.height + Math.round(footer * 0.45));
+    ctx.fillText(PLATFORM_DISPLAY_NAME, left + iconSize + 10, image.height + Math.round(footer * 0.45));
     ctx.fillStyle = '#A3A3A3';
     ctx.font = `500 ${Math.max(9, Math.round(footer * 0.2))}px Arial, Helvetica, sans-serif`;
     ctx.fillText('Cryptographic Platform', left + iconSize + 10, image.height + Math.round(footer * 0.72));
@@ -1468,7 +1475,7 @@ const rowToMarkdown = (row) => {
     '```',
     ``,
     `---`,
-    `_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`,
+    `_opencriptG · ${PLATFORM_DISPLAY_NAME} Cryptographic Generator v12 · diktatcart® 2026_`,
     ``,
   ];
   return lines.join('\n');
@@ -2001,7 +2008,7 @@ const allRowsToMarkdown = (rows) => {
   });
 
   out.push(`---`);
-  out.push(`_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`);
+  out.push(`_opencriptG · ${PLATFORM_DISPLAY_NAME} Cryptographic Generator v12 · diktatcart® 2026_`);
   out.push(``);
   return out.join('\n');
 };
@@ -3068,7 +3075,7 @@ const TicketForgeDialog = ({ open, onClose, rows, notify, language }) => {
     drawHSG2818CanvasLogo(ctx, 106, 112, 48, '#F5F5F5');
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 44px "Segoe UI", Arial, sans-serif';
-    ctx.fillText('HSG2818', 170, 148);
+    ctx.fillText(PLATFORM_DISPLAY_NAME, 170, 148);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 42px Georgia, serif';
     ctx.fillText(t.title.slice(0, 34), 106, 230);
@@ -5243,7 +5250,7 @@ const AuthGate = ({ children }) => {
       setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : msg === 'invalid_gate_key' ? 'Clave de entrada invalida.' : 'Gate invalido. Pega el token completo sv/sig/se y la clave correcta.');
     }
   };
-  if (platformGate.loading || auth.loading) return <div className="authgate"><div className="authbox"><h1>HSG2818</h1><p>Loading secure session...</p></div></div>;
+  if (platformGate.loading || auth.loading) return <div className="authgate"><div className="authbox"><h1>{PLATFORM_DISPLAY_NAME}</h1><p>Loading secure session...</p></div></div>;
   if (!platformGate.unlocked) {
     return (
       <div className="authgate">
@@ -5251,9 +5258,9 @@ const AuthGate = ({ children }) => {
           <div className="auth-hero">
             <div>
               <div className="authmark"><span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.hashcodLaw}} /></div>
-              <span>HSG2818 PLATFORM GATE</span>
+              <span>{PLATFORM_DISPLAY_NAME} PLATFORM GATE</span>
               <h1>Access Token</h1>
-              <p>La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de HSG2818.</p>
+              <p>La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de {PLATFORM_DISPLAY_NAME}.</p>
             </div>
             <aside className="auth-handshake" aria-label="Platform gate checks">
               <b>GATE CHECK</b>
@@ -5449,7 +5456,7 @@ const BillingContractGate = ({ user, children }) => {
     }
   };
   useEffect(() => { loadContract(); }, []);
-  if (loading) return <div className="authgate pixel-auth"><div className="authbox pixel-authbox"><h1>HSG2818</h1><p>Loading contract gate...</p></div></div>;
+  if (loading) return <div className="authgate pixel-auth"><div className="authbox pixel-authbox"><h1>{PLATFORM_DISPLAY_NAME}</h1><p>Loading contract gate...</p></div></div>;
   if (!required) return children;
   const submit = async (e) => {
     e.preventDefault();
@@ -12833,7 +12840,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
   };
 
   const certificateHtml = (cert) => {
-    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=hashcod-icon-1';
+    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=q7-terminal-1';
     const legal = L(
       'Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema HSG2818 operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de HSG2818.',
       'This private certificate states that the identified code was generated or registered inside the HSG2818 ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private HSG2818 verification.'
@@ -12920,7 +12927,7 @@ const CodeCertificateDialog = ({ open, onClose, rows = [], notify, language }) =
 
           <main className="certdlg-main">
             <section className="certdlg-preview">
-              <div className="certdlg-logo-wrap"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="HSG2818" /></div>
+              <div className="certdlg-logo-wrap"><img src="app/hashcod-platform-icon.svg?v=q7-terminal-1" alt={PLATFORM_DISPLAY_NAME} /></div>
               <div className="certdlg-k">OPENCRIPTG · DIKTATCART · RNC 402-0936929-3</div>
               <h3>{L('Certificado Privado de Code', 'Private Code Certificate')}</h3>
               <p>{L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema HSG2818.', 'Private document for authenticity, issuance, and use license inside the HSG2818 ecosystem.')}</p>
@@ -16011,8 +16018,8 @@ const App = () => {
         .pel{width:22px;height:22px;display:inline-flex;color:#111;}
         @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
       </style></head><body><div class="ticket">
-        <div class="brand">HSG2818 ticket</div>
-        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong></div>
+        <div class="brand">${PLATFORM_DISPLAY_NAME} ticket</div>
+        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>${PLATFORM_DISPLAY_NAME}</strong></div>
         <div class="k">${safe(titleText)}</div>
         <div class="k">${safe(language === 'es' ? 'Índice' : 'Index')}</div><div class="v">${safe(String(row.idx).padStart(3,'0'))}</div>
         <div class="k">${safe(language === 'es' ? 'Primitiva' : 'Primitive')}</div><div class="v">${safe(type?.label || row.primitiveLabel || row.type)}</div>
@@ -17013,8 +17020,8 @@ const App = () => {
         <header className="tb">
           <div className="tb-brand">
             <span className="tb-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(20)}} />
-            <span className="tb-name"><b>HSG2818</b><i>Cryptographic Platform</i></span>
-            <span className="tb-tag">HSG2818 Cryptographic Generator · v12</span>
+            <span className="tb-name"><b>{PLATFORM_DISPLAY_NAME}</b><i>Cryptographic Platform</i></span>
+            <span className="tb-tag">{PLATFORM_DISPLAY_NAME} Cryptographic Generator · v12</span>
           </div>
           <nav ref={topNavRef} className="tb-nav" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
             <MenuButton label={t('menuFile')} icon={TOP_MENU_ICONS.file} iconOnly items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
@@ -17055,11 +17062,11 @@ const App = () => {
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
             <MenuButton label="LWE LATTICE LAB" icon={TOP_MENU_ICONS.latticeLab} iconOnly items={latticeLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLatticeLab} />
-            <MenuButton label="HSG2818 LICENSES" icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHSG2818Licenses} />
+            <MenuButton label={`${PLATFORM_DISPLAY_NAME} LICENSES`} icon={TOP_MENU_ICONS.hashcodLicenseFactory} iconOnly items={hashcodLicenseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHSG2818Licenses} />
             <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
             <MenuButton label="BILLING TIMER" icon={TOP_MENU_ICONS.billingTimer} iconOnly items={billingTimerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBillingTimer} />
             <MenuButton label="CLIENT VAULT" icon={TOP_MENU_ICONS.clientVault} iconOnly items={clientVaultItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openClientVault} />
-            <MenuButton label="HSG2818 PLATFORM" icon={TOP_MENU_ICONS.building} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
+            <MenuButton label={`${PLATFORM_DISPLAY_NAME} PLATFORM`} icon={TOP_MENU_ICONS.building} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="CRYPTO EXAM" icon={TOP_MENU_ICONS.cryptoExam} iconOnly items={cryptoExamItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoExam} />
@@ -17482,9 +17489,9 @@ const HSG2818SingleKeyGate = ({ children }) => {
       <form className="singlekey-card zero-trust-card" onSubmit={submit}>
         <section className="zta-hero">
           <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
-          <span>HSG2818 検証可能セキュリティレイヤー</span>
+          <span>{PLATFORM_DISPLAY_NAME} 検証可能セキュリティレイヤー</span>
           <h1>ゼロトラストアクセス</h1>
-          <p>ユーザー、トークン、ファイル、API、セッションは既定で信頼されません。HSG2818 は起動前に環境を検証し、入場マニフェストへ署名し、監査チェーンへ記録します。</p>
+          <p>ユーザー、トークン、ファイル、API、セッションは既定で信頼されません。{PLATFORM_DISPLAY_NAME} は起動前に環境を検証し、入場マニフェストへ署名し、監査チェーンへ記録します。</p>
         </section>
 
         <aside className="zta-panel">
@@ -17505,12 +17512,12 @@ const HSG2818SingleKeyGate = ({ children }) => {
             type="password"
             value={keyText}
             onChange={e => setKeyText(e.target.value)}
-            placeholder="HSG2818 アクセスキー"
+            placeholder={`${PLATFORM_DISPLAY_NAME} アクセスキー`}
             autoComplete="off"
             autoFocus
           />
           {error && <em>{error}</em>}
-          <button disabled={checking || !keyText.trim()}>{checking ? 'ゼロトラスト検証中...' : 'HSG2818を解除'}</button>
+          <button disabled={checking || !keyText.trim()}>{checking ? 'ゼロトラスト検証中...' : `${PLATFORM_DISPLAY_NAME}を解除`}</button>
         </section>
 
         <section className="zta-metrics" aria-label="Zero Trust status">

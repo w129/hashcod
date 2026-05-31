@@ -66,7 +66,7 @@ const SipHashGate = ({ onUnlock }) => {
     if (locked) return;
     if (timingSafeStr(normalized, SIPHASH_GATE_CODE)) {
       sessionStorage.setItem('ocg_v12_siphash_gate', '1');
-      setStatus('Access verified. Opening HSG2818 v12...');
+      setStatus('Access verified. Opening Q+7LkMK05 v12...');
       setTimeout(() => onUnlock && onUnlock(), 180);
       return;
     }
@@ -84,10 +84,10 @@ const SipHashGate = ({ onUnlock }) => {
       <section className="siphash-card">
         <div className="siphash-brand">
           <div className="siphash-mark">
-            <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=q7-terminal-1" alt="" />
           </div>
           <div>
-            <p>HSG2818 v12</p>
+            <p>Q+7LkMK05 v12</p>
             <h1>Private Access</h1>
             <small>Enterprise cryptographic workspace</small>
           </div>
@@ -114,9 +114,9 @@ const SipHashGate = ({ onUnlock }) => {
         <div className="siphash-meta">
           <div><span>Protection</span><b>SipHash-2-4 gate</b></div>
           <div><span>Access scope</span><b>Private v12 session</b></div>
-          <div><span>Workspace</span><b>HSG2818 cryptographic lab</b></div>
+          <div><span>Workspace</span><b>Q+7LkMK05 cryptographic lab</b></div>
         </div>
-        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter your private access key to continue into HSG2818 v12.'}</p>
+        <p className={`siphash-status ${status ? 'is-visible' : ''}`}>{status || 'Enter your private access key to continue into Q+7LkMK05 v12.'}</p>
       </section>
     </main>
   );
@@ -349,9 +349,9 @@ const VaultLock = ({ onUnlock }) => {
       <section className="access-shell">
         <header className="access-head">
           <div className="access-brand">
-            <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=q7-terminal-1" alt="" />
             <div>
-            <p>HSG2818 enterprise access</p>
+            <p>Q+7LkMK05 enterprise access</p>
             <h1>{mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'}</h1>
             </div>
           </div>

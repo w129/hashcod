@@ -65,7 +65,7 @@ const SipHashGate = ({
     if (locked) return;
     if (timingSafeStr(normalized, SIPHASH_GATE_CODE)) {
       sessionStorage.setItem('ocg_v12_siphash_gate', '1');
-      setStatus('Access verified. Opening HSG2818 v12...');
+      setStatus('Access verified. Opening Q+7LkMK05 v12...');
       setTimeout(() => onUnlock && onUnlock(), 180);
       return;
     }
@@ -86,9 +86,9 @@ const SipHashGate = ({
   }, React.createElement("div", {
     className: "siphash-mark"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
+    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
     alt: ""
-  })), React.createElement("div", null, React.createElement("p", null, "HSG2818 v12"), React.createElement("h1", null, "Private Access"), React.createElement("small", null, "Enterprise cryptographic workspace"))), React.createElement("form", {
+  })), React.createElement("div", null, React.createElement("p", null, "Q+7LkMK05 v12"), React.createElement("h1", null, "Private Access"), React.createElement("small", null, "Enterprise cryptographic workspace"))), React.createElement("form", {
     onSubmit: submit,
     className: "siphash-form"
   }, React.createElement("label", null, React.createElement("span", null, "SECURE ACCESS KEY"), React.createElement("input", {
@@ -106,9 +106,9 @@ const SipHashGate = ({
     disabled: locked || normalized.length !== 16
   }, locked ? `WAIT ${Math.ceil(remaining / 1000)}S` : 'UNLOCK V12')), React.createElement("div", {
     className: "siphash-meta"
-  }, React.createElement("div", null, React.createElement("span", null, "Protection"), React.createElement("b", null, "SipHash-2-4 gate")), React.createElement("div", null, React.createElement("span", null, "Access scope"), React.createElement("b", null, "Private v12 session")), React.createElement("div", null, React.createElement("span", null, "Workspace"), React.createElement("b", null, "HSG2818 cryptographic lab"))), React.createElement("p", {
+  }, React.createElement("div", null, React.createElement("span", null, "Protection"), React.createElement("b", null, "SipHash-2-4 gate")), React.createElement("div", null, React.createElement("span", null, "Access scope"), React.createElement("b", null, "Private v12 session")), React.createElement("div", null, React.createElement("span", null, "Workspace"), React.createElement("b", null, "Q+7LkMK05 cryptographic lab"))), React.createElement("p", {
     className: `siphash-status ${status ? 'is-visible' : ''}`
-  }, status || 'Enter your private access key to continue into HSG2818 v12.')));
+  }, status || 'Enter your private access key to continue into Q+7LkMK05 v12.')));
 };
 async function deriveVerifier(log, salt) {
   const keyMaterial = [ACCESS_LOG_FORMAT, log.keys?.aes256, log.keys?.sm4, log.keys?.serpent, log.issueId, salt].join('|');
@@ -316,9 +316,9 @@ const VaultLock = ({
   }, React.createElement("div", {
     className: "access-brand"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
+    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
     alt: ""
-  }), React.createElement("div", null, React.createElement("p", null, "HSG2818 enterprise access"), React.createElement("h1", null, mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'))), React.createElement("span", {
+  }), React.createElement("div", null, React.createElement("p", null, "Q+7LkMK05 enterprise access"), React.createElement("h1", null, mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'))), React.createElement("span", {
     className: `access-state ${hasProfile ? 'is-ready' : ''}`
   }, hasProfile ? 'profile armed' : 'new vault')), React.createElement("nav", {
     className: "access-tabs",

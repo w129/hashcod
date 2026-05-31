@@ -85,10 +85,10 @@ const I18N = {
     replayTour: 'Replay tour',
     openHelp: 'Open help',
     shortcuts: 'Shortcuts',
-    aboutApp: 'About HSG2818',
-    helpTitle: 'HSG2818 Help',
+    aboutApp: 'About Q+7LkMK05',
+    helpTitle: 'Q+7LkMK05 Help',
     helpSubtitle: 'Local cryptographic value generator for developers and cybersecurity workflows.',
-    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved HSG2818 session.',
+    helpFileDesc: 'Create a clean session, save your current session as JSON, or load a previously saved Q+7LkMK05 session.',
     helpGenerateDesc: 'Generate the selected primitive, change batch size quickly, copy results, or clear the output.',
     helpExportDesc: 'Export generated values as Markdown, TXT, JSON, or CSV depending on your use case.',
     helpViewDesc: 'Switch density, focus search, scroll to the newest result, or replay the guided tour.',
@@ -222,10 +222,10 @@ const I18N = {
     replayTour: 'Repetir tour',
     openHelp: 'Abrir ayuda',
     shortcuts: 'Atajos',
-    aboutApp: 'Acerca de HSG2818',
-    helpTitle: 'Ayuda de HSG2818',
+    aboutApp: 'Acerca de Q+7LkMK05',
+    helpTitle: 'Ayuda de Q+7LkMK05',
     helpSubtitle: 'Generador local de valores criptográficos para desarrolladores y flujos de ciberseguridad.',
-    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de HSG2818.',
+    helpFileDesc: 'Crea una sesión limpia, guarda tu sesión actual como JSON o carga una sesión guardada previamente de Q+7LkMK05.',
     helpGenerateDesc: 'Genera la primitiva seleccionada, cambia el tamaño del lote rápidamente, copia resultados o limpia la salida.',
     helpExportDesc: 'Exporta valores generados como Markdown, TXT, JSON o CSV según tu caso de uso.',
     helpViewDesc: 'Cambia la densidad, enfoca la búsqueda, ve al resultado más nuevo o repite el tour guiado.',
@@ -359,10 +359,10 @@ const I18N = {
     replayTour: 'ツアーを再生',
     openHelp: 'ヘルプを開く',
     shortcuts: 'ショートカット',
-    aboutApp: 'HSG2818について',
-    helpTitle: 'HSG2818 ヘルプ',
+    aboutApp: 'Q+7LkMK05について',
+    helpTitle: 'Q+7LkMK05 ヘルプ',
     helpSubtitle: '開発者とサイバーセキュリティ作業向けのローカル暗号値ジェネレーター。',
-    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのHSG2818セッションを読み込みます。',
+    helpFileDesc: 'クリーンなセッションを作成し、現在のセッションをJSONで保存、または保存済みのQ+7LkMK05セッションを読み込みます。',
     helpGenerateDesc: '選択したプリミティブを生成し、バッチサイズを素早く変更し、結果をコピーまたは出力を消去します。',
     helpExportDesc: '用途に応じて生成値をMarkdown、TXT、JSON、CSVとしてエクスポートします。',
     helpViewDesc: '表示密度の変更、検索フォーカス、最新結果への移動、ガイドツアーの再生を行います。',
@@ -1715,36 +1715,43 @@ const AdaptiveToolCard = ({
     className: "adapt-grid"
   }, React.createElement("div", null, React.createElement("span", null, L('Entradas', 'Inputs')), React.createElement("b", null, p.inputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Salidas', 'Outputs')), React.createElement("b", null, p.outputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Seguridad', 'Security')), React.createElement("b", null, p.security)), React.createElement("div", null, React.createElement("span", null, L('Funcion ideal', 'Best fit')), React.createElement("b", null, p.action))));
 };
-const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z"/><path fill="currentColor" d="M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z"/></svg>';
+const PLATFORM_DISPLAY_NAME = 'Q+7LkMK05';
+const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 16 2-2-2-2"/><path d="M12 18h4"/></svg>';
 const drawHSG2818CanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
   const line = Math.max(2, size * 0.075);
-  const frameX = x + size * 0.08;
-  const frameY = y + size * 0.1;
-  const frameW = size * 0.84;
-  const frameH = size * 0.58;
+  const frameX = x + size * 0.18;
+  const frameY = y + size * 0.08;
+  const frameW = size * 0.62;
+  const frameH = size * 0.84;
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = line;
   ctx.lineJoin = 'round';
-  ctx.lineCap = 'square';
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(frameX, frameY + frameH);
-  ctx.lineTo(frameX, frameY);
-  ctx.lineTo(frameX + frameW, frameY);
+  ctx.moveTo(frameX + frameW * 0.68, frameY);
+  ctx.lineTo(frameX + frameW * 0.68, frameY + frameH * 0.26);
+  ctx.lineTo(frameX + frameW, frameY + frameH * 0.26);
+  ctx.moveTo(frameX + frameW * 0.68, frameY);
+  ctx.lineTo(frameX + frameW, frameY + frameH * 0.26);
   ctx.lineTo(frameX + frameW, frameY + frameH);
+  ctx.lineTo(frameX, frameY + frameH);
+  ctx.lineTo(frameX, frameY);
+  ctx.lineTo(frameX + frameW * 0.68, frameY);
   ctx.stroke();
-  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
   ctx.beginPath();
-  ctx.moveTo(x + size * 0.5, y + size * 0.49);
-  ctx.lineTo(x + size * 0.22, y + size * 0.9);
-  ctx.lineTo(x + size * 0.78, y + size * 0.9);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(x + size * 0.32, y + size * 0.56);
+  ctx.lineTo(x + size * 0.41, y + size * 0.64);
+  ctx.lineTo(x + size * 0.32, y + size * 0.72);
+  ctx.moveTo(x + size * 0.5, y + size * 0.79);
+  ctx.lineTo(x + size * 0.66, y + size * 0.79);
+  ctx.stroke();
   ctx.restore();
 };
 const hashcodDownloadBrand = () => ({
-  name: 'HSG2818',
-  platform: 'HSG2818 - Cryptographic Platform',
+  name: PLATFORM_DISPLAY_NAME,
+  platform: `${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`,
   logo_svg: HASHCOD_DOWNLOAD_LOGO_SVG,
   generated_at: new Date().toISOString()
 });
@@ -1756,7 +1763,7 @@ const brandDownloadText = (filename, text, mime = '') => {
   const brand = hashcodDownloadBrand();
   if (lowerName.endsWith('.ocg.pack') || raw.startsWith('HASHCOD-OCG-PACK/1')) {
     if (/^brand_logo_svg=/m.test(raw)) return raw;
-    return raw.replace(/^(HASHCOD-OCG-PACK\/1\s*)/m, `$1brand_name=HSG2818\nbrand_platform=HSG2818 - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`);
+    return raw.replace(/^(HASHCOD-OCG-PACK\/1\s*)/m, `$1brand_name=${PLATFORM_DISPLAY_NAME}\nbrand_platform=${PLATFORM_DISPLAY_NAME} - Cryptographic Platform\nbrand_logo_svg=${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}\n`);
   }
   if (lowerMime.includes('json') || lowerName.endsWith('.json') || raw.trim().startsWith('{')) {
     try {
@@ -1776,22 +1783,22 @@ const brandDownloadText = (filename, text, mime = '') => {
     }
   }
   if (lowerName.endsWith('.js') || lowerMime.includes('javascript')) {
-    return ['/* HASHCOD_DOWNLOAD_BRAND', ' * Name: HSG2818', ' * Platform: HSG2818 - Cryptographic Platform', ` * Generated: ${brand.generated_at}`, ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, ' */', raw].join('\n');
+    return ['/* HASHCOD_DOWNLOAD_BRAND', ` * Name: ${PLATFORM_DISPLAY_NAME}`, ` * Platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`, ` * Generated: ${brand.generated_at}`, ` * Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, ' */', raw].join('\n');
   }
   if (lowerMime.includes('html') || lowerName.endsWith('.html')) {
-    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
+    const badge = `<section data-brand="HASHCOD_DOWNLOAD_BRAND" style="display:flex;align-items:center;gap:12px;border:1px solid #2A2A2A;background:#0F0F0F;color:#F5F5F5;padding:12px 14px;margin:0 0 18px;font-family:Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase"><span style="width:28px;height:28px;display:inline-flex">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>${PLATFORM_DISPLAY_NAME}</strong><small style="color:#A3A3A3;letter-spacing:.14em">Cryptographic Platform</small></section>`;
     if (/<body[^>]*>/i.test(raw)) return raw.replace(/<body([^>]*)>/i, `<body$1>${badge}`);
     return `${badge}\n${raw}`;
   }
   if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml') || lowerMime.includes('yaml')) {
-    return ['hashcod_brand:', '  name: HSG2818', '  platform: HSG2818 - Cryptographic Platform', `  generated_at: ${brand.generated_at}`, `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, '---', raw].join('\n');
+    return ['hashcod_brand:', `  name: ${PLATFORM_DISPLAY_NAME}`, `  platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`, `  generated_at: ${brand.generated_at}`, `  logo_svg: ${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, '---', raw].join('\n');
   }
   if (lowerName.endsWith('.csv') || lowerMime.includes('csv')) {
-    return ['# HASHCOD_DOWNLOAD_BRAND', '# name,HSG2818', '# platform,HSG2818 - Cryptographic Platform', `# generated_at,${brand.generated_at}`, `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, raw].join('\n');
+    return ['# HASHCOD_DOWNLOAD_BRAND', `# name,${PLATFORM_DISPLAY_NAME}`, `# platform,${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`, `# generated_at,${brand.generated_at}`, `# logo_svg,${JSON.stringify(HASHCOD_DOWNLOAD_LOGO_SVG)}`, raw].join('\n');
   }
   const textLike = lowerMime.includes('text') || lowerMime.includes('markdown') || lowerName.endsWith('.md') || lowerName.endsWith('.txt') || lowerName.endsWith('.log') || lowerName.endsWith('.pack') || lowerName.endsWith('.license') || lowerName.endsWith('.pem');
   if (!textLike) return raw;
-  return ['HASHCOD_DOWNLOAD_BRAND', 'Name: HSG2818', 'Platform: HSG2818 - Cryptographic Platform', `Generated: ${brand.generated_at}`, `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, '', raw].join('\n');
+  return ['HASHCOD_DOWNLOAD_BRAND', `Name: ${PLATFORM_DISPLAY_NAME}`, `Platform: ${PLATFORM_DISPLAY_NAME} - Cryptographic Platform`, `Generated: ${brand.generated_at}`, `Logo SVG: ${HASHCOD_DOWNLOAD_LOGO_SVG}`, '', raw].join('\n');
 };
 const HASHCOD_LAW_LOG_KEY = 'hashcod_law_audit_v1';
 const HASHCOD_LAW_SETTINGS_KEY = 'hashcod_law_settings_v1';
@@ -1951,7 +1958,7 @@ const brandPngBlob = async blob => {
     if (icon) ctx.drawImage(icon, left, top, iconSize, iconSize);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = `700 ${Math.max(13, Math.round(footer * 0.28))}px Arial, Helvetica, sans-serif`;
-    ctx.fillText('HSG2818', left + iconSize + 10, image.height + Math.round(footer * 0.45));
+    ctx.fillText(PLATFORM_DISPLAY_NAME, left + iconSize + 10, image.height + Math.round(footer * 0.45));
     ctx.fillStyle = '#A3A3A3';
     ctx.font = `500 ${Math.max(9, Math.round(footer * 0.2))}px Arial, Helvetica, sans-serif`;
     ctx.fillText('Cryptographic Platform', left + iconSize + 10, image.height + Math.round(footer * 0.72));
@@ -2277,7 +2284,7 @@ const rowToMarkdown = row => {
     type
   } = findTypeMeta(row.type);
   const date = new Date(row.ts || Date.now()).toISOString();
-  const lines = [`# HSG2818 — Generated value · v12`, ``, `- **Index:** ${String(row.idx).padStart(3, '0')}`, `- **Primitive:** ${type ? type.label : row.type}`, `- **Category:** ${cat ? cat.label : '—'}`, `- **Standard:** ${type ? type.std : '—'}`, `- **Length:** ${row.value.length} characters`, `- **Generated:** ${date}`, ``, `## Value`, ``, '```', row.value, '```', ``, `---`, `_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`, ``];
+  const lines = [`# HSG2818 — Generated value · v12`, ``, `- **Index:** ${String(row.idx).padStart(3, '0')}`, `- **Primitive:** ${type ? type.label : row.type}`, `- **Category:** ${cat ? cat.label : '—'}`, `- **Standard:** ${type ? type.std : '—'}`, `- **Length:** ${row.value.length} characters`, `- **Generated:** ${date}`, ``, `## Value`, ``, '```', row.value, '```', ``, `---`, `_opencriptG · ${PLATFORM_DISPLAY_NAME} Cryptographic Generator v12 · diktatcart® 2026_`, ``];
   return lines.join('\n');
 };
 const rowToLog = (row, language = 'en') => {
@@ -2643,7 +2650,7 @@ const allRowsToMarkdown = rows => {
     out.push(``);
   });
   out.push(`---`);
-  out.push(`_opencriptG · HSG2818 Cryptographic Generator v12 · diktatcart® 2026_`);
+  out.push(`_opencriptG · ${PLATFORM_DISPLAY_NAME} Cryptographic Generator v12 · diktatcart® 2026_`);
   out.push(``);
   return out.join('\n');
 };
@@ -3944,7 +3951,7 @@ const TicketForgeDialog = ({
     drawHSG2818CanvasLogo(ctx, 106, 112, 48, '#F5F5F5');
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 44px "Segoe UI", Arial, sans-serif';
-    ctx.fillText('HSG2818', 170, 148);
+    ctx.fillText(PLATFORM_DISPLAY_NAME, 170, 148);
     ctx.fillStyle = '#F5F5F5';
     ctx.font = '700 42px Georgia, serif';
     ctx.fillText(t.title.slice(0, 34), 106, 230);
@@ -6455,7 +6462,7 @@ const AuthGate = ({
     className: "authgate"
   }, React.createElement("div", {
     className: "authbox"
-  }, React.createElement("h1", null, "HSG2818"), React.createElement("p", null, "Loading secure session...")));
+  }, React.createElement("h1", null, PLATFORM_DISPLAY_NAME), React.createElement("p", null, "Loading secure session...")));
   if (!platformGate.unlocked) {
     return React.createElement("div", {
       className: "authgate"
@@ -6470,7 +6477,7 @@ const AuthGate = ({
       dangerouslySetInnerHTML: {
         __html: TOP_MENU_ICONS.hashcodLaw
       }
-    })), React.createElement("span", null, "HSG2818 PLATFORM GATE"), React.createElement("h1", null, "Access Token"), React.createElement("p", null, "La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de HSG2818.")), React.createElement("aside", {
+    })), React.createElement("span", null, PLATFORM_DISPLAY_NAME, " PLATFORM GATE"), React.createElement("h1", null, "Access Token"), React.createElement("p", null, "La unica entrada activa requiere el token completo con sv, sig y se, mas la clave de entrada. Luego se abre el login normal de ", PLATFORM_DISPLAY_NAME, ".")), React.createElement("aside", {
       className: "auth-handshake",
       "aria-label": "Platform gate checks"
     }, React.createElement("b", null, "GATE CHECK"), React.createElement("span", null, React.createElement("i", null), " SHA-256 server compare"), React.createElement("span", null, React.createElement("i", null), " Access key required"), React.createElement("span", null, React.createElement("i", null), " Expiration check"), React.createElement("span", null, React.createElement("i", null), " HttpOnly gate cookie"), React.createElement("span", null, React.createElement("i", null), " API routes locked"))), React.createElement("textarea", {
@@ -6777,7 +6784,7 @@ const BillingContractGate = ({
     className: "authgate pixel-auth"
   }, React.createElement("div", {
     className: "authbox pixel-authbox"
-  }, React.createElement("h1", null, "HSG2818"), React.createElement("p", null, "Loading contract gate...")));
+  }, React.createElement("h1", null, PLATFORM_DISPLAY_NAME), React.createElement("p", null, "Loading contract gate...")));
   if (!required) return children;
   const submit = async e => {
     e.preventDefault();
@@ -15499,7 +15506,7 @@ const CodeCertificateDialog = ({
     if (activeCertId === id) setActiveCertId('');
   };
   const certificateHtml = cert => {
-    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=hashcod-icon-1';
+    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=q7-terminal-1';
     const legal = L('Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema HSG2818 operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de HSG2818.', 'This private certificate states that the identified code was generated or registered inside the HSG2818 ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private HSG2818 verification.');
     const rowsHtml = [['ID', cert.id], [L('Titular', 'Holder'), cert.buyerName], ['Email', cert.buyerEmail || '—'], [L('Tipo de licencia', 'License type'), cert.licenseType], [L('Alcance', 'Scope'), cert.scope], [L('Code ID', 'Code ID'), cert.codeId], [L('Tipo de code', 'Code type'), cert.codeType], [L('Code visible', 'Visible code'), cert.codeValue], ['SHA-256 CODE', cert.codeHash], ['SHA-256 CERT', cert.certificateHash], [L('Emitido total', 'Issued total'), new Date(cert.issuedAt).toLocaleString()], ['RNC diktatcart', cert.issuerRnc], [L('Estado', 'Status'), cert.status], [L('Precio / referencia', 'Price / reference'), cert.price || '—']].map(([a, b]) => '<div class="row"><span>' + escapeHtmlLocal(a) + '</span><b>' + escapeHtmlLocal(b) + '</b></div>').join('');
     const notesHtml = cert.notes ? '<div class="notes"><span>NOTAS</span><p>' + escapeHtmlLocal(cert.notes) + '</p></div>' : '';
@@ -15590,8 +15597,8 @@ const CodeCertificateDialog = ({
   }, React.createElement("div", {
     className: "certdlg-logo-wrap"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=hashcod-icon-1",
-    alt: "HSG2818"
+    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
+    alt: PLATFORM_DISPLAY_NAME
   })), React.createElement("div", {
     className: "certdlg-k"
   }, "OPENCRIPTG \xB7 DIKTATCART \xB7 RNC 402-0936929-3"), React.createElement("h3", null, L('Certificado Privado de Code', 'Private Code Certificate')), React.createElement("p", null, L('Documento privado de autenticidad, emisión y licencia de uso dentro del ecosistema HSG2818.', 'Private document for authenticity, issuance, and use license inside the HSG2818 ecosystem.')), activeCert ? React.createElement("div", {
@@ -19875,8 +19882,8 @@ const App = () => {
         .pel{width:22px;height:22px;display:inline-flex;color:#111;}
         @media print{body{background:#fff}.ticket{border:1px solid #000;box-shadow:none;}}
       </style></head><body><div class="ticket">
-        <div class="brand">HSG2818 ticket</div>
-        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>HSG2818</strong></div>
+        <div class="brand">${PLATFORM_DISPLAY_NAME} ticket</div>
+        <div class="logo"><span class="pel">${HASHCOD_DOWNLOAD_LOGO_SVG}</span><strong>${PLATFORM_DISPLAY_NAME}</strong></div>
         <div class="k">${safe(titleText)}</div>
         <div class="k">${safe(language === 'es' ? 'Índice' : 'Index')}</div><div class="v">${safe(String(row.idx).padStart(3, '0'))}</div>
         <div class="k">${safe(language === 'es' ? 'Primitiva' : 'Primitive')}</div><div class="v">${safe(type?.label || row.primitiveLabel || row.type)}</div>
@@ -22223,9 +22230,9 @@ const App = () => {
     }
   }), React.createElement("span", {
     className: "tb-name"
-  }, React.createElement("b", null, "HSG2818"), React.createElement("i", null, "Cryptographic Platform")), React.createElement("span", {
+  }, React.createElement("b", null, PLATFORM_DISPLAY_NAME), React.createElement("i", null, "Cryptographic Platform")), React.createElement("span", {
     className: "tb-tag"
-  }, "HSG2818 Cryptographic Generator \xB7 v12")), React.createElement("nav", {
+  }, PLATFORM_DISPLAY_NAME, " Cryptographic Generator \xB7 v12")), React.createElement("nav", {
     ref: topNavRef,
     className: "tb-nav",
     onClick: e => e.stopPropagation(),
@@ -22529,7 +22536,7 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openLatticeLab
   }), React.createElement(MenuButton, {
-    label: "HSG2818 LICENSES",
+    label: `${PLATFORM_DISPLAY_NAME} LICENSES`,
     icon: TOP_MENU_ICONS.hashcodLicenseFactory,
     iconOnly: true,
     items: hashcodLicenseItems,
@@ -22561,7 +22568,7 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openClientVault
   }), React.createElement(MenuButton, {
-    label: "HSG2818 PLATFORM",
+    label: `${PLATFORM_DISPLAY_NAME} PLATFORM`,
     icon: TOP_MENU_ICONS.building,
     iconOnly: true,
     items: launchCenterItems,
@@ -23164,7 +23171,7 @@ const HSG2818SingleKeyGate = ({
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS.brand(42)
     }
-  }), React.createElement("span", null, "HSG2818 \u691C\u8A3C\u53EF\u80FD\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30EC\u30A4\u30E4\u30FC"), React.createElement("h1", null, "\u30BC\u30ED\u30C8\u30E9\u30B9\u30C8\u30A2\u30AF\u30BB\u30B9"), React.createElement("p", null, "\u30E6\u30FC\u30B6\u30FC\u3001\u30C8\u30FC\u30AF\u30F3\u3001\u30D5\u30A1\u30A4\u30EB\u3001API\u3001\u30BB\u30C3\u30B7\u30E7\u30F3\u306F\u65E2\u5B9A\u3067\u4FE1\u983C\u3055\u308C\u307E\u305B\u3093\u3002HSG2818 \u306F\u8D77\u52D5\u524D\u306B\u74B0\u5883\u3092\u691C\u8A3C\u3057\u3001\u5165\u5834\u30DE\u30CB\u30D5\u30A7\u30B9\u30C8\u3078\u7F72\u540D\u3057\u3001\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3\u3078\u8A18\u9332\u3057\u307E\u3059\u3002")), React.createElement("aside", {
+  }), React.createElement("span", null, PLATFORM_DISPLAY_NAME, " \u691C\u8A3C\u53EF\u80FD\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30EC\u30A4\u30E4\u30FC"), React.createElement("h1", null, "\u30BC\u30ED\u30C8\u30E9\u30B9\u30C8\u30A2\u30AF\u30BB\u30B9"), React.createElement("p", null, "\u30E6\u30FC\u30B6\u30FC\u3001\u30C8\u30FC\u30AF\u30F3\u3001\u30D5\u30A1\u30A4\u30EB\u3001API\u3001\u30BB\u30C3\u30B7\u30E7\u30F3\u306F\u65E2\u5B9A\u3067\u4FE1\u983C\u3055\u308C\u307E\u305B\u3093\u3002", PLATFORM_DISPLAY_NAME, " \u306F\u8D77\u52D5\u524D\u306B\u74B0\u5883\u3092\u691C\u8A3C\u3057\u3001\u5165\u5834\u30DE\u30CB\u30D5\u30A7\u30B9\u30C8\u3078\u7F72\u540D\u3057\u3001\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3\u3078\u8A18\u9332\u3057\u307E\u3059\u3002")), React.createElement("aside", {
     className: "zta-panel"
   }, React.createElement("b", null, "\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3\u30B9\u30BF\u30C3\u30AF"), React.createElement("div", {
     className: "zta-stack"
@@ -23177,12 +23184,12 @@ const HSG2818SingleKeyGate = ({
     type: "password",
     value: keyText,
     onChange: e => setKeyText(e.target.value),
-    placeholder: "HSG2818 \u30A2\u30AF\u30BB\u30B9\u30AD\u30FC",
+    placeholder: `${PLATFORM_DISPLAY_NAME} アクセスキー`,
     autoComplete: "off",
     autoFocus: true
   }), error && React.createElement("em", null, error), React.createElement("button", {
     disabled: checking || !keyText.trim()
-  }, checking ? 'ゼロトラスト検証中...' : 'HSG2818を解除')), React.createElement("section", {
+  }, checking ? 'ゼロトラスト検証中...' : `${PLATFORM_DISPLAY_NAME}を解除`)), React.createElement("section", {
     className: "zta-metrics",
     "aria-label": "Zero Trust status"
   }, React.createElement("div", null, React.createElement("span", null, "\u8105\u5A01\u30B9\u30B3\u30A2"), React.createElement("strong", null, threatScore, "/100"), React.createElement("small", null, threatScore >= 70 ? 'インシデント監視' : threatScore >= 35 ? '上昇中' : '制御済み')), React.createElement("div", null, React.createElement("span", null, "\u76E3\u67FB\u30C1\u30A7\u30FC\u30F3"), React.createElement("strong", null, auditRows.length), React.createElement("small", null, auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : '起点')), React.createElement("div", null, React.createElement("span", null, "\u6697\u53F7\u30A8\u30F3\u30B8\u30F3"), React.createElement("strong", null, checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : '制限あり'), React.createElement("small", null, "SHA-256 + HMAC manifest")), React.createElement("div", null, React.createElement("span", null, "Vault\u72B6\u614B"), React.createElement("strong", null, checks.find(c => c.id === 'vault')?.ok ? '準備完了' : '制限あり'), React.createElement("small", null, "\u30ED\u30FC\u30AB\u30EB\u5C01\u5370\u30BB\u30C3\u30B7\u30E7\u30F3"))), React.createElement("section", {
