@@ -3291,6 +3291,7 @@ const TOP_MENU_ICONS = {
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
+  codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="4"/><circle cx="16" cy="9" r="5"/><path d="M7 17h9"/><path d="m13 17 3-3 3 3"/><path d="M16 9h.01"/></svg>`,
   complexEntropy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 22v-5"/><path d="M14 19v-2"/><path d="M18 20v-3"/><path d="M2 13h20"/><path d="M6 20v-3"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
@@ -10605,6 +10606,288 @@ const ParametricCryptoAnalyzerDialog = ({
   }, React.createElement("td", null, point.index), React.createElement("td", null, point.t.toFixed(3)), React.createElement("td", null, point.byte), React.createElement("td", null, point.orbitX.toFixed(3)), React.createElement("td", null, point.orbitY.toFixed(3)), React.createElement("td", null, point.delta.toFixed(4)), React.createElement("td", null, point.curvature.toFixed(4)), React.createElement("td", null, point.localEntropy.toFixed(3))))))))) : React.createElement("div", {
     className: "param-empty"
   }, L('Selecciona un code guardado y ejecuta el analisis.', 'Select a saved code and run the analysis.'))))));
+};
+const incubatorClamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
+const incubatorBytePair = (bytes, index) => (bytes[index % bytes.length] << 8 | bytes[(index + 1) % bytes.length]) / 65535;
+const buildCodeIncubation = async (row, stepCount = 36, generationCount = 4) => {
+  const value = String(row?.value || '');
+  if (!value) return null;
+  const sourceDigest = await digestHex(value);
+  const bytes = [];
+  for (let index = 0; index < sourceDigest.length; index += 2) bytes.push(parseInt(sourceDigest.slice(index, index + 2), 16));
+  const steps = incubatorClamp(stepCount, 12, 96);
+  const generationsTotal = incubatorClamp(generationCount, 1, 8);
+  const generations = [];
+  let a = Number((incubatorBytePair(bytes, 0) * 12 - 6).toFixed(6));
+  let b = Number((incubatorBytePair(bytes, 2) * 12 - 6).toFixed(6));
+  let radius = Number((1.5 + incubatorBytePair(bytes, 4) * 4.5).toFixed(6));
+  let phase = incubatorBytePair(bytes, 6) * Math.PI * 2;
+  for (let generation = 0; generation < generationsTotal; generation++) {
+    const points = Array.from({
+      length: steps + 1
+    }, (_, index) => {
+      const theta = phase + index / steps * Math.PI * 2;
+      return {
+        index,
+        theta,
+        x: a + radius * Math.cos(theta),
+        y: b + radius * Math.sin(theta)
+      };
+    });
+    generations.push({
+      index: generation + 1,
+      a,
+      b,
+      radius,
+      phase,
+      formula: `x=${a.toFixed(4)}+${radius.toFixed(4)}cos(theta); y=${b.toFixed(4)}+${radius.toFixed(4)}sin(theta)`,
+      points
+    });
+    const offset = 8 + generation * 4;
+    a = Number((a + (incubatorBytePair(bytes, offset) - 0.5) * radius * 1.15).toFixed(6));
+    b = Number((b + (incubatorBytePair(bytes, offset + 2) - 0.5) * radius * 1.15).toFixed(6));
+    radius = Number(Math.max(0.5, radius * (0.72 + incubatorBytePair(bytes, offset + 1) * 0.52)).toFixed(6));
+    phase += incubatorBytePair(bytes, offset + 3) * Math.PI;
+  }
+  const finalGeneration = generations.at(-1);
+  const canonical = generations.map(generation => ({
+    index: generation.index,
+    a: generation.a,
+    b: generation.b,
+    radius: generation.radius,
+    phase: Number(generation.phase.toFixed(8))
+  }));
+  const embryoDigest = (await digestHex(`${sourceDigest}:${JSON.stringify(canonical)}`)).toUpperCase();
+  return {
+    id: `HCI-${embryoDigest.slice(0, 14)}`,
+    type: 'Q+7LkMK05 Incubated Code',
+    source: {
+      id: row?.id || '',
+      idx: row?.idx || 0,
+      type: row?.type || 'code',
+      digest: sourceDigest.toUpperCase()
+    },
+    formula: 'x = a + R cos(theta); y = b + R sin(theta)',
+    baseFormula: 'x = R cos(theta); y = R sin(theta)',
+    generations,
+    embryoDigest,
+    embryoValue: `Q7-INC.${embryoDigest.slice(0, 24)}.${embryoDigest.slice(24, 48)}.${embryoDigest.slice(48)}`,
+    finalCenter: {
+      a: finalGeneration.a,
+      b: finalGeneration.b
+    },
+    finalRadius: finalGeneration.radius,
+    generatedAt: new Date().toISOString()
+  };
+};
+const CodeIncubatorDialog = ({
+  open,
+  onClose,
+  rows,
+  outputRows,
+  notify,
+  language,
+  onSaveRows
+}) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const canvasRef = useRef(null);
+  const sources = useMemo(() => {
+    const seen = new Set();
+    return [...(rows || []), ...(outputRows || [])].filter(row => {
+      const key = `${row?.id || ''}:${row?.type || ''}:${row?.value || ''}`;
+      if (!row?.value || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 900).map((row, index) => ({
+      ...row,
+      _incubatorKey: `${row?.id || row?.idx || 'code'}:${index}`,
+      _incubatorLabel: parametricSourceLabel(row, index)
+    }));
+  }, [rows, outputRows]);
+  const [selectedId, setSelectedId] = useState('');
+  const [steps, setSteps] = useState(36);
+  const [generationCount, setGenerationCount] = useState(4);
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const activeId = selectedId || String(sources[0]?._incubatorKey || '');
+  const selected = sources.find(row => String(row._incubatorKey) === String(activeId)) || sources[0] || null;
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fbfbfa';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#e4e4df';
+    for (let x = 0; x <= w; x += 32) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= h; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+    if (!result?.generations?.length) {
+      ctx.fillStyle = '#6f6f69';
+      ctx.font = '18px "Codec Pro", Consolas, monospace';
+      ctx.fillText(L('Incuba un code para dibujar sus orbitas.', 'Incubate a code to draw its orbits.'), 36, 58);
+      return;
+    }
+    const allPoints = result.generations.flatMap(generation => generation.points);
+    const xs = allPoints.map(point => point.x);
+    const ys = allPoints.map(point => point.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const px = value => 48 + (value - minX) / Math.max(0.0001, maxX - minX) * (w - 96);
+    const py = value => h - 48 - (value - minY) / Math.max(0.0001, maxY - minY) * (h - 96);
+    const palette = ['#171717', '#d21b68', '#157a5b', '#325dab', '#a76d00', '#6c4c9e', '#007b91', '#8b3b24'];
+    result.generations.forEach((generation, generationIndex) => {
+      ctx.strokeStyle = palette[generationIndex % palette.length];
+      ctx.lineWidth = generationIndex === result.generations.length - 1 ? 3 : 1.6;
+      ctx.beginPath();
+      generation.points.forEach((point, index) => index ? ctx.lineTo(px(point.x), py(point.y)) : ctx.moveTo(px(point.x), py(point.y)));
+      ctx.stroke();
+      const centerX = px(generation.a);
+      const centerY = py(generation.b);
+      const first = generation.points[0];
+      ctx.fillStyle = palette[generationIndex % palette.length];
+      ctx.fillRect(centerX - 3, centerY - 3, 6, 6);
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(px(first.x), py(first.y));
+      ctx.stroke();
+      ctx.font = '12px "Codec Pro", Consolas, monospace';
+      ctx.fillText(`G${generation.index} (${generation.a.toFixed(2)}, ${generation.b.toFixed(2)})`, centerX + 8, centerY - 7);
+    });
+    ctx.fillStyle = '#101010';
+    ctx.font = '14px "Codec Pro", Consolas, monospace';
+    ctx.fillText(`${result.id} | x=a+R cos(theta), y=b+R sin(theta)`, 20, 24);
+  }, [language, result]);
+  useEffect(() => {
+    if (open) requestAnimationFrame(draw);
+  }, [draw, open]);
+  const incubate = async () => {
+    if (!selected) return notify?.(L('No hay codes disponibles.', 'No codes are available.'));
+    setBusy(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      setResult(await buildCodeIncubation(selected, steps, generationCount));
+      notify?.(L('Incubacion matematica completada.', 'Mathematical incubation completed.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const save = () => {
+    if (!result) return;
+    onSaveRows?.({
+      id: `${result.id}-${Date.now()}`,
+      idx: result.source.idx,
+      type: 'incubated-code',
+      primitiveLabel: result.type,
+      value: result.embryoValue,
+      copiedAt: new Date().toISOString(),
+      meta: result
+    }, 'code-incubator');
+    notify?.(L('Embrión incubado guardado en la base de datos.', 'Incubated embryo saved to the database.'));
+  };
+  const downloadJson = () => result && triggerDownload(`Q7LkMK05-Incubator-${result.id}-${tsStamp()}.json`, JSON.stringify({
+    q7_code_incubation: result
+  }, null, 2), 'application/json;charset=utf-8');
+  const downloadPng = () => {
+    draw();
+    canvasRef.current?.toBlob(blob => blob && triggerBlobDownload(`Q7LkMK05-Incubator-${result?.id || 'orbit'}-${tsStamp()}.png`, blob), 'image/png');
+  };
+  if (!open) return null;
+  const finalGeneration = result?.generations?.at(-1);
+  return React.createElement("div", {
+    className: "dlg-back",
+    onClick: onClose
+  }, React.createElement("section", {
+    className: "dlg incubatordlg",
+    onClick: event => event.stopPropagation()
+  }, React.createElement("div", {
+    className: "dlg-h incubator-head"
+  }, React.createElement("div", {
+    className: "incubator-title"
+  }, React.createElement("span", {
+    className: "incubator-mark",
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.codeIncubator
+    }
+  }), React.createElement("div", null, React.createElement("h2", null, L('Incubadora de Codes', 'Code Incubator Lab')), React.createElement("p", null, L('Deriva orbitas circulares trasladadas desde un code guardado y conserva su procedencia.', 'Derives translated circular orbits from a saved code and preserves its provenance.')))), React.createElement("button", {
+    className: "dlg-x",
+    onClick: onClose
+  }, "x")), React.createElement("div", {
+    className: "incubator-shell"
+  }, React.createElement("aside", {
+    className: "incubator-side"
+  }, React.createElement("label", null, React.createElement("span", null, L('Code fuente', 'Source code')), React.createElement("select", {
+    value: activeId,
+    onChange: event => setSelectedId(event.target.value)
+  }, !sources.length && React.createElement("option", {
+    value: ""
+  }, L('Base sin codes', 'No saved codes')), sources.map(row => React.createElement("option", {
+    key: row._incubatorKey,
+    value: row._incubatorKey
+  }, row._incubatorLabel)))), React.createElement("label", null, React.createElement("span", null, L('Puntos por orbita', 'Points per orbit')), React.createElement("input", {
+    type: "number",
+    min: "12",
+    max: "96",
+    value: steps,
+    onChange: event => setSteps(event.target.value)
+  })), React.createElement("label", null, React.createElement("span", null, L('Generaciones', 'Generations')), React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: "8",
+    value: generationCount,
+    onChange: event => setGenerationCount(event.target.value)
+  })), React.createElement("div", {
+    className: "incubator-actions"
+  }, React.createElement("button", {
+    onClick: incubate,
+    disabled: !selected || busy
+  }, busy ? L('Incubando...', 'Incubating...') : L('Incubar code', 'Incubate code')), React.createElement("button", {
+    onClick: save,
+    disabled: !result
+  }, L('Guardar', 'Save')), React.createElement("button", {
+    onClick: downloadJson,
+    disabled: !result
+  }, "JSON"), React.createElement("button", {
+    onClick: downloadPng,
+    disabled: !result
+  }, "PNG")), React.createElement("div", {
+    className: "incubator-formula"
+  }, React.createElement("b", null, L('Modelo de incubacion', 'Incubation model')), React.createElement("code", null, "(R cos(theta), R sin(theta))"), React.createElement("code", null, "(a + R cos(theta), b + R sin(theta))")), React.createElement("div", {
+    className: "incubator-note"
+  }, L('La salida es un artefacto derivado reproducible. No constituye un algoritmo criptografico estandar ni una prueba de seguridad.', 'The output is a reproducible derived artifact. It is not a standard cryptographic algorithm or a security proof.'))), React.createElement("main", {
+    className: "incubator-main"
+  }, React.createElement("canvas", {
+    ref: canvasRef,
+    width: "1280",
+    height: "520"
+  }), result ? React.createElement(React.Fragment, null, React.createElement("div", {
+    className: "incubator-metrics"
+  }, React.createElement("article", null, React.createElement("span", null, "ID"), React.createElement("b", null, result.id)), React.createElement("article", null, React.createElement("span", null, L('Generaciones', 'Generations')), React.createElement("b", null, result.generations.length)), React.createElement("article", null, React.createElement("span", null, L('Centro final', 'Final center')), React.createElement("b", null, "(", result.finalCenter.a.toFixed(3), ", ", result.finalCenter.b.toFixed(3), ")")), React.createElement("article", null, React.createElement("span", null, L('Radio final', 'Final radius')), React.createElement("b", null, result.finalRadius.toFixed(4)))), React.createElement("div", {
+    className: "incubator-data-grid"
+  }, React.createElement("section", {
+    className: "incubator-generations"
+  }, React.createElement("h3", null, L('Etapas de incubacion', 'Incubation stages')), result.generations.map(generation => React.createElement("article", {
+    key: generation.index
+  }, React.createElement("b", null, "G", generation.index), React.createElement("code", null, generation.formula)))), React.createElement("section", {
+    className: "incubator-table-wrap"
+  }, React.createElement("h3", null, L('Tabla de orbita final', 'Final orbit table')), React.createElement("table", null, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "i"), React.createElement("th", null, "theta"), React.createElement("th", null, "x = a + R cos(theta)"), React.createElement("th", null, "y = b + R sin(theta)"))), React.createElement("tbody", null, finalGeneration.points.slice(0, 96).map(point => React.createElement("tr", {
+    key: point.index
+  }, React.createElement("td", null, point.index), React.createElement("td", null, point.theta.toFixed(4)), React.createElement("td", null, point.x.toFixed(6)), React.createElement("td", null, point.y.toFixed(6))))))))) : React.createElement("div", {
+    className: "incubator-empty"
+  }, L('Selecciona un code y ejecuta la incubacion.', 'Select a code and run the incubation.'))))));
 };
 const CodeDesktopDialog = ({
   open,
@@ -19186,6 +19469,7 @@ const App = () => {
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
+  const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
   const [complexEntropyOpen, setComplexEntropyOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
@@ -20138,6 +20422,7 @@ const App = () => {
   const openFileViewer = () => setFileViewerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
+  const openCodeIncubator = () => setCodeIncubatorOpen(true);
   const openComplexEntropy = () => setComplexEntropyOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
@@ -20662,6 +20947,19 @@ const App = () => {
     label: language === 'es' ? 'Tabla reproducible y descarga PNG / JSON' : 'Reproducible table and PNG / JSON export',
     onClick: openParametricAnalyzer
   }];
+  const codeIncubatorItems = [{
+    label: language === 'es' ? 'Abrir incubadora de codes' : 'Open code incubator',
+    onClick: openCodeIncubator
+  }, {
+    label: 'x = a + R cos(theta)',
+    onClick: openCodeIncubator
+  }, {
+    label: 'y = b + R sin(theta)',
+    onClick: openCodeIncubator
+  }, {
+    label: language === 'es' ? 'Guardar embrion y exportar PNG / JSON' : 'Save embryo and export PNG / JSON',
+    onClick: openCodeIncubator
+  }];
   const complexEntropyItems = [{
     label: language === 'es' ? 'Abrir Complex Entropy Map' : 'Open Complex Entropy Map',
     onClick: openComplexEntropy
@@ -21104,6 +21402,13 @@ const App = () => {
         trajectory: openParametricAnalyzer,
         orbit: openParametricAnalyzer,
         'parametric-analyzer': openParametricAnalyzer,
+        incubator: openCodeIncubator,
+        incubadora: openCodeIncubator,
+        incubate: openCodeIncubator,
+        incubar: openCodeIncubator,
+        embryo: openCodeIncubator,
+        embrion: openCodeIncubator,
+        'code-incubator': openCodeIncubator,
         complex: openComplexEntropy,
         complexentropy: openComplexEntropy,
         'complex-entropy': openComplexEntropy,
@@ -21610,6 +21915,16 @@ const App = () => {
         label: 'HSG2818 Parametric Crypto Analyzer',
         verbs: ['analyze', 'orbit', 'polar', 'curvature', 'entropy', 'trajectory', 'table', 'png', 'json']
       },
+      incubator: {
+        open: openCodeIncubator,
+        label: 'Q+7LkMK05 Code Incubator',
+        verbs: ['incubate', 'orbit', 'circle', 'embryo', 'save', 'database', 'png', 'json']
+      },
+      incubadora: {
+        open: openCodeIncubator,
+        label: 'Q+7LkMK05 Code Incubator',
+        verbs: ['incubar', 'orbita', 'circulo', 'embrion', 'guardar', 'base', 'png', 'json']
+      },
       complexentropy: {
         open: openComplexEntropy,
         label: 'Complex Entropy Map',
@@ -21896,7 +22211,7 @@ const App = () => {
       return;
     }
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openCodeIncubator, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
   return React.createElement(React.Fragment, null, React.createElement(Tweaks, {
     tweaks: tweaks,
     setTweak: setTweak
@@ -22078,6 +22393,14 @@ const App = () => {
     outputRows: output,
     notify: notify,
     language: language
+  }), React.createElement(CodeIncubatorDialog, {
+    open: codeIncubatorOpen,
+    onClose: () => setCodeIncubatorOpen(false),
+    rows: copyDb,
+    outputRows: output,
+    notify: notify,
+    language: language,
+    onSaveRows: rememberCopied
   }), React.createElement(ComplexEntropyMapDialog, {
     open: complexEntropyOpen,
     onClose: () => setComplexEntropyOpen(false),
@@ -22518,6 +22841,14 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openParametricAnalyzer
   }), React.createElement(MenuButton, {
+    label: "CODE INCUBATOR",
+    icon: TOP_MENU_ICONS.codeIncubator,
+    iconOnly: true,
+    items: codeIncubatorItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openCodeIncubator
+  }), React.createElement(MenuButton, {
     label: "COMPLEX MAP",
     icon: TOP_MENU_ICONS.complexEntropy,
     iconOnly: true,
@@ -22888,7 +23219,17 @@ const App = () => {
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.parametricAnalyzer
     }
-  }), React.createElement("b", null, "Parametric")), HASHCOD_SECURITY_SUITE_TOOLS.map(tool => React.createElement("button", {
+  }), React.createElement("b", null, "Parametric")), React.createElement("button", {
+    type: "button",
+    className: "bottom-tool-icon",
+    onClick: () => setCodeIncubatorOpen(true),
+    title: language === 'es' ? 'Incubadora matematica de codes' : 'Mathematical code incubator',
+    "aria-label": language === 'es' ? 'Incubadora matematica de codes' : 'Mathematical code incubator'
+  }, React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.codeIncubator
+    }
+  }), React.createElement("b", null, "Incubator")), HASHCOD_SECURITY_SUITE_TOOLS.map(tool => React.createElement("button", {
     type: "button",
     className: "bottom-tool-icon",
     key: tool.key,

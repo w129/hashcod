@@ -7616,3 +7616,109 @@ button:hover,
   .param-data-grid { display:block; }
   .param-processes { margin-bottom:12px; }
 }
+
+/* Q+7LkMK05 circular code incubator */
+.incubatordlg {
+  width:min(1460px,calc(100vw - 24px));
+  max-height:calc(100vh - 24px);
+  background:#ffffff;
+  color:#101010;
+  border:1px solid #101010;
+}
+.incubator-head { border-bottom:1px solid #101010; }
+.incubator-title { display:flex;align-items:center;gap:14px; }
+.incubator-title h2 { margin:0;font-size:24px;letter-spacing:0; }
+.incubator-title p { margin:4px 0 0;color:#6c6c67; }
+.incubator-mark {
+  display:grid;
+  place-items:center;
+  width:46px;
+  height:46px;
+  color:#ffffff;
+  background:#101010;
+}
+.incubator-mark svg { width:27px;height:27px; }
+.incubator-shell { display:grid;grid-template-columns:310px minmax(0,1fr);min-height:630px; }
+.incubator-side {
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  padding:18px;
+  background:#f7f7f5;
+  border-right:1px solid #d8d8d4;
+}
+.incubator-side label { display:grid;gap:7px; }
+.incubator-side label span,
+.incubator-generations h3,
+.incubator-table-wrap h3 {
+  color:#6c6c67;
+  font-size:10px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.incubator-side select,
+.incubator-side input {
+  width:100%;
+  padding:11px;
+  background:#ffffff;
+  color:#101010;
+  border:1px solid #c9c9c5;
+}
+.incubator-actions { display:grid;grid-template-columns:1fr 1fr;gap:6px; }
+.incubator-actions button {
+  min-height:40px;
+  color:#ffffff;
+  background:#101010;
+  border:1px solid #101010;
+}
+.incubator-actions button:disabled { opacity:.38; }
+.incubator-formula,.incubator-note {
+  display:grid;
+  gap:7px;
+  padding:12px;
+  background:#ffffff;
+  border-left:4px solid #d21b68;
+  font-size:11px;
+  line-height:1.5;
+}
+.incubator-formula code { color:#5d5d59;overflow-wrap:anywhere; }
+.incubator-note { color:#62625e;border-left-color:#157a5b; }
+.incubator-main { min-width:0;padding:16px;overflow:auto; }
+.incubator-main canvas {
+  display:block;
+  width:100%;
+  height:350px;
+  border:1px solid #cfcfca;
+  image-rendering:pixelated;
+}
+.incubator-metrics {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  margin-top:10px;
+  border:1px solid #d4d4cf;
+}
+.incubator-metrics article { display:grid;gap:6px;padding:10px;border-right:1px solid #d4d4cf; }
+.incubator-metrics article:last-child { border-right:0; }
+.incubator-metrics span { color:#74746f;font-size:9px;letter-spacing:1.4px;text-transform:uppercase; }
+.incubator-metrics b { font-size:13px;overflow-wrap:anywhere; }
+.incubator-data-grid { display:grid;grid-template-columns:390px minmax(0,1fr);gap:12px;margin-top:12px; }
+.incubator-generations,.incubator-table-wrap { min-width:0;border:1px solid #d4d4cf; }
+.incubator-generations h3,.incubator-table-wrap h3 { margin:0;padding:10px;border-bottom:1px solid #d4d4cf; }
+.incubator-generations article { display:grid;grid-template-columns:34px minmax(0,1fr);gap:6px;padding:9px 10px;border-bottom:1px solid #e4e4e0; }
+.incubator-generations article:last-child { border-bottom:0; }
+.incubator-generations code { color:#696965;font-size:10px;overflow-wrap:anywhere; }
+.incubator-table-wrap { overflow:auto;max-height:320px; }
+.incubator-table-wrap table { width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px; }
+.incubator-table-wrap th,.incubator-table-wrap td { padding:7px 9px;text-align:right;border-bottom:1px solid #e4e4e0;border-right:1px solid #ededeb; }
+.incubator-table-wrap th { position:sticky;top:0;background:#101010;color:#ffffff;letter-spacing:1px; }
+.incubator-empty { padding:30px;color:#777772;border:1px dashed #c7c7c2;margin-top:12px; }
+@media(max-width:900px) {
+  .incubatordlg { width:calc(100vw - 12px);max-height:calc(100vh - 12px); }
+  .incubator-shell { display:block;min-height:0; }
+  .incubator-side { border-right:0;border-bottom:1px solid #d8d8d4; }
+  .incubator-main canvas { height:250px; }
+  .incubator-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .incubator-metrics article:nth-child(2) { border-right:0; }
+  .incubator-data-grid { display:block; }
+  .incubator-generations { margin-bottom:12px; }
+}
