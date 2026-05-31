@@ -15169,6 +15169,12 @@ const App = () => {
     }
   }, [syncCopyDb]);
 
+  const notify = useCallback((message) => {
+    setToast(message);
+    window.clearTimeout(window.__ocgToastTimer);
+    window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
+  }, []);
+
   const extractCodeSample = useCallback(async (row) => {
     if (!row?.value) return;
     const raw = String(row.value || '');
@@ -15233,11 +15239,6 @@ const App = () => {
     else setLength(32);
   }, [selectedId]);
 
-  const notify = useCallback((message) => {
-    setToast(message);
-    window.clearTimeout(window.__ocgToastTimer);
-    window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
-  }, []);
   const planAllows = useCallback(() => true, []);
   const activatePlan = useCallback((nextLicense) => {
     writePlanLicense(nextLicense);

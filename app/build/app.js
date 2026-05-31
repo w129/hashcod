@@ -18997,6 +18997,11 @@ const App = () => {
       }).catch(() => {});
     }
   }, [syncCopyDb]);
+  const notify = useCallback(message => {
+    setToast(message);
+    window.clearTimeout(window.__ocgToastTimer);
+    window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
+  }, []);
   const extractCodeSample = useCallback(async row => {
     if (!row?.value) return;
     const raw = String(row.value || '');
@@ -19060,11 +19065,6 @@ const App = () => {
     if (!selectedType?.hasLen) return;
     if (selectedType.id === 'nanoid') setLength(21);else if (selectedType.id === 'shortid') setLength(12);else if (selectedType.id === 'invite') setLength(12);else setLength(32);
   }, [selectedId]);
-  const notify = useCallback(message => {
-    setToast(message);
-    window.clearTimeout(window.__ocgToastTimer);
-    window.__ocgToastTimer = window.setTimeout(() => setToast(''), 1800);
-  }, []);
   const planAllows = useCallback(() => true, []);
   const activatePlan = useCallback(nextLicense => {
     writePlanLicense(nextLicense);
