@@ -25,15 +25,21 @@
       }
     });
   </script>
-  <div id="root"></div>
+  <div id="root">
+    <div class="instant-boot" role="status" aria-live="polite">
+      <div class="instant-boot-card">
+        <img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" />
+        <div>
+          <b>Hashcod</b>
+          <span>Opening secure platform...</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- React + Babel -->
-  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- React runtime -->
+  <script src="vendor/react.production.min.js?v=18.3.1"></script>
+  <script src="vendor/react-dom.production.min.js?v=18.3.1"></script>
 
   <!-- Data layer -->
   <script src="data/icons.js?v=container-icons-1"></script>
@@ -45,55 +51,16 @@
   <script src="app/enterprise.js?v=enterprise-production-1"></script>
 
   <!-- Tweaks shell -->
-  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script src="app/build/tweaks-panel.js?v=fast-start-1"></script>
 
   <!-- App -->
-  <script type="text/babel" src="app/tech-info.jsx?v=right-info-v2"></script>
-  <script type="text/babel" src="app/vault.jsx?v=v12-siphash-2"></script>
-  <script type="text/babel" src="app/tour.jsx?v=enterprise-tour-1"></script>
-  <script type="text/babel" src="app/app.jsx?v=identity-platform-1"></script>
+  <script src="app/build/tech-info.js?v=fast-start-1"></script>
+  <script src="app/build/vault.js?v=fast-start-1"></script>
+  <script src="app/build/tour.js?v=fast-start-1"></script>
+  <script src="app/build/app.js?v=fast-start-1"></script>
 
-  <script type="text/babel">
-    const Root = () => {
-      React.useEffect(() => { document.getElementById('root')?.setAttribute('data-mounted','1'); }, []);
-      const [tourOpen, setTourOpen] = React.useState(false);
-      const [enterprise, setEnterprise] = React.useState({ ready: false, status: null });
-      React.useEffect(() => {
-        let alive = true;
-        (async () => {
-          if (!window.OCGEnterprise) {
-            setEnterprise({ ready: true, status: { ok: false, failed: [{ id: 'enterprise-module-missing', detail: 'app/enterprise.js not loaded' }] } });
-            return;
-          }
-          const status = await window.OCGEnterprise.runSelfTests();
-          if (alive) setEnterprise({ ready: true, status });
-        })();
-        return () => { alive = false; };
-      }, []);
-      React.useEffect(() => {
-        window.__startTour = () => {
-          if (window.resetTourSeen) window.resetTourSeen();
-          setTourOpen(true);
-        };
-        return () => { delete window.__startTour; };
-      }, []);
-      React.useEffect(() => {
-        if (enterprise.ready && enterprise.status?.ok && window.AppTour && !window.hasSeenTour?.()) {
-          setTimeout(() => setTourOpen(true), 420);
-        }
-      }, [enterprise.ready, enterprise.status?.ok]);
-      if (enterprise.ready && !enterprise.status?.ok) {
-        return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-icon-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate bloqueó el arranque. Revisa los self-tests fallidos.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
-      }
-
-      const PlatformApp = window.App;
-      return <>
-        <PlatformApp />
-        {window.AppTour ? <AppTour active={tourOpen} onClose={() => setTourOpen(false)} /> : null}
-      </>;
-    };
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<Root />);
-  </script>
+  <script src="app/build/root.js?v=fast-start-1"></script>
+  <script async src="vendor/qrcode.min.js?v=1.0.0"></script>
+  <script async src="vendor/html2canvas.min.js?v=1.4.1"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const zlib = require('zlib');
 let PgPool = null;
 try { PgPool = require('pg').Pool; } catch {}
 
@@ -23,6 +24,7 @@ const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
 const rateBuckets = new Map();
 const userBuckets = new Map();
+const staticGzipCache = new Map();
 const sessions = new Map();
 const adminPanelSessions = new Map();
 const securityKingSessions = new Map();
@@ -119,6 +121,31 @@ const SECURITY_HEADERS = {
 function send(res, status, headers, body) {
   res.writeHead(status, Object.assign({}, SECURITY_HEADERS, headers || {}));
   res.end(body);
+}
+
+function sendStatic(req, res, filePath, ext, data, cacheControl) {
+  const headers = {
+    'Content-Type': MIME[ext] || 'application/octet-stream',
+    'Cache-Control': cacheControl,
+  };
+  const compressible = new Set(['.html', '.css', '.js', '.jsx', '.json', '.svg']);
+  if (!String(req.headers['accept-encoding'] || '').includes('gzip') || data.length < 1024 || !compressible.has(ext)) {
+    send(res, 200, headers, data);
+    return;
+  }
+  const cached = staticGzipCache.get(filePath);
+  if (cached) {
+    send(res, 200, { ...headers, 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' }, cached);
+    return;
+  }
+  zlib.gzip(data, { level: zlib.constants.Z_BEST_SPEED }, (err, compressed) => {
+    if (err) {
+      send(res, 200, headers, data);
+      return;
+    }
+    staticGzipCache.set(filePath, compressed);
+    send(res, 200, { ...headers, 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding' }, compressed);
+  });
 }
 
 function clientIp(req) {
@@ -2345,32 +2372,37 @@ const server = http.createServer((req, res) => {
           send(res, 404, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Not found');
           return;
         }
-        send(res, 200, { 'Content-Type': MIME['.html'] }, fallback);
+        sendStatic(req, res, path.join(ROOT, 'index.html'), '.html', fallback, 'no-cache');
       });
       return;
     }
 
     const ext = path.extname(filePath).toLowerCase();
-    send(res, 200, { 'Content-Type': MIME[ext] || 'application/octet-stream' }, data);
+    const cacheControl = ext === '.html'
+      ? 'no-cache'
+      : 'public, max-age=300, stale-while-revalidate=86400';
+    sendStatic(req, res, filePath, ext, data, cacheControl);
   });
 });
 
 async function startServer() {
-  try {
-    await initRenderDatabase();
-    await bootstrapAuthDbFromRender();
-  } catch (err) {
-    audit('db.render.start_failed', { error: safeText(err.message, 160) });
-    console.warn('[Hashcod] Render database unavailable, using encrypted file cache:', err.message);
-  }
   server.listen(PORT, HOST, () => {
     console.log('----------------------------------------');
     console.log(' Hashcod servidor iniciado');
     console.log(` URL: http://${HOST}:${PORT}`);
-    console.log(` Auth storage: ${pgReady ? 'Render PostgreSQL + encrypted cache' : 'encrypted file cache'}`);
+    console.log(' Auth storage: encrypted file cache; Render PostgreSQL connecting in background');
     console.log(' Para cerrar: Ctrl + C');
     console.log('----------------------------------------');
   });
+
+  try {
+    await initRenderDatabase();
+    await bootstrapAuthDbFromRender();
+    console.log(' Hashcod Render PostgreSQL conectado');
+  } catch (err) {
+    audit('db.render.start_failed', { error: safeText(err.message, 160) });
+    console.warn('[Hashcod] Render database unavailable, using encrypted file cache:', err.message);
+  }
 }
 
 startServer();
