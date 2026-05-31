@@ -1,3 +1,4 @@
+(function () {
 const {
   useState,
   useEffect,
@@ -22396,7 +22397,7 @@ const App = () => {
     language: language
   }))))), React.createElement("aside", {
     className: "rp"
-  }, React.createElement(TechInfo, {
+  }, React.createElement(window.TechInfo, {
     type: selectedType,
     category: selectedCat,
     density: density,
@@ -22847,3 +22848,4 @@ window.App = () => {
   const Platform = window.HSG2818App;
   return React.createElement(HSG2818SingleKeyGate, null, React.createElement(Platform, null));
 };
+})();

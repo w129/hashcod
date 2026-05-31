@@ -1,3 +1,4 @@
+(function () {
 const Root = () => {
   React.useEffect(() => {
     document.getElementById('root')?.setAttribute('data-mounted', '1');
@@ -64,10 +65,11 @@ const Root = () => {
     }, JSON.stringify(enterprise.status?.failed || [], null, 2))));
   }
   const PlatformApp = window.App;
-  return React.createElement(React.Fragment, null, React.createElement(PlatformApp, null), window.AppTour ? React.createElement(AppTour, {
+  return React.createElement(React.Fragment, null, React.createElement(PlatformApp, null), window.AppTour ? React.createElement(window.AppTour, {
     active: tourOpen,
     onClose: () => setTourOpen(false)
   }) : null);
 };
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(React.createElement(Root, null));
+})();

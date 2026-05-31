@@ -1,3 +1,4 @@
+(function () {
 const {
   useState,
   useEffect,
@@ -455,3 +456,4 @@ function resetTourSeen() {
 window.AppTour = AppTour;
 window.hasSeenTour = hasSeenTour;
 window.resetTourSeen = resetTourSeen;
+})();

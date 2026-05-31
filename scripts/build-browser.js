@@ -23,6 +23,8 @@ for (const [input, output] of entries) {
     comments: false,
     compact: false,
   }).code;
-  fs.writeFileSync(path.join(outDir, output), `${compiled}\n`);
+  // Classic browser scripts share one lexical scope. Keep each compiled entry
+  // isolated and expose only the explicit window exports defined by the source.
+  fs.writeFileSync(path.join(outDir, output), `(function () {\n${compiled}\n})();\n`);
   console.log(`built ${input} -> app/build/${output}`);
 }

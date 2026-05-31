@@ -33,7 +33,7 @@ const Root = () => {
   const PlatformApp = window.App;
   return <>
     <PlatformApp />
-    {window.AppTour ? <AppTour active={tourOpen} onClose={() => setTourOpen(false)} /> : null}
+    {window.AppTour ? <window.AppTour active={tourOpen} onClose={() => setTourOpen(false)} /> : null}
   </>;
 };
 const root = ReactDOM.createRoot(document.getElementById('root'));

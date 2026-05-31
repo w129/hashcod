@@ -1,3 +1,4 @@
+(function () {
 const {
   useState,
   useRef,
@@ -392,3 +393,4 @@ const VaultLock = ({
 };
 window.VaultLock = VaultLock;
 window.SipHashGate = SipHashGate;
+})();

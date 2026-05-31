@@ -16836,7 +16836,7 @@ const App = () => {
           </main>
 
           <aside className="rp">
-            <TechInfo type={selectedType} category={selectedCat} density={density} language={language} t={t} />
+            <window.TechInfo type={selectedType} category={selectedCat} density={density} language={language} t={t} />
           </aside>
         </div>
 

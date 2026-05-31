@@ -1,3 +1,4 @@
+(function () {
 const PANEL_LANG = {
   en: {
     selectTitle: 'Select a primitive',
@@ -836,3 +837,4 @@ function TechInfo({
   }, React.createElement("span", null, TL(language, 'category')), React.createElement("b", null, category.id))));
 }
 window.TechInfo = TechInfo;
+})();
