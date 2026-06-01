@@ -11236,6 +11236,50 @@ const CodeTransformCliDialog = ({
     notify?.(L('Transformacion guardada en la base de datos.', 'Transformation saved to database.'));
     push('[ok] Saved transformed code to database.', 'ok');
   };
+  const copyResult = async () => {
+    if (!editor) return push('[error] Nothing to copy.', 'err');
+    await navigator.clipboard?.writeText(editor);
+    notify?.(L('Code transformado copiado.', 'Transformed code copied.'));
+    push('[ok] Transformed code copied.', 'ok');
+  };
+  const exportPng = () => {
+    if (!editor) return push('[error] Nothing to export.', 'err');
+    const command = lastRun?.command;
+    const canvas = document.createElement('canvas');
+    const maxCharsPerLine = 92;
+    const maxLines = 108;
+    const sourceLines = String(editor).split(/\r?\n/).flatMap(line => {
+      const text = line || ' ';
+      return Array.from({
+        length: Math.max(1, Math.ceil(text.length / maxCharsPerLine))
+      }, (_, index) => text.slice(index * maxCharsPerLine, (index + 1) * maxCharsPerLine));
+    });
+    const clipped = sourceLines.length > maxLines;
+    const lines = sourceLines.slice(0, maxLines);
+    if (clipped) lines.push('[PNG VIEW TRUNCATED - COPY OR EXPORT JSON FOR THE COMPLETE VALUE]');
+    canvas.width = 1440;
+    canvas.height = 238 + lines.length * 22;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f7f7f4';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, canvas.width, 112);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 34px monospace';
+    ctx.fillText('Hashcod Transform CMD', 44, 54);
+    ctx.font = '16px monospace';
+    ctx.fillText(command ? `${command.id} | ${command.operation} | PROFILE ${command.profile}` : 'EDITOR RESULT | DIRECT EXPORT', 44, 88);
+    ctx.fillStyle = '#111111';
+    ctx.font = '15px monospace';
+    ctx.fillText(`CHARS ${editor.length} | BYTES ${cliTextToBytes(editor).length} | ENTROPY ${cliEntropy(editor).toFixed(4)}`, 44, 154);
+    ctx.fillText(`PROOF ${lastRun?.proof || 'not-generated'}`, 44, 182);
+    ctx.strokeStyle = '#2a2a2a';
+    ctx.strokeRect(30, 202, canvas.width - 60, canvas.height - 224);
+    ctx.font = '15px monospace';
+    lines.forEach((line, index) => ctx.fillText(line, 48, 232 + index * 22));
+    canvas.toBlob(blob => blob && triggerBlobDownload(`Hashcod-TransformCMD-${tsStamp()}.png`, blob), 'image/png');
+    push(`[ok] Exported PNG result${clipped ? ' (preview truncated).' : '.'}`, 'ok');
+  };
   const exportResult = format => {
     const payload = {
       tool: 'Hashcod Transform CMD',
@@ -11248,7 +11292,7 @@ const CodeTransformCliDialog = ({
       value: editor,
       exportedAt: new Date().toISOString()
     };
-    if (format === 'txt') triggerDownload(`Hashcod-TransformCMD-${tsStamp()}.txt`, `Hashcod TRANSFORM CMD\n\n${editor}`, 'text/plain;charset=utf-8');else triggerDownload(`Hashcod-TransformCMD-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    if (format === 'txt') triggerDownload(`Hashcod-TransformCMD-${tsStamp()}.txt`, `Hashcod TRANSFORM CMD\n\n${editor}`, 'text/plain;charset=utf-8');else if (format === 'png') return exportPng();else triggerDownload(`Hashcod-TransformCMD-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
     push(`[ok] Exported ${format.toUpperCase()} result.`, 'ok');
   };
   const run = async (override = '') => {
@@ -11258,7 +11302,7 @@ const CodeTransformCliDialog = ({
     const [verb = '', ...parts] = line.split(/\s+/);
     try {
       if (verb === 'help') {
-        push('help | list [page] | find <text> | select <row> | show | run <hcx0001> | chain <id,id> | save | copy | export json|txt | history | reset | clear', 'sys');
+        push('help | list [page] | find <text> | select <row> | show | run <hcx0001> | chain <id,id> | save | copy | export json|txt|png | history | reset | clear', 'sys');
       } else if (verb === 'list') {
         const nextPage = Math.max(0, Number(parts[0] || 1) - 1);
         setPage(nextPage);
@@ -11277,10 +11321,7 @@ const CodeTransformCliDialog = ({
       } else if (verb === 'show') push(editor || '[empty editor]', 'out');else if (verb === 'run') await apply(findCommand(parts[0]));else if (verb === 'chain') {
         let value = editor;
         for (const id of String(parts[0] || '').split(',').filter(Boolean).slice(0, 12)) value = await apply(findCommand(id), value);
-      } else if (verb === 'save') save();else if (verb === 'copy') {
-        await navigator.clipboard?.writeText(editor);
-        push('[ok] Editor copied.', 'ok');
-      } else if (verb === 'export') exportResult(parts[0] === 'txt' ? 'txt' : 'json');else if (verb === 'history') push(history.map(item => `${item.command.id} ${item.command.operation} ${item.proof.slice(0, 16)}`).join('\n') || '[empty history]', 'out');else if (verb === 'reset') {
+      } else if (verb === 'save') save();else if (verb === 'copy') await copyResult();else if (verb === 'export') exportResult(['txt', 'png'].includes(parts[0]) ? parts[0] : 'json');else if (verb === 'history') push(history.map(item => `${item.command.id} ${item.command.operation} ${item.proof.slice(0, 16)}`).join('\n') || '[empty history]', 'out');else if (verb === 'reset') {
         setEditor(String(activeRow?.value || ''));
         setLastRun(null);
         push('[ok] Original database value restored.', 'ok');
@@ -11341,8 +11382,12 @@ const CodeTransformCliDialog = ({
   }, "INTEGRITY"), React.createElement("button", {
     onClick: save
   }, L('Guardar DB', 'Save DB')), React.createElement("button", {
+    onClick: copyResult
+  }, L('Copiar', 'Copy')), React.createElement("button", {
     onClick: () => exportResult('json')
-  }, "JSON")), React.createElement("p", {
+  }, "JSON"), React.createElement("button", {
+    onClick: exportPng
+  }, "PNG")), React.createElement("p", {
     className: "transformcli-note"
   }, L('CRYPTO usa Web Crypto real. CONVERT, FORMAT y TRANSFORM son utilidades reproducibles; no se presentan como cifrado.', 'CRYPTO uses real Web Crypto. CONVERT, FORMAT, and TRANSFORM are reproducible utilities; they are not presented as encryption.'))), React.createElement("main", {
     className: "transformcli-main"

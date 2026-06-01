@@ -112,6 +112,8 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const CODE_TRANSFORM_CLI_TOTAL = 1100;'), 'transform-cmd-total-1100');
   assert(appSource.includes("['segment-permute', 'TRANSFORM'") && appSource.includes("['integrity-envelope', 'FORMAT'"), 'transform-cmd-extension-operations');
   assert(appSource.includes("'1100 commands: hcx0001 - hcx1100'"), 'transform-cmd-menu-range');
+  assert(appSource.includes('const copyResult = async () =>') && appSource.includes('const exportPng = () =>'), 'transform-cmd-copy-png-actions');
+  assert(appSource.includes("export json|txt|png") && appSource.includes("<button onClick={exportPng}>PNG</button>"), 'transform-cmd-png-command-ui');
 
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {
