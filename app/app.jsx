@@ -2505,6 +2505,7 @@ const TOP_MENU_ICONS = {
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
+  codeTransformCli: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="m17 7 5 5-5 5"/><path d="m7 7-5 5 5 5"/><path d="M8 12h.01"/></svg>`,
   complexEntropy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v5"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 22v-5"/><path d="M14 19v-2"/><path d="M18 20v-3"/><path d="M2 13h20"/><path d="M6 20v-3"/></svg>`,
   securityKing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="m6.7 18-1-1C4.35 15.682 3 14.09 3 12a5 5 0 0 1 4.95-5c1.584 0 2.7.455 4.05 1.818C13.35 7.455 14.466 7 16.05 7A5 5 0 0 1 21 12c0 2.082-1.359 3.673-2.7 5l-1 1"/><path d="M10 4h4"/><path d="M12 2v6.818"/></svg>`,
   ticketForge: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M9 3h1"/><path d="M14 3h1"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M21 9v1"/><path d="M21 14v1"/><path d="M21 19a2 2 0 0 1-2 2"/><path d="M14 21h1"/><path d="M9 21h1"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M3 14v1"/><path d="M3 9v1"/></svg>`,
@@ -9123,6 +9124,306 @@ const CodeIncubatorDialog = ({ open, onClose, rows, outputRows, notify, language
   );
 };
 
+const CODE_TRANSFORM_CLI_OPERATIONS = [
+  ['sha256-domain', 'CRYPTO', 'SHA-256 with an isolated command domain'],
+  ['hmac-sha256', 'CRYPTO', 'HMAC-SHA-256 authentication tag'],
+  ['pbkdf2-sha256', 'CRYPTO', 'PBKDF2-SHA-256 key derivation'],
+  ['hkdf-sha256', 'CRYPTO', 'HKDF-SHA-256 domain derivation'],
+  ['hash-chain', 'CRYPTO', 'Iterated SHA-256 chain'],
+  ['base64-encode', 'CONVERT', 'UTF-8 to Base64 conversion'],
+  ['base64-decode', 'CONVERT', 'Safe Base64 to UTF-8 conversion'],
+  ['hex-encode', 'CONVERT', 'UTF-8 to hexadecimal conversion'],
+  ['hex-decode', 'CONVERT', 'Safe hexadecimal to UTF-8 conversion'],
+  ['url-encode', 'CONVERT', 'URL component conversion'],
+  ['url-decode', 'CONVERT', 'Safe URL component restore'],
+  ['rotate-left', 'TRANSFORM', 'Deterministic character rotation'],
+  ['rotate-right', 'TRANSFORM', 'Reverse deterministic rotation'],
+  ['xor-mask', 'TRANSFORM', 'Reversible XOR laboratory mask'],
+  ['reverse-blocks', 'TRANSFORM', 'Reverse fixed-size blocks'],
+  ['chunk-delimit', 'FORMAT', 'Split code into fixed-size chunks'],
+  ['window-sample', 'ANALYZE', 'Extract a deterministic SHA-256 seeded window'],
+  ['checksum-envelope', 'FORMAT', 'Wrap code with SHA-256 integrity metadata'],
+  ['json-envelope', 'FORMAT', 'Create a JSON transport envelope'],
+  ['entropy-report', 'ANALYZE', 'Measure entropy, length, and charset profile'],
+];
+
+const CODE_TRANSFORM_CLI_CATALOG = Array.from({ length: 1000 }, (_, index) => {
+  const number = index + 1;
+  const profile = Math.floor(index / CODE_TRANSFORM_CLI_OPERATIONS.length) + 1;
+  const [operation, category, description] = CODE_TRANSFORM_CLI_OPERATIONS[index % CODE_TRANSFORM_CLI_OPERATIONS.length];
+  return {
+    id: `hcx${String(number).padStart(4, '0')}`,
+    number,
+    profile,
+    operation,
+    category,
+    description,
+  };
+});
+
+const cliTextToBytes = (value) => new TextEncoder().encode(String(value || ''));
+const cliBytesToHex = (bytes) => Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+const cliHexToBytes = (value) => {
+  const clean = String(value || '').replace(/[^0-9a-f]/gi, '');
+  if (!clean || clean.length % 2) throw new Error('Hex input must contain complete byte pairs.');
+  return new Uint8Array(clean.match(/.{2}/g).map(pair => parseInt(pair, 16)));
+};
+const cliBytesToBase64 = (bytes) => btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''));
+const cliBase64ToBytes = (value) => {
+  const raw = atob(String(value || '').replace(/\s+/g, ''));
+  return Uint8Array.from(raw, char => char.charCodeAt(0));
+};
+const cliEntropy = (value) => {
+  const text = String(value || '');
+  if (!text) return 0;
+  const counts = {};
+  for (const char of text) counts[char] = (counts[char] || 0) + 1;
+  return Object.values(counts).reduce((sum, count) => {
+    const p = count / text.length;
+    return sum - p * Math.log2(p);
+  }, 0);
+};
+const cliRotate = (value, amount) => {
+  const text = String(value || '');
+  if (!text.length) return '';
+  const offset = ((amount % text.length) + text.length) % text.length;
+  return text.slice(offset) + text.slice(0, offset);
+};
+const cliHmacHex = async (keyText, value) => {
+  const key = await crypto.subtle.importKey('raw', cliTextToBytes(keyText), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return cliBytesToHex(new Uint8Array(await crypto.subtle.sign('HMAC', key, cliTextToBytes(value))));
+};
+const cliDeriveHex = async (name, value, salt, profile) => {
+  const baseKey = await crypto.subtle.importKey('raw', cliTextToBytes(value), name, false, ['deriveBits']);
+  const params = name === 'PBKDF2'
+    ? { name, hash: 'SHA-256', salt: cliTextToBytes(salt), iterations: 8000 + profile * 1000 }
+    : { name, hash: 'SHA-256', salt: cliTextToBytes(salt), info: cliTextToBytes(`HSG2818-HCX-P${profile}`) };
+  return cliBytesToHex(new Uint8Array(await crypto.subtle.deriveBits(params, baseKey, 256)));
+};
+const executeCodeTransformCli = async (command, input, secret = '') => {
+  const value = String(input || '');
+  const profile = command.profile;
+  const domain = `HSG2818:${command.id}:P${profile}`;
+  const width = 4 + (profile % 13);
+  const shift = 1 + (profile % Math.max(1, value.length || 1));
+  let output = value;
+  if (command.operation === 'sha256-domain') output = await digestHex(`${domain}|${value}`);
+  else if (command.operation === 'hmac-sha256') output = await cliHmacHex(secret || domain, value);
+  else if (command.operation === 'pbkdf2-sha256') output = await cliDeriveHex('PBKDF2', value, secret || domain, profile);
+  else if (command.operation === 'hkdf-sha256') output = await cliDeriveHex('HKDF', value, secret || domain, profile);
+  else if (command.operation === 'hash-chain') {
+    output = value;
+    for (let round = 0; round < 2 + (profile % 8); round++) output = await digestHex(`${domain}:${round}:${output}`);
+  } else if (command.operation === 'base64-encode') output = cliBytesToBase64(cliTextToBytes(value));
+  else if (command.operation === 'base64-decode') output = new TextDecoder().decode(cliBase64ToBytes(value));
+  else if (command.operation === 'hex-encode') output = cliBytesToHex(cliTextToBytes(value));
+  else if (command.operation === 'hex-decode') output = new TextDecoder().decode(cliHexToBytes(value));
+  else if (command.operation === 'url-encode') output = encodeURIComponent(value);
+  else if (command.operation === 'url-decode') output = decodeURIComponent(value);
+  else if (command.operation === 'rotate-left') output = cliRotate(value, shift);
+  else if (command.operation === 'rotate-right') output = cliRotate(value, -shift);
+  else if (command.operation === 'xor-mask') {
+    const mask = cliHexToBytes(await digestHex(secret || domain));
+    output = cliBytesToHex(Uint8Array.from(cliTextToBytes(value), (byte, i) => byte ^ mask[i % mask.length]));
+  } else if (command.operation === 'reverse-blocks') output = (value.match(new RegExp(`.{1,${width}}`, 'g')) || []).map(block => [...block].reverse().join('')).join('');
+  else if (command.operation === 'chunk-delimit') output = (value.match(new RegExp(`.{1,${width}}`, 'g')) || []).join('-');
+  else if (command.operation === 'window-sample') {
+    const digest = await digestHex(`${domain}|${value}`);
+    const size = Math.min(value.length, Math.max(8, width * 2));
+    const start = Math.max(0, value.length - size) ? parseInt(digest.slice(0, 8), 16) % (value.length - size + 1) : 0;
+    output = value.slice(start, start + size);
+  } else if (command.operation === 'checksum-envelope') output = `${domain}|SHA256=${await digestHex(value)}|VALUE=${value}`;
+  else if (command.operation === 'json-envelope') output = JSON.stringify({ domain, profile, value, sha256: await digestHex(value) }, null, 2);
+  else if (command.operation === 'entropy-report') output = JSON.stringify({ domain, chars: value.length, bytes: cliTextToBytes(value).length, unique: new Set(value).size, entropyPerChar: Number(cliEntropy(value).toFixed(6)), estimatedBits: Number((cliEntropy(value) * value.length).toFixed(3)), sha256: await digestHex(value) }, null, 2);
+  return {
+    command,
+    input: value,
+    output,
+    proof: await digestHex(`${command.id}|${value}|${output}`),
+    executedAt: new Date().toISOString(),
+  };
+};
+
+const CodeTransformCliDialog = ({ open, onClose, rows = [], outputRows = [], notify, language, onSaveRows }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const candidates = useMemo(() => [...rows, ...outputRows].filter(row => row?.value), [rows, outputRows]);
+  const [selected, setSelected] = useState('');
+  const [editor, setEditor] = useState('');
+  const [secret, setSecret] = useState('');
+  const [cmd, setCmd] = useState('help');
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [log, setLog] = useState([]);
+  const [lastRun, setLastRun] = useState(null);
+  const [history, setHistory] = useState([]);
+  const pageSize = 36;
+  const activeRow = candidates.find(row => String(row.id) === selected) || candidates[0] || null;
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return needle ? CODE_TRANSFORM_CLI_CATALOG.filter(item => `${item.id} ${item.operation} ${item.category} ${item.description}`.toLowerCase().includes(needle)) : CODE_TRANSFORM_CLI_CATALOG;
+  }, [query]);
+  const visible = filtered.slice(page * pageSize, page * pageSize + pageSize);
+  const push = (text, kind = 'out') => setLog(prev => [...prev.slice(-119), { text, kind }]);
+
+  useEffect(() => {
+    if (!open) return;
+    const row = candidates[0] || null;
+    setSelected(row ? String(row.id) : '');
+    setEditor(String(row?.value || ''));
+    setSecret('');
+    setCmd('help');
+    setQuery('');
+    setPage(0);
+    setLastRun(null);
+    setHistory([]);
+    setLog([
+      { kind: 'sys', text: 'HSG2818 Transform CMD ready. Catalog: hcx0001..hcx1000.' },
+      { kind: 'sys', text: 'Use help, list, find sha, select 1, run hcx0001, chain hcx0001,hcx0005, save, copy, export json.' },
+    ]);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !activeRow) return;
+    setEditor(String(activeRow.value || ''));
+  }, [selected]);
+
+  if (!open) return null;
+
+  const metrics = {
+    chars: editor.length,
+    bytes: cliTextToBytes(editor).length,
+    unique: new Set(editor).size,
+    entropy: cliEntropy(editor),
+  };
+  const findCommand = (id) => CODE_TRANSFORM_CLI_CATALOG.find(item => item.id === String(id || '').toLowerCase());
+  const apply = async (item, source = editor) => {
+    if (!item) throw new Error('Unknown HCX command. Use list or find.');
+    const result = await executeCodeTransformCli(item, source, secret);
+    setEditor(result.output);
+    setLastRun(result);
+    setHistory(prev => [result, ...prev].slice(0, 50));
+    push(`[ok] ${item.id} ${item.operation} P${item.profile} -> ${result.output.length} chars`, 'ok');
+    return result.output;
+  };
+  const save = () => {
+    if (!editor) return push('[error] Nothing to save.', 'err');
+    const item = lastRun?.command;
+    const now = Date.now();
+    onSaveRows?.([{
+      id: now,
+      idx: now % 1000000,
+      type: item ? `hcx-${item.operation}` : 'hcx-transform',
+      value: editor,
+      ts: now,
+      transformMeta: lastRun ? { command: item.id, profile: item.profile, proof: lastRun.proof, executedAt: lastRun.executedAt } : null,
+    }], 'transform-cli');
+    notify?.(L('Transformacion guardada en la base de datos.', 'Transformation saved to database.'));
+    push('[ok] Saved transformed code to database.', 'ok');
+  };
+  const exportResult = (format) => {
+    const payload = { tool: 'HSG2818 Transform CMD', source: activeRow ? { id: activeRow.id, idx: activeRow.idx, type: activeRow.type } : null, lastRun, value: editor, exportedAt: new Date().toISOString() };
+    if (format === 'txt') triggerDownload(`HSG2818-TransformCMD-${tsStamp()}.txt`, `HSG2818 TRANSFORM CMD\n\n${editor}`, 'text/plain;charset=utf-8');
+    else triggerDownload(`HSG2818-TransformCMD-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+    push(`[ok] Exported ${format.toUpperCase()} result.`, 'ok');
+  };
+  const run = async (override = '') => {
+    const line = String(override || cmd || '').trim();
+    if (!line) return;
+    push(`cmd$ ${line}`, 'in');
+    const [verb = '', ...parts] = line.split(/\s+/);
+    try {
+      if (verb === 'help') {
+        push('help | list [page] | find <text> | select <row> | show | run <hcx0001> | chain <id,id> | save | copy | export json|txt | history | reset | clear', 'sys');
+      } else if (verb === 'list') {
+        const nextPage = Math.max(0, Number(parts[0] || 1) - 1);
+        setPage(nextPage);
+        push(`Catalog page ${nextPage + 1}: ${CODE_TRANSFORM_CLI_CATALOG.slice(nextPage * pageSize, nextPage * pageSize + 12).map(item => `${item.id}:${item.operation}`).join(' | ')}`, 'out');
+      } else if (verb === 'find') {
+        const needle = parts.join(' ');
+        setQuery(needle);
+        setPage(0);
+        push(`Filter applied: "${needle || 'all'}".`, 'ok');
+      } else if (verb === 'select') {
+        const row = candidates[Math.max(0, Number(parts[0] || 1) - 1)];
+        if (!row) throw new Error('Database row not found.');
+        setSelected(String(row.id));
+        setEditor(String(row.value || ''));
+        push(`[ok] Selected ${String(row.idx || parts[0]).padStart(3, '0')} | ${row.type}`, 'ok');
+      } else if (verb === 'show') push(editor || '[empty editor]', 'out');
+      else if (verb === 'run') await apply(findCommand(parts[0]));
+      else if (verb === 'chain') {
+        let value = editor;
+        for (const id of String(parts[0] || '').split(',').filter(Boolean).slice(0, 12)) value = await apply(findCommand(id), value);
+      } else if (verb === 'save') save();
+      else if (verb === 'copy') { await navigator.clipboard?.writeText(editor); push('[ok] Editor copied.', 'ok'); }
+      else if (verb === 'export') exportResult(parts[0] === 'txt' ? 'txt' : 'json');
+      else if (verb === 'history') push(history.map(item => `${item.command.id} ${item.command.operation} ${item.proof.slice(0, 16)}`).join('\n') || '[empty history]', 'out');
+      else if (verb === 'reset') { setEditor(String(activeRow?.value || '')); setLastRun(null); push('[ok] Original database value restored.', 'ok'); }
+      else if (verb === 'clear') setLog([]);
+      else throw new Error('Unknown command. Use help.');
+    } catch (error) {
+      push(`[error] ${error.message || error}`, 'err');
+    }
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg transformcli-dlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h transformcli-head">
+          <div className="transformcli-title">
+            <span className="transformcli-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
+            <div>
+              <h2>HSG2818 Transform CMD</h2>
+              <p>{L('Consola para convertir, derivar, estudiar y guardar codes de la base de datos.', 'Console to convert, derive, study, and save database codes.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="transformcli-shell">
+          <aside className="transformcli-side">
+            <label><span>{L('Code guardado', 'Saved code')}</span><select value={selected} onChange={event => setSelected(event.target.value)}>{candidates.map((row, index) => <option key={`${row.id}-${index}`} value={String(row.id)}>{String(index + 1).padStart(3, '0')} | {row.type} | {String(row.value).slice(0, 34)}</option>)}</select></label>
+            <label><span>{L('Clave opcional para HMAC / KDF', 'Optional HMAC / KDF key')}</span><input type="password" value={secret} onChange={event => setSecret(event.target.value)} placeholder={L('Se usa localmente; no se guarda', 'Used locally; never stored')} /></label>
+            <div className="transformcli-metrics">
+              <div><span>Chars</span><b>{metrics.chars}</b></div>
+              <div><span>Bytes</span><b>{metrics.bytes}</b></div>
+              <div><span>Unique</span><b>{metrics.unique}</b></div>
+              <div><span>Entropy</span><b>{metrics.entropy.toFixed(3)}</b></div>
+            </div>
+            <div className="transformcli-actions">
+              <button onClick={() => run('run hcx0001')}>SHA-256</button>
+              <button onClick={() => run('run hcx0002')}>HMAC</button>
+              <button onClick={() => run('run hcx0006')}>Base64</button>
+              <button onClick={() => run('run hcx0008')}>HEX</button>
+              <button onClick={save}>{L('Guardar DB', 'Save DB')}</button>
+              <button onClick={() => exportResult('json')}>JSON</button>
+            </div>
+            <p className="transformcli-note">{L('CRYPTO usa Web Crypto real. CONVERT, FORMAT y TRANSFORM son utilidades reproducibles; no se presentan como cifrado.', 'CRYPTO uses real Web Crypto. CONVERT, FORMAT, and TRANSFORM are reproducible utilities; they are not presented as encryption.')}</p>
+          </aside>
+          <main className="transformcli-main">
+            <section className="transformcli-work">
+              <textarea value={editor} onChange={event => setEditor(event.target.value)} spellCheck="false" />
+              <div className="transformcli-terminal">
+                <div className="transformcli-log">{log.map((line, index) => <pre key={index} className={line.kind}>{line.text}</pre>)}</div>
+                <div className="transformcli-command"><span>cmd$</span><input value={cmd} onChange={event => setCmd(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') run(); }} /><button onClick={() => run()}>RUN</button></div>
+              </div>
+            </section>
+            <section className="transformcli-catalog">
+              <div className="transformcli-catalog-head">
+                <div><b>HCX COMMAND CATALOG</b><span>{filtered.length} / 1000</span></div>
+                <input value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} placeholder="sha256 | hkdf | format | hcx0042" />
+              </div>
+              <div className="transformcli-list">
+                {visible.map(item => <button key={item.id} onClick={() => { setCmd(`run ${item.id}`); run(`run ${item.id}`); }}><code>{item.id}</code><b>{item.operation}</b><span>{item.category} | P{item.profile}</span></button>)}
+              </div>
+              <div className="transformcli-pages"><button disabled={!page} onClick={() => setPage(current => Math.max(0, current - 1))}>PREV</button><span>{page + 1} / {Math.max(1, Math.ceil(filtered.length / pageSize))}</span><button disabled={(page + 1) * pageSize >= filtered.length} onClick={() => setPage(current => current + 1)}>NEXT</button></div>
+            </section>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const CodeDesktopDialog = ({ open, onClose, row, notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const slots = [
@@ -15668,6 +15969,7 @@ const App = () => {
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
+  const [codeTransformCliOpen, setCodeTransformCliOpen] = useState(false);
   const [complexEntropyOpen, setComplexEntropyOpen] = useState(false);
   const [securityKingOpen, setSecurityKingOpen] = useState(false);
   const [ticketForgeOpen, setTicketForgeOpen] = useState(false);
@@ -16520,6 +16822,7 @@ const App = () => {
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
+  const openCodeTransformCli = () => setCodeTransformCliOpen(true);
   const openComplexEntropy = () => setComplexEntropyOpen(true);
   const openSecurityKing = () => setSecurityKingOpen(true);
   const openTicketForge = () => setTicketForgeOpen(true);
@@ -16793,6 +17096,12 @@ const App = () => {
     { label: 'cubic: x=t^2+1; y=t^3-4t', onClick: openCodeIncubator },
     { label: 'cycloid: x=t-sin(t); y=1-cos(t)', onClick: openCodeIncubator },
     { label: language === 'es' ? 'Guardar embrion y exportar PNG / JSON' : 'Save embryo and export PNG / JSON', onClick: openCodeIncubator },
+  ];
+  const codeTransformCliItems = [
+    { label: language === 'es' ? 'Abrir Transform CMD' : 'Open Transform CMD', onClick: openCodeTransformCli },
+    { label: '1000 commands: hcx0001 - hcx1000', onClick: openCodeTransformCli },
+    { label: 'SHA-256 / HMAC / PBKDF2 / HKDF', onClick: openCodeTransformCli },
+    { label: language === 'es' ? 'Convertir, encadenar y guardar en DB' : 'Convert, chain, and save to DB', onClick: openCodeTransformCli },
   ];
   const complexEntropyItems = [
     { label: language === 'es' ? 'Abrir Complex Entropy Map' : 'Open Complex Entropy Map', onClick: openComplexEntropy },
@@ -17220,6 +17529,9 @@ const App = () => {
       parametric: { open: openParametricAnalyzer, label: 'HSG2818 Parametric Crypto Analyzer', verbs: ['analyze','orbit','polar','curvature','entropy','trajectory','table','png','json'] },
       incubator: { open: openCodeIncubator, label: 'Q+7LkMK05 Code Incubator', verbs: ['incubate','orbit','circle','embryo','save','database','png','json'] },
       incubadora: { open: openCodeIncubator, label: 'Q+7LkMK05 Code Incubator', verbs: ['incubar','orbita','circulo','embrion','guardar','base','png','json'] },
+      transformcmd: { open: openCodeTransformCli, label: 'HSG2818 Transform CMD', verbs: ['run','chain','select','save','copy','export','find','list','hcx0001','hcx1000'] },
+      transform: { open: openCodeTransformCli, label: 'HSG2818 Transform CMD', verbs: ['run','chain','select','save','copy','export','find','list','hcx0001','hcx1000'] },
+      consola: { open: openCodeTransformCli, label: 'HSG2818 Transform CMD', verbs: ['ejecutar','cadena','seleccionar','guardar','copiar','exportar','buscar','listar'] },
       complexentropy: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','complex','entropy','map','quadrants','bands','png','json','risk'] },
       complexmap: { open: openComplexEntropy, label: 'Complex Entropy Map', verbs: ['analyze','bytes','plane','risk','png','json'] },
       licenses: { open: openHSG2818Licenses, label: 'HSG2818 License Factory', verbs: ['issue','catalog','json','yaml','png','txt','copyright','template','help'] },
@@ -17282,7 +17594,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openCodeIncubator, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openCodeIncubator, openCodeTransformCli, openComplexEntropy, openHSG2818Licenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -17314,6 +17626,7 @@ const App = () => {
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CodeIncubatorDialog open={codeIncubatorOpen} onClose={() => setCodeIncubatorOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} onSaveRows={rememberCopied} />
+      <CodeTransformCliDialog open={codeTransformCliOpen} onClose={() => setCodeTransformCliOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} onSaveRows={rememberCopied} />
       <ComplexEntropyMapDialog open={complexEntropyOpen} onClose={() => setComplexEntropyOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <SecurityKingDialog open={securityKingOpen} onClose={() => setSecurityKingOpen(false)} notify={notify} language={language} />
       <TicketForgeDialog open={ticketForgeOpen} onClose={() => setTicketForgeOpen(false)} rows={copyDb} notify={notify} language={language} />
@@ -17384,6 +17697,7 @@ const App = () => {
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="CODE INCUBATOR" icon={TOP_MENU_ICONS.codeIncubator} iconOnly items={codeIncubatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeIncubator} />
+            <MenuButton label="TRANSFORM CMD" icon={TOP_MENU_ICONS.codeTransformCli} iconOnly items={codeTransformCliItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeTransformCli} />
             <MenuButton label="COMPLEX MAP" icon={TOP_MENU_ICONS.complexEntropy} iconOnly items={complexEntropyItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openComplexEntropy} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
@@ -17544,6 +17858,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setCodeIncubatorOpen(true)} title={language === 'es' ? 'Incubadora matematica de codes' : 'Mathematical code incubator'} aria-label={language === 'es' ? 'Incubadora matematica de codes' : 'Mathematical code incubator'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeIncubator}} />
                 <b>Incubator</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setCodeTransformCliOpen(true)} title={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'} aria-label={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
+                <b>Transform CMD</b>
               </button>
               {HASHCOD_SECURITY_SUITE_TOOLS.map(tool => (
                 <button type="button" className="bottom-tool-icon" key={tool.key} onClick={() => openSecuritySuite(tool.key)} title={tool.title} aria-label={tool.title}>
