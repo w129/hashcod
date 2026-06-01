@@ -2560,6 +2560,7 @@ const TOP_MENU_ICONS = {
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
   cryptoExam: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/><path d="m15 15 2 2 4-4"/></svg>`,
   geometricCode: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.34 17.52a10 10 0 1 0-2.82 2.82"/><circle cx="19" cy="19" r="2"/><path d="m13.41 13.41 4.18 4.18"/><circle cx="12" cy="12" r="2"/></svg>`,
+  designStudio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
   licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
   evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
@@ -15954,6 +15955,282 @@ const HSG2818SecuritySuiteDialog = ({ open, activeTool, onSelectTool, onClose, r
   );
 };
 
+const DESIGN_STUDIO_SIZE = { width: 960, height: 540 };
+const designStudioPoint = (event, canvas) => {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: Math.round((event.clientX - rect.left) * (canvas.width / rect.width)),
+    y: Math.round((event.clientY - rect.top) * (canvas.height / rect.height)),
+  };
+};
+const designStudioFactory = (type, start, end, style, extra = {}) => ({
+  id: `layer_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+  type,
+  x: start.x,
+  y: start.y,
+  x2: end.x,
+  y2: end.y,
+  color: style.color,
+  fill: style.fill,
+  width: style.width,
+  opacity: style.opacity,
+  ...extra,
+});
+const designStudioBounds = (layer) => ({
+  left: Math.min(layer.x, layer.x2 ?? layer.x),
+  right: Math.max(layer.x, layer.x2 ?? layer.x) + (layer.type === 'text' ? String(layer.text || '').length * 12 : 0),
+  top: Math.min(layer.y, layer.y2 ?? layer.y) - (layer.type === 'text' ? 22 : 0),
+  bottom: Math.max(layer.y, layer.y2 ?? layer.y) + (layer.type === 'text' ? 6 : 0),
+});
+const designStudioHit = (layer, point) => {
+  const box = designStudioBounds(layer);
+  return point.x >= box.left - 8 && point.x <= box.right + 8 && point.y >= box.top - 8 && point.y <= box.bottom + 8;
+};
+const drawDesignStudioPattern = (ctx, pattern) => {
+  const { width, height } = ctx.canvas;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(23,23,23,.09)';
+  ctx.lineWidth = 1;
+  if (pattern === 'grid') {
+    for (let x = 0; x <= width; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+    for (let y = 0; y <= height; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
+  } else if (pattern === 'radial') {
+    const cx = width / 2, cy = height / 2;
+    for (let r = 24; r < Math.max(width, height); r += 28) { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); }
+    for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * width, cy + Math.sin(a) * width); ctx.stroke(); }
+  } else if (pattern === 'pixel') {
+    ctx.fillStyle = 'rgba(23,23,23,.08)';
+    for (let y = 0; y < height; y += 24) for (let x = 0; x < width; x += 24) if ((x / 24 + y / 24) % 2 === 0) ctx.fillRect(x, y, 12, 12);
+  }
+  ctx.restore();
+};
+const designStudioImageCache = new Map();
+const drawDesignStudioLayer = (ctx, layer, selected = false) => {
+  ctx.save();
+  ctx.globalAlpha = layer.opacity ?? 1;
+  ctx.strokeStyle = layer.color || '#111111';
+  ctx.fillStyle = layer.fill || 'transparent';
+  ctx.lineWidth = layer.width || 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  const w = (layer.x2 ?? layer.x) - layer.x;
+  const h = (layer.y2 ?? layer.y) - layer.y;
+  if (layer.type === 'rect') {
+    if (layer.fill !== 'transparent') ctx.fillRect(layer.x, layer.y, w, h);
+    ctx.strokeRect(layer.x, layer.y, w, h);
+  } else if (layer.type === 'ellipse') {
+    ctx.beginPath();
+    ctx.ellipse(layer.x + w / 2, layer.y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+    if (layer.fill !== 'transparent') ctx.fill();
+    ctx.stroke();
+  } else if (layer.type === 'line') {
+    ctx.beginPath(); ctx.moveTo(layer.x, layer.y); ctx.lineTo(layer.x2, layer.y2); ctx.stroke();
+  } else if (layer.type === 'brush') {
+    ctx.beginPath();
+    (layer.points || []).forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.stroke();
+  } else if (layer.type === 'text') {
+    ctx.fillStyle = layer.color || '#111111';
+    ctx.font = `${layer.fontSize || 28}px "Codec Pro", monospace`;
+    ctx.fillText(layer.text || 'TEXT', layer.x, layer.y);
+  } else if (layer.type === 'image' && layer.src) {
+    let image = designStudioImageCache.get(layer.src);
+    if (!image) {
+      image = new Image();
+      image.src = layer.src;
+      designStudioImageCache.set(layer.src, image);
+    }
+    if (image.complete) ctx.drawImage(image, layer.x, layer.y, w || image.width, h || image.height);
+    else image.onload = () => ctx.drawImage(image, layer.x, layer.y, w || image.width, h || image.height);
+  }
+  if (selected) {
+    const box = designStudioBounds(layer);
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([6, 4]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#0d6efd';
+    ctx.strokeRect(box.left - 6, box.top - 6, Math.max(16, box.right - box.left + 12), Math.max(16, box.bottom - box.top + 12));
+  }
+  ctx.restore();
+};
+
+const DesignStudioDialog = ({ open, onClose, notify, language }) => {
+  const canvasRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const projectInputRef = useRef(null);
+  const [history, setHistory] = useState({ snapshots: [[]], index: 0 });
+  const [tool, setTool] = useState('brush');
+  const [selectedId, setSelectedId] = useState('');
+  const [draft, setDraft] = useState(null);
+  const [style, setStyle] = useState({ color: '#111111', fill: 'transparent', width: 4, opacity: 1 });
+  const [background, setBackground] = useState('#ffffff');
+  const [pattern, setPattern] = useState('grid');
+  const [text, setText] = useState('Q+7LkMK05 DESIGN');
+  const objects = history.snapshots[history.index] || [];
+  const L = (es, en) => language === 'es' ? es : en;
+  const commit = useCallback((next) => {
+    setHistory(prev => {
+      const snapshots = [...prev.snapshots.slice(0, prev.index + 1), next].slice(-50);
+      return { snapshots, index: snapshots.length - 1 };
+    });
+  }, []);
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawDesignStudioPattern(ctx, pattern);
+    objects.forEach(layer => drawDesignStudioLayer(ctx, layer, layer.id === selectedId));
+    if (draft) drawDesignStudioLayer(ctx, draft);
+  }, [background, pattern, objects, selectedId, draft]);
+  useEffect(() => { redraw(); }, [redraw]);
+  if (!open) return null;
+
+  const startDraw = (event) => {
+    const canvas = canvasRef.current;
+    const point = designStudioPoint(event, canvas);
+    if (tool === 'select') {
+      const match = [...objects].reverse().find(layer => designStudioHit(layer, point));
+      setSelectedId(match?.id || '');
+      return;
+    }
+    if (tool === 'text') {
+      commit([...objects, designStudioFactory('text', point, point, style, { text, fontSize: 28 })]);
+      return;
+    }
+    const next = designStudioFactory(tool, point, point, style, tool === 'brush' ? { points: [point] } : {});
+    setDraft(next);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const continueDraw = (event) => {
+    if (!draft) return;
+    const point = designStudioPoint(event, canvasRef.current);
+    setDraft(prev => prev.type === 'brush' ? { ...prev, x2: point.x, y2: point.y, points: [...prev.points, point] } : { ...prev, x2: point.x, y2: point.y });
+  };
+  const finishDraw = () => {
+    if (!draft) return;
+    commit([...objects, draft]);
+    setSelectedId(draft.id);
+    setDraft(null);
+  };
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    commit(objects.filter(layer => layer.id !== selectedId));
+    setSelectedId('');
+  };
+  const moveSelected = (dx, dy) => {
+    if (!selectedId) return;
+    commit(objects.map(layer => layer.id === selectedId ? {
+      ...layer,
+      x: layer.x + dx, y: layer.y + dy,
+      x2: (layer.x2 ?? layer.x) + dx, y2: (layer.y2 ?? layer.y) + dy,
+      points: layer.points?.map(point => ({ x: point.x + dx, y: point.y + dy })),
+    } : layer));
+  };
+  const addImage = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = String(reader.result || '');
+      const image = new Image();
+      image.onload = () => {
+        designStudioImageCache.set(src, image);
+        commit([...objects, designStudioFactory('image', { x: 150, y: 90 }, { x: 610, y: 390 }, style, { src })]);
+      };
+      image.src = src;
+    };
+    reader.readAsDataURL(file);
+  };
+  const saveProject = () => triggerDownload(`Q7LkMK05-design-${tsStamp()}.json`, JSON.stringify({ app: 'Q+7LkMK05 Design Studio', version: 1, background, pattern, layers: objects }, null, 2), 'application/json;charset=utf-8');
+  const loadProject = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const project = JSON.parse(String(reader.result || '{}'));
+        if (!Array.isArray(project.layers)) throw new Error('invalid_project');
+        setBackground(project.background || '#ffffff');
+        setPattern(project.pattern || 'grid');
+        setHistory({ snapshots: [project.layers.slice(0, 500)], index: 0 });
+        setSelectedId('');
+        notify?.(L('Proyecto cargado.', 'Project loaded.'));
+      } catch { notify?.(L('Proyecto invalido.', 'Invalid project.')); }
+    };
+    reader.readAsText(file);
+  };
+  const exportPng = () => {
+    redraw();
+    canvasRef.current?.toBlob(blob => blob && triggerDownload(`Q7LkMK05-design-${tsStamp()}.png`, blob, 'image/png'), 'image/png');
+  };
+  const applyPatternPreset = () => {
+    const next = [...objects];
+    for (let y = 70; y <= 470; y += 80) for (let x = 100; x <= 860; x += 95) {
+      next.push(designStudioFactory('ellipse', { x: x - 16, y: y - 16 }, { x: x + 16, y: y + 16 }, { ...style, fill: (x + y) % 3 ? style.color : 'transparent', width: 2 }));
+    }
+    commit(next);
+  };
+  return (
+    <div className="dlg-b">
+      <section className="dlg designstudio">
+        <header className="dlg-h designstudio-head">
+          <div className="designstudio-title">
+            <span className="designstudio-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.designStudio}} />
+            <div><h2>Q+7LkMK05 Design Studio</h2><p>{L('Editor creativo por capas con patrones Factory, Composite, Command y Memento.', 'Layered creative editor using Factory, Composite, Command, and Memento patterns.')}</p></div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>×</button>
+        </header>
+        <div className="designstudio-shell">
+          <aside className="designstudio-tools">
+            <div className="designstudio-toolgrid">
+              {[['select', 'CURSOR'], ['brush', 'BRUSH'], ['line', 'LINE'], ['rect', 'RECT'], ['ellipse', 'ELLIPSE'], ['text', 'TEXT']].map(([id, label]) => (
+                <button key={id} className={tool === id ? 'on' : ''} onClick={() => setTool(id)}>{label}</button>
+              ))}
+            </div>
+            <label><span>{L('Trazo', 'Stroke')}</span><input type="color" value={style.color} onChange={event => setStyle({ ...style, color: event.target.value })} /></label>
+            <label><span>{L('Relleno', 'Fill')}</span><select value={style.fill} onChange={event => setStyle({ ...style, fill: event.target.value })}><option value="transparent">TRANSPARENT</option><option value={style.color}>STROKE COLOR</option><option value="#ffffff">WHITE</option><option value="#111111">BLACK</option><option value="#d52b7f">MAGENTA</option></select></label>
+            <label><span>{L('Grosor', 'Width')} {style.width}px</span><input type="range" min="1" max="30" value={style.width} onChange={event => setStyle({ ...style, width: Number(event.target.value) })} /></label>
+            <label><span>{L('Fondo', 'Background')}</span><input type="color" value={background} onChange={event => setBackground(event.target.value)} /></label>
+            <label><span>{L('Patron', 'Pattern')}</span><select value={pattern} onChange={event => setPattern(event.target.value)}><option value="none">NONE</option><option value="grid">GRID</option><option value="radial">RADIAL</option><option value="pixel">PIXEL</option></select></label>
+            <label><span>{L('Texto', 'Text')}</span><input value={text} onChange={event => setText(event.target.value)} maxLength={80} /></label>
+            <div className="designstudio-actions">
+              <button onClick={() => setHistory(prev => ({ ...prev, index: Math.max(0, prev.index - 1) }))} disabled={history.index === 0}>UNDO</button>
+              <button onClick={() => setHistory(prev => ({ ...prev, index: Math.min(prev.snapshots.length - 1, prev.index + 1) }))} disabled={history.index >= history.snapshots.length - 1}>REDO</button>
+              <button onClick={deleteSelected} disabled={!selectedId}>DELETE</button>
+              <button onClick={applyPatternPreset}>PATTERN</button>
+              <button onClick={() => imageInputRef.current?.click()}>IMAGE</button>
+              <button onClick={() => commit([])}>CLEAR</button>
+            </div>
+            <input ref={imageInputRef} className="hidden-file" type="file" accept="image/*" onChange={addImage} />
+            <input ref={projectInputRef} className="hidden-file" type="file" accept=".json,application/json" onChange={loadProject} />
+          </aside>
+          <main className="designstudio-main">
+            <div className="designstudio-topbar">
+              <button onClick={() => moveSelected(-8, 0)}>←</button><button onClick={() => moveSelected(0, -8)}>↑</button><button onClick={() => moveSelected(0, 8)}>↓</button><button onClick={() => moveSelected(8, 0)}>→</button>
+              <span>{objects.length} LAYERS</span>
+              <button onClick={() => projectInputRef.current?.click()}>OPEN JSON</button><button onClick={saveProject}>SAVE JSON</button><button className="pri" onClick={exportPng}>EXPORT PNG</button>
+            </div>
+            <div className="designstudio-canvaswrap">
+              <canvas ref={canvasRef} width={DESIGN_STUDIO_SIZE.width} height={DESIGN_STUDIO_SIZE.height} onPointerDown={startDraw} onPointerMove={continueDraw} onPointerUp={finishDraw} onPointerLeave={finishDraw} />
+            </div>
+          </main>
+          <aside className="designstudio-layers">
+            <h3>LAYERS</h3>
+            <div className="designstudio-layerlist">
+              {[...objects].reverse().map((layer, index) => <button key={layer.id} className={selectedId === layer.id ? 'on' : ''} onClick={() => setSelectedId(layer.id)}><b>{String(objects.length - index).padStart(2, '0')}</b><span>{layer.type}</span></button>)}
+              {!objects.length && <p>{L('El lienzo esta listo.', 'Canvas ready.')}</p>}
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const App = () => {
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(window.OCG_DEFAULTS) : [{}, () => {}];
   const density = tweaks.density || 'comfortable';
@@ -16024,6 +16301,7 @@ const App = () => {
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
   const [geometricCodeOpen, setGeometricCodeOpen] = useState(false);
+  const [designStudioOpen, setDesignStudioOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
   const [securitySuiteTool, setSecuritySuiteTool] = useState('tokenInspector');
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
@@ -16876,6 +17154,7 @@ const App = () => {
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openCryptoExam = () => setCryptoExamOpen(true);
   const openGeometricCode = () => setGeometricCodeOpen(true);
+  const openDesignStudio = () => setDesignStudioOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
     setSecuritySuiteTool(toolKey);
     setSecuritySuiteOpen(true);
@@ -17206,6 +17485,12 @@ const App = () => {
     { label: language === 'ja' ? '幾何学コードラボを開く' : language === 'es' ? 'Abrir Geometric Code Lab' : 'Open Geometric Code Lab', onClick: openGeometricCode },
     { label: language === 'ja' ? '保存済みコードから生成' : language === 'es' ? 'Generar desde base de datos' : 'Generate from database', onClick: openGeometricCode },
     { label: language === 'ja' ? 'ASCII / PNG / JSON' : 'ASCII / PNG / JSON', onClick: openGeometricCode },
+  ];
+  const designStudioItems = [
+    { label: language === 'es' ? 'Abrir Design Studio' : 'Open Design Studio', onClick: openDesignStudio },
+    { label: language === 'es' ? 'Pincel, figuras, texto e imagenes' : 'Brush, shapes, text, and images', onClick: openDesignStudio },
+    { label: language === 'es' ? 'Capas, undo, redo y patrones' : 'Layers, undo, redo, and patterns', onClick: openDesignStudio },
+    { label: language === 'es' ? 'Exportar PNG / guardar proyecto JSON' : 'Export PNG / save JSON project', onClick: openDesignStudio },
   ];
   const hosItems = [
     { label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System', onClick: openHos },
@@ -17688,6 +17973,7 @@ const App = () => {
       <HSG2818PivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CryptoExamSuiteDialog open={cryptoExamOpen} onClose={() => setCryptoExamOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <GeometricCodeDialog open={geometricCodeOpen} onClose={() => setGeometricCodeOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
+      <DesignStudioDialog open={designStudioOpen} onClose={() => setDesignStudioOpen(false)} notify={notify} language={language} />
       <HSG2818SecuritySuiteDialog open={securitySuiteOpen} activeTool={securitySuiteTool} onSelectTool={setSecuritySuiteTool} onClose={() => setSecuritySuiteOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <IvoryIdeaVaultDialog open={ivoryIdeasOpen} onClose={() => setIvoryIdeasOpen(false)} notify={notify} language={language} rows={copyDb} />
       <OCGCodeUnitsDialog open={ocgUnitsOpen} onClose={() => setOcgUnitsOpen(false)} notify={notify} language={language} />
@@ -17756,6 +18042,7 @@ const App = () => {
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
             <MenuButton label="CRYPTO EXAM" icon={TOP_MENU_ICONS.cryptoExam} iconOnly items={cryptoExamItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCryptoExam} />
             <MenuButton label="GEOMETRIC CODE" icon={TOP_MENU_ICONS.geometricCode} iconOnly items={geometricCodeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGeometricCode} />
+            <MenuButton label="DESIGN STUDIO" icon={TOP_MENU_ICONS.designStudio} iconOnly items={designStudioItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDesignStudio} />
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
