@@ -19,6 +19,7 @@ const SMS_GATEWAY_FILE = path.join(DATA_DIR, 'sms-gateway.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
+const CODE_WALLET_FILE = path.join(DATA_DIR, 'code-wallet.enc');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
@@ -233,6 +234,7 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(CLI_CONSOLE_FILE, 'cli', stamp),
       backupFileIfExists(AUDIT_FILE, 'audit', stamp),
       backupFileIfExists(ACCESS_HISTORY_FILE, 'access-history', stamp),
+      backupFileIfExists(CODE_WALLET_FILE, 'code-wallet', stamp),
     ].filter(Boolean).map(file => path.basename(file));
     fs.writeFileSync(manifest, JSON.stringify({ app: 'HSG2818', createdAt: new Date().toISOString(), reason, files }, null, 2));
     audit('backup.automatic', { reason, files: files.length });
@@ -329,6 +331,10 @@ function readJsonBody(req, maxBytes = 1024 * 1024) {
 
 function safeText(value, max = 500) {
   return String(value || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
+}
+
+function safeWalletPayload(value, max = 16000) {
+  return String(value || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, max);
 }
 
 function validEmail(email) {
@@ -617,6 +623,24 @@ async function saveRenderAuditRows(rows) {
   return true;
 }
 
+async function loadRenderWalletDb() {
+  if (!pgReady || !pgPool) return null;
+  const result = await pgPool.query('select value from hashcod_kv where key = $1 limit 1', ['code-wallet']);
+  const rows = result.rows[0]?.value?.rows;
+  return Array.isArray(rows) ? rows : null;
+}
+
+async function saveRenderWalletDb(rows) {
+  if (!pgReady || !pgPool) return false;
+  await pgPool.query(
+    `insert into hashcod_kv(key, value, updated_at)
+     values($1, $2::jsonb, now())
+     on conflict(key) do update set value = excluded.value, updated_at = now()`,
+    ['code-wallet', JSON.stringify({ rows: (Array.isArray(rows) ? rows : []).slice(0, 5000) })]
+  );
+  return true;
+}
+
 async function appendRenderAudit(row) {
   if (!pgReady || !pgPool || !row) return false;
   try {
@@ -662,6 +686,41 @@ function writeAuthDb(db) {
   ensureAutomaticBackup('auth-db-write');
   if (pgReady) {
     saveRenderAuthDb(clean).catch(err => audit('db.render.auth_write_failed', { error: safeText(err.message, 160) }));
+  }
+}
+
+function readWalletCache() {
+  ensureDataDir();
+  if (!fs.existsSync(CODE_WALLET_FILE)) return [];
+  const rows = decryptJson(fs.readFileSync(CODE_WALLET_FILE, 'utf8'), []);
+  return Array.isArray(rows) ? rows : [];
+}
+
+function writeWalletCache(rows) {
+  ensureDataDir();
+  fs.writeFileSync(CODE_WALLET_FILE, encryptJson((Array.isArray(rows) ? rows : []).slice(0, 5000)));
+  ensureAutomaticBackup('code-wallet-write');
+}
+
+async function readCodeWallet() {
+  try {
+    const remote = await loadRenderWalletDb();
+    if (remote) {
+      writeWalletCache(remote);
+      return remote;
+    }
+  } catch (err) {
+    audit('wallet.render_read_failed', { error: safeText(err.message, 160) });
+  }
+  return readWalletCache();
+}
+
+async function writeCodeWallet(rows) {
+  const clean = (Array.isArray(rows) ? rows : []).slice(0, 5000);
+  writeWalletCache(clean);
+  if (pgReady) {
+    try { await saveRenderWalletDb(clean); }
+    catch (err) { audit('wallet.render_write_failed', { error: safeText(err.message, 160) }); }
   }
 }
 
@@ -1692,6 +1751,100 @@ function writeSmsGatewayDb(db) {
   ensureAutomaticBackup('sms-gateway-write');
 }
 
+const WALLET_VERSIONS = {
+  'v1.2.5': 4,
+  'v1.5-10': 16,
+  'v2.2-5': 22,
+  'v2.5-10': 30,
+};
+
+function walletMath(value) {
+  const bytes = Buffer.from(String(value || ''), 'utf8');
+  const size = Math.max(1, bytes.length);
+  const integral = Array.from(bytes).reduce((sum, byte, index) => sum + ((index + 1) / size) * ((byte + 1) / 256), 0);
+  const bracket = Array.from(bytes).reduce((sum, byte, index) => sum + ((byte % 17) + 1) * ((index % 7) + 1), 0);
+  const phase = Number(((integral % 6.283185307).toFixed(6)));
+  return { integral: Number(integral.toFixed(6)), bracket, phase, bytes: bytes.length };
+}
+
+function publicWalletRow(row) {
+  const { userId, ip, sessionFingerprint, computerFingerprint, ...publicRow } = row || {};
+  return publicRow;
+}
+
+async function handleCodeWallet(req, res) {
+  const auth = requireAuth(req, res, 'viewer');
+  if (!auth) return;
+  const route = (req.url || '').split('?')[0];
+  if (route !== '/api/code-wallet') {
+    send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_route_not_found' }));
+    return;
+  }
+  const rows = await readCodeWallet();
+  if (req.method === 'GET') {
+    const mine = rows.filter(row => row.userId === auth.user.id).map(publicWalletRow);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, rows: mine, storage: pgReady ? 'render-postgres+encrypted-cache' : 'encrypted-cache', network: { p2p: 'browser-webrtc-capable', udp: 'relay-required', tcpSync: 'https-api-active' } }));
+    return;
+  }
+  if (req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req, 256 * 1024);
+      const name = safeText(body.name, 80);
+      const payload = safeWalletPayload(body.payload, 16000);
+      const kind = ['prompt', 'text', 'document', 'json', 'code'].includes(body.kind) ? body.kind : 'code';
+      const version = WALLET_VERSIONS[body.version] ? body.version : 'v1.2.5';
+      if (name.length < 2 || payload.length < 1) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_name_and_payload_required' }));
+        return;
+      }
+      const digest = crypto.createHash('sha256').update(`${auth.user.id}|${name}|${payload}|${Date.now()}`).digest('hex');
+      const metrics = walletMath(payload);
+      const cookies = parseCookies(req);
+      const sessionFingerprint = crypto.createHash('sha256').update(String(cookies.hashcod_session || '')).digest('hex').slice(0, 20);
+      const computerFingerprint = crypto.createHash('sha256').update(`${safeText(req.headers['user-agent'], 180)}|${safeText(req.headers['accept-language'], 80)}|${clientIp(req)}`).digest('hex').slice(0, 20);
+      const row = {
+        id: `wallet_${digest.slice(0, 18)}`,
+        userId: auth.user.id,
+        name,
+        fase: metrics.phase,
+        interception: `INT-${digest.slice(18, 28).toUpperCase()}`,
+        bar: Number(((metrics.integral + metrics.bracket) % 100).toFixed(2)),
+        bset: `Bset (${((metrics.bracket % 9999) / 1000).toFixed(3)})`,
+        udset: `Udset (${digest.slice(0, 3)}) -${((metrics.integral % 10) / 10).toFixed(2)}`,
+        version,
+        priceUsd: WALLET_VERSIONS[version],
+        kind,
+        payload,
+        digest,
+        metrics,
+        network: { model: 'container-per-code', p2p: 'WebRTC capable', udp: 'relay required', tcpSync: 'HTTPS/TCP active' },
+        ip: clientIp(req),
+        sessionFingerprint,
+        computerFingerprint,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      rows.unshift(row);
+      await writeCodeWallet(rows);
+      audit('wallet.container_created', { actor: auth.user.id, ip: clientIp(req), id: row.id, version, kind, digest: digest.slice(0, 18) });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, row: publicWalletRow(row) }));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_wallet_payload' }));
+    }
+    return;
+  }
+  if (req.method === 'DELETE') {
+    const url = new URL(req.url, 'http://localhost');
+    const id = safeText(url.searchParams.get('id'), 120);
+    const next = rows.filter(row => !(row.id === id && row.userId === auth.user.id));
+    await writeCodeWallet(next);
+    audit('wallet.container_deleted', { actor: auth.user.id, ip: clientIp(req), id });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: rows.length - next.length }));
+    return;
+  }
+  send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+}
+
 function verifyGatewayDevice(db, deviceId, deviceSecret) {
   const device = db.devices.find(row => row.id === safeText(deviceId, 120) && row.status !== 'DISABLED');
   if (!device) return null;
@@ -2433,6 +2586,14 @@ const server = http.createServer((req, res) => {
 
   if (routePath === '/api/assist-requests') {
     handleAssistRequests(req, res);
+    return;
+  }
+
+  if (routePath === '/api/code-wallet') {
+    handleCodeWallet(req, res).catch(err => {
+      audit('wallet.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
+      if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_request_failed' }));
+    });
     return;
   }
 

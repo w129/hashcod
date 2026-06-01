@@ -3345,6 +3345,7 @@ const TOP_MENU_ICONS = {
   cryptoExam: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/><path d="m15 15 2 2 4-4"/></svg>`,
   geometricCode: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.34 17.52a10 10 0 1 0-2.82 2.82"/><circle cx="19" cy="19" r="2"/><path d="m13.41 13.41 4.18 4.18"/><circle cx="12" cy="12" r="2"/></svg>`,
   designStudio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg>`,
+  codeWallet: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2"/><path d="M3 11h3c.8 0 1.6.3 2.1.9l1.1.9c1.6 1.6 4.1 1.6 5.7 0l1.1-.9c.5-.5 1.3-.9 2.1-.9H21"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
   licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
   evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
@@ -20540,6 +20541,297 @@ const DesignStudioDialog = ({
     onClick: () => runAdvancedTool(entry)
   }, React.createElement("b", null, String(DESIGN_STUDIO_ADVANCED_TOOLS.indexOf(entry) + 1).padStart(3, '0')), React.createElement("span", null, entry.label)))))))));
 };
+const CODE_WALLET_VERSIONS = [{
+  id: 'v1.2.5',
+  price: 4,
+  label: 'BSET CORE'
+}, {
+  id: 'v1.5-10',
+  price: 16,
+  label: 'INTERCEPT'
+}, {
+  id: 'v2.2-5',
+  price: 22,
+  label: 'PHASE SYNC'
+}, {
+  id: 'v2.5-10',
+  price: 30,
+  label: 'BAR PRIME'
+}];
+const CodeWalletDialog = ({
+  open,
+  onClose,
+  rows,
+  outputRows,
+  notify,
+  language
+}) => {
+  const fileRef = useRef(null);
+  const [walletRows, setWalletRows] = useState([]);
+  const [selectedSource, setSelectedSource] = useState('');
+  const [selectedWalletId, setSelectedWalletId] = useState('');
+  const [storage, setStorage] = useState('connecting');
+  const [network, setNetwork] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    kind: 'code',
+    version: 'v1.2.5',
+    payload: ''
+  });
+  const sourceRows = useMemo(() => {
+    const seen = new Set();
+    return [...(outputRows || []).slice(0, 160), ...(rows || []).slice(0, 240)].filter(row => {
+      const key = String(row?.value || '');
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [rows, outputRows]);
+  const selectedWallet = walletRows.find(row => row.id === selectedWalletId) || walletRows[0] || null;
+  const selectedVersion = CODE_WALLET_VERSIONS.find(entry => entry.id === form.version) || CODE_WALLET_VERSIONS[0];
+  const p2pAvailable = typeof window !== 'undefined' && !!window.RTCPeerConnection;
+  const loadWallet = async () => {
+    setBusy(true);
+    try {
+      const res = await authFetch('/api/code-wallet');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'wallet_load_failed');
+      setWalletRows(data.rows || []);
+      setStorage(data.storage || 'encrypted-cache');
+      setNetwork(data.network || {});
+      setStatus(language === 'es' ? 'Wallet sincronizada.' : 'Wallet synchronized.');
+    } catch (err) {
+      setStatus(`${language === 'es' ? 'No se pudo sincronizar' : 'Sync failed'}: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  useEffect(() => {
+    if (open) loadWallet();
+  }, [open]);
+  if (!open) return null;
+  const updateForm = patch => setForm(prev => ({
+    ...prev,
+    ...patch
+  }));
+  const selectSource = value => {
+    setSelectedSource(value);
+    const row = sourceRows.find(entry => String(entry.value) === value);
+    if (!row) return;
+    updateForm({
+      name: `${String(row.type || row.name || 'HASHCOD').toUpperCase()}-${String(row.idx ?? row.id ?? sourceRows.indexOf(row)).padStart(4, '0')}`,
+      kind: 'code',
+      payload: String(row.value || '')
+    });
+  };
+  const importDocument = event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 128 * 1024) {
+      setStatus(language === 'es' ? 'Documento demasiado grande. Maximo 128 KB.' : 'Document too large. Maximum 128 KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateForm({
+        name: file.name.replace(/\.[^.]+$/, '').slice(0, 80),
+        kind: 'document',
+        payload: String(reader.result || '').slice(0, 16000)
+      });
+      setStatus(language === 'es' ? 'Documento cargado como contenedor.' : 'Document loaded as a container.');
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+  const createContainer = async () => {
+    if (form.name.trim().length < 2 || !form.payload.trim()) {
+      setStatus(language === 'es' ? 'Agrega un nombre y un payload.' : 'Add a name and payload.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await authFetch('/api/code-wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(form)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'wallet_create_failed');
+      setWalletRows(prev => [data.row, ...prev]);
+      setSelectedWalletId(data.row.id);
+      setStatus(language === 'es' ? 'Contenedor cifrado y sincronizado.' : 'Encrypted container synchronized.');
+      notify?.(language === 'es' ? 'Wallet: contenedor guardado' : 'Wallet: container saved');
+    } catch (err) {
+      setStatus(`${language === 'es' ? 'No se pudo guardar' : 'Save failed'}: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const deleteContainer = async row => {
+    if (!row) return;
+    setBusy(true);
+    try {
+      const res = await authFetch(`/api/code-wallet?id=${encodeURIComponent(row.id)}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('wallet_delete_failed');
+      setWalletRows(prev => prev.filter(entry => entry.id !== row.id));
+      setSelectedWalletId('');
+      setStatus(language === 'es' ? 'Contenedor eliminado.' : 'Container deleted.');
+    } catch (err) {
+      setStatus(`${language === 'es' ? 'No se pudo eliminar' : 'Delete failed'}: ${err.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const reuseContainer = row => {
+    if (!row) return;
+    updateForm({
+      name: `${row.name}-COPY`.slice(0, 80),
+      kind: row.kind,
+      version: row.version,
+      payload: row.payload
+    });
+    setStatus(language === 'es' ? 'Contenedor cargado en el editor.' : 'Container loaded into the editor.');
+  };
+  const exportContainer = row => {
+    if (!row) return;
+    triggerDownload(`${row.name}-${row.id}.wallet.json`, JSON.stringify({
+      platform: PLATFORM_DISPLAY_NAME,
+      schema: 'hashcod-code-wallet/v1',
+      container: row
+    }, null, 2), 'application/json;charset=utf-8');
+  };
+  return React.createElement("div", {
+    className: "dlg-back codewallet-back",
+    onClick: onClose
+  }, React.createElement("section", {
+    className: "dlg codewallet",
+    onClick: event => event.stopPropagation()
+  }, React.createElement("header", {
+    className: "dlg-h codewallet-head"
+  }, React.createElement("div", {
+    className: "codewallet-title"
+  }, React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.codeWallet
+    }
+  }), React.createElement("div", null, React.createElement("h2", null, PLATFORM_DISPLAY_NAME, " Code Wallet"), React.createElement("p", null, language === 'es' ? 'Contenedores criptograficos por usuario con sync persistente.' : 'Per-user cryptographic containers with persistent sync.'))), React.createElement("button", {
+    className: "dlg-x",
+    onClick: onClose,
+    "aria-label": "Close"
+  }, "\xD7")), React.createElement("div", {
+    className: "codewallet-grid"
+  }, React.createElement("aside", {
+    className: "codewallet-editor"
+  }, React.createElement("h3", null, "TK INTERFACE / NEW CONTAINER"), React.createElement("label", null, React.createElement("span", null, "SOURCE CODE"), React.createElement("select", {
+    value: selectedSource,
+    onChange: event => selectSource(event.target.value)
+  }, React.createElement("option", {
+    value: ""
+  }, "Manual payload"), sourceRows.map((row, index) => React.createElement("option", {
+    key: `${row.value}-${index}`,
+    value: row.value
+  }, String(row.idx ?? row.id ?? index).padStart(4, '0'), " | ", row.type || row.name || 'Hashcod code')))), React.createElement("label", null, React.createElement("span", null, "NAME"), React.createElement("input", {
+    value: form.name,
+    onChange: event => updateForm({
+      name: event.target.value
+    }),
+    placeholder: "WALLET-CONTAINER-001"
+  })), React.createElement("div", {
+    className: "codewallet-pair"
+  }, React.createElement("label", null, React.createElement("span", null, "MODEL"), React.createElement("select", {
+    value: form.kind,
+    onChange: event => updateForm({
+      kind: event.target.value
+    })
+  }, React.createElement("option", {
+    value: "code"
+  }, "CODE"), React.createElement("option", {
+    value: "prompt"
+  }, "PROMPT"), React.createElement("option", {
+    value: "text"
+  }, "TEXT"), React.createElement("option", {
+    value: "document"
+  }, "DOCUMENT"), React.createElement("option", {
+    value: "json"
+  }, "JSON"))), React.createElement("label", null, React.createElement("span", null, "VERSION"), React.createElement("select", {
+    value: form.version,
+    onChange: event => updateForm({
+      version: event.target.value
+    })
+  }, CODE_WALLET_VERSIONS.map(entry => React.createElement("option", {
+    key: entry.id,
+    value: entry.id
+  }, entry.id, " | $", entry.price))))), React.createElement("label", null, React.createElement("span", null, "PAYLOAD"), React.createElement("textarea", {
+    rows: "10",
+    value: form.payload,
+    onChange: event => updateForm({
+      payload: event.target.value
+    }),
+    placeholder: "Code, prompt, text, JSON, or imported text document"
+  })), React.createElement("input", {
+    ref: fileRef,
+    className: "hidden-file",
+    type: "file",
+    accept: ".txt,.md,.json,.csv,.yaml,.yml,text/*",
+    onChange: importDocument
+  }), React.createElement("div", {
+    className: "codewallet-actions"
+  }, React.createElement("button", {
+    onClick: createContainer,
+    disabled: busy
+  }, busy ? 'SYNC...' : 'STORE CONTAINER'), React.createElement("button", {
+    onClick: () => fileRef.current?.click()
+  }, "IMPORT DOC")), React.createElement("div", {
+    className: "codewallet-price"
+  }, React.createElement("b", null, selectedVersion.id), React.createElement("span", null, selectedVersion.label), React.createElement("strong", null, "$", selectedVersion.price, " USD"))), React.createElement("main", {
+    className: "codewallet-main"
+  }, React.createElement("div", {
+    className: "codewallet-mainbar"
+  }, React.createElement("div", null, React.createElement("b", null, "DECENTRALIZED WALLET MODEL"), React.createElement("span", null, walletRows.length, " USER CONTAINERS")), React.createElement("button", {
+    onClick: loadWallet,
+    disabled: busy
+  }, "SYNC NOW")), React.createElement("div", {
+    className: "codewallet-list"
+  }, walletRows.length === 0 && React.createElement("div", {
+    className: "codewallet-empty"
+  }, "NO CONTAINERS YET", React.createElement("br", null), React.createElement("small", null, "Select a generated code or import a text document.")), walletRows.map(row => React.createElement("button", {
+    className: `codewallet-row ${selectedWallet?.id === row.id ? 'on' : ''}`,
+    key: row.id,
+    onClick: () => setSelectedWalletId(row.id)
+  }, React.createElement("span", null, React.createElement("b", null, row.name), React.createElement("small", null, row.kind, " / ", row.version, " / $", row.priceUsd)), React.createElement("i", null, row.bset), React.createElement("i", null, row.udset), React.createElement("em", null, row.interception)))), selectedWallet && React.createElement("section", {
+    className: "codewallet-detail"
+  }, React.createElement("div", null, React.createElement("span", null, "NAME"), React.createElement("b", null, selectedWallet.name)), React.createElement("div", null, React.createElement("span", null, "FASE"), React.createElement("b", null, selectedWallet.fase)), React.createElement("div", null, React.createElement("span", null, "INTERCEPTION"), React.createElement("b", null, selectedWallet.interception)), React.createElement("div", null, React.createElement("span", null, "BAR"), React.createElement("b", null, selectedWallet.bar)), React.createElement("pre", null, selectedWallet.payload), React.createElement("div", {
+    className: "codewallet-actions"
+  }, React.createElement("button", {
+    onClick: () => reuseContainer(selectedWallet)
+  }, "CONVERT / REUSE"), React.createElement("button", {
+    onClick: () => exportContainer(selectedWallet)
+  }, "EXPORT JSON"), React.createElement("button", {
+    onClick: () => deleteContainer(selectedWallet)
+  }, "DELETE")))), React.createElement("aside", {
+    className: "codewallet-side"
+  }, React.createElement("h3", null, "INTEGRAL ENGINE"), React.createElement("code", null, "[ \u222B0\u207F (i/n) \xD7 ((byte\u1D62+1)/256) di ]"), React.createElement("code", null, "[ \u03A3 ((byte\u1D62 mod 17)+1) \xD7 ((i mod 7)+1) ]"), selectedWallet && React.createElement("div", {
+    className: "codewallet-metrics"
+  }, React.createElement("span", null, "INTEGRAL ", React.createElement("b", null, selectedWallet.metrics?.integral)), React.createElement("span", null, "BRACKET ", React.createElement("b", null, selectedWallet.metrics?.bracket)), React.createElement("span", null, "BYTES ", React.createElement("b", null, selectedWallet.metrics?.bytes)), React.createElement("span", null, "DIGEST ", React.createElement("b", null, selectedWallet.digest?.slice(0, 18)))), React.createElement("h3", null, "TRANSPORT ENGINES"), React.createElement("div", {
+    className: "codewallet-network"
+  }, React.createElement("span", null, "P2P / WEBRTC ", React.createElement("b", null, p2pAvailable ? 'CAPABLE' : 'UNAVAILABLE')), React.createElement("span", null, "UDP ", React.createElement("b", null, "RELAY REQUIRED")), React.createElement("span", null, "TCP SYNC ", React.createElement("b", null, "HTTPS API ACTIVE")), React.createElement("span", null, "STORE ", React.createElement("b", null, storage))), React.createElement("p", null, language === 'es' ? 'El navegador no abre sockets UDP directos. La wallet usa sync real por HTTPS/TCP y declara P2P solo cuando WebRTC esta disponible.' : 'Browsers cannot open direct UDP sockets. The wallet uses real HTTPS/TCP sync and reports P2P only when WebRTC is available.'), React.createElement("h3", null, "VERSION MATRIX"), React.createElement("div", {
+    className: "codewallet-versions"
+  }, CODE_WALLET_VERSIONS.map(entry => React.createElement("button", {
+    className: form.version === entry.id ? 'on' : '',
+    key: entry.id,
+    onClick: () => updateForm({
+      version: entry.id
+    })
+  }, React.createElement("b", null, entry.id), React.createElement("span", null, entry.label), React.createElement("em", null, "$", entry.price)))))), React.createElement("footer", {
+    className: "codewallet-footer"
+  }, React.createElement("span", null, status || 'READY'), React.createElement("span", null, "COOKIE HASHED \xB7 DEVICE MINIMIZED \xB7 USER SCOPED"))));
+};
 const App = () => {
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(window.OCG_DEFAULTS) : [{}, () => {}];
   const density = tweaks.density || 'comfortable';
@@ -20619,6 +20911,7 @@ const App = () => {
   const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
   const [geometricCodeOpen, setGeometricCodeOpen] = useState(false);
   const [designStudioOpen, setDesignStudioOpen] = useState(false);
+  const [codeWalletOpen, setCodeWalletOpen] = useState(false);
   const [securitySuiteOpen, setSecuritySuiteOpen] = useState(false);
   const [securitySuiteTool, setSecuritySuiteTool] = useState('tokenInspector');
   const [containerPortState, setContainerPortState] = useState(() => readContainerPort());
@@ -21580,6 +21873,7 @@ const App = () => {
   const openCryptoExam = () => setCryptoExamOpen(true);
   const openGeometricCode = () => setGeometricCodeOpen(true);
   const openDesignStudio = () => setDesignStudioOpen(true);
+  const openCodeWallet = () => setCodeWalletOpen(true);
   const openSecuritySuite = (toolKey = 'tokenInspector') => {
     setSecuritySuiteTool(toolKey);
     setSecuritySuiteOpen(true);
@@ -22262,6 +22556,19 @@ const App = () => {
   }, {
     label: language === 'es' ? 'Exportar PNG / guardar proyecto JSON' : 'Export PNG / save JSON project',
     onClick: openDesignStudio
+  }];
+  const codeWalletItems = [{
+    label: language === 'es' ? 'Abrir Code Wallet' : 'Open Code Wallet',
+    onClick: openCodeWallet
+  }, {
+    label: language === 'es' ? 'Contenedores por usuario con sync persistente' : 'Per-user containers with persistent sync',
+    onClick: openCodeWallet
+  }, {
+    label: language === 'es' ? 'Code, prompt, texto, documento y JSON' : 'Code, prompt, text, document, and JSON',
+    onClick: openCodeWallet
+  }, {
+    label: language === 'es' ? 'P2P WebRTC / UDP relay / TCP sync' : 'P2P WebRTC / UDP relay / TCP sync',
+    onClick: openCodeWallet
   }];
   const hosItems = [{
     label: language === 'es' ? 'Abrir Hash Operative System' : 'Open Hash Operative System',
@@ -23708,6 +24015,13 @@ const App = () => {
     onClose: () => setDesignStudioOpen(false),
     notify: notify,
     language: language
+  }), React.createElement(CodeWalletDialog, {
+    open: codeWalletOpen,
+    onClose: () => setCodeWalletOpen(false),
+    rows: copyDb,
+    outputRows: output,
+    notify: notify,
+    language: language
   }), React.createElement(HSG2818SecuritySuiteDialog, {
     open: securitySuiteOpen,
     activeTool: securitySuiteTool,
@@ -24182,6 +24496,14 @@ const App = () => {
     activeMenu: activeMenu,
     setActiveMenu: setActiveMenu,
     primaryAction: openDesignStudio
+  }), React.createElement(MenuButton, {
+    label: "CODE WALLET",
+    icon: TOP_MENU_ICONS.codeWallet,
+    iconOnly: true,
+    items: codeWalletItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openCodeWallet
   }), React.createElement(MenuButton, {
     label: "HOS",
     icon: TOP_MENU_ICONS.hos,
