@@ -8337,3 +8337,100 @@ textarea:focus-visible {
     transition: none !important;
   }
 }
+
+/* File ZIP Packager */
+.filepackdlg { width:min(1120px,calc(100vw - 42px)); }
+.filepack-head { padding:16px 18px; }
+.filepack-title { display:flex;align-items:center;gap:14px;min-width:0; }
+.filepack-mark {
+  display:grid;
+  place-items:center;
+  flex:0 0 48px;
+  width:48px;
+  height:48px;
+  border:1px solid var(--line-2);
+  background:#101010;
+  color:#fff;
+}
+.filepack-mark svg,
+.filepack-dropicon svg { width:24px;height:24px;display:block; }
+.filepack-shell { display:grid;grid-template-columns:260px minmax(0,1fr);min-height:560px; }
+.filepack-side { display:grid;align-content:start;gap:10px;padding:16px;border-right:1px solid var(--line);background:var(--bg-soft); }
+.filepack-side label { display:grid;gap:7px; }
+.filepack-side label span,
+.filepack-listhead span,
+.filepack-stats span {
+  color:var(--ink-4);
+  font-size:9px;
+  letter-spacing:1.8px;
+  text-transform:uppercase;
+}
+.filepack-side input {
+  width:100%;
+  min-height:38px;
+  padding:8px 9px;
+  border:1px solid var(--line-2);
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--mono);
+}
+.filepack-mainbtn,
+.filepack-subbtn {
+  min-height:38px;
+  padding:0 13px;
+  border:1px solid var(--line-2);
+  background:#101010;
+  color:#fff;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+}
+.filepack-subbtn { background:var(--bg);color:var(--ink); }
+.filepack-mainbtn:hover,
+.filepack-mainbtn:focus-visible,
+.filepack-subbtn:hover,
+.filepack-subbtn:focus-visible { background:#fff;color:#101010;border-color:#101010; }
+.filepack-stats { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);background:var(--line);gap:1px;margin-top:4px; }
+.filepack-stats div { display:grid;gap:7px;min-height:62px;padding:10px;background:var(--bg); }
+.filepack-stats b { font-family:var(--mono);font-size:13px;overflow-wrap:anywhere; }
+.filepack-note { color:var(--ink-4) !important;font-family:var(--mono);font-size:10px !important;line-height:1.55 !important; }
+.filepack-main { display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;min-width:0;min-height:0;padding:16px;gap:10px; }
+.filepack-drop {
+  display:grid;
+  justify-items:center;
+  gap:6px;
+  padding:18px;
+  border:1px dashed var(--line-3);
+  background:var(--bg-soft);
+  color:var(--ink-3);
+  text-align:center;
+  transition:background .14s ease,border-color .14s ease,color .14s ease;
+}
+.filepack-drop.dragging { border-color:var(--tool-accent);background:var(--tool-accent-soft);color:var(--tool-focus); }
+.filepack-dropicon { display:grid;place-items:center;width:34px;height:34px; }
+.filepack-drop small { color:var(--ink-4);font-family:var(--mono); }
+.filepack-error { padding:10px 12px;border-left:4px solid #b42318;background:#fff0ee;color:#8b1c13;font-family:var(--mono);font-size:11px; }
+.filepack-listhead { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 0; }
+.filepack-listhead b { font-family:var(--mono);font-size:11px;color:var(--ink-3); }
+.filepack-list { min-height:0;overflow:auto;border:1px solid var(--line);background:var(--bg-soft); }
+.filepack-empty { display:grid;place-items:center;min-height:230px;padding:20px;color:var(--ink-4);font-family:var(--mono);text-align:center; }
+.filepack-row { display:grid;grid-template-columns:44px minmax(0,1fr) 34px;align-items:center;gap:10px;min-height:52px;padding:7px 9px;border-bottom:1px solid var(--line);background:var(--bg); }
+.filepack-row:last-child { border-bottom:0; }
+.filepack-index { color:var(--tool-accent);font-family:var(--mono);font-size:11px; }
+.filepack-row div { display:grid;gap:4px;min-width:0; }
+.filepack-row b { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11px; }
+.filepack-row small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-4);font-family:var(--mono);font-size:9px; }
+.filepack-row button { width:30px;height:30px;border:1px solid var(--line-2);background:var(--bg-soft); }
+.filepack-row button:hover,
+.filepack-row button:focus-visible { background:#101010;color:#fff;border-color:#101010; }
+.filepack-footer { display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px; }
+.filepack-footer span { color:var(--ink-4);font-family:var(--mono);font-size:10px; }
+
+@media (max-width:760px) {
+  .filepackdlg { width:calc(100vw - 16px) !important; }
+  .filepack-shell { grid-template-columns:1fr;min-height:auto; }
+  .filepack-side { border-right:0;border-bottom:1px solid var(--line); }
+  .filepack-main { min-height:410px; }
+  .filepack-footer { align-items:stretch;flex-direction:column; }
+}

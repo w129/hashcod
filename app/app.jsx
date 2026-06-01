@@ -2544,6 +2544,7 @@ const TOP_MENU_ICONS = {
   containerPort: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V5"/><path d="M10 19V6.8"/><path d="M14 19v-7.8"/><path d="M18 5v4"/><path d="M18 19v-6"/><path d="M22 19V9"/><path d="M2 19V9a4 4 0 0 1 4-4c2 0 4 1.33 6 4s4 4 6 4a4 4 0 1 0-3-6.65"/></svg>`,
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
+  filePackager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h2"/><path d="M12 18h6"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
@@ -7554,6 +7555,200 @@ const UniversalFileViewerDialog = ({ open, onClose, notify, language }) => {
           <main className="fileview-main">
             {error && <div className="fileview-error">{error}</div>}
             {renderPreview()}
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const FileZipPackagerDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const inputRef = useRef(null);
+  const [files, setFiles] = useState([]);
+  const [packageName, setPackageName] = useState('Hashcod-file-package');
+  const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState('');
+  const totalBytes = useMemo(() => files.reduce((sum, item) => sum + Number(item.file?.size || 0), 0), [files]);
+  const MAX_FILES = 250;
+  const MAX_TOTAL_BYTES = 128 * 1024 * 1024;
+
+  if (!open) return null;
+
+  const prettyBytes = (value = 0) => {
+    const bytes = Number(value) || 0;
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+  const safeArchiveName = (name, used) => {
+    const clean = String(name || 'file')
+      .replace(/\\/g, '/')
+      .split('/')
+      .pop()
+      .replace(/[<>:"|?*\u0000-\u001f]/g, '_')
+      .slice(0, 160) || 'file';
+    const dot = clean.lastIndexOf('.');
+    const base = dot > 0 ? clean.slice(0, dot) : clean;
+    const ext = dot > 0 ? clean.slice(dot) : '';
+    let candidate = clean;
+    let index = 2;
+    while (used.has(candidate.toLowerCase())) {
+      candidate = `${base}-${index}${ext}`;
+      index += 1;
+    }
+    used.add(candidate.toLowerCase());
+    return candidate;
+  };
+  const addFiles = (incoming = []) => {
+    const selected = Array.from(incoming || []).filter(Boolean);
+    if (!selected.length) return;
+    setError('');
+    setFiles((current) => {
+      const used = new Set(current.map(item => item.archiveName.toLowerCase()));
+      const available = Math.max(0, MAX_FILES - current.length);
+      const additions = selected.slice(0, available).map((file, index) => ({
+        id: `${Date.now().toString(36)}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+        archiveName: safeArchiveName(file.name, used),
+        file,
+      }));
+      const next = [...current, ...additions];
+      const nextBytes = next.reduce((sum, item) => sum + Number(item.file?.size || 0), 0);
+      if (nextBytes > MAX_TOTAL_BYTES) {
+        setError(L('El paquete supera el limite local de 128 MB.', 'Package exceeds the 128 MB local limit.'));
+        return current;
+      }
+      if (selected.length > available) setError(L('El limite es de 250 archivos por paquete.', 'Each package supports up to 250 files.'));
+      return next;
+    });
+  };
+  const removeFile = (id) => setFiles(current => current.filter(item => item.id !== id));
+  const clearFiles = () => {
+    setFiles([]);
+    setError('');
+    if (inputRef.current) inputRef.current.value = '';
+  };
+  const downloadZip = async () => {
+    if (!files.length || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const entries = await Promise.all(files.map(async item => ({
+        name: item.archiveName,
+        content: new Uint8Array(await item.file.arrayBuffer()),
+        date: new Date(item.file.lastModified || Date.now()),
+      })));
+      const manifest = {
+        platform: 'Hashcod',
+        package: sanitizeFilename(packageName || 'Hashcod-file-package'),
+        generatedAt: new Date().toISOString(),
+        fileCount: files.length,
+        totalBytes,
+        files: files.map(item => ({
+          name: item.archiveName,
+          size: item.file.size,
+          mime: item.file.type || 'application/octet-stream',
+          lastModified: new Date(item.file.lastModified || Date.now()).toISOString(),
+        })),
+      };
+      entries.push({
+        name: 'Hashcod-package-manifest.json',
+        content: new TextEncoder().encode(JSON.stringify(manifest, null, 2)),
+        mime: 'application/json;charset=utf-8',
+      });
+      const zip = makeZipBlob(entries);
+      triggerBlobDownload(`${sanitizeFilename(packageName || 'Hashcod-file-package')}-${tsStamp()}.zip`, zip);
+      notify?.(L(`ZIP creado con ${files.length} archivo(s).`, `ZIP created with ${files.length} file(s).`));
+    } catch (err) {
+      console.error(err);
+      setError(L('No se pudo crear el ZIP. Revisa los archivos e intenta otra vez.', 'Could not create ZIP. Review the files and try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const onDrop = (event) => {
+    event.preventDefault();
+    setDragging(false);
+    addFiles(event.dataTransfer?.files);
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg filepackdlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h filepack-head">
+          <div className="filepack-title">
+            <span className="filepack-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.filePackager}} />
+            <div>
+              <h2>{L('Empaquetadora ZIP de Archivos', 'File ZIP Packager')}</h2>
+              <p>{L('Agrupa archivos localmente, revisa el contenido y descarga un ZIP valido con manifiesto Hashcod.', 'Bundle files locally, review the contents, and download a valid ZIP with a Hashcod manifest.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="filepack-shell">
+          <aside className="filepack-side">
+            <label>
+              <span>{L('Nombre del paquete', 'Package name')}</span>
+              <input value={packageName} maxLength="64" onChange={event => setPackageName(event.target.value)} placeholder="Hashcod-file-package" />
+            </label>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              className="hidden-file"
+              onChange={event => {
+                addFiles(event.target.files);
+                event.target.value = '';
+              }}
+            />
+            <button className="filepack-mainbtn" onClick={() => inputRef.current?.click()}>{L('Agregar archivos', 'Add files')}</button>
+            <button className="filepack-subbtn" onClick={clearFiles} disabled={!files.length}>{L('Limpiar lista', 'Clear list')}</button>
+            <div className="filepack-stats">
+              <div><span>{L('Archivos', 'Files')}</span><b>{files.length}</b></div>
+              <div><span>{L('Tamano total', 'Total size')}</span><b>{prettyBytes(totalBytes)}</b></div>
+              <div><span>{L('Formato', 'Format')}</span><b>ZIP</b></div>
+              <div><span>{L('Proceso', 'Process')}</span><b>{L('Local', 'Local')}</b></div>
+            </div>
+            <p className="filepack-note">{L('Los archivos permanecen en este navegador hasta que descargues el paquete. Se agrega un manifiesto JSON dentro del ZIP.', 'Files remain in this browser until you download the package. A JSON manifest is included inside the ZIP.')}</p>
+          </aside>
+          <main className="filepack-main">
+            <div
+              className={`filepack-drop ${dragging ? 'dragging' : ''}`}
+              onDragEnter={event => { event.preventDefault(); setDragging(true); }}
+              onDragOver={event => event.preventDefault()}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+            >
+              <span className="filepack-dropicon" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.filePackager}} />
+              <b>{L('Arrastra archivos aqui', 'Drop files here')}</b>
+              <small>{L('o usa el boton Agregar archivos', 'or use the Add files button')}</small>
+            </div>
+            {error && <div className="filepack-error">{error}</div>}
+            <div className="filepack-listhead">
+              <span>{L('Contenido del ZIP', 'ZIP contents')}</span>
+              <b>{files.length} / {MAX_FILES}</b>
+            </div>
+            <div className="filepack-list">
+              {!files.length ? (
+                <div className="filepack-empty">{L('Todavia no hay archivos en este paquete.', 'There are no files in this package yet.')}</div>
+              ) : files.map((item, index) => (
+                <article className="filepack-row" key={item.id}>
+                  <span className="filepack-index">{String(index + 1).padStart(3, '0')}</span>
+                  <div>
+                    <b>{item.archiveName}</b>
+                    <small>{item.file.type || 'application/octet-stream'} | {prettyBytes(item.file.size)}</small>
+                  </div>
+                  <button onClick={() => removeFile(item.id)} title={L('Quitar archivo', 'Remove file')} aria-label={L('Quitar archivo', 'Remove file')}>x</button>
+                </article>
+              ))}
+            </div>
+            <div className="filepack-footer">
+              <span>{L('ZIP almacenado sin ejecutar archivos.', 'ZIP stored without executing files.')}</span>
+              <button className="filepack-mainbtn" onClick={downloadZip} disabled={!files.length || busy}>
+                {busy ? L('Creando ZIP...', 'Creating ZIP...') : L('Descargar ZIP', 'Download ZIP')}
+              </button>
+            </div>
           </main>
         </div>
       </section>
@@ -16720,6 +16915,7 @@ const App = () => {
   const [containerPortOpen, setContainerPortOpen] = useState(false);
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
+  const [filePackagerOpen, setFilePackagerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
@@ -17578,6 +17774,7 @@ const App = () => {
   const openContainerPort = () => setContainerPortOpen(true);
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
+  const openFilePackager = () => setFilePackagerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
@@ -17838,6 +18035,12 @@ const App = () => {
     { label: language === 'es' ? 'Imagen, PDF, audio y video' : 'Image, PDF, audio and video', onClick: openFileViewer },
     { label: language === 'es' ? 'Texto, JSON, codigo y CSV' : 'Text, JSON, code and CSV', onClick: openFileViewer },
     { label: language === 'es' ? 'SHA-256 y vista hexadecimal' : 'SHA-256 and hex view', onClick: openFileViewer },
+  ];
+  const filePackagerItems = [
+    { label: language === 'es' ? 'Abrir empaquetadora ZIP' : 'Open ZIP packager', onClick: openFilePackager },
+    { label: language === 'es' ? 'Subir y agrupar varios archivos' : 'Upload and bundle multiple files', onClick: openFilePackager },
+    { label: language === 'es' ? 'Manifiesto Hashcod incluido' : 'Hashcod manifest included', onClick: openFilePackager },
+    { label: language === 'es' ? 'Descarga ZIP local' : 'Local ZIP download', onClick: openFilePackager },
   ];
   const graphLabItems = [
     { label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab', onClick: openGraphLab },
@@ -18400,6 +18603,7 @@ const App = () => {
       <ContainerPortDialog open={containerPortOpen} onClose={() => setContainerPortOpen(false)} portState={containerPortState} setPortState={setContainerPortState} notify={notify} language={language} />
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
+      <FileZipPackagerDialog open={filePackagerOpen} onClose={() => setFilePackagerOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CodeIncubatorDialog open={codeIncubatorOpen} onClose={() => setCodeIncubatorOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} onSaveRows={rememberCopied} />
@@ -18474,6 +18678,7 @@ const App = () => {
             <MenuButton label="CONTAINER PORT" icon={TOP_MENU_ICONS.containerPort} iconOnly items={containerPortItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openContainerPort} />
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
+            <MenuButton label="FILE ZIP PACKAGER" icon={TOP_MENU_ICONS.filePackager} iconOnly items={filePackagerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFilePackager} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="CODE INCUBATOR" icon={TOP_MENU_ICONS.codeIncubator} iconOnly items={codeIncubatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeIncubator} />
