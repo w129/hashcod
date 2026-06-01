@@ -11011,12 +11011,18 @@ const CodeIncubatorDialog = ({
   }, L('Selecciona un code y ejecuta la incubacion.', 'Select a code and run the incubation.'))))));
 };
 const CODE_TRANSFORM_CLI_OPERATIONS = [['sha256-domain', 'CRYPTO', 'SHA-256 with an isolated command domain'], ['hmac-sha256', 'CRYPTO', 'HMAC-SHA-256 authentication tag'], ['pbkdf2-sha256', 'CRYPTO', 'PBKDF2-SHA-256 key derivation'], ['hkdf-sha256', 'CRYPTO', 'HKDF-SHA-256 domain derivation'], ['hash-chain', 'CRYPTO', 'Iterated SHA-256 chain'], ['base64-encode', 'CONVERT', 'UTF-8 to Base64 conversion'], ['base64-decode', 'CONVERT', 'Safe Base64 to UTF-8 conversion'], ['hex-encode', 'CONVERT', 'UTF-8 to hexadecimal conversion'], ['hex-decode', 'CONVERT', 'Safe hexadecimal to UTF-8 conversion'], ['url-encode', 'CONVERT', 'URL component conversion'], ['url-decode', 'CONVERT', 'Safe URL component restore'], ['rotate-left', 'TRANSFORM', 'Deterministic character rotation'], ['rotate-right', 'TRANSFORM', 'Reverse deterministic rotation'], ['xor-mask', 'TRANSFORM', 'Reversible XOR laboratory mask'], ['reverse-blocks', 'TRANSFORM', 'Reverse fixed-size blocks'], ['chunk-delimit', 'FORMAT', 'Split code into fixed-size chunks'], ['window-sample', 'ANALYZE', 'Extract a deterministic SHA-256 seeded window'], ['checksum-envelope', 'FORMAT', 'Wrap code with SHA-256 integrity metadata'], ['json-envelope', 'FORMAT', 'Create a JSON transport envelope'], ['entropy-report', 'ANALYZE', 'Measure entropy, length, and charset profile']];
+const CODE_TRANSFORM_CLI_EXTRA_OPERATIONS = [['segment-permute', 'TRANSFORM', 'Deterministically permute fixed-size segments for reproducible code editing'], ['integrity-envelope', 'FORMAT', 'Wrap code in a hardened Base64URL envelope with SHA-256 integrity proof']];
+const CODE_TRANSFORM_CLI_BASE_TOTAL = 1000;
+const CODE_TRANSFORM_CLI_TOTAL = 1100;
 const CODE_TRANSFORM_CLI_CATALOG = Array.from({
-  length: 1000
+  length: CODE_TRANSFORM_CLI_TOTAL
 }, (_, index) => {
   const number = index + 1;
-  const profile = Math.floor(index / CODE_TRANSFORM_CLI_OPERATIONS.length) + 1;
-  const [operation, category, description] = CODE_TRANSFORM_CLI_OPERATIONS[index % CODE_TRANSFORM_CLI_OPERATIONS.length];
+  const isExtension = index >= CODE_TRANSFORM_CLI_BASE_TOTAL;
+  const relativeIndex = isExtension ? index - CODE_TRANSFORM_CLI_BASE_TOTAL : index;
+  const operations = isExtension ? CODE_TRANSFORM_CLI_EXTRA_OPERATIONS : CODE_TRANSFORM_CLI_OPERATIONS;
+  const profile = Math.floor(relativeIndex / operations.length) + 1;
+  const [operation, category, description] = operations[relativeIndex % operations.length];
   return {
     id: `hcx${String(number).padStart(4, '0')}`,
     number,
@@ -11053,6 +11059,19 @@ const cliRotate = (value, amount) => {
   if (!text.length) return '';
   const offset = (amount % text.length + text.length) % text.length;
   return text.slice(offset) + text.slice(0, offset);
+};
+const cliBase64Url = bytes => cliBytesToBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+const cliPermuteSegments = async (value, width, domain) => {
+  const blocks = String(value || '').match(new RegExp(`.{1,${width}}`, 'g')) || [];
+  if (blocks.length < 2) return blocks.join('');
+  const seed = await digestHex(`${domain}|SEGMENTS=${blocks.length}|WIDTH=${width}`);
+  let state = parseInt(seed.slice(0, 8), 16) >>> 0;
+  for (let index = blocks.length - 1; index > 0; index--) {
+    state = Math.imul(state ^ state >>> 16, 0x45d9f3b) + index + 0x9e3779b9 >>> 0;
+    const swapIndex = state % (index + 1);
+    [blocks[index], blocks[swapIndex]] = [blocks[swapIndex], blocks[index]];
+  }
+  return blocks.join('');
 };
 const cliHmacHex = async (keyText, value) => {
   const key = await crypto.subtle.importKey('raw', cliTextToBytes(keyText), {
@@ -11107,6 +11126,16 @@ const executeCodeTransformCli = async (command, input, secret = '') => {
     entropyPerChar: Number(cliEntropy(value).toFixed(6)),
     estimatedBits: Number((cliEntropy(value) * value.length).toFixed(3)),
     sha256: await digestHex(value)
+  }, null, 2);else if (command.operation === 'segment-permute') output = await cliPermuteSegments(value, width, domain);else if (command.operation === 'integrity-envelope') output = JSON.stringify({
+    format: 'HASHCOD.HCX.INTEGRITY.v1',
+    domain,
+    profile,
+    payloadEncoding: 'base64url',
+    payload: cliBase64Url(cliTextToBytes(value)),
+    chars: value.length,
+    bytes: cliTextToBytes(value).length,
+    sha256: await digestHex(value),
+    entropyPerChar: Number(cliEntropy(value).toFixed(6))
   }, null, 2);
   return {
     command,
@@ -11160,7 +11189,7 @@ const CodeTransformCliDialog = ({
     setHistory([]);
     setLog([{
       kind: 'sys',
-      text: 'Hashcod Transform CMD ready. Catalog: hcx0001..hcx1000.'
+      text: `Hashcod Transform CMD ready. Catalog: hcx0001..hcx${CODE_TRANSFORM_CLI_TOTAL}.`
     }, {
       kind: 'sys',
       text: 'Use help, list, find sha, select 1, run hcx0001, chain hcx0001,hcx0005, save, copy, export json.'
@@ -11306,6 +11335,10 @@ const CodeTransformCliDialog = ({
   }, "Base64"), React.createElement("button", {
     onClick: () => run('run hcx0008')
   }, "HEX"), React.createElement("button", {
+    onClick: () => run('run hcx1001')
+  }, "PERMUTE"), React.createElement("button", {
+    onClick: () => run('run hcx1002')
+  }, "INTEGRITY"), React.createElement("button", {
     onClick: save
   }, L('Guardar DB', 'Save DB')), React.createElement("button", {
     onClick: () => exportResult('json')
@@ -11340,7 +11373,7 @@ const CodeTransformCliDialog = ({
     className: "transformcli-catalog"
   }, React.createElement("div", {
     className: "transformcli-catalog-head"
-  }, React.createElement("div", null, React.createElement("b", null, "HCX COMMAND CATALOG"), React.createElement("span", null, filtered.length, " / 1000")), React.createElement("input", {
+  }, React.createElement("div", null, React.createElement("b", null, "HCX COMMAND CATALOG"), React.createElement("span", null, filtered.length, " / ", CODE_TRANSFORM_CLI_TOTAL)), React.createElement("input", {
     value: query,
     onChange: event => {
       setQuery(event.target.value);
@@ -22450,7 +22483,7 @@ const App = () => {
     label: language === 'es' ? 'Abrir Transform CMD' : 'Open Transform CMD',
     onClick: openCodeTransformCli
   }, {
-    label: '1000 commands: hcx0001 - hcx1000',
+    label: '1100 commands: hcx0001 - hcx1100',
     onClick: openCodeTransformCli
   }, {
     label: 'SHA-256 / HMAC / PBKDF2 / HKDF',
@@ -23465,12 +23498,12 @@ const App = () => {
       transformcmd: {
         open: openCodeTransformCli,
         label: 'Hashcod Transform CMD',
-        verbs: ['run', 'chain', 'select', 'save', 'copy', 'export', 'find', 'list', 'hcx0001', 'hcx1000']
+        verbs: ['run', 'chain', 'select', 'save', 'copy', 'export', 'find', 'list', 'hcx0001', 'hcx1100']
       },
       transform: {
         open: openCodeTransformCli,
         label: 'Hashcod Transform CMD',
-        verbs: ['run', 'chain', 'select', 'save', 'copy', 'export', 'find', 'list', 'hcx0001', 'hcx1000']
+        verbs: ['run', 'chain', 'select', 'save', 'copy', 'export', 'find', 'list', 'hcx0001', 'hcx1100']
       },
       consola: {
         open: openCodeTransformCli,

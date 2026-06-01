@@ -108,6 +108,11 @@ function assert(ok, id, detail = '') {
   const jwt = await ctx.window.OCG_GEN.generate('jwt_hs256_real', 32, {});
   assert(jwt.split('.').length === 3, 'jwt-real-shape');
 
+  const appSource = fs.readFileSync(path.join(ROOT, 'app/app.jsx'), 'utf8');
+  assert(appSource.includes('const CODE_TRANSFORM_CLI_TOTAL = 1100;'), 'transform-cmd-total-1100');
+  assert(appSource.includes("['segment-permute', 'TRANSFORM'") && appSource.includes("['integrity-envelope', 'FORMAT'"), 'transform-cmd-extension-operations');
+  assert(appSource.includes("'1100 commands: hcx0001 - hcx1100'"), 'transform-cmd-menu-range');
+
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {
   console.error(`ENTERPRISE SELFTEST FAIL: ${err.message}`);
