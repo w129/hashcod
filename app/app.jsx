@@ -17715,6 +17715,9 @@ const App = () => {
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
           <div className="tb-right">
+            <button className="tb-cli" onClick={() => setCodeTransformCliOpen(true)} title={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'} aria-label={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'}>
+              <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
+            </button>
             <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
               <span dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
             </button>

@@ -23433,6 +23433,15 @@ const App = () => {
     className: "tb-right"
   }, React.createElement("button", {
     className: "tb-cli",
+    onClick: () => setCodeTransformCliOpen(true),
+    title: language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console',
+    "aria-label": language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'
+  }, React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.codeTransformCli
+    }
+  })), React.createElement("button", {
+    className: "tb-cli",
     onClick: () => setSharedCliOpen(true),
     title: language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console',
     "aria-label": language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'
