@@ -10627,11 +10627,19 @@ const buildCodeIncubation = async (row, stepCount = 36, generationCount = 4) => 
       length: steps + 1
     }, (_, index) => {
       const theta = phase + index / steps * Math.PI * 2;
+      const t = -3 + index / steps * 6;
+      const cubicBaseY = t * t * t - 4 * t;
       return {
         index,
         theta,
+        t,
         x: a + radius * Math.cos(theta),
-        y: b + radius * Math.sin(theta)
+        y: b + radius * Math.sin(theta),
+        cubicX: a + radius * (t * t + 1),
+        cubicY: b + radius * cubicBaseY,
+        cubicSign: cubicBaseY === 0 ? '0' : cubicBaseY > 0 ? '+' : '-',
+        cycloidX: a + radius * (theta - Math.sin(theta)),
+        cycloidY: b + radius * (1 - Math.cos(theta))
       };
     });
     generations.push({
@@ -10655,7 +10663,9 @@ const buildCodeIncubation = async (row, stepCount = 36, generationCount = 4) => 
     a: generation.a,
     b: generation.b,
     radius: generation.radius,
-    phase: Number(generation.phase.toFixed(8))
+    phase: Number(generation.phase.toFixed(8)),
+    cubic: generation.points.map(point => [Number(point.t.toFixed(5)), Number(point.cubicX.toFixed(5)), Number(point.cubicY.toFixed(5)), point.cubicSign]),
+    cycloid: generation.points.map(point => [Number(point.cycloidX.toFixed(5)), Number(point.cycloidY.toFixed(5))])
   }));
   const embryoDigest = (await digestHex(`${sourceDigest}:${JSON.stringify(canonical)}`)).toUpperCase();
   return {
@@ -10669,6 +10679,32 @@ const buildCodeIncubation = async (row, stepCount = 36, generationCount = 4) => 
     },
     formula: 'x = a + R cos(theta); y = b + R sin(theta)',
     baseFormula: 'x = R cos(theta); y = R sin(theta)',
+    cubicFormula: 'x(t) = t^2 + 1; y(t) = t^3 - 4t = t(t - 2)(t + 2)',
+    cycloidFormula: 'x(t) = t - sin(t); y(t) = 1 - cos(t)',
+    signTable: [{
+      interval: 't < -2',
+      sign: '-'
+    }, {
+      interval: 't = -2',
+      sign: '0'
+    }, {
+      interval: '-2 < t < 0',
+      sign: '+'
+    }, {
+      interval: 't = 0',
+      sign: '0'
+    }, {
+      interval: '0 < t < 2',
+      sign: '-'
+    }, {
+      interval: 't = 2',
+      sign: '0'
+    }, {
+      interval: 't > 2',
+      sign: '+'
+    }],
+    symmetry: 'c(-t) = (x(t), -y(t))',
+    roots: [-2, 0, 2],
     generations,
     embryoDigest,
     embryoValue: `Q7-INC.${embryoDigest.slice(0, 24)}.${embryoDigest.slice(24, 48)}.${embryoDigest.slice(48)}`,
@@ -10707,6 +10743,7 @@ const CodeIncubatorDialog = ({
   const [selectedId, setSelectedId] = useState('');
   const [steps, setSteps] = useState(36);
   const [generationCount, setGenerationCount] = useState(4);
+  const [curveMode, setCurveMode] = useState('circle');
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const activeId = selectedId || String(sources[0]?._incubatorKey || '');
@@ -10739,9 +10776,10 @@ const CodeIncubatorDialog = ({
       ctx.fillText(L('Incuba un code para dibujar sus orbitas.', 'Incubate a code to draw its orbits.'), 36, 58);
       return;
     }
-    const allPoints = result.generations.flatMap(generation => generation.points);
-    const xs = allPoints.map(point => point.x);
-    const ys = allPoints.map(point => point.y);
+    const coordinates = point => curveMode === 'cubic' ? [point.cubicX, point.cubicY] : curveMode === 'cycloid' ? [point.cycloidX, point.cycloidY] : [point.x, point.y];
+    const allPoints = result.generations.flatMap(generation => generation.points.map(coordinates));
+    const xs = allPoints.map(point => point[0]);
+    const ys = allPoints.map(point => point[1]);
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
     const minY = Math.min(...ys);
@@ -10753,24 +10791,29 @@ const CodeIncubatorDialog = ({
       ctx.strokeStyle = palette[generationIndex % palette.length];
       ctx.lineWidth = generationIndex === result.generations.length - 1 ? 3 : 1.6;
       ctx.beginPath();
-      generation.points.forEach((point, index) => index ? ctx.lineTo(px(point.x), py(point.y)) : ctx.moveTo(px(point.x), py(point.y)));
+      generation.points.forEach((point, index) => {
+        const [x, y] = coordinates(point);
+        index ? ctx.lineTo(px(x), py(y)) : ctx.moveTo(px(x), py(y));
+      });
       ctx.stroke();
       const centerX = px(generation.a);
       const centerY = py(generation.b);
       const first = generation.points[0];
+      const [firstX, firstY] = coordinates(first);
       ctx.fillStyle = palette[generationIndex % palette.length];
       ctx.fillRect(centerX - 3, centerY - 3, 6, 6);
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
-      ctx.lineTo(px(first.x), py(first.y));
+      ctx.lineTo(px(firstX), py(firstY));
       ctx.stroke();
       ctx.font = '12px "Codec Pro", Consolas, monospace';
       ctx.fillText(`G${generation.index} (${generation.a.toFixed(2)}, ${generation.b.toFixed(2)})`, centerX + 8, centerY - 7);
     });
     ctx.fillStyle = '#101010';
     ctx.font = '14px "Codec Pro", Consolas, monospace';
-    ctx.fillText(`${result.id} | x=a+R cos(theta), y=b+R sin(theta)`, 20, 24);
-  }, [language, result]);
+    const modeFormula = curveMode === 'cubic' ? 'x=t^2+1, y=t^3-4t' : curveMode === 'cycloid' ? 'x=t-sin(t), y=1-cos(t)' : 'x=a+R cos(theta), y=b+R sin(theta)';
+    ctx.fillText(`${result.id} | ${modeFormula}`, 20, 24);
+  }, [curveMode, language, result]);
   useEffect(() => {
     if (open) requestAnimationFrame(draw);
   }, [draw, open]);
@@ -10849,7 +10892,16 @@ const CodeIncubatorDialog = ({
     max: "8",
     value: generationCount,
     onChange: event => setGenerationCount(event.target.value)
-  })), React.createElement("div", {
+  })), React.createElement("label", null, React.createElement("span", null, L('Vista matematica', 'Mathematical view')), React.createElement("select", {
+    value: curveMode,
+    onChange: event => setCurveMode(event.target.value)
+  }, React.createElement("option", {
+    value: "circle"
+  }, L('Orbita circular trasladada', 'Translated circular orbit')), React.createElement("option", {
+    value: "cubic"
+  }, L('Curva cubica simetrica', 'Symmetric cubic curve')), React.createElement("option", {
+    value: "cycloid"
+  }, L('Cicloide', 'Cycloid')))), React.createElement("div", {
     className: "incubator-actions"
   }, React.createElement("button", {
     onClick: incubate,
@@ -10865,7 +10917,7 @@ const CodeIncubatorDialog = ({
     disabled: !result
   }, "PNG")), React.createElement("div", {
     className: "incubator-formula"
-  }, React.createElement("b", null, L('Modelo de incubacion', 'Incubation model')), React.createElement("code", null, "(R cos(theta), R sin(theta))"), React.createElement("code", null, "(a + R cos(theta), b + R sin(theta))")), React.createElement("div", {
+  }, React.createElement("b", null, L('Modelo de incubacion', 'Incubation model')), React.createElement("code", null, "(R cos(theta), R sin(theta))"), React.createElement("code", null, "(a + R cos(theta), b + R sin(theta))"), React.createElement("code", null, "x(t)=t^2+1; y(t)=t^3-4t"), React.createElement("code", null, "x(t)=t-sin(t); y(t)=1-cos(t)")), React.createElement("div", {
     className: "incubator-note"
   }, L('La salida es un artefacto derivado reproducible. No constituye un algoritmo criptografico estandar ni una prueba de seguridad.', 'The output is a reproducible derived artifact. It is not a standard cryptographic algorithm or a security proof.'))), React.createElement("main", {
     className: "incubator-main"
@@ -10875,17 +10927,21 @@ const CodeIncubatorDialog = ({
     height: "520"
   }), result ? React.createElement(React.Fragment, null, React.createElement("div", {
     className: "incubator-metrics"
-  }, React.createElement("article", null, React.createElement("span", null, "ID"), React.createElement("b", null, result.id)), React.createElement("article", null, React.createElement("span", null, L('Generaciones', 'Generations')), React.createElement("b", null, result.generations.length)), React.createElement("article", null, React.createElement("span", null, L('Centro final', 'Final center')), React.createElement("b", null, "(", result.finalCenter.a.toFixed(3), ", ", result.finalCenter.b.toFixed(3), ")")), React.createElement("article", null, React.createElement("span", null, L('Radio final', 'Final radius')), React.createElement("b", null, result.finalRadius.toFixed(4)))), React.createElement("div", {
+  }, React.createElement("article", null, React.createElement("span", null, "ID"), React.createElement("b", null, result.id)), React.createElement("article", null, React.createElement("span", null, L('Generaciones', 'Generations')), React.createElement("b", null, result.generations.length)), React.createElement("article", null, React.createElement("span", null, L('Centro final', 'Final center')), React.createElement("b", null, "(", result.finalCenter.a.toFixed(3), ", ", result.finalCenter.b.toFixed(3), ")")), React.createElement("article", null, React.createElement("span", null, L('Radio final', 'Final radius')), React.createElement("b", null, result.finalRadius.toFixed(4))), React.createElement("article", null, React.createElement("span", null, L('Raices cubicas', 'Cubic roots')), React.createElement("b", null, "-2, 0, 2")), React.createElement("article", null, React.createElement("span", null, L('Simetria', 'Symmetry')), React.createElement("b", null, "c(-t)=(x,-y)"))), React.createElement("div", {
     className: "incubator-data-grid"
   }, React.createElement("section", {
     className: "incubator-generations"
   }, React.createElement("h3", null, L('Etapas de incubacion', 'Incubation stages')), result.generations.map(generation => React.createElement("article", {
     key: generation.index
-  }, React.createElement("b", null, "G", generation.index), React.createElement("code", null, generation.formula)))), React.createElement("section", {
+  }, React.createElement("b", null, "G", generation.index), React.createElement("code", null, generation.formula))), React.createElement("h3", null, L('Tabla de signos: y(t)=t(t-2)(t+2)', 'Sign table: y(t)=t(t-2)(t+2)')), React.createElement("div", {
+    className: "incubator-signs"
+  }, result.signTable.map(entry => React.createElement("span", {
+    key: entry.interval
+  }, React.createElement("i", null, entry.interval), React.createElement("b", null, entry.sign))))), React.createElement("section", {
     className: "incubator-table-wrap"
-  }, React.createElement("h3", null, L('Tabla de orbita final', 'Final orbit table')), React.createElement("table", null, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "i"), React.createElement("th", null, "theta"), React.createElement("th", null, "x = a + R cos(theta)"), React.createElement("th", null, "y = b + R sin(theta)"))), React.createElement("tbody", null, finalGeneration.points.slice(0, 96).map(point => React.createElement("tr", {
+  }, React.createElement("h3", null, L('Tabla parametrica final', 'Final parametric table')), React.createElement("table", null, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "i"), React.createElement("th", null, "t"), React.createElement("th", null, "theta"), React.createElement("th", null, "circle x"), React.createElement("th", null, "circle y"), React.createElement("th", null, "cubic x"), React.createElement("th", null, "cubic y"), React.createElement("th", null, "sign"), React.createElement("th", null, "cycloid x"), React.createElement("th", null, "cycloid y"))), React.createElement("tbody", null, finalGeneration.points.slice(0, 96).map(point => React.createElement("tr", {
     key: point.index
-  }, React.createElement("td", null, point.index), React.createElement("td", null, point.theta.toFixed(4)), React.createElement("td", null, point.x.toFixed(6)), React.createElement("td", null, point.y.toFixed(6))))))))) : React.createElement("div", {
+  }, React.createElement("td", null, point.index), React.createElement("td", null, point.t.toFixed(4)), React.createElement("td", null, point.theta.toFixed(4)), React.createElement("td", null, point.x.toFixed(6)), React.createElement("td", null, point.y.toFixed(6)), React.createElement("td", null, point.cubicX.toFixed(6)), React.createElement("td", null, point.cubicY.toFixed(6)), React.createElement("td", null, point.cubicSign), React.createElement("td", null, point.cycloidX.toFixed(6)), React.createElement("td", null, point.cycloidY.toFixed(6))))))))) : React.createElement("div", {
     className: "incubator-empty"
   }, L('Selecciona un code y ejecuta la incubacion.', 'Select a code and run the incubation.'))))));
 };
@@ -20951,10 +21007,13 @@ const App = () => {
     label: language === 'es' ? 'Abrir incubadora de codes' : 'Open code incubator',
     onClick: openCodeIncubator
   }, {
-    label: 'x = a + R cos(theta)',
+    label: 'circle: x=a+R cos(theta); y=b+R sin(theta)',
     onClick: openCodeIncubator
   }, {
-    label: 'y = b + R sin(theta)',
+    label: 'cubic: x=t^2+1; y=t^3-4t',
+    onClick: openCodeIncubator
+  }, {
+    label: 'cycloid: x=t-sin(t); y=1-cos(t)',
     onClick: openCodeIncubator
   }, {
     label: language === 'es' ? 'Guardar embrion y exportar PNG / JSON' : 'Save embryo and export PNG / JSON',

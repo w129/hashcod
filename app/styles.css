@@ -7693,7 +7693,7 @@ button:hover,
 }
 .incubator-metrics {
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   margin-top:10px;
   border:1px solid #d4d4cf;
 }
@@ -7707,6 +7707,11 @@ button:hover,
 .incubator-generations article { display:grid;grid-template-columns:34px minmax(0,1fr);gap:6px;padding:9px 10px;border-bottom:1px solid #e4e4e0; }
 .incubator-generations article:last-child { border-bottom:0; }
 .incubator-generations code { color:#696965;font-size:10px;overflow-wrap:anywhere; }
+.incubator-signs { display:grid;grid-template-columns:repeat(7,minmax(0,1fr)); }
+.incubator-signs span { display:grid;gap:5px;padding:8px 4px;text-align:center;border-right:1px solid #e4e4e0; }
+.incubator-signs span:last-child { border-right:0; }
+.incubator-signs i { color:#696965;font-size:9px;font-style:normal; }
+.incubator-signs b { font-size:14px; }
 .incubator-table-wrap { overflow:auto;max-height:320px; }
 .incubator-table-wrap table { width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px; }
 .incubator-table-wrap th,.incubator-table-wrap td { padding:7px 9px;text-align:right;border-bottom:1px solid #e4e4e0;border-right:1px solid #ededeb; }
@@ -7718,7 +7723,8 @@ button:hover,
   .incubator-side { border-right:0;border-bottom:1px solid #d8d8d4; }
   .incubator-main canvas { height:250px; }
   .incubator-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .incubator-metrics article:nth-child(2) { border-right:0; }
+  .incubator-metrics article:nth-child(even) { border-right:0; }
+  .incubator-signs { grid-template-columns:repeat(4,minmax(0,1fr)); }
   .incubator-data-grid { display:block; }
   .incubator-generations { margin-bottom:12px; }
 }
