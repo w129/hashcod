@@ -2039,22 +2039,17 @@ const getCliOwnerKey = () => {
   }
   return key;
 };
-const authFetch = async (url, options = {}) => {
+const authFetch = (url, options = {}) => {
   const headers = {
     ...(options.headers || {})
   };
   if (window.HASHCOD_CSRF && !['GET', 'HEAD'].includes(String(options.method || 'GET').toUpperCase())) {
     headers['X-CSRF-Token'] = window.HASHCOD_CSRF;
   }
-  const response = await fetch(url, {
+  return fetch(url, {
     ...options,
     headers
   });
-  if (response.status === 401) {
-    window.HASHCOD_CSRF = '';
-    window.dispatchEvent(new CustomEvent('hashcod:auth-required'));
-  }
-  return response;
 };
 const digestHex = async (value, algo = 'SHA-256') => {
   const data = new TextEncoder().encode(String(value || ''));
@@ -6453,21 +6448,6 @@ const AuthGate = ({
   };
   useEffect(() => {
     refreshPlatformGate();
-  }, []);
-  useEffect(() => {
-    const handleAuthRequired = () => {
-      window.HASHCOD_CSRF = '';
-      setAuth({
-        loading: false,
-        setupRequired: false,
-        user: null
-      });
-      setMode('login');
-      setSessionsList([]);
-      setNotice('Tu sesion vencio o Render se reinicio. Inicia sesion nuevamente para continuar.');
-    };
-    window.addEventListener('hashcod:auth-required', handleAuthRequired);
-    return () => window.removeEventListener('hashcod:auth-required', handleAuthRequired);
   }, []);
   const loadSessions = async () => {
     try {
@@ -25172,6 +25152,6 @@ const CUBE_DOC_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidd
 window.HSG2818App = App;
 window.App = () => {
   const Platform = window.HSG2818App;
-  return React.createElement(HSG2818SingleKeyGate, null, React.createElement(AuthGate, null, React.createElement(Platform, null)));
+  return React.createElement(HSG2818SingleKeyGate, null, React.createElement(Platform, null));
 };
 })();

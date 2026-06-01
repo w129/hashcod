@@ -1015,8 +1015,15 @@ function handlePrivateEntry(req, res) {
         return;
       }
       const session = makePrivateEntrySession(req);
+      const walletScope = parseCookies(req).hashcod_wallet_scope || b64url(crypto.randomBytes(32));
       audit('private_entry.unlocked', { ip: clientIp(req) });
-      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_private_entry=${encodeURIComponent(session.sid)}; ${cookieOptions(req, 60 * 60 * 4)}` }, JSON.stringify({ ok: true }));
+      send(res, 200, {
+        'Content-Type': MIME['.json'],
+        'Set-Cookie': [
+          `hashcod_private_entry=${encodeURIComponent(session.sid)}; ${cookieOptions(req, 60 * 60 * 4)}`,
+          `hashcod_wallet_scope=${encodeURIComponent(walletScope)}; ${cookieOptions(req, 60 * 60 * 24 * 365)}`
+        ]
+      }, JSON.stringify({ ok: true }));
     }).catch(() => send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' })));
     return;
   }
@@ -1777,8 +1784,29 @@ function publicWalletRow(row) {
   return publicRow;
 }
 
+function requireWalletAccess(req, res) {
+  const authenticated = getSession(req);
+  if (authenticated) return requireAuth(req, res, 'viewer');
+  const privateEntry = getPrivateEntrySession(req);
+  if (!privateEntry) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_required' }));
+    return null;
+  }
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    const origin = String(req.headers.origin || '').trim();
+    if (origin && origin !== requestOrigin(req)) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_origin_required' }));
+      return null;
+    }
+  }
+  const cookies = parseCookies(req);
+  const sid = cookies.hashcod_wallet_scope || privateEntry.sid || cookies.hashcod_private_entry || `${clientIp(req)}|${safeText(req.headers['user-agent'], 180)}|local-wallet`;
+  const userId = `wallet_private_${crypto.createHash('sha256').update(sid).digest('hex').slice(0, 24)}`;
+  return { user: { id: userId, role: 'private-wallet' }, actorId: userId, privateSession: true };
+}
+
 async function handleCodeWallet(req, res) {
-  const auth = requireAuth(req, res, 'viewer');
+  const auth = requireWalletAccess(req, res);
   if (!auth) return;
   const route = (req.url || '').split('?')[0];
   if (route !== '/api/code-wallet') {
@@ -1805,7 +1833,7 @@ async function handleCodeWallet(req, res) {
       const digest = crypto.createHash('sha256').update(`${auth.user.id}|${name}|${payload}|${Date.now()}`).digest('hex');
       const metrics = walletMath(payload);
       const cookies = parseCookies(req);
-      const sessionFingerprint = crypto.createHash('sha256').update(String(cookies.hashcod_session || '')).digest('hex').slice(0, 20);
+      const sessionFingerprint = crypto.createHash('sha256').update(String(cookies.hashcod_session || cookies.hashcod_private_entry || cookies.hashcod_wallet_scope || '')).digest('hex').slice(0, 20);
       const computerFingerprint = crypto.createHash('sha256').update(`${safeText(req.headers['user-agent'], 180)}|${safeText(req.headers['accept-language'], 80)}|${clientIp(req)}`).digest('hex').slice(0, 20);
       const row = {
         id: `wallet_${digest.slice(0, 18)}`,
