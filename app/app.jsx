@@ -536,11 +536,48 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
 };
 
 // ── Config Bar ──
-const ConfigBar = ({ type, length, setLength, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan }) => {
+const normalizeGenerationStrength = (value) => Math.max(0.5, Math.min(5, Math.round((Number(value) || 1) * 20) / 20));
+const scaledGenerationLength = (baseLength, strength) => Math.max(4, Math.min(4096, Math.round((Number(baseLength) || 32) * normalizeGenerationStrength(strength))));
+const generationStrengthLabel = (strength) => {
+  if (strength >= 4) return 'MAXIMUM';
+  if (strength >= 2.5) return 'HARDENED';
+  if (strength >= 1.5) return 'STRONG';
+  if (strength >= 1) return 'STANDARD';
+  return 'LIGHT';
+};
+
+const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan, language }) => {
   const maxBatch = plan?.maxBatch || MAX_GENERATION_BATCH;
   const setPlanQty = (value) => setQty(Math.max(1, Math.min(maxBatch, Number(value) || 1)));
+  const effectiveLength = scaledGenerationLength(length, strength);
   return (
     <div className="cfg">
+      <div className="cfg-strength">
+        <div className="cfg-strength-head">
+          <label className="cfg-l" htmlFor="generation-strength">{language === 'es' ? 'Fuerza del code' : 'Code strength'}</label>
+          <strong>{normalizeGenerationStrength(strength).toFixed(2)}x</strong>
+          <span>{generationStrengthLabel(strength)}</span>
+          <em>{language === 'es' ? `Entropia configurable: ${length} -> ${effectiveLength} caracteres` : `Configurable entropy: ${length} -> ${effectiveLength} characters`}</em>
+        </div>
+        <input
+          id="generation-strength"
+          type="range"
+          min="0.5"
+          max="5"
+          step="0.05"
+          value={strength}
+          onChange={(event) => setStrength(normalizeGenerationStrength(event.target.value))}
+          aria-label={language === 'es' ? 'Fuerza de los codes generados' : 'Generated code strength'}
+        />
+        <div className="cfg-strength-scale" aria-hidden="true">
+          <span>0.50</span>
+          <span>1.00</span>
+          <span>2.50</span>
+          <span>5.00</span>
+        </div>
+        <small>{language === 'es' ? 'Escala la longitud de los formatos configurables. Los estandares rigidos conservan su tamano obligatorio.' : 'Scales configurable formats. Fixed standards retain their mandatory size.'}</small>
+      </div>
+
       {type?.id === 'apikey' && (
         <div className="cfg-g">
           <label className="cfg-l">{t('prefix')}</label>
@@ -584,7 +621,7 @@ const ConfigBar = ({ type, length, setLength, qty, setQty, prefix, setPrefix, ch
         <div className="stp">
           <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
           <input type="number" value={qty} min={1} max={maxBatch} onChange={e => setPlanQty(e.target.value)} />
-          <button onClick={() => setQty(Math.min(MAX_GENERATION_BATCH, qty + 1))}>+</button>
+          <button onClick={() => setQty(Math.min(maxBatch, qty + 1))}>+</button>
         </div>
         <div className="cfg-plan-limit">{plan?.name || 'Free'} max {maxBatch.toLocaleString()}</div>
       </div>
@@ -1401,12 +1438,12 @@ const rowsToCsv = (rows) => [
   ].map(csvEscape).join(',')),
 ].join('\n');
 
-const sessionToJson = ({ output, selectedId, selectedCatId, length, qty, prefix, charset, stats }) => JSON.stringify({
+const sessionToJson = ({ output, selectedId, selectedCatId, length, strength, qty, prefix, charset, stats }) => JSON.stringify({
   app: 'opencriptG',
   kind: 'session',
   version: APP_VERSION,
   savedAt: new Date().toISOString(),
-  state: { selectedId, selectedCatId, length, qty, prefix, charset, stats, output },
+  state: { selectedId, selectedCatId, length, strength, qty, prefix, charset, stats, output },
 }, null, 2);
 
 const tsStamp = () => {
@@ -15926,6 +15963,7 @@ const App = () => {
   const [selectedCatId, setSelectedCatId] = useState('symmetric');
   const [query, setQuery] = useState('');
   const [length, setLength] = useState(32);
+  const [strength, setStrength] = useState(1);
   const [qty, setQty] = useState(10);
   const [prefix, setPrefix] = useState('ocg_');
   const [charset, setCharset] = useState({ upper: true, lower: true, num: true, sym: false });
@@ -16194,9 +16232,10 @@ const App = () => {
     const items = [];
     const seen = new Set(output.map(o => o.value));
     for (let i = 0; i < total; i++) {
-      const v = await window.OCG_GEN.generate(selectedType.id, length, { ...charset, prefix });
+      const effectiveLength = scaledGenerationLength(length, strength);
+      const v = await window.OCG_GEN.generate(selectedType.id, effectiveLength, { ...charset, prefix, strength });
       idRef.current += 1;
-      items.push({ id: idRef.current, idx: idRef.current, value: v, type: selectedType.id, ts: Date.now() });
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: selectedType.id, ts: Date.now(), strength, baseLength: length, effectiveLength });
       seen.add(v);
       if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
         await new Promise((resolve) => setTimeout(resolve, 0));
@@ -16211,14 +16250,14 @@ const App = () => {
     hashcodLawRecord(hashcodLawAssessPayload({
       action: 'generate',
       text: items.slice(0, 18).map(item => item.value).join('\n'),
-      meta: { count: total, typeId: selectedType.id, categoryId: selectedCat?.id || '' },
+      meta: { count: total, typeId: selectedType.id, categoryId: selectedCat?.id || '', strength, effectiveLength: scaledGenerationLength(length, strength) },
     }));
     setBusy(false);
     if (outRef.current) outRef.current.scrollTop = 0;
     if (activePlan.id === 'free') {
       setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
     }
-  }, [selectedType, selectedCat, length, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
+  }, [selectedType, selectedCat, length, strength, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
 
   const clearOutput = () => {
     hashcodLawRecord(hashcodLawAssessPayload({ action: 'output:clear', meta: { count: output.length } }));
@@ -16232,6 +16271,7 @@ const App = () => {
     setSelectedId('aes256');
     setSelectedCatId('symmetric');
     setLength(32);
+    setStrength(1);
     setQty(10);
     setPrefix('ocg_');
     setCharset({ upper: true, lower: true, num: true, sym: false });
@@ -16697,7 +16737,7 @@ const App = () => {
       setPlanOpen(true);
       return;
     }
-    const payload = sessionToJson({ output, selectedId, selectedCatId, length, qty, prefix, charset, stats });
+    const payload = sessionToJson({ output, selectedId, selectedCatId, length, strength, qty, prefix, charset, stats });
     hashcodLawRecord(hashcodLawAssessPayload({ action: 'session:save', filename: `opencriptG-session-${tsStamp()}.ocg.json`, text: payload, meta: { output: output.length } }));
     triggerDownload(`opencriptG-session-${tsStamp()}.ocg.json`, payload, 'application/json;charset=utf-8');
     notify(t('sessionSaved'));
@@ -16735,6 +16775,7 @@ const App = () => {
         setSelectedId(st.selectedId || 'aes256');
         setSelectedCatId(st.selectedCatId || 'symmetric');
         setLength(st.length || 32);
+        setStrength(normalizeGenerationStrength(st.strength || 1));
         setQty(st.qty || 10);
         setPrefix(st.prefix || 'ocg_');
         setCharset(st.charset || { upper: true, lower: true, num: true, sym: false });
@@ -17226,9 +17267,11 @@ const App = () => {
     const items = [];
     const seen = new Set(output.map(o => o.value));
     for (let i = 0; i < total; i++) {
-      const v = await window.OCG_GEN.generate(type.id, type.hasLen ? length : 32, { ...charset, prefix });
+      const baseLength = type.hasLen ? length : 32;
+      const effectiveLength = scaledGenerationLength(baseLength, strength);
+      const v = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
       idRef.current += 1;
-      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now() });
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now(), strength, baseLength, effectiveLength });
       seen.add(v);
       if (i > 0 && i % GENERATION_CHUNK_SIZE === 0) {
         await new Promise((resolve) => setTimeout(resolve, 0));
@@ -17241,7 +17284,7 @@ const App = () => {
       setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
     }
     return items;
-  }, [busy, output, length, charset, prefix, activePlan, reserveFreeDailyCodes]);
+  }, [busy, output, length, strength, charset, prefix, activePlan, reserveFreeDailyCodes]);
 
   const generateAll619 = useCallback(async () => {
     if (busy) return;
@@ -17254,16 +17297,18 @@ const App = () => {
     const items = [];
     const seen = new Set(output.map(o => o.value));
     for (const { type } of cmdTypes619) {
-      const v = await window.OCG_GEN.generate(type.id, type.hasLen ? length : 32, { ...charset, prefix });
+      const baseLength = type.hasLen ? length : 32;
+      const effectiveLength = scaledGenerationLength(baseLength, strength);
+      const v = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
       idRef.current += 1;
-      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now() });
+      items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now(), strength, baseLength, effectiveLength });
       seen.add(v);
     }
     setOutput(prev => [...items.reverse(), ...prev]);
     setStats(prev => ({ ...prev, generated: prev.generated + items.length, unique: seen.size }));
     setBusy(false);
     return items;
-  }, [busy, output, cmdTypes619, length, charset, prefix, activePlan, notify, language]);
+  }, [busy, output, cmdTypes619, length, strength, charset, prefix, activePlan, notify, language]);
 
   const OCG_COMMAND_HELP_1000 = useMemo(() => {
     const named = [
@@ -17754,6 +17799,7 @@ const App = () => {
             <ConfigBar
               type={selectedType}
               length={length} setLength={setLength}
+              strength={strength} setStrength={setStrength}
               qty={qty} setQty={setQty}
               prefix={prefix} setPrefix={setPrefix}
               charset={charset} setCharset={setCharset}
@@ -17761,6 +17807,7 @@ const App = () => {
               busy={busy} hasOut={output.length > 0}
               t={t}
               plan={activePlan}
+              language={language}
             />
 
             <div className="out-tb">

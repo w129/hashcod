@@ -2663,6 +2663,90 @@ kbd {
 }
 .app.compact .cfg { padding: 8px 14px; gap: 10px; }
 .cfg-g { display: flex; flex-direction: column; gap: 5px; }
+.cfg-strength {
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr);
+  gap: 5px;
+  padding: 8px 10px 7px;
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+}
+.cfg-strength-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.cfg-strength-head strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .4px;
+}
+.cfg-strength-head span {
+  padding: 2px 6px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  font-size: 8px;
+  letter-spacing: 1.2px;
+}
+.cfg-strength-head em {
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--ink-4);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: .5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cfg-strength input[type="range"] {
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+.cfg-strength input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+}
+.cfg-strength input[type="range"]::-webkit-slider-thumb {
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+  -webkit-appearance: none;
+}
+.cfg-strength input[type="range"]::-moz-range-track {
+  height: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+}
+.cfg-strength input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: var(--ink);
+}
+.cfg-strength-scale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-4);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .6px;
+}
+.cfg-strength small {
+  color: var(--ink-4);
+  font-size: 9px;
+  letter-spacing: .35px;
+}
 .cfg-l {
   font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--ink-4);
@@ -5686,6 +5770,16 @@ kbd {
     padding: 12px 10px;
     gap: 10px;
     align-items: stretch;
+  }
+
+  .cfg-strength-head {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+  }
+
+  .cfg-strength-head em {
+    width: 100%;
+    margin-left: 0;
   }
 
   .cfg-g {
