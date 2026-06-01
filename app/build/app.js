@@ -20023,6 +20023,7 @@ const DesignStudioDialog = ({
   const [text, setText] = useState('Q+7LkMK05 DESIGN');
   const [advancedQuery, setAdvancedQuery] = useState('');
   const [advancedFamily, setAdvancedFamily] = useState('all');
+  const [sideExpanded, setSideExpanded] = useState(false);
   const objects = history.snapshots[history.index] || [];
   const L = (es, en) => language === 'es' ? es : en;
   const commit = useCallback(next => {
@@ -20361,10 +20362,17 @@ const DesignStudioDialog = ({
     commit(next);
   };
   return React.createElement("div", {
-    className: "dlg-b"
+    className: "dlg-b designstudio-back"
   }, React.createElement("section", {
-    className: "dlg designstudio"
-  }, React.createElement("header", {
+    className: `dlg designstudio ${sideExpanded ? 'expanded' : ''}`,
+    onMouseLeave: () => setSideExpanded(false)
+  }, React.createElement("button", {
+    className: "designstudio-expand-edge",
+    onMouseEnter: () => setSideExpanded(true),
+    onFocus: () => setSideExpanded(true),
+    onClick: () => setSideExpanded(value => !value),
+    "aria-label": L('Expandir estudio hacia la derecha', 'Expand studio to the right')
+  }, React.createElement("span", null, sideExpanded ? '‹' : '›'), React.createElement("b", null, sideExpanded ? L('Reducir', 'Collapse') : L('Expandir', 'Expand'))), React.createElement("header", {
     className: "dlg-h designstudio-head"
   }, React.createElement("div", {
     className: "designstudio-title"

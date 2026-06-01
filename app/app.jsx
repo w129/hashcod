@@ -16088,6 +16088,7 @@ const DesignStudioDialog = ({ open, onClose, notify, language }) => {
   const [text, setText] = useState('Q+7LkMK05 DESIGN');
   const [advancedQuery, setAdvancedQuery] = useState('');
   const [advancedFamily, setAdvancedFamily] = useState('all');
+  const [sideExpanded, setSideExpanded] = useState(false);
   const objects = history.snapshots[history.index] || [];
   const L = (es, en) => language === 'es' ? es : en;
   const commit = useCallback((next) => {
@@ -16292,8 +16293,12 @@ const DesignStudioDialog = ({ open, onClose, notify, language }) => {
     commit(next);
   };
   return (
-    <div className="dlg-b">
-      <section className="dlg designstudio">
+    <div className="dlg-b designstudio-back">
+      <section className={`dlg designstudio ${sideExpanded ? 'expanded' : ''}`} onMouseLeave={() => setSideExpanded(false)}>
+        <button className="designstudio-expand-edge" onMouseEnter={() => setSideExpanded(true)} onFocus={() => setSideExpanded(true)} onClick={() => setSideExpanded(value => !value)} aria-label={L('Expandir estudio hacia la derecha', 'Expand studio to the right')}>
+          <span>{sideExpanded ? '‹' : '›'}</span>
+          <b>{sideExpanded ? L('Reducir', 'Collapse') : L('Expandir', 'Expand')}</b>
+        </button>
         <header className="dlg-h designstudio-head">
           <div className="designstudio-title">
             <span className="designstudio-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.designStudio}} />
