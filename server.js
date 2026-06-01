@@ -35,6 +35,7 @@ const oauthStates = new Map();
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const PRIVATE_MODE = String(process.env.HASHCOD_PRIVATE_MODE || (IS_PRODUCTION ? '1' : '0')).toLowerCase() !== '0';
 const PRIVATE_ENTRY_KEY = String(process.env.HASHCOD_PRIVATE_ENTRY_KEY || '');
+const LEGACY_PLATFORM_GATE = String(process.env.HASHCOD_LEGACY_PLATFORM_GATE || '0').toLowerCase() === '1';
 const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
 const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
 const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
@@ -1201,6 +1202,10 @@ async function handleSecurityKing(req, res) {
 async function handlePlatformGate(req, res) {
   const route = (req.url || '').split('?')[0];
   if (route === '/api/platform-gate/status' && req.method === 'GET') {
+    if (!LEGACY_PLATFORM_GATE) {
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, unlocked: true, legacy: false, expiresAt: null }));
+      return;
+    }
     const gate = getPlatformGateSession(req);
     send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({
       ok: true,
@@ -2564,7 +2569,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (routePath.startsWith('/api/') && !getPlatformGateSession(req)) {
+  if (LEGACY_PLATFORM_GATE && routePath.startsWith('/api/') && !getPlatformGateSession(req)) {
     send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'platform_gate_required' }));
     return;
   }
