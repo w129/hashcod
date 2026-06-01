@@ -23078,6 +23078,14 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openDatabase
   }), React.createElement(MenuButton, {
+    label: "TRANSFORM CMD",
+    icon: TOP_MENU_ICONS.codeTransformCli,
+    iconOnly: true,
+    items: codeTransformCliItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openCodeTransformCli
+  }), React.createElement(MenuButton, {
     label: t('qrMenu'),
     icon: TOP_MENU_ICONS.qr,
     iconOnly: true,
@@ -23301,14 +23309,6 @@ const App = () => {
     activeMenu: activeMenu,
     setActiveMenu: setActiveMenu,
     primaryAction: openCodeIncubator
-  }), React.createElement(MenuButton, {
-    label: "TRANSFORM CMD",
-    icon: TOP_MENU_ICONS.codeTransformCli,
-    iconOnly: true,
-    items: codeTransformCliItems,
-    activeMenu: activeMenu,
-    setActiveMenu: setActiveMenu,
-    primaryAction: openCodeTransformCli
   }), React.createElement(MenuButton, {
     label: "COMPLEX MAP",
     icon: TOP_MENU_ICONS.complexEntropy,

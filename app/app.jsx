@@ -17669,6 +17669,7 @@ const App = () => {
             <MenuButton label={t('menuHelp')} icon={TOP_MENU_ICONS.help} iconOnly items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuLanguages')} icon={TOP_MENU_ICONS.languages} iconOnly items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuDatabase')} icon={TOP_MENU_ICONS.database} iconOnly items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
+            <MenuButton label="TRANSFORM CMD" icon={TOP_MENU_ICONS.codeTransformCli} iconOnly items={codeTransformCliItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeTransformCli} />
             <MenuButton label={t('qrMenu')} icon={TOP_MENU_ICONS.qr} iconOnly items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
             <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} icon={TOP_MENU_ICONS.textLab} iconOnly items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
             <MenuButton label={language === 'es' ? 'DISCO LAB' : 'DRIVE LAB'} icon={TOP_MENU_ICONS.driveLab} iconOnly items={driveItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDriveLab} />
@@ -17697,7 +17698,6 @@ const App = () => {
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="CODE INCUBATOR" icon={TOP_MENU_ICONS.codeIncubator} iconOnly items={codeIncubatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeIncubator} />
-            <MenuButton label="TRANSFORM CMD" icon={TOP_MENU_ICONS.codeTransformCli} iconOnly items={codeTransformCliItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeTransformCli} />
             <MenuButton label="COMPLEX MAP" icon={TOP_MENU_ICONS.complexEntropy} iconOnly items={complexEntropyItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openComplexEntropy} />
             <MenuButton label="SECURITY KING" icon={TOP_MENU_ICONS.securityKing} iconOnly items={securityKingItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openSecurityKing} />
             <MenuButton label="TICKET FORGE" icon={TOP_MENU_ICONS.ticketForge} iconOnly items={ticketForgeItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTicketForge} />
