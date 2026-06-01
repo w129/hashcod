@@ -16445,13 +16445,19 @@ const CodeWalletDialog = ({ open, onClose, rows, outputRows, notify, language })
     event.target.value = '';
   };
   const createContainer = async () => {
-    if (form.name.trim().length < 2 || !form.payload.trim()) {
-      setStatus(language === 'es' ? 'Agrega un nombre y un payload.' : 'Add a name and payload.');
+    const payload = form.payload.trim() || selectedSource.trim();
+    const autoName = `WALLET-${form.kind.toUpperCase()}-${String(Date.now()).slice(-8)}`;
+    const name = form.name.trim() || autoName;
+    if (!payload) {
+      setStatus(language === 'es' ? 'Selecciona un code o agrega un payload.' : 'Select a code or add a payload.');
       return;
     }
+    const requestForm = { ...form, name, payload };
+    updateForm({ name, payload });
+    setStatus(language === 'es' ? 'Guardando contenedor...' : 'Storing container...');
     setBusy(true);
     try {
-      const res = await authFetch('/api/code-wallet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await authFetch('/api/code-wallet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestForm) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'wallet_create_failed');
       setWalletRows(prev => [data.row, ...prev]);
@@ -16519,9 +16525,10 @@ const CodeWalletDialog = ({ open, onClose, rows, outputRows, notify, language })
             <label><span>PAYLOAD</span><textarea rows="10" value={form.payload} onChange={event => updateForm({ payload: event.target.value })} placeholder="Code, prompt, text, JSON, or imported text document" /></label>
             <input ref={fileRef} className="hidden-file" type="file" accept=".txt,.md,.json,.csv,.yaml,.yml,text/*" onChange={importDocument} />
             <div className="codewallet-actions">
-              <button onClick={createContainer} disabled={busy}>{busy ? 'SYNC...' : 'STORE CONTAINER'}</button>
+              <button type="button" onClick={createContainer} disabled={busy}>{busy ? 'STORING...' : 'STORE CONTAINER'}</button>
               <button onClick={() => fileRef.current?.click()}>IMPORT DOC</button>
             </div>
+            <div className={`codewallet-inline-status ${status.toLowerCase().includes('failed') || status.toLowerCase().includes('no se pudo') ? 'bad' : ''}`}>{status || 'READY TO STORE'}</div>
             <div className="codewallet-price">
               <b>{selectedVersion.id}</b><span>{selectedVersion.label}</span><strong>${selectedVersion.price} USD</strong>
             </div>

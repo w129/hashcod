@@ -20646,10 +20646,23 @@ const CodeWalletDialog = ({
     event.target.value = '';
   };
   const createContainer = async () => {
-    if (form.name.trim().length < 2 || !form.payload.trim()) {
-      setStatus(language === 'es' ? 'Agrega un nombre y un payload.' : 'Add a name and payload.');
+    const payload = form.payload.trim() || selectedSource.trim();
+    const autoName = `WALLET-${form.kind.toUpperCase()}-${String(Date.now()).slice(-8)}`;
+    const name = form.name.trim() || autoName;
+    if (!payload) {
+      setStatus(language === 'es' ? 'Selecciona un code o agrega un payload.' : 'Select a code or add a payload.');
       return;
     }
+    const requestForm = {
+      ...form,
+      name,
+      payload
+    };
+    updateForm({
+      name,
+      payload
+    });
+    setStatus(language === 'es' ? 'Guardando contenedor...' : 'Storing container...');
     setBusy(true);
     try {
       const res = await authFetch('/api/code-wallet', {
@@ -20657,7 +20670,7 @@ const CodeWalletDialog = ({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(requestForm)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'wallet_create_failed');
@@ -20783,11 +20796,14 @@ const CodeWalletDialog = ({
   }), React.createElement("div", {
     className: "codewallet-actions"
   }, React.createElement("button", {
+    type: "button",
     onClick: createContainer,
     disabled: busy
-  }, busy ? 'SYNC...' : 'STORE CONTAINER'), React.createElement("button", {
+  }, busy ? 'STORING...' : 'STORE CONTAINER'), React.createElement("button", {
     onClick: () => fileRef.current?.click()
   }, "IMPORT DOC")), React.createElement("div", {
+    className: `codewallet-inline-status ${status.toLowerCase().includes('failed') || status.toLowerCase().includes('no se pudo') ? 'bad' : ''}`
+  }, status || 'READY TO STORE'), React.createElement("div", {
     className: "codewallet-price"
   }, React.createElement("b", null, selectedVersion.id), React.createElement("span", null, selectedVersion.label), React.createElement("strong", null, "$", selectedVersion.price, " USD"))), React.createElement("main", {
     className: "codewallet-main"

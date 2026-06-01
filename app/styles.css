@@ -2921,6 +2921,11 @@ kbd {
 .codewallet-actions button { padding: 0 9px; }
 .codewallet-actions button:first-child, .codewallet-mainbar button { background: #111; color: #fff; }
 .codewallet-actions button:disabled { opacity: .45; }
+.codewallet-inline-status {
+  margin-top: 7px; padding: 8px; border-left: 3px solid #158344; background: #fff;
+  color: #383834; font-family: var(--mono); font-size: 8px; line-height: 1.45; letter-spacing: .5px;
+}
+.codewallet-inline-status.bad { border-left-color: #b62525; color: #9d1d1d; }
 .codewallet-price { display: grid; grid-template-columns: auto 1fr auto; gap: 7px; margin-top: 12px; padding: 9px; border: 1px solid #c6c6c0; background: #fff; font-family: var(--mono); font-size: 9px; }
 .codewallet-price strong { color: #0b7b3e; }
 .codewallet-main { display: flex; min-width: 0; flex-direction: column; overflow: hidden; background: #e1e1dc; }

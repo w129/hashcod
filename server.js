@@ -1789,12 +1789,12 @@ async function handleCodeWallet(req, res) {
   if (req.method === 'POST') {
     try {
       const body = await readJsonBody(req, 256 * 1024);
-      const name = safeText(body.name, 80);
       const payload = safeWalletPayload(body.payload, 16000);
       const kind = ['prompt', 'text', 'document', 'json', 'code'].includes(body.kind) ? body.kind : 'code';
       const version = WALLET_VERSIONS[body.version] ? body.version : 'v1.2.5';
-      if (name.length < 2 || payload.length < 1) {
-        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_name_and_payload_required' }));
+      const name = safeText(body.name, 80) || `WALLET-${kind.toUpperCase()}-${String(Date.now()).slice(-8)}`;
+      if (payload.length < 1) {
+        send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_payload_required' }));
         return;
       }
       const digest = crypto.createHash('sha256').update(`${auth.user.id}|${name}|${payload}|${Date.now()}`).digest('hex');
