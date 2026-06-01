@@ -7166,6 +7166,11 @@ body ::selection { background:#101010 !important; color:#ffffff !important; }
   filter:none !important;
 }
 
+.out-empty-mark .ocg-brand-icon {
+  filter: none !important;
+  opacity: .95;
+}
+
 .tb-nav {
   scrollbar-color:#101010 #ededeb !important;
 }
