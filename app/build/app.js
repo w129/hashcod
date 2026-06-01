@@ -3380,7 +3380,7 @@ const MenuButton = ({
   const btnRef = useRef(null);
   const [menuPos, setMenuPos] = useState({
     left: 0,
-    top: 38
+    top: 60
   });
   useEffect(() => {
     if (!open) return undefined;
@@ -3398,7 +3398,7 @@ const MenuButton = ({
     if (!rect) return;
     setMenuPos({
       left: Math.max(6, Math.min(rect.left, window.innerWidth - 224)),
-      top: Math.max(38, rect.bottom)
+      top: Math.max(60, rect.bottom)
     });
   };
   const handleClick = () => {
@@ -3448,7 +3448,9 @@ const MenuButton = ({
     dangerouslySetInnerHTML: {
       __html: icon
     }
-  }) : null, !iconOnly ? React.createElement("span", null, label) : null, primaryAction && hasDropdown ? React.createElement("span", {
+  }) : null, iconOnly ? React.createElement("span", {
+    className: "tb-n-caption"
+  }, label) : React.createElement("span", null, label), primaryAction && hasDropdown ? React.createElement("span", {
     className: "tb-n-caret"
   }, "\u25BE") : null), open && hasDropdown && React.createElement("div", {
     className: "tb-dd",
@@ -24878,7 +24880,9 @@ const App = () => {
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.codeTransformCli
     }
-  })), React.createElement("button", {
+  }), React.createElement("span", {
+    className: "tb-cli-caption"
+  }, "CMD")), React.createElement("button", {
     className: "tb-cli",
     onClick: () => setSharedCliOpen(true),
     title: language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console',
@@ -24887,7 +24891,9 @@ const App = () => {
     dangerouslySetInnerHTML: {
       __html: SHARED_CLI_ICON
     }
-  })), React.createElement("div", {
+  }), React.createElement("span", {
+    className: "tb-cli-caption"
+  }, "CLI")), React.createElement("div", {
     className: "tb-clk"
   }, clock))), React.createElement("div", {
     className: "bcr"
