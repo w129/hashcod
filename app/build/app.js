@@ -19934,6 +19934,13 @@ const drawDesignStudioPattern = (ctx, pattern) => {
   ctx.restore();
 };
 const designStudioImageCache = new Map();
+const DESIGN_STUDIO_ADVANCED_FAMILIES = [['create', ['Pixel Rect', 'Signal Circle', 'Vector Line', 'Micro Dot', 'Frame', 'Badge', 'Wide Panel', 'Tall Panel', 'Cross Line', 'Orbit']], ['transform', ['Shift Left', 'Shift Right', 'Shift Up', 'Shift Down', 'Grow', 'Shrink', 'Stretch X', 'Stretch Y', 'Rotate Left', 'Rotate Right']], ['style', ['Ink Black', 'Signal Red', 'Electric Blue', 'Forest Green', 'Magenta', 'Amber', 'Thin Stroke', 'Bold Stroke', 'Soft Opacity', 'Solid Opacity']], ['align', ['Align Left', 'Align Center X', 'Align Right', 'Align Top', 'Align Center Y', 'Align Bottom', 'Canvas Center', 'Snap 8px', 'Snap 16px', 'Snap 32px']], ['arrange', ['Bring Front', 'Send Back', 'Move Forward', 'Move Backward', 'Duplicate', 'Mirror X', 'Mirror Y', 'Offset Copy', 'Triplicate', 'Delete Layer']], ['pattern', ['No Pattern', 'Grid Pattern', 'Radial Pattern', 'Pixel Pattern', 'Paper White', 'Soft Gray', 'Night Ink', 'Mint Surface', 'Rose Surface', 'Amber Surface']], ['composition', ['Dot Matrix', 'Corner Marks', 'Orbit Rings', 'Pixel Ladder', 'Signal Bars', 'Grid Nodes', 'Radial Burst', 'Card Stack', 'Crosshair', 'Module Cluster']], ['selection', ['Select First', 'Select Last', 'Select Next', 'Select Previous', 'Select Rect', 'Select Ellipse', 'Select Text', 'Select Brush', 'Select Image', 'Select Largest']], ['typography', ['Title 48', 'Heading 36', 'Body 24', 'Caption 16', 'Mono Label', 'Stamp', 'Index Tag', 'Signature', 'Footer', 'Watermark']], ['canvas', ['Clean Canvas', 'Draft Canvas', 'Poster Canvas', 'Interface Canvas', 'Blueprint Canvas', 'Editorial Canvas', 'Presentation Canvas', 'Square Guide', 'Wide Guide', 'Reset View']]];
+const DESIGN_STUDIO_ADVANCED_TOOLS = DESIGN_STUDIO_ADVANCED_FAMILIES.flatMap(([family, names]) => names.map((label, variant) => ({
+  id: `${family}-${variant}`,
+  family,
+  variant,
+  label
+})));
 const drawDesignStudioLayer = (ctx, layer, selected = false) => {
   ctx.save();
   ctx.globalAlpha = layer.opacity ?? 1;
@@ -19944,6 +19951,11 @@ const drawDesignStudioLayer = (ctx, layer, selected = false) => {
   ctx.lineJoin = 'round';
   const w = (layer.x2 ?? layer.x) - layer.x;
   const h = (layer.y2 ?? layer.y) - layer.y;
+  if (layer.rotation) {
+    ctx.translate(layer.x + w / 2, layer.y + h / 2);
+    ctx.rotate(layer.rotation);
+    ctx.translate(-(layer.x + w / 2), -(layer.y + h / 2));
+  }
   if (layer.type === 'rect') {
     if (layer.fill !== 'transparent') ctx.fillRect(layer.x, layer.y, w, h);
     ctx.strokeRect(layer.x, layer.y, w, h);
@@ -20009,6 +20021,8 @@ const DesignStudioDialog = ({
   const [background, setBackground] = useState('#ffffff');
   const [pattern, setPattern] = useState('grid');
   const [text, setText] = useState('Q+7LkMK05 DESIGN');
+  const [advancedQuery, setAdvancedQuery] = useState('');
+  const [advancedFamily, setAdvancedFamily] = useState('all');
   const objects = history.snapshots[history.index] || [];
   const L = (es, en) => language === 'es' ? es : en;
   const commit = useCallback(next => {
@@ -20094,6 +20108,183 @@ const DesignStudioDialog = ({
       }))
     } : layer));
   };
+  const selectedLayer = objects.find(layer => layer.id === selectedId);
+  const requireSelected = () => {
+    if (selectedLayer) return true;
+    notify?.(L('Selecciona una capa primero.', 'Select a layer first.'));
+    return false;
+  };
+  const replaceSelected = updater => {
+    if (!requireSelected()) return;
+    commit(objects.map(layer => layer.id === selectedId ? updater(layer) : layer));
+  };
+  const addPresetShape = variant => {
+    const positions = [[80, 80, 230, 170], [330, 110, 430, 210], [130, 280, 500, 284], [620, 130, 640, 150], [70, 65, 890, 475], [690, 370, 850, 455], [130, 190, 820, 300], [430, 55, 535, 470], [170, 420, 790, 120], [350, 150, 610, 410]];
+    const [x, y, x2, y2] = positions[variant];
+    const shape = [0, 4, 5, 6, 7].includes(variant) ? 'rect' : [1, 3, 9].includes(variant) ? 'ellipse' : 'line';
+    commit([...objects, designStudioFactory(shape, {
+      x,
+      y
+    }, {
+      x: x2,
+      y: y2
+    }, {
+      ...style,
+      fill: variant === 3 ? style.color : 'transparent'
+    })]);
+  };
+  const addComposition = variant => {
+    const next = [...objects];
+    const ink = ['#111111', '#d52b7f', '#0d6efd', '#159447'][variant % 4];
+    const add = (type, x, y, x2, y2, extra = {}) => next.push(designStudioFactory(type, {
+      x,
+      y
+    }, {
+      x: x2,
+      y: y2
+    }, {
+      ...style,
+      color: ink,
+      fill: extra.fill || 'transparent',
+      width: extra.width || 2
+    }, extra));
+    if (variant === 0 || variant === 5) for (let y = 100; y <= 440; y += 68) for (let x = 150; x <= 820; x += 82) add('ellipse', x, y, x + 12, y + 12, {
+      fill: ink
+    });else if (variant === 1) [[45, 45, 165, 45], [45, 45, 45, 165], [915, 45, 795, 45], [915, 45, 915, 165], [45, 495, 165, 495], [45, 495, 45, 375], [915, 495, 795, 495], [915, 495, 915, 375]].forEach(([x, y, x2, y2]) => add('line', x, y, x2, y2));else if (variant === 2 || variant === 6) for (let r = 45; r <= 225; r += 35) add('ellipse', 480 - r, 270 - r, 480 + r, 270 + r);else if (variant === 3) for (let i = 0; i < 12; i++) add('rect', 140 + i * 54, 410 - i * 22, 176 + i * 54, 450 - i * 22, {
+      fill: i % 2 ? ink : 'transparent'
+    });else if (variant === 4) for (let i = 0; i < 11; i++) add('rect', 145 + i * 62, 390 - i % 5 * 45, 180 + i * 62, 440, {
+      fill: ink
+    });else if (variant === 7) for (let i = 0; i < 6; i++) add('rect', 205 + i * 35, 120 + i * 35, 705 + i * 10, 390 + i * 10);else if (variant === 8) {
+      add('line', 80, 270, 880, 270);
+      add('line', 480, 50, 480, 490);
+      add('ellipse', 390, 180, 570, 360);
+    } else for (let y = 125; y <= 365; y += 120) for (let x = 210; x <= 690; x += 120) add('rect', x, y, x + 72, y + 72, {
+      fill: (x + y) % 3 ? 'transparent' : ink
+    });
+    commit(next);
+  };
+  const runAdvancedTool = entry => {
+    const {
+      family,
+      variant
+    } = entry;
+    if (family === 'create') addPresetShape(variant);else if (family === 'transform') {
+      if (!requireSelected()) return;
+      const moves = [[-16, 0], [16, 0], [0, -16], [0, 16]];
+      if (variant < 4) moveSelected(...moves[variant]);else replaceSelected(layer => {
+        const sx = variant === 5 ? .85 : variant === 7 ? 1 : variant === 8 || variant === 9 ? 1 : variant === 6 ? 1.2 : 1.15;
+        const sy = variant === 5 ? .85 : variant === 6 ? 1 : variant === 8 || variant === 9 ? 1 : variant === 7 ? 1.2 : 1.15;
+        return {
+          ...layer,
+          x2: layer.x + ((layer.x2 ?? layer.x) - layer.x) * sx,
+          y2: layer.y + ((layer.y2 ?? layer.y) - layer.y) * sy,
+          rotation: (layer.rotation || 0) + (variant === 8 ? -.18 : variant === 9 ? .18 : 0)
+        };
+      });
+    } else if (family === 'style') {
+      const colors = ['#111111', '#e10600', '#0d6efd', '#137a45', '#d52b7f', '#c97900'];
+      if (variant < 6) {
+        setStyle(prev => ({
+          ...prev,
+          color: colors[variant]
+        }));
+        if (selectedLayer) replaceSelected(layer => ({
+          ...layer,
+          color: colors[variant]
+        }));
+      } else if (variant < 8) replaceSelected(layer => ({
+        ...layer,
+        width: variant === 6 ? 1 : 12
+      }));else replaceSelected(layer => ({
+        ...layer,
+        opacity: variant === 8 ? .38 : 1
+      }));
+    } else if (family === 'align') {
+      replaceSelected(layer => {
+        const w = (layer.x2 ?? layer.x) - layer.x,
+          h = (layer.y2 ?? layer.y) - layer.y;
+        if (variant < 7) {
+          const xs = [24, (960 - w) / 2, 936 - w, layer.x, layer.x, layer.x, (960 - w) / 2];
+          const ys = [layer.y, layer.y, layer.y, 24, (540 - h) / 2, 516 - h, (540 - h) / 2];
+          return {
+            ...layer,
+            x: xs[variant],
+            y: ys[variant],
+            x2: xs[variant] + w,
+            y2: ys[variant] + h
+          };
+        }
+        const snap = [8, 16, 32][variant - 7];
+        return {
+          ...layer,
+          x: Math.round(layer.x / snap) * snap,
+          y: Math.round(layer.y / snap) * snap,
+          x2: Math.round((layer.x2 ?? layer.x) / snap) * snap,
+          y2: Math.round((layer.y2 ?? layer.y) / snap) * snap
+        };
+      });
+    } else if (family === 'arrange') {
+      if (!requireSelected()) return;
+      const index = objects.findIndex(layer => layer.id === selectedId);
+      if (variant <= 3) {
+        const next = [...objects],
+          [layer] = next.splice(index, 1);
+        const at = variant === 0 ? next.length : variant === 1 ? 0 : variant === 2 ? Math.min(next.length, index + 1) : Math.max(0, index - 1);
+        next.splice(at, 0, layer);
+        commit(next);
+      } else if (variant === 4 || variant === 7 || variant === 8) {
+        const copies = variant === 8 ? 3 : 1;
+        const next = [...objects];
+        for (let i = 1; i <= copies; i++) next.push({
+          ...selectedLayer,
+          id: `layer_${Date.now()}_${variant}_${i}`,
+          x: selectedLayer.x + i * 18,
+          y: selectedLayer.y + i * 18,
+          x2: (selectedLayer.x2 ?? selectedLayer.x) + i * 18,
+          y2: (selectedLayer.y2 ?? selectedLayer.y) + i * 18
+        });
+        commit(next);
+      } else if (variant === 9) deleteSelected();else replaceSelected(layer => ({
+        ...layer,
+        x2: variant === 5 ? layer.x - ((layer.x2 ?? layer.x) - layer.x) : layer.x2,
+        y2: variant === 6 ? layer.y - ((layer.y2 ?? layer.y) - layer.y) : layer.y2
+      }));
+    } else if (family === 'pattern') {
+      const patterns = ['none', 'grid', 'radial', 'pixel'];
+      const colors = ['#ffffff', '#e6e6e2', '#181818', '#e6fff3', '#fff0f6', '#fff7df'];
+      if (variant < 4) setPattern(patterns[variant]);else setBackground(colors[variant - 4]);
+    } else if (family === 'composition') addComposition(variant);else if (family === 'selection') {
+      if (!objects.length) return;
+      const ordered = objects;
+      const current = Math.max(0, ordered.findIndex(layer => layer.id === selectedId));
+      const types = ['rect', 'ellipse', 'text', 'brush', 'image'];
+      const match = variant === 0 ? ordered[0] : variant === 1 ? ordered.at(-1) : variant === 2 ? ordered[(current + 1) % ordered.length] : variant === 3 ? ordered[(current + ordered.length - 1) % ordered.length] : variant === 9 ? [...ordered].sort((a, b) => (b.x2 - b.x) * (b.y2 - b.y) - (a.x2 - a.x) * (a.y2 - a.y))[0] : ordered.find(layer => layer.type === types[variant - 4]);
+      setSelectedId(match?.id || '');
+    } else if (family === 'typography') {
+      const labels = [text, text, text, text, 'Q+7LkMK05 / MONO', 'APPROVED', 'INDEX 0001', 'SIGNATURE', 'Q+7LkMK05 DESIGN STUDIO', 'Q+7LkMK05'];
+      const sizes = [48, 36, 24, 16, 18, 26, 15, 30, 18, 64];
+      commit([...objects, designStudioFactory('text', {
+        x: variant === 9 ? 260 : 96,
+        y: 90 + variant * 38
+      }, {
+        x: 96,
+        y: 90
+      }, {
+        ...style,
+        color: variant === 9 ? '#d8d8d8' : style.color
+      }, {
+        text: labels[variant],
+        fontSize: sizes[variant],
+        opacity: variant === 9 ? .4 : 1
+      })]);
+    } else if (family === 'canvas') {
+      const presets = [['#ffffff', 'none'], ['#ffffff', 'grid'], ['#f7f7f4', 'none'], ['#f2f2ee', 'pixel'], ['#eaf4ff', 'grid'], ['#fffdf7', 'none'], ['#f7f7f7', 'radial'], ['#ffffff', 'grid'], ['#ffffff', 'pixel'], ['#ffffff', 'none']];
+      setBackground(presets[variant][0]);
+      setPattern(presets[variant][1]);
+    }
+    notify?.(`${entry.label} OK`);
+  };
+  const visibleAdvancedTools = DESIGN_STUDIO_ADVANCED_TOOLS.filter(entry => (advancedFamily === 'all' || entry.family === advancedFamily) && entry.label.toLowerCase().includes(advancedQuery.toLowerCase()));
   const addImage = event => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -20318,7 +20509,28 @@ const DesignStudioDialog = ({
     key: layer.id,
     className: selectedId === layer.id ? 'on' : '',
     onClick: () => setSelectedId(layer.id)
-  }, React.createElement("b", null, String(objects.length - index).padStart(2, '0')), React.createElement("span", null, layer.type))), !objects.length && React.createElement("p", null, L('El lienzo esta listo.', 'Canvas ready.')))))));
+  }, React.createElement("b", null, String(objects.length - index).padStart(2, '0')), React.createElement("span", null, layer.type))), !objects.length && React.createElement("p", null, L('El lienzo esta listo.', 'Canvas ready.'))), React.createElement("section", {
+    className: "designstudio-advanced"
+  }, React.createElement("div", {
+    className: "designstudio-advanced-head"
+  }, React.createElement("h3", null, "TOOLBOX 100"), React.createElement("b", null, visibleAdvancedTools.length)), React.createElement("input", {
+    value: advancedQuery,
+    onChange: event => setAdvancedQuery(event.target.value),
+    placeholder: L('Buscar herramienta', 'Search tool')
+  }), React.createElement("select", {
+    value: advancedFamily,
+    onChange: event => setAdvancedFamily(event.target.value)
+  }, React.createElement("option", {
+    value: "all"
+  }, "ALL FAMILIES"), DESIGN_STUDIO_ADVANCED_FAMILIES.map(([family]) => React.createElement("option", {
+    key: family,
+    value: family
+  }, family.toUpperCase()))), React.createElement("div", {
+    className: "designstudio-advanced-list"
+  }, visibleAdvancedTools.map((entry, index) => React.createElement("button", {
+    key: entry.id,
+    onClick: () => runAdvancedTool(entry)
+  }, React.createElement("b", null, String(DESIGN_STUDIO_ADVANCED_TOOLS.indexOf(entry) + 1).padStart(3, '0')), React.createElement("span", null, entry.label)))))))));
 };
 const App = () => {
   const [tweaks, setTweak] = window.useTweaks ? window.useTweaks(window.OCG_DEFAULTS) : [{}, () => {}];
