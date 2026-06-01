@@ -2577,6 +2577,17 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
   const hasDropdown = Array.isArray(items) && items.length > 0;
   const btnRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ left: 0, top: 38 });
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setActiveMenu(null);
+        btnRef.current?.focus?.();
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [open, setActiveMenu]);
   const updateMenuPosition = () => {
     const rect = btnRef.current?.getBoundingClientRect?.();
     if (!rect) return;
@@ -2600,6 +2611,15 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
     updateMenuPosition();
     setActiveMenu(open ? null : label);
   };
+  const handleKeyDown = (event) => {
+    if (!hasDropdown) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      updateMenuPosition();
+      setActiveMenu(label);
+      requestAnimationFrame(() => document.querySelector('.tb-dd-item:not(:disabled)')?.focus?.());
+    }
+  };
   return (
     <div className="tb-menu">
       <button
@@ -2607,8 +2627,11 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
         className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''} ${iconOnly ? 'tb-n-icon-only' : ''}`}
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
+        aria-haspopup={hasDropdown ? 'menu' : undefined}
+        aria-expanded={hasDropdown ? open : undefined}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
+        onKeyDown={handleKeyDown}
         onMouseEnter={() => {
           if (activeMenu && hasDropdown) {
             updateMenuPosition();
@@ -2621,13 +2644,14 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
         {primaryAction && hasDropdown ? <span className="tb-n-caret">▾</span> : null}
       </button>
       {open && hasDropdown && (
-        <div className="tb-dd" style={{ left: menuPos.left, top: menuPos.top }} onMouseLeave={() => setActiveMenu(null)}>
+        <div className="tb-dd" role="menu" aria-label={label} style={{ left: menuPos.left, top: menuPos.top }} onMouseLeave={() => setActiveMenu(null)}>
           {items.map((item, i) => item.type === 'sep' ? (
             <div key={`sep-${i}`} className="tb-dd-sep" />
           ) : (
             <button
               key={item.label}
               className="tb-dd-item"
+              role="menuitem"
               disabled={item.disabled}
               onClick={() => { setActiveMenu(null); item.onClick && item.onClick(); }}
             >

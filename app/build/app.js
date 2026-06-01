@@ -3371,6 +3371,17 @@ const MenuButton = ({
     left: 0,
     top: 38
   });
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') {
+        setActiveMenu(null);
+        btnRef.current?.focus?.();
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [open, setActiveMenu]);
   const updateMenuPosition = () => {
     const rect = btnRef.current?.getBoundingClientRect?.();
     if (!rect) return;
@@ -3394,6 +3405,15 @@ const MenuButton = ({
     updateMenuPosition();
     setActiveMenu(open ? null : label);
   };
+  const handleKeyDown = event => {
+    if (!hasDropdown) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      updateMenuPosition();
+      setActiveMenu(label);
+      requestAnimationFrame(() => document.querySelector('.tb-dd-item:not(:disabled)')?.focus?.());
+    }
+  };
   return React.createElement("div", {
     className: "tb-menu"
   }, React.createElement("button", {
@@ -3401,8 +3421,11 @@ const MenuButton = ({
     className: `tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''} ${iconOnly ? 'tb-n-icon-only' : ''}`,
     "aria-label": iconOnly ? label : undefined,
     title: iconOnly ? label : undefined,
+    "aria-haspopup": hasDropdown ? 'menu' : undefined,
+    "aria-expanded": hasDropdown ? open : undefined,
     onClick: handleClick,
     onContextMenu: handleContextMenu,
+    onKeyDown: handleKeyDown,
     onMouseEnter: () => {
       if (activeMenu && hasDropdown) {
         updateMenuPosition();
@@ -3418,6 +3441,8 @@ const MenuButton = ({
     className: "tb-n-caret"
   }, "\u25BE") : null), open && hasDropdown && React.createElement("div", {
     className: "tb-dd",
+    role: "menu",
+    "aria-label": label,
     style: {
       left: menuPos.left,
       top: menuPos.top
@@ -3429,6 +3454,7 @@ const MenuButton = ({
   }) : React.createElement("button", {
     key: item.label,
     className: "tb-dd-item",
+    role: "menuitem",
     disabled: item.disabled,
     onClick: () => {
       setActiveMenu(null);

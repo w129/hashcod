@@ -8102,3 +8102,215 @@ button:hover,
   .transformcli-catalog { min-height:360px; }
   .transformcli-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+/* Hashcod vector tools polish */
+:root {
+  --tool-accent: #167052;
+  --tool-accent-soft: #e8f5ef;
+  --tool-focus: #0b5f47;
+  --tool-shadow: 4px 4px 0 rgba(16,16,16,.12);
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--tool-focus) !important;
+  outline-offset: 2px;
+}
+
+.tb-n,
+.tb-cli,
+.bottom-tool-icon,
+.oc-act,
+.dlg-x {
+  position: relative;
+  isolation: isolate;
+}
+
+.tb-n::after,
+.tb-cli::after,
+.bottom-tool-icon::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(.3);
+  transform-origin: center;
+  transition: opacity .14s ease, transform .14s ease;
+}
+
+.tb-n:hover::after,
+.tb-n.on::after,
+.tb-n:focus-visible::after,
+.tb-cli:hover::after,
+.tb-cli:focus-visible::after,
+.bottom-tool-icon:hover::after,
+.bottom-tool-icon:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.tb-n-icon svg,
+.tb-cli svg,
+.bottom-tool-icon svg,
+.oc-act svg,
+.dlg-h svg {
+  transition: transform .14s ease, color .14s ease, stroke-width .14s ease;
+}
+
+.tb-n:hover .tb-n-icon svg,
+.tb-n:focus-visible .tb-n-icon svg,
+.tb-cli:hover svg,
+.tb-cli:focus-visible svg,
+.bottom-tool-icon:hover svg,
+.bottom-tool-icon:focus-visible svg,
+.oc-act:hover svg,
+.oc-act:focus-visible svg {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.tb-n.on .tb-n-icon svg {
+  transform: scale(1.08);
+}
+
+.tb-dd {
+  overflow: hidden;
+}
+
+.tb-dd::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background:
+    linear-gradient(90deg, #101010 0 22%, transparent 22% 28%, #101010 28% 62%, transparent 62% 68%, #101010 68% 100%);
+}
+
+.tb-dd-item {
+  position: relative;
+  padding-left: 24px !important;
+}
+
+.tb-dd-item::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+  opacity: .55;
+}
+
+.tb-dd-item:hover::before,
+.tb-dd-item:focus-visible::before {
+  background: currentColor;
+  opacity: 1;
+}
+
+.dlg {
+  box-shadow: 8px 8px 0 rgba(16,16,16,.14);
+}
+
+.dlg-h {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.dlg-h::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  top: 0;
+  right: 54px;
+  width: 180px;
+  height: 100%;
+  opacity: .18;
+  background:
+    linear-gradient(135deg, transparent 0 44%, #101010 44% 46%, transparent 46% 100%),
+    linear-gradient(45deg, transparent 0 64%, #101010 64% 66%, transparent 66% 100%);
+  background-size: 28px 28px, 34px 34px;
+}
+
+.dlg-h > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dlg-h > div:first-child,
+.dlg-h > section:first-child {
+  min-width: 0;
+}
+
+.dlg-h [class$="-mark"],
+.dlg-h [class*="-mark "] {
+  box-shadow: 4px 4px 0 rgba(16,16,16,.13);
+}
+
+.dlg-h [class$="-mark"] svg,
+.dlg-h [class*="-mark "] svg {
+  display: block;
+}
+
+.dlg-x {
+  transition: background .14s ease, color .14s ease, transform .14s ease;
+}
+
+.dlg-x:hover,
+.dlg-x:focus-visible {
+  transform: translate(-1px, -1px);
+}
+
+.oc-act {
+  transition: background .12s ease, color .12s ease, border-color .12s ease, transform .12s ease;
+}
+
+.oc-act:hover,
+.oc-act:focus-visible {
+  transform: translateY(-1px);
+  background: #101010 !important;
+  color: #ffffff !important;
+  border-color: #101010 !important;
+}
+
+.bottom-tools-rail {
+  box-shadow: 0 -4px 0 rgba(16,16,16,.08);
+}
+
+.bottom-tools-slots button {
+  transition: background .14s ease, color .14s ease, border-color .14s ease;
+}
+
+.bottom-tools-slots button:hover,
+.bottom-tools-slots button:focus-visible {
+  background: #ffffff !important;
+  color: #101010 !important;
+  border-color: #101010 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-n::after,
+  .tb-cli::after,
+  .bottom-tool-icon::after,
+  .tb-n-icon svg,
+  .tb-cli svg,
+  .bottom-tool-icon svg,
+  .oc-act,
+  .oc-act svg,
+  .dlg-x {
+    transition: none !important;
+  }
+}
