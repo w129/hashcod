@@ -2590,7 +2590,7 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
   const open = activeMenu === label;
   const hasDropdown = Array.isArray(items) && items.length > 0;
   const btnRef = useRef(null);
-  const [menuPos, setMenuPos] = useState({ left: 0, top: 60 });
+  const [menuPos, setMenuPos] = useState({ left: 0, top: 38 });
   useEffect(() => {
     if (!open) return undefined;
     const closeOnEscape = (event) => {
@@ -2607,7 +2607,7 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
     if (!rect) return;
     setMenuPos({
       left: Math.max(6, Math.min(rect.left, window.innerWidth - 224)),
-      top: Math.max(60, rect.bottom),
+      top: Math.max(38, rect.bottom),
     });
   };
   const handleClick = () => {
@@ -2654,7 +2654,7 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
         }}
       >
         {icon ? <span className="tb-n-icon" dangerouslySetInnerHTML={{ __html: icon }} /> : null}
-        {iconOnly ? <span className="tb-n-caption">{label}</span> : <span>{label}</span>}
+        {!iconOnly ? <span>{label}</span> : null}
         {primaryAction && hasDropdown ? <span className="tb-n-caret">▾</span> : null}
       </button>
       {open && hasDropdown && (
@@ -18703,11 +18703,9 @@ const App = () => {
           <div className="tb-right">
             <button className="tb-cli" onClick={() => setCodeTransformCliOpen(true)} title={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'} aria-label={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'}>
               <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
-              <span className="tb-cli-caption">CMD</span>
             </button>
             <button className="tb-cli" onClick={() => setSharedCliOpen(true)} title={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'} aria-label={language === 'es' ? 'Consola CLI compartida' : 'Shared CLI console'}>
               <span dangerouslySetInnerHTML={{__html: SHARED_CLI_ICON}} />
-              <span className="tb-cli-caption">CLI</span>
             </button>
             <div className="tb-clk">{clock}</div>
           </div>

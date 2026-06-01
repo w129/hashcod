@@ -116,7 +116,6 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes("export json|txt|png") && appSource.includes("<button onClick={exportPng}>PNG</button>"), 'transform-cmd-png-command-ui');
   assert(appSource.includes('const FileZipPackagerDialog =') && appSource.includes('makeZipBlob(entries)'), 'file-zip-packager-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
-  assert(appSource.includes('className="tb-n-caption"') && appSource.includes('className="tb-cli-caption"'), 'toolbar-visible-tool-labels');
 
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {
