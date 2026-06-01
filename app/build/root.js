@@ -56,9 +56,9 @@ const Root = () => {
     }, React.createElement("div", {
       className: "boot-logo"
     }, React.createElement("img", {
-      src: "app/hashcod-platform-icon.svg?v=q7-radial-1",
+      src: "app/hashcod-platform-icon.svg?v=hashcod-classic-1",
       alt: ""
-    }), React.createElement("div", null, "Q+7LkMK05 ", React.createElement("span", null, "Cryptographic Platform"))), React.createElement("div", {
+    }), React.createElement("div", null, "Hashcod ", React.createElement("span", null, "Cryptographic Platform"))), React.createElement("div", {
       className: "boot-text"
     }, "Enterprise gate blocked startup. Review the failed self-tests."), React.createElement("pre", {
       className: "boot-error"

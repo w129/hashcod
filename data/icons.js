@@ -76,7 +76,7 @@
   }
 
   function renderBrandIcon(s=20) {
-    return `<img class="ocg-brand-icon" src="app/hashcod-platform-icon.svg?v=q7-radial-2" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
+    return `<img class="ocg-brand-icon" src="app/hashcod-platform-icon.svg?v=hashcod-classic-2" width="${s}" height="${s}" alt="" aria-hidden="true"/>`;
   }
 
   function renderCodeContainerIcon(s=16) {

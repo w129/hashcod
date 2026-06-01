@@ -4,7 +4,7 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'exports');
-const OUT_FILE = path.join(OUT_DIR, 'HSG2818-10000-code-pricing.pdf');
+const OUT_FILE = path.join(OUT_DIR, 'Hashcod-10000-code-pricing.pdf');
 
 const FAMILY_BASE = {
   'PQC-KEM': 34,
@@ -93,7 +93,7 @@ const standardPremium = (type) => {
   if (/deprecated|broken|legacy interop only/i.test(text)) return 0.62;
   if (/NIST|FIPS|RFC|ISO|SP 800|IETF|W3C|IEEE/i.test(text)) return 1.22;
   if (/post-quantum|zero-knowledge|homomorphic|threshold|identity-based|attribute-based/i.test(text)) return 1.38;
-  if (/HSG2818/i.test(text)) return 1.16;
+  if (/Hashcod/i.test(text)) return 1.16;
   return 1.0;
 };
 
@@ -158,7 +158,7 @@ const pdfEscape = (text) => ascii(text).replace(/\\/g, '\\\\').replace(/\(/g, '\
 const line = (x, y, text, size = 8, font = 'F2') =>
   `BT /${font} ${size} Tf ${x} ${y} Td (${pdfEscape(text)}) Tj ET\n`;
 
-const drawHSG2818Logo = (x, y, size = 28) => {
+const drawHashcodLogo = (x, y, size = 28) => {
   const s = size;
   const stroke = Math.max(1.6, s * 0.095);
   const left = x + s * 0.04;
@@ -190,8 +190,8 @@ const drawHSG2818Logo = (x, y, size = 28) => {
 
 const drawHeader = (pageNo, totalPages) => {
   let s = '';
-  s += drawHSG2818Logo(34, 556, 28);
-  s += line(72, 564, 'HSG2818', 18, 'F1');
+  s += drawHashcodLogo(34, 556, 28);
+  s += line(72, 564, 'Hashcod', 18, 'F1');
   s += line(162, 568, 'Cryptographic Code Pricing Catalog', 11, 'F2');
   s += line(724, 568, `Page ${pageNo}/${totalPages}`, 8, 'F2');
   s += '0.75 w 34 552 m 808 552 l S\n';
@@ -202,15 +202,15 @@ const makeIntroPage = (totalRows, totalPages) => {
   let s = drawHeader(1, totalPages);
   s += line(34, 526, 'Pricing algorithm detected and applied', 20, 'F1');
   s += line(34, 500, 'Formula: price_10 = base_family x security_level x standard_premium x rarity x complexity x entropy_factor.', 9, 'F2');
-  s += line(34, 482, 'Base family: symmetric/hash/token families are lower; PQC, ZK, MPC, FHE, ABE and advanced HSG2818 profiles are higher.', 9, 'F2');
+  s += line(34, 482, 'Base family: symmetric/hash/token families are lower; PQC, ZK, MPC, FHE, ABE and advanced Hashcod profiles are higher.', 9, 'F2');
   s += line(34, 464, 'Security level: 128/192/256-bit, L1/L3/L5 and 640-896-bit metadata raise or lower the pack price.', 9, 'F2');
   s += line(34, 446, 'Standard premium: NIST/FIPS/RFC/ISO and signed/verified profiles get higher confidence value; deprecated legacy items are discounted.', 9, 'F2');
   s += line(34, 428, 'Rarity and complexity: uncommon families, HMAC binding, salt/nonce, routes, signatures and post-quantum functions increase price.', 9, 'F2');
   s += line(34, 400, `Total priced codes: ${totalRows.toLocaleString('en-US')}. Currency: USD. Unit: price per single code and per pack of 10 codes.`, 10, 'F1');
-  s += line(34, 374, 'This catalog is a product-pricing model for HSG2818 services. It is not a market quote, legal valuation, or financial advice.', 9, 'F2');
+  s += line(34, 374, 'This catalog is a product-pricing model for Hashcod services. It is not a market quote, legal valuation, or financial advice.', 9, 'F2');
   s += line(34, 338, 'Columns', 13, 'F1');
   s += line(54, 316, 'IDX: global code number in the 10,000-code catalog.', 9, 'F2');
-  s += line(54, 298, 'CODE: HSG2818 variant or primitive name.', 9, 'F2');
+  s += line(54, 298, 'CODE: Hashcod variant or primitive name.', 9, 'F2');
   s += line(54, 280, 'FAMILY: detected cryptographic pricing family.', 9, 'F2');
   s += line(54, 262, 'ENTROPY/STANDARD: metadata used by the pricing algorithm.', 9, 'F2');
   s += line(54, 244, '1 CODE / 10 CODES: suggested service price.', 9, 'F2');

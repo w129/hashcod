@@ -2748,7 +2748,7 @@ kbd {
   letter-spacing: .35px;
 }
 
-/* Q+7LkMK05 layered design studio */
+/* Hashcod layered design studio */
 .designstudio-back {
   position: fixed; inset: 0; z-index: 420;
   overflow: hidden; pointer-events: none;
@@ -2887,7 +2887,7 @@ kbd {
   .designstudio-topbar { flex-wrap: wrap; }
 }
 
-/* Q+7LkMK05 persistent code wallet */
+/* Hashcod persistent code wallet */
 .dlg.codewallet {
   width: min(1480px, calc(100vw - 32px)); max-width: none;
   max-height: calc(100vh - 32px); overflow: hidden;
@@ -6587,7 +6587,7 @@ kbd {
   .authusers-list { padding-left: 8px; padding-right: 8px; }
 }
 
-/* HSG2818 dark contrast pass */
+/* Hashcod dark contrast pass */
 body {
   background: #0F0F0F;
   color: #F5F5F5;
@@ -7096,7 +7096,7 @@ textarea,
   font-family: 'Codec Pro', var(--ui) !important;
 }
 
-/* HSG2818 light pixel interface */
+/* Hashcod light pixel interface */
 :root {
   --bg: #ffffff;
   --bg-alt: #f4f4f2;
@@ -7820,7 +7820,7 @@ button:hover,
   border-color:#101010 !important;
 }
 
-/* HSG2818 parametric cryptographic analyzer */
+/* Hashcod parametric cryptographic analyzer */
 .paramdlg {
   width:min(1480px,calc(100vw - 24px));
   max-height:calc(100vh - 24px);
@@ -7936,7 +7936,7 @@ button:hover,
   .param-processes { margin-bottom:12px; }
 }
 
-/* Q+7LkMK05 circular code incubator */
+/* Hashcod circular code incubator */
 .incubatordlg {
   width:min(1460px,calc(100vw - 24px));
   max-height:calc(100vh - 24px);

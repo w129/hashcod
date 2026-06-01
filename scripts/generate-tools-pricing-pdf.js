@@ -4,7 +4,7 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(ROOT, 'exports');
-const OUT_FILE = path.join(OUT_DIR, 'HSG2818-tools-pricing-and-code-differences.pdf');
+const OUT_FILE = path.join(OUT_DIR, 'Hashcod-tools-pricing-and-code-differences.pdf');
 
 const ascii = (value) => String(value ?? '')
   .normalize('NFKD')
@@ -47,19 +47,19 @@ const TOOL_GROUPS = [
     ['Crypto AI', 'Chat de IA para revisar, explicar y mejorar codes segun proveedor API.', 'ai', ['all']],
   ]],
   ['Security suite', [
-    ['HSG2818 Token Inspector', 'Analiza JWT, API keys, licencias, QR payloads, seriales y sesiones.', 'security', ['tokens']],
-    ['HSG2818 License Shield', 'Crea y verifica licencias firmadas por usuario, dispositivo y expiracion.', 'security', ['signatures', 'tokens']],
-    ['HSG2818 Secure Tab', 'Reemplaza secretos de codigo por referencias a vault.', 'security', ['tokens', 'vault']],
-    ['HSG2818 Secret Scanner', 'Detecta API keys, JWT, private keys, passwords, .env y DB URLs.', 'security', ['tokens']],
-    ['HSG2818 QR Verifier', 'Valida QR con digest, estado, timestamp e historial.', 'security', ['ids', 'hashes']],
-    ['HSG2818 Code Fingerprint', 'Huella digital de proyectos por archivos, hashes y cambios.', 'security', ['hashes']],
-    ['HSG2818 Crypto Benchmark Lab', 'Compara SHA, AES, ChaCha20, CSPRNG, UUID, JWT y datos repetitivos.', 'security', ['all']],
-    ['HSG2818 Password Entropy Lab', 'Mide entropia y patrones de contrasenas sin guardarlas.', 'security', ['passwords']],
-    ['HSG2818 File Integrity Monitor', 'Snapshots de archivos y alertas por cambios SHA-256.', 'security', ['hashes']],
-    ['HSG2818 API Trust Score', 'Evalua HTTPS, CORS, headers, URLs y rate-limit visible.', 'security', ['api']],
-    ['HSG2818 Report Verifier', 'Verifica reportes por ID, digest, QR y autenticidad.', 'security', ['signatures', 'hashes']],
-    ['HSG2818 Developer Vault', 'Guarda secretos cifrados localmente con AES-GCM y passphrase.', 'security', ['vault', 'symmetric']],
-    ['HSG2818 Risk Engine', 'Motor comun de risk score, entropia, patrones, cloud score y veredicto.', 'security', ['all']],
+    ['Hashcod Token Inspector', 'Analiza JWT, API keys, licencias, QR payloads, seriales y sesiones.', 'security', ['tokens']],
+    ['Hashcod License Shield', 'Crea y verifica licencias firmadas por usuario, dispositivo y expiracion.', 'security', ['signatures', 'tokens']],
+    ['Hashcod Secure Tab', 'Reemplaza secretos de codigo por referencias a vault.', 'security', ['tokens', 'vault']],
+    ['Hashcod Secret Scanner', 'Detecta API keys, JWT, private keys, passwords, .env y DB URLs.', 'security', ['tokens']],
+    ['Hashcod QR Verifier', 'Valida QR con digest, estado, timestamp e historial.', 'security', ['ids', 'hashes']],
+    ['Hashcod Code Fingerprint', 'Huella digital de proyectos por archivos, hashes y cambios.', 'security', ['hashes']],
+    ['Hashcod Crypto Benchmark Lab', 'Compara SHA, AES, ChaCha20, CSPRNG, UUID, JWT y datos repetitivos.', 'security', ['all']],
+    ['Hashcod Password Entropy Lab', 'Mide entropia y patrones de contrasenas sin guardarlas.', 'security', ['passwords']],
+    ['Hashcod File Integrity Monitor', 'Snapshots de archivos y alertas por cambios SHA-256.', 'security', ['hashes']],
+    ['Hashcod API Trust Score', 'Evalua HTTPS, CORS, headers, URLs y rate-limit visible.', 'security', ['api']],
+    ['Hashcod Report Verifier', 'Verifica reportes por ID, digest, QR y autenticidad.', 'security', ['signatures', 'hashes']],
+    ['Hashcod Developer Vault', 'Guarda secretos cifrados localmente con AES-GCM y passphrase.', 'security', ['vault', 'symmetric']],
+    ['Hashcod Risk Engine', 'Motor comun de risk score, entropia, patrones, cloud score y veredicto.', 'security', ['all']],
   ]],
   ['Platform systems', [
     ['Zero Trust Access', 'Gate previo con clave, WebCrypto, manifiesto firmado, threat score y audit chain.', 'access', ['tokens', 'mac']],
@@ -68,8 +68,8 @@ const TOOL_GROUPS = [
     ['HOS', 'Hash Operative System para control y rutas hacia phone gateway.', 'network', ['tokens']],
     ['HCP', 'Hash Command Prompting para comandos y patrones ocultos de control.', 'network', ['tokens']],
     ['Phone OS Link', 'Sincroniza PC y telefono para notificaciones, SMS y browser de codes.', 'network', ['tokens', 'qr']],
-    ['HSG2818 Law / Anti-fraud', 'Capa de validacion, auditoria y controles antifraude para descargas y generacion.', 'governance', ['all']],
-    ['License Factory 400', 'Crea 400 plantillas de licencias HSG2818 para uso comercial.', 'license', ['signatures', 'tokens']],
+    ['Hashcod Law / Anti-fraud', 'Capa de validacion, auditoria y controles antifraude para descargas y generacion.', 'governance', ['all']],
+    ['License Factory 400', 'Crea 400 plantillas de licencias Hashcod para uso comercial.', 'license', ['signatures', 'tokens']],
     ['Launch Center', 'Checklist comercial, seguridad, legal, produccion y salida al mercado.', 'business', ['all']],
   ]],
   ['Editors and utilities', [
@@ -178,7 +178,7 @@ const money = (amount) => `${Number(amount).toLocaleString('en-US', { minimumFra
 const pdfEscape = (text) => ascii(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 const line = (x, y, text, size = 8, font = 'F2') => `BT /${font} ${size} Tf ${x} ${y} Td (${pdfEscape(text)}) Tj ET\n`;
 
-const drawHSG2818Logo = (x, y, size = 28) => {
+const drawHashcodLogo = (x, y, size = 28) => {
   const s = size;
   const stroke = Math.max(1.6, s * 0.095);
   const left = x + s * 0.04;
@@ -203,8 +203,8 @@ const drawHSG2818Logo = (x, y, size = 28) => {
 };
 
 const header = (pageNo, totalPages) => {
-  let s = drawHSG2818Logo(34, 556, 28);
-  s += line(72, 564, 'HSG2818', 18, 'F1');
+  let s = drawHashcodLogo(34, 556, 28);
+  s += line(72, 564, 'Hashcod', 18, 'F1');
   s += line(162, 568, 'Tools Pricing + Code Difference Catalog', 11, 'F2');
   s += line(724, 568, `Page ${pageNo}/${totalPages}`, 8, 'F2');
   s += '0.75 w 34 552 m 808 552 l S\n';
@@ -218,7 +218,7 @@ const chunk = (value, max) => {
 
 const introPage = (toolCount, codeCount, totalPages) => {
   let s = header(1, totalPages);
-  s += line(34, 526, 'Pricing algorithm for HSG2818 tools', 20, 'F1');
+  s += line(34, 526, 'Pricing algorithm for Hashcod tools', 20, 'F1');
   s += line(34, 500, 'Formula: suggested_tool_price = monthly + setup/6 + related_code_value x 28 + small rarity modifier.', 9, 'F2');
   s += line(34, 482, 'Tool prices are software/service prices. Code prices are per cryptographic unit or per 10-code pack.', 9, 'F2');
   s += line(34, 464, 'The difference column explains whether a tool creates, verifies, transports, stores, analyzes or monetizes codes.', 9, 'F2');
@@ -227,7 +227,7 @@ const introPage = (toolCount, codeCount, totalPages) => {
   s += line(54, 382, 'Starter service: utility/export/database tools for small code workflows.', 9, 'F2');
   s += line(54, 364, 'Professional service: certificates, evidence, security suite and analysis labs.', 9, 'F2');
   s += line(54, 346, 'Enterprise service: Zero Trust, Law engine, Phone OS, API, HNS/HOS/HCP and container flows.', 9, 'F2');
-  s += line(34, 306, 'Important: prices are suggested HSG2818 service prices, not financial advice or legal valuation.', 9, 'F2');
+  s += line(34, 306, 'Important: prices are suggested Hashcod service prices, not financial advice or legal valuation.', 9, 'F2');
   return s;
 };
 
@@ -278,7 +278,7 @@ const detailPage = (items, pageNo, totalPages) => {
 const summaryPage = (items, pageNo, totalPages) => {
   let s = header(pageNo, totalPages);
   s += line(34, 526, 'Difference with the 10,000 cryptographic codes', 18, 'F1');
-  s += line(34, 500, 'A cryptographic code is the generated material: key, token, digest, signature packet, KDF output or HSG2818 profile.', 9, 'F2');
+  s += line(34, 500, 'A cryptographic code is the generated material: key, token, digest, signature packet, KDF output or Hashcod profile.', 9, 'F2');
   s += line(34, 482, 'A tool is the operational layer: it creates, signs, verifies, stores, transports, visualizes, audits or sells those codes.', 9, 'F2');
   s += line(34, 452, 'CATALOG AREA', 8, 'F1');
   s += line(270, 452, 'COUNT', 8, 'F1');

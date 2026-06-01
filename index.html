@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Q+7LkMK05 - Cryptographic Platform</title>
+  <title>Hashcod - Cryptographic Platform</title>
 
-  <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=q7-radial-1" />
-  <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=q7-radial-1" />
+  <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=hashcod-classic-1" />
+  <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=hashcod-classic-1" />
 
-  <link rel="stylesheet" href="app/styles.css?v=q7-private-wallet-1" />
+  <link rel="stylesheet" href="app/styles.css?v=hashcod-classic-wallet-1" />
   <link rel="stylesheet" href="app/vault.css?v=v12-siphash-2" />
   <link rel="stylesheet" href="app/tour.css?v=enterprise-tour-1" />
   <style>
@@ -18,19 +18,19 @@
 <body>
   <script>
     window.addEventListener('error', function(e){
-      console.error('[Q+7LkMK05]', e.message, e.error || '');
+      console.error('[Hashcod]', e.message, e.error || '');
       var root = document.getElementById('root');
       if(root && !root.dataset.mounted){
-        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/hashcod-platform-icon.svg?v=q7-radial-1" alt=""><div>Q+7LkMK05 <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
+        root.innerHTML = '<div class="boot-screen"><div class="boot-card"><div class="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-classic-1" alt=""><div>Hashcod <span>Cryptographic Platform</span></div></div><div class="boot-text">Error cargando el software. Ejecuta con <b>npm start</b> en localhost y revisa la consola.</div><pre class="boot-error">'+String(e.message).replace(/[<>&]/g,function(c){return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c]})+'</pre></div></div>';
       }
     });
   </script>
   <div id="root">
     <div class="instant-boot" role="status" aria-live="polite">
       <div class="instant-boot-card">
-        <img src="app/hashcod-platform-icon.svg?v=q7-radial-1" alt="" />
+        <img src="app/hashcod-platform-icon.svg?v=hashcod-classic-1" alt="" />
         <div>
-          <b>Q+7LkMK05</b>
+          <b>Hashcod</b>
           <span>Opening secure platform...</span>
         </div>
       </div>
@@ -42,24 +42,24 @@
   <script src="vendor/react-dom.production.min.js?v=18.3.1"></script>
 
   <!-- Data layer -->
-  <script src="data/icons.js?v=q7-radial-2"></script>
-  <script src="data/catalog.js?v=hsg2818-brand-1"></script>
+  <script src="data/icons.js?v=hashcod-classic-2"></script>
+  <script src="data/catalog.js?v=hashcod-classic-brand-1"></script>
   <script src="data/generators.js"></script>
 
   <!-- Security core -->
   <script src="app/security.js"></script>
-  <script src="app/enterprise.js?v=hsg2818-brand-1"></script>
+  <script src="app/enterprise.js?v=hashcod-classic-brand-1"></script>
 
   <!-- Tweaks shell -->
-  <script src="app/build/tweaks-panel.js?v=hsg2818-runtime-2"></script>
+  <script src="app/build/tweaks-panel.js?v=hashcod-classic-runtime-2"></script>
 
   <!-- App -->
-  <script src="app/build/tech-info.js?v=hsg2818-runtime-2"></script>
-  <script src="app/build/vault.js?v=q7-radial-1"></script>
-  <script src="app/build/tour.js?v=hsg2818-runtime-2"></script>
-  <script src="app/build/app.js?v=q7-private-wallet-1"></script>
+  <script src="app/build/tech-info.js?v=hashcod-classic-runtime-2"></script>
+  <script src="app/build/vault.js?v=hashcod-classic-1"></script>
+  <script src="app/build/tour.js?v=hashcod-classic-runtime-2"></script>
+  <script src="app/build/app.js?v=hashcod-classic-wallet-1"></script>
 
-  <script src="app/build/root.js?v=q7-radial-1"></script>
+  <script src="app/build/root.js?v=hashcod-classic-1"></script>
   <script async src="vendor/qrcode.min.js?v=1.0.0"></script>
   <script async src="vendor/html2canvas.min.js?v=1.4.1"></script>
 </body>

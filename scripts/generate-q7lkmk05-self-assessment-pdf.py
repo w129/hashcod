@@ -25,7 +25,7 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPORTS = ROOT / "exports"
-PDF_PATH = EXPORTS / "Q+7LkMK05-Self-Assessment-and-Technical-Conformity-Report-v1.0.pdf"
+PDF_PATH = EXPORTS / "Hashcod-Self-Assessment-and-Technical-Conformity-Report-v1.0.pdf"
 SHA_PATH = PDF_PATH.with_suffix(PDF_PATH.suffix + ".sha256")
 DR_TZ = timezone(timedelta(hours=-4))
 ISSUED_AT = datetime.now(DR_TZ)
@@ -164,7 +164,7 @@ def page_decor(canvas, doc):
     canvas.line(54, 43, width - 54, 43)
     canvas.setFillColor(MUTED)
     canvas.setFont("Helvetica", 7.5)
-    canvas.drawString(54, 29, "Q+7LkMK05 | INTERNAL TECHNICAL SELF-ASSESSMENT | NOT AN OFFICIAL CERTIFICATION")
+    canvas.drawString(54, 29, "Hashcod | INTERNAL TECHNICAL SELF-ASSESSMENT | NOT AN OFFICIAL CERTIFICATION")
     canvas.drawRightString(width - 54, 29, f"PAGE {doc.page}")
     canvas.restoreState()
 
@@ -299,15 +299,15 @@ def build_report():
         leftMargin=0.72 * inch,
         topMargin=0.56 * inch,
         bottomMargin=0.68 * inch,
-        title="Q+7LkMK05 Self-Assessment and Technical Conformity Report v1.0",
-        author="Q+7LkMK05 Project",
+        title="Hashcod Self-Assessment and Technical Conformity Report v1.0",
+        author="Hashcod Project",
         subject="Internal technical self-assessment. Not an official certification.",
     )
     story = []
 
     identity = Table([
         [TerminalLogo(52), [
-            p("Q+7LkMK05", styles["ReportTitle"]),
+            p("Hashcod", styles["ReportTitle"]),
             p("SELF-ASSESSMENT AND TECHNICAL CONFORMITY REPORT v1.0", styles["Kicker"]),
             p("Internal engineering evidence package for the cryptographic platform snapshot.", styles["ReportSubtitle"]),
         ]]
@@ -332,14 +332,14 @@ def build_report():
     story.append(styled_table(metadata, [76, 190, 86, 154], header=False, font_size=7.8, row_bgs=True))
     story.append(Spacer(1, 13))
     story.append(p(
-        "LEGAL AND TECHNICAL NOTICE: This document is an internal self-assessment issued by the Q+7LkMK05 project. "
+        "LEGAL AND TECHNICAL NOTICE: This document is an internal self-assessment issued by the Hashcod project. "
         "It is not an official FIPS 140-3 validation, ISO/IEC 27001 certificate, SOC 2 examination, accredited "
         "laboratory result, penetration-test attestation, or legal guarantee of security.",
         styles["Callout"],
     ))
     story.append(p("Executive statement", styles["H1Custom"]))
     story.append(p(
-        "Q+7LkMK05 is a web-based cryptographic workstation and analysis platform. The evaluated snapshot includes "
+        "Hashcod is a web-based cryptographic workstation and analysis platform. The evaluated snapshot includes "
         "a 10,000-entry catalog, code generation workflows, export tools, database-oriented features, authentication "
         "controls, QR and evidence functions, visual laboratories, and operational utilities. The platform is suitable "
         "for controlled demonstrations, prototyping, educational work, internal evaluation, and further security hardening.",
@@ -501,7 +501,7 @@ def build_report():
     story.append(styled_table(roadmap_rows, [28, 120, 268, 90], font_size=7.5))
     story.append(p("Suggested public wording", styles["H2Custom"]))
     story.append(p(
-        '"Q+7LkMK05 maintains an internal technical self-assessment with reproducible repository checks. '
+        '"Hashcod maintains an internal technical self-assessment with reproducible repository checks. '
         'External certification and independent penetration testing remain separate assurance activities."',
         styles["PositiveCallout"],
     ))
@@ -530,7 +530,7 @@ def build_report():
     ))
     story.append(p("Sign-off", styles["H2Custom"]))
     signoff = [
-        [p("<b>Issued by</b>", styles["CellCustom"]), p("Q+7LkMK05 Project - Internal Technical Self-Assessment", styles["CellCustom"])],
+        [p("<b>Issued by</b>", styles["CellCustom"]), p("Hashcod Project - Internal Technical Self-Assessment", styles["CellCustom"])],
         [p("<b>Snapshot</b>", styles["CellCustom"]), p(full_commit, styles["CellSmall"])],
         [p("<b>Report ID</b>", styles["CellCustom"]), p(report_id, styles["CellCustom"])],
         [p("<b>Qualification</b>", styles["CellCustom"]), p("Internal evidence report only. External certification not claimed.", styles["CellCustom"])],

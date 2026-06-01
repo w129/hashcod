@@ -23,7 +23,7 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPORTS = ROOT / "exports"
-PDF_PATH = EXPORTS / "Q+7LkMK05-Proprietary-Software-License-v1.0.pdf"
+PDF_PATH = EXPORTS / "Hashcod-Proprietary-Software-License-v1.0.pdf"
 SHA_PATH = PDF_PATH.with_suffix(PDF_PATH.suffix + ".sha256")
 DR_TZ = timezone(timedelta(hours=-4))
 ISSUED_AT = datetime.now(DR_TZ)
@@ -154,7 +154,7 @@ def page_decor(canvas, doc):
     canvas.line(54, 43, width - 54, 43)
     canvas.setFillColor(MUTED)
     canvas.setFont("Helvetica", 7.3)
-    canvas.drawString(54, 29, "Q+7LkMK05 | PROPRIETARY SOFTWARE LICENSE | SIGNATURE-GATED AUTHORIZATION")
+    canvas.drawString(54, 29, "Hashcod | PROPRIETARY SOFTWARE LICENSE | SIGNATURE-GATED AUTHORIZATION")
     canvas.drawRightString(width - 54, 29, f"PAGE {doc.page}")
     canvas.restoreState()
 
@@ -177,7 +177,7 @@ def build():
     story = []
 
     story.append(Table(
-        [[TerminalLogo(42), p("<b>Q+7LkMK05</b><br/><font color='#5C6268'>CRYPTOGRAPHIC PLATFORM</font>", "SubtitleCustom")]],
+        [[TerminalLogo(42), p("<b>Hashcod</b><br/><font color='#5C6268'>CRYPTOGRAPHIC PLATFORM</font>", "SubtitleCustom")]],
         colWidths=[0.65 * inch, 5.7 * inch],
         style=TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]),
     ))
@@ -185,7 +185,7 @@ def build():
     story.append(p("PROPRIETARY SOFTWARE LICENSE", "Kicker"))
     story.append(p("Signature-Gated Authorization Agreement", "TitleCustom"))
     story.append(p(
-        "Licencia propietaria de uso restringido para Q+7LkMK05. Este documento establece "
+        "Licencia propietaria de uso restringido para Hashcod. Este documento establece "
         "las condiciones base; no concede acceso por sí solo.",
         "SubtitleCustom",
     ))
@@ -213,7 +213,7 @@ def build():
     story.append(Spacer(1, 8))
     story.append(p("Nature of this document", "H1Custom"))
     story.append(p(
-        "Q+7LkMK05, its code, interfaces, catalogs, reports, cryptographic workflows, "
+        "Hashcod, its code, interfaces, catalogs, reports, cryptographic workflows, "
         "graphics, scripts, documentation, and downloadable artifacts are proprietary. "
         "This agreement reserves all rights that have not been expressly granted in writing.",
     ))
@@ -346,7 +346,7 @@ def build():
     story.append(p(
         "This draft is not legal advice and is not an official registration, government certificate, "
         "notarial act, or digital-signature certificate. It is a proprietary software license template "
-        "prepared for Q+7LkMK05. Obtain legal review before relying on it commercially.",
+        "prepared for Hashcod. Obtain legal review before relying on it commercially.",
     ))
     story.append(p("Reference points", "H1Custom"))
     add_bullet(story, "WIPO Copyright: https://www.wipo.int/copyright/en/")

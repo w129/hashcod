@@ -27,7 +27,7 @@ const Root = () => {
     }
   }, [enterprise.ready, enterprise.status?.ok]);
   if (enterprise.ready && !enterprise.status?.ok) {
-    return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=q7-radial-1" alt="" /><div>Q+7LkMK05 <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate blocked startup. Review the failed self-tests.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
+    return <div className="boot-screen"><div className="boot-card"><div className="boot-logo"><img src="app/hashcod-platform-icon.svg?v=hashcod-classic-1" alt="" /><div>Hashcod <span>Cryptographic Platform</span></div></div><div className="boot-text">Enterprise gate blocked startup. Review the failed self-tests.</div><pre className="boot-error">{JSON.stringify(enterprise.status?.failed || [], null, 2)}</pre></div></div>;
   }
 
   const PlatformApp = window.App;
