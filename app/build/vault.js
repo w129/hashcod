@@ -86,7 +86,7 @@ const SipHashGate = ({
   }, React.createElement("div", {
     className: "siphash-mark"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
+    src: "app/hashcod-platform-icon.svg?v=q7-radial-1",
     alt: ""
   })), React.createElement("div", null, React.createElement("p", null, "Q+7LkMK05 v12"), React.createElement("h1", null, "Private Access"), React.createElement("small", null, "Enterprise cryptographic workspace"))), React.createElement("form", {
     onSubmit: submit,
@@ -316,7 +316,7 @@ const VaultLock = ({
   }, React.createElement("div", {
     className: "access-brand"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
+    src: "app/hashcod-platform-icon.svg?v=q7-radial-1",
     alt: ""
   }), React.createElement("div", null, React.createElement("p", null, "Q+7LkMK05 enterprise access"), React.createElement("h1", null, mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'))), React.createElement("span", {
     className: `access-state ${hasProfile ? 'is-ready' : ''}`

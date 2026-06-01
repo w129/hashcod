@@ -84,7 +84,7 @@ const SipHashGate = ({ onUnlock }) => {
       <section className="siphash-card">
         <div className="siphash-brand">
           <div className="siphash-mark">
-            <img src="app/hashcod-platform-icon.svg?v=q7-terminal-1" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=q7-radial-1" alt="" />
           </div>
           <div>
             <p>Q+7LkMK05 v12</p>
@@ -349,7 +349,7 @@ const VaultLock = ({ onUnlock }) => {
       <section className="access-shell">
         <header className="access-head">
           <div className="access-brand">
-            <img src="app/hashcod-platform-icon.svg?v=q7-terminal-1" alt="" />
+            <img src="app/hashcod-platform-icon.svg?v=q7-radial-1" alt="" />
             <div>
             <p>Q+7LkMK05 enterprise access</p>
             <h1>{mode === 'issue' ? 'Inicio de sesion seguro' : mode === 'register' ? 'Registro con log' : 'Inicio de sesion'}</h1>

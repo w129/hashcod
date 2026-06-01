@@ -1716,7 +1716,7 @@ const AdaptiveToolCard = ({
   }, React.createElement("div", null, React.createElement("span", null, L('Entradas', 'Inputs')), React.createElement("b", null, p.inputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Salidas', 'Outputs')), React.createElement("b", null, p.outputs.join(' · '))), React.createElement("div", null, React.createElement("span", null, L('Seguridad', 'Security')), React.createElement("b", null, p.security)), React.createElement("div", null, React.createElement("span", null, L('Funcion ideal', 'Best fit')), React.createElement("b", null, p.action))));
 };
 const PLATFORM_DISPLAY_NAME = 'Q+7LkMK05';
-const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 16 2-2-2-2"/><path d="M12 18h4"/></svg>';
+const HASHCOD_DOWNLOAD_LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16.712 4.33a9.027 9.027 0 0 1 1.652 1.306c.51.51.944 1.064 1.306 1.652M16.712 4.33l-3.448 4.138m3.448-4.138a9.014 9.014 0 0 0-9.424 0M19.67 7.288l-4.138 3.448m4.138-3.448a9.014 9.014 0 0 1 0 9.424m-4.138-5.976a3.736 3.736 0 0 0-.88-1.388 3.737 3.737 0 0 0-1.388-.88m2.268 2.268a3.765 3.765 0 0 1 0 2.528m-2.268-4.796a3.765 3.765 0 0 0-2.528 0m4.796 4.796c-.181.506-.475.982-.88 1.388a3.736 3.736 0 0 1-1.388.88m2.268-2.268 4.138 3.448m0 0a9.027 9.027 0 0 1-1.306 1.652c-.51.51-1.064.944-1.652 1.306m0 0-3.448-4.138m3.448 4.138a9.014 9.014 0 0 1-9.424 0m5.976-4.138a3.765 3.765 0 0 1-2.528 0m0 0a3.736 3.736 0 0 1-1.388-.88 3.737 3.737 0 0 1-.88-1.388m2.268 2.268L7.288 19.67m0 0a9.024 9.024 0 0 1-1.652-1.306 9.027 9.027 0 0 1-1.306-1.652m0 0 4.138-3.448M4.33 16.712a9.014 9.014 0 0 1 0-9.424m4.138 5.976a3.765 3.765 0 0 1 0-2.528m0 0c.181-.506.475-.982.88-1.388a3.736 3.736 0 0 1 1.388-.88m-2.268 2.268L4.33 7.288m6.406 1.18L7.288 4.33m0 0a9.024 9.024 0 0 0-1.652 1.306A9.025 9.025 0 0 0 4.33 7.288"/></svg>';
 const drawHSG2818CanvasLogo = (ctx, x, y, size = 36, color = '#111111') => {
   const line = Math.max(2, size * 0.075);
   const frameX = x + size * 0.18;
@@ -16215,7 +16215,7 @@ const CodeCertificateDialog = ({
     if (activeCertId === id) setActiveCertId('');
   };
   const certificateHtml = cert => {
-    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=q7-terminal-1';
+    const logoUrl = window.location.origin + '/app/hashcod-platform-icon.svg?v=q7-radial-1';
     const legal = L('Este certificado privado acredita que el code identificado fue generado o registrado dentro del ecosistema HSG2818 operado por diktatcart. No constituye certificación gubernamental, bancaria, notarial, financiera ni garantía de valor. Su validez se limita a los registros internos, condiciones de licencia y verificación privada de HSG2818.', 'This private certificate states that the identified code was generated or registered inside the HSG2818 ecosystem operated by diktatcart. It is not a governmental, banking, notarial, financial certification or value guarantee. Its validity is limited to internal records, license terms, and private HSG2818 verification.');
     const rowsHtml = [['ID', cert.id], [L('Titular', 'Holder'), cert.buyerName], ['Email', cert.buyerEmail || '—'], [L('Tipo de licencia', 'License type'), cert.licenseType], [L('Alcance', 'Scope'), cert.scope], [L('Code ID', 'Code ID'), cert.codeId], [L('Tipo de code', 'Code type'), cert.codeType], [L('Code visible', 'Visible code'), cert.codeValue], ['SHA-256 CODE', cert.codeHash], ['SHA-256 CERT', cert.certificateHash], [L('Emitido total', 'Issued total'), new Date(cert.issuedAt).toLocaleString()], ['RNC diktatcart', cert.issuerRnc], [L('Estado', 'Status'), cert.status], [L('Precio / referencia', 'Price / reference'), cert.price || '—']].map(([a, b]) => '<div class="row"><span>' + escapeHtmlLocal(a) + '</span><b>' + escapeHtmlLocal(b) + '</b></div>').join('');
     const notesHtml = cert.notes ? '<div class="notes"><span>NOTAS</span><p>' + escapeHtmlLocal(cert.notes) + '</p></div>' : '';
@@ -16306,7 +16306,7 @@ const CodeCertificateDialog = ({
   }, React.createElement("div", {
     className: "certdlg-logo-wrap"
   }, React.createElement("img", {
-    src: "app/hashcod-platform-icon.svg?v=q7-terminal-1",
+    src: "app/hashcod-platform-icon.svg?v=q7-radial-1",
     alt: PLATFORM_DISPLAY_NAME
   })), React.createElement("div", {
     className: "certdlg-k"
