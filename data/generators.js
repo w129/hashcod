@@ -21,12 +21,23 @@
   const EMOJI_ARR = [...EMOJI];
 
   function bytes(n) { const a = new Uint8Array(n); crypto.getRandomValues(a); return a; }
-  function rint(max) { return crypto.getRandomValues(new Uint32Array(1))[0] % max; }
+  function rint(max) {
+    const limit = Number(max);
+    if (!Number.isSafeInteger(limit) || limit <= 0 || limit > 0x100000000) {
+      throw new RangeError('Random range must be an integer between 1 and 2^32.');
+    }
+    const ceiling = Math.floor(0x100000000 / limit) * limit;
+    let value;
+    do {
+      value = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (value >= ceiling);
+    return value % limit;
+  }
   function pick(s) { return s[rint(s.length)]; }
   function fromAlpha(n, alpha) {
-    const b = bytes(n);
+    if (!alpha || !alpha.length) throw new Error('Alphabet cannot be empty.');
     let out = '';
-    for (let i = 0; i < n; i++) out += alpha[b[i] % alpha.length];
+    for (let i = 0; i < n; i++) out += alpha[rint(alpha.length)];
     return out;
   }
   function toHex(b) { return [...b].map(x => x.toString(16).padStart(2,'0')).join(''); }
@@ -283,13 +294,21 @@
   function xkcdPwd() { return passphrase(4, WORDS, ' '); }
 
   function password(len, opts) {
-    let alpha = '';
-    if (opts.upper) alpha += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (opts.lower) alpha += 'abcdefghijklmnopqrstuvwxyz';
-    if (opts.num)   alpha += '0123456789';
-    if (opts.sym)   alpha += SYMBOLS;
-    if (!alpha) alpha = ALPHANUM;
-    return fromAlpha(len, alpha);
+    const groups = [];
+    if (opts.upper) groups.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    if (opts.lower) groups.push('abcdefghijklmnopqrstuvwxyz');
+    if (opts.num)   groups.push('0123456789');
+    if (opts.sym)   groups.push(SYMBOLS);
+    if (!groups.length) groups.push(ALPHANUM);
+    const size = Math.max(groups.length, Number(len) || 32);
+    const alpha = groups.join('');
+    const chars = groups.map(group => pick(group));
+    while (chars.length < size) chars.push(pick(alpha));
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = rint(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    return chars.join('');
   }
 
 

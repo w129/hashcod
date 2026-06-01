@@ -1205,6 +1205,7 @@ const generationStrengthLabel = strength => {
   if (strength >= 1) return 'STANDARD';
   return 'LIGHT';
 };
+const sanitizeApiPrefix = value => String(value || '').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 24);
 const ConfigBar = ({
   type,
   length,
@@ -1230,6 +1231,14 @@ const ConfigBar = ({
   const maxBatch = plan?.maxBatch || MAX_GENERATION_BATCH;
   const setPlanQty = value => setQty(Math.max(1, Math.min(maxBatch, Number(value) || 1)));
   const effectiveLength = scaledGenerationLength(length, strength);
+  const activeCharsetCount = Object.values(charset).filter(Boolean).length;
+  const toggleCharset = key => {
+    if (charset[key] && activeCharsetCount === 1) return;
+    setCharset({
+      ...charset,
+      [key]: !charset[key]
+    });
+  };
   return React.createElement("div", {
     className: "cfg"
   }, React.createElement("div", {
@@ -1258,10 +1267,12 @@ const ConfigBar = ({
   }, t('prefix')), React.createElement("input", {
     className: "cfg-inp",
     value: prefix,
-    onChange: e => setPrefix(e.target.value),
+    onChange: e => setPrefix(sanitizeApiPrefix(e.target.value)),
     placeholder: "ocg_",
-    maxLength: 16
-  })), type?.hasLen && React.createElement("div", {
+    maxLength: 24
+  }), React.createElement("div", {
+    className: "cfg-api-hardening"
+  }, React.createElement("b", null, "API CSPRNG+"), React.createElement("span", null, language === 'es' ? 'seleccion uniforme' : 'uniform selection'), React.createElement("span", null, language === 'es' ? 'cobertura charset' : 'charset coverage'))), type?.hasLen && React.createElement("div", {
     className: "cfg-g"
   }, React.createElement("label", {
     className: "cfg-l"
@@ -1301,10 +1312,9 @@ const ConfigBar = ({
   }) => React.createElement("button", {
     key: k,
     className: `cs-b ${charset[k] ? 'on' : ''}`,
-    onClick: () => setCharset({
-      ...charset,
-      [k]: !charset[k]
-    })
+    onClick: () => toggleCharset(k),
+    "aria-pressed": !!charset[k],
+    title: charset[k] && activeCharsetCount === 1 ? language === 'es' ? 'Debe quedar al menos un conjunto activo.' : 'At least one charset must remain active.' : l
   }, l)))), React.createElement("div", {
     className: "cfg-g"
   }, React.createElement("label", {

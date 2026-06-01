@@ -86,6 +86,16 @@ function assert(ok, id, detail = '') {
   const hc10000 = catalog.find(cat => cat.id === 'hashcod_advanced_8282');
   assert(hc10000 && hc10000.types && hc10000.types.length === 8282, 'hashcod-8282-complete', `${hc10000 ? hc10000.types.length : 0}/8282`);
 
+  const variants = catalog.flatMap(cat => cat.types || []);
+  const apiVariant = variants.find(type => type.hashcodVariant === 'HCV-00185');
+  assert(apiVariant && apiVariant.id === 'apikey', 'hashcod-variant-00185-api-key', apiVariant ? apiVariant.id : 'missing');
+
+  const apiPrefix = 'svc.prod_';
+  const apiOut = await ctx.window.OCG_GEN.generate('apikey', 64, { prefix: apiPrefix, upper: true, lower: true, num: true, sym: true });
+  const apiPayload = apiOut.slice(apiPrefix.length);
+  assert(apiOut.startsWith(apiPrefix) && apiPayload.length === 64, 'api-key-prefix-length', `${apiPayload.length} chars`);
+  assert(/[A-Z]/.test(apiPayload) && /[a-z]/.test(apiPayload) && /[0-9]/.test(apiPayload) && /[^A-Za-z0-9]/.test(apiPayload), 'api-key-charset-coverage');
+
   const out = await ctx.window.OCG_GEN.generate('neo_code_200', 32, {});
   assert(/^OCG-NEO\./.test(out) && /^CHECK=/m.test(out), 'neo-generator-health', out.split('\n')[0]);
 

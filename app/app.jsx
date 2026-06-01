@@ -545,11 +545,17 @@ const generationStrengthLabel = (strength) => {
   if (strength >= 1) return 'STANDARD';
   return 'LIGHT';
 };
+const sanitizeApiPrefix = (value) => String(value || '').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 24);
 
 const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan, language }) => {
   const maxBatch = plan?.maxBatch || MAX_GENERATION_BATCH;
   const setPlanQty = (value) => setQty(Math.max(1, Math.min(maxBatch, Number(value) || 1)));
   const effectiveLength = scaledGenerationLength(length, strength);
+  const activeCharsetCount = Object.values(charset).filter(Boolean).length;
+  const toggleCharset = (key) => {
+    if (charset[key] && activeCharsetCount === 1) return;
+    setCharset({ ...charset, [key]: !charset[key] });
+  };
   return (
     <div className="cfg">
       <div className="cfg-strength">
@@ -581,7 +587,12 @@ const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty
       {type?.id === 'apikey' && (
         <div className="cfg-g">
           <label className="cfg-l">{t('prefix')}</label>
-          <input className="cfg-inp" value={prefix} onChange={e => setPrefix(e.target.value)} placeholder="ocg_" maxLength={16} />
+          <input className="cfg-inp" value={prefix} onChange={e => setPrefix(sanitizeApiPrefix(e.target.value))} placeholder="ocg_" maxLength={24} />
+          <div className="cfg-api-hardening">
+            <b>API CSPRNG+</b>
+            <span>{language === 'es' ? 'seleccion uniforme' : 'uniform selection'}</span>
+            <span>{language === 'es' ? 'cobertura charset' : 'charset coverage'}</span>
+          </div>
         </div>
       )}
 
@@ -609,7 +620,9 @@ const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty
               <button
                 key={k}
                 className={`cs-b ${charset[k] ? 'on' : ''}`}
-                onClick={() => setCharset({ ...charset, [k]: !charset[k] })}
+                onClick={() => toggleCharset(k)}
+                aria-pressed={!!charset[k]}
+                title={charset[k] && activeCharsetCount === 1 ? (language === 'es' ? 'Debe quedar al menos un conjunto activo.' : 'At least one charset must remain active.') : l}
               >{l}</button>
             ))}
           </div>

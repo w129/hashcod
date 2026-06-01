@@ -4261,6 +4261,29 @@ kbd {
   .codegui-command, .codegui-report { grid-template-columns:1fr; }
 }
 .cfg-plan-limit { margin-top: 5px; color: var(--ink-4); font-size: 9px; letter-spacing: .8px; text-transform: uppercase; }
+.cfg-api-hardening {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  max-width: 260px;
+}
+.cfg-api-hardening b,
+.cfg-api-hardening span {
+  border: 1px solid var(--line);
+  padding: 3px 5px;
+  color: var(--ink-3);
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: .8px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.cfg-api-hardening b {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
 .plandlg { width: min(980px, calc(100vw - 48px)); }
 .plandlg-active { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #0a0a0a; color: #fff; text-transform: uppercase; letter-spacing: 1px; font-size: 10px; }
 .plandlg-active b { font-size: 13px; }
