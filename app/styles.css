@@ -8353,7 +8353,13 @@ textarea:focus-visible {
   color:#fff;
 }
 .filepack-mark svg,
-.filepack-dropicon svg { width:24px;height:24px;display:block; }
+.filepack-dropicon svg {
+  display:block !important;
+  width:24px !important;
+  height:24px !important;
+  max-width:24px !important;
+  max-height:24px !important;
+}
 .filepack-shell { display:grid;grid-template-columns:260px minmax(0,1fr);min-height:560px; }
 .filepack-side { display:grid;align-content:start;gap:10px;padding:16px;border-right:1px solid var(--line);background:var(--bg-soft); }
 .filepack-side label { display:grid;gap:7px; }
