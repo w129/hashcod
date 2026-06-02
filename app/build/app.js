@@ -9415,21 +9415,27 @@ const PdfStampDialog = ({
   open,
   onClose,
   notify,
-  language
+  language,
+  rows = []
 }) => {
   const L = (es, en) => language === 'es' ? es : en;
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [fileDigest, setFileDigest] = useState('');
+  const [selectedCodeIndex, setSelectedCodeIndex] = useState('0');
   const [position, setPosition] = useState('bottom-right');
-  const [stampWidth, setStampWidth] = useState(168);
+  const [stampWidth, setStampWidth] = useState(286);
   const [opacity, setOpacity] = useState(0.88);
   const [allPages, setAllPages] = useState(true);
   const [singlePage, setSinglePage] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const MAX_PDF_BYTES = 48 * 1024 * 1024;
+  const availableCodes = useMemo(() => rows.filter(row => row?.value), [rows]);
+  const selectedCode = availableCodes[Math.max(0, Math.min(availableCodes.length - 1, Number(selectedCodeIndex) || 0))] || null;
+  const selectedCodeValue = String(selectedCode?.value || '');
+  const selectedCodeId = selectedCode ? `HC-${String(selectedCode.idx || selectedCode.id || Number(selectedCodeIndex) + 1).padStart(5, '0')}-${String(selectedCode.type || 'CODE').toUpperCase()}` : '';
   if (!open) return null;
   const prettyBytes = (value = 0) => {
     const bytes = Number(value) || 0;
@@ -9440,6 +9446,22 @@ const PdfStampDialog = ({
   const hashBytes = async bytes => {
     const hash = await crypto.subtle.digest('SHA-256', bytes);
     return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+  };
+  const buildStampQrPng = async value => {
+    if (!value || !window.QRCode) throw new Error('QRCode unavailable');
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:-99999px;top:0;width:180px;height:180px;';
+    document.body.appendChild(host);
+    try {
+      const {
+        node
+      } = await tryRenderQr(host, value, 180, 'M');
+      if (node.tagName.toLowerCase() === 'canvas') return node.toDataURL('image/png');
+      if (node.tagName.toLowerCase() === 'img') return node.src;
+      throw new Error('QR image unavailable');
+    } finally {
+      host.remove();
+    }
   };
   const resetFile = () => {
     setFile(null);
@@ -9479,18 +9501,18 @@ const PdfStampDialog = ({
       setBusy(false);
     }
   };
-  const drawHashcodStamp = (page, pdf, fonts, digest, stampedAt) => {
+  const drawHashcodStamp = (page, pdf, fonts, digest, stampedAt, codeId, codeDigest, qrImage) => {
     const {
       rgb
     } = window.PDFLib;
-    const blue = rgb(0.035, 0.31, 0.78);
+    const black = rgb(0, 0, 0);
     const {
       width,
       height
     } = page.getSize();
     const margin = 22;
-    const boxWidth = Math.min(Number(stampWidth) || 168, Math.max(112, width - margin * 2));
-    const boxHeight = Math.max(56, boxWidth * 0.39);
+    const boxWidth = Math.min(Number(stampWidth) || 286, Math.max(216, width - margin * 2));
+    const boxHeight = Math.max(76, boxWidth * 0.3);
     const coords = {
       'top-left': [margin, height - margin - boxHeight],
       'top-right': [width - margin - boxWidth, height - margin - boxHeight],
@@ -9502,63 +9524,81 @@ const PdfStampDialog = ({
     const logoX = x + 11;
     const logoY = y + (boxHeight - logoSize) / 2 + 2;
     const lineWidth = Math.max(1.4, boxWidth / 110);
+    const qrSize = Math.max(48, boxHeight - 14);
+    const qrX = x + boxWidth - qrSize - 7;
+    const qrY = y + (boxHeight - qrSize) / 2;
     page.drawRectangle({
       x,
       y,
       width: boxWidth,
       height: boxHeight,
-      borderColor: blue,
+      borderColor: black,
       borderWidth: lineWidth,
       opacity
     });
     const logoOptions = {
       x: logoX,
       y: logoY + logoSize,
-      color: blue,
+      color: black,
       opacity,
       scale: logoSize / 32
     };
     page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
     page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
     const textX = logoX + logoSize + 9;
-    const availableTextWidth = Math.max(50, boxWidth - (textX - x) - 8);
+    const availableTextWidth = Math.max(50, qrX - textX - 6);
     const titleSize = Math.max(8, Math.min(13, availableTextWidth / 7.2));
     const metaSize = Math.max(5.5, Math.min(7.2, titleSize * 0.56));
     page.drawText('HASHCOD', {
       x: textX,
-      y: y + boxHeight * 0.6,
+      y: y + boxHeight * 0.69,
       size: titleSize,
       font: fonts.bold,
-      color: blue,
+      color: black,
       opacity
     });
     page.drawText('VERIFIED PDF STAMP', {
       x: textX,
-      y: y + boxHeight * 0.39,
+      y: y + boxHeight * 0.5,
       size: metaSize,
       font: fonts.bold,
-      color: blue,
+      color: black,
       opacity
     });
-    page.drawText(`SHA256 ${digest.slice(0, 16).toUpperCase()}`, {
+    page.drawText(codeId.slice(0, 34), {
       x: textX,
-      y: y + boxHeight * 0.22,
+      y: y + boxHeight * 0.34,
       size: metaSize,
       font: fonts.regular,
-      color: blue,
+      color: black,
       opacity
     });
-    page.drawText(stampedAt.slice(0, 19) + 'Z', {
+    page.drawText(`CODE ${codeDigest.slice(0, 14).toUpperCase()}`, {
       x: textX,
-      y: y + boxHeight * 0.07,
+      y: y + boxHeight * 0.19,
       size: metaSize,
       font: fonts.regular,
-      color: blue,
+      color: black,
+      opacity
+    });
+    page.drawText(`PDF ${digest.slice(0, 14).toUpperCase()} | ${stampedAt.slice(0, 10)}`, {
+      x: textX,
+      y: y + boxHeight * 0.05,
+      size: metaSize,
+      font: fonts.regular,
+      color: black,
+      opacity
+    });
+    page.drawImage(qrImage, {
+      x: qrX,
+      y: qrY,
+      width: qrSize,
+      height: qrSize,
       opacity
     });
   };
   const stampAndDownload = async () => {
-    if (!file || busy || !window.PDFLib?.PDFDocument) return;
+    if (!file || !selectedCodeValue || busy || !window.PDFLib?.PDFDocument) return;
     setBusy(true);
     setError('');
     try {
@@ -9571,10 +9611,12 @@ const PdfStampDialog = ({
         regular: await pdf.embedFont(window.PDFLib.StandardFonts.Helvetica)
       };
       const stampedAt = new Date().toISOString();
-      targetIndexes.forEach(index => drawHashcodStamp(pages[index], pdf, fonts, fileDigest, stampedAt));
+      const codeDigest = await digestHex(selectedCodeValue);
+      const qrImage = await pdf.embedPng(await buildStampQrPng(selectedCodeValue));
+      targetIndexes.forEach(index => drawHashcodStamp(pages[index], pdf, fonts, fileDigest, stampedAt, selectedCodeId, codeDigest, qrImage));
       pdf.setProducer('Hashcod Cryptographic Platform');
       pdf.setCreator('Hashcod PDF Stamp');
-      pdf.setSubject(`Hashcod blue vector stamp | original SHA-256 ${fileDigest}`);
+      pdf.setSubject(`Hashcod black QR stamp | ${selectedCodeId} | PDF SHA-256 ${fileDigest} | CODE SHA-256 ${codeDigest}`);
       pdf.setModificationDate(new Date());
       const output = await pdf.save();
       const name = String(file.name || 'document.pdf').replace(/\.pdf$/i, '');
@@ -9604,7 +9646,7 @@ const PdfStampDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.pdfStamp
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('Aplica un sello vectorial azul de Hashcod y descarga un PDF nuevo sin subir el archivo.', 'Apply a blue Hashcod vector stamp and download a new PDF without uploading the file.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('Aplica un sello negro de Hashcod con un QR enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'Apply a black Hashcod stamp with a QR linked to a saved code and download a new PDF without uploading the file.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -9629,7 +9671,7 @@ const PdfStampDialog = ({
     className: "pdfstamp-stats"
   }, React.createElement("div", null, React.createElement("span", null, L('Paginas', 'Pages')), React.createElement("b", null, pageCount || '---')), React.createElement("div", null, React.createElement("span", null, L('Tamano', 'Size')), React.createElement("b", null, file ? prettyBytes(file.size) : '---')), React.createElement("div", null, React.createElement("span", null, L('Proceso', 'Process')), React.createElement("b", null, L('Local', 'Local'))), React.createElement("div", null, React.createElement("span", null, L('Salida', 'Output')), React.createElement("b", null, "PDF"))), React.createElement("p", {
     className: "pdfstamp-note"
-  }, L('El original permanece intacto. El navegador crea un segundo PDF con el sello vectorial y la huella SHA-256 del documento original.', 'The original remains unchanged. The browser creates a second PDF with the vector stamp and the original document SHA-256 digest.'))), React.createElement("main", {
+  }, L('El original permanece intacto. El QR contiene exactamente el code seleccionado de la base de datos y el PDF nuevo incluye las huellas SHA-256 del documento y del code.', 'The original remains unchanged. The QR contains the exact selected database code and the new PDF includes SHA-256 digests for the document and code.'))), React.createElement("main", {
     className: "pdfstamp-main"
   }, React.createElement("div", {
     className: "pdfstamp-preview"
@@ -9639,13 +9681,29 @@ const PdfStampDialog = ({
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS.brand(48)
     }
-  }), React.createElement("div", null, React.createElement("b", null, "HASHCOD"), React.createElement("strong", null, "VERIFIED PDF STAMP"), React.createElement("small", null, "SHA256 ", fileDigest ? fileDigest.slice(0, 16).toUpperCase() : '----------------')))), error && React.createElement("div", {
+  }), React.createElement("div", null, React.createElement("b", null, "HASHCOD"), React.createElement("strong", null, "VERIFIED PDF STAMP"), React.createElement("small", null, selectedCodeId || 'HC----- SELECT DATABASE CODE'), React.createElement("small", null, "PDF ", fileDigest ? fileDigest.slice(0, 14).toUpperCase() : '--------------')), React.createElement("div", {
+    className: "pdfstamp-qr"
+  }, selectedCodeValue ? React.createElement(QrCanvas, {
+    payload: selectedCodeValue,
+    size: 58,
+    correctLevel: "M"
+  }) : React.createElement("span", null, "QR")))), error && React.createElement("div", {
     className: "pdfstamp-error"
   }, error), React.createElement("div", {
     className: "pdfstamp-file"
   }, React.createElement("span", null, L('Documento seleccionado', 'Selected document')), React.createElement("b", null, file?.name || L('Todavia no has subido un PDF.', 'No PDF uploaded yet.')), fileDigest && React.createElement("code", null, fileDigest)), React.createElement("div", {
     className: "pdfstamp-controls"
-  }, React.createElement("label", null, React.createElement("span", null, L('Posicion del sello', 'Stamp position')), React.createElement("select", {
+  }, React.createElement("label", {
+    className: "pdfstamp-code-select"
+  }, React.createElement("span", null, L('Code identificador de base de datos', 'Database identifier code')), React.createElement("select", {
+    value: selectedCodeIndex,
+    onChange: event => setSelectedCodeIndex(event.target.value)
+  }, availableCodes.length ? availableCodes.map((row, index) => React.createElement("option", {
+    key: `${row.id || row.idx || index}-${index}`,
+    value: String(index)
+  }, String(row.idx || index + 1).padStart(5, '0'), " | ", row.type || 'code', " | ", String(row.value).slice(0, 36))) : React.createElement("option", {
+    value: "0"
+  }, L('Base de datos vacia', 'Database is empty')))), React.createElement("label", null, React.createElement("span", null, L('Posicion del sello', 'Stamp position')), React.createElement("select", {
     value: position,
     onChange: event => setPosition(event.target.value)
   }, React.createElement("option", {
@@ -9658,8 +9716,8 @@ const PdfStampDialog = ({
     value: "top-left"
   }, L('Arriba izquierda', 'Top left')))), React.createElement("label", null, React.createElement("span", null, L('Ancho', 'Width'), " ", stampWidth, "px"), React.createElement("input", {
     type: "range",
-    min: "120",
-    max: "240",
+    min: "220",
+    max: "360",
     step: "4",
     value: stampWidth,
     onChange: event => setStampWidth(Number(event.target.value))
@@ -9684,10 +9742,10 @@ const PdfStampDialog = ({
     onChange: event => setSinglePage(Number(event.target.value))
   }))), React.createElement("div", {
     className: "pdfstamp-footer"
-  }, React.createElement("span", null, L('Sello azul vectorial | SHA-256 | procesamiento local', 'Blue vector stamp | SHA-256 | local processing')), React.createElement("button", {
+  }, React.createElement("span", null, L('Sello negro | QR del code guardado | doble SHA-256 | procesamiento local', 'Black stamp | saved-code QR | dual SHA-256 | local processing')), React.createElement("button", {
     className: "pdfstamp-mainbtn",
     onClick: stampAndDownload,
-    disabled: !file || busy
+    disabled: !file || !selectedCodeValue || busy
   }, busy ? L('Procesando PDF...', 'Processing PDF...') : L('Descargar PDF sellado', 'Download stamped PDF')))))));
 };
 const ComplexEntropyMapDialog = ({
@@ -24527,7 +24585,8 @@ const App = () => {
     open: pdfStampOpen,
     onClose: () => setPdfStampOpen(false),
     notify: notify,
-    language: language
+    language: language,
+    rows: copyDb
   }), React.createElement(GraphLabDialog, {
     open: graphLabOpen,
     onClose: () => setGraphLabOpen(false),

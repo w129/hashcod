@@ -8453,8 +8453,8 @@ textarea:focus-visible {
   flex:0 0 48px;
   width:48px;
   height:48px;
-  border:1px solid #0754c8;
-  background:#0754c8;
+  border:1px solid #101010;
+  background:#101010;
   color:#fff;
 }
 .pdfstamp-mark svg { display:block;width:25px;height:25px; }
@@ -8464,8 +8464,8 @@ textarea:focus-visible {
 .pdfstamp-subbtn {
   min-height:40px;
   padding:0 14px;
-  border:1px solid #0754c8;
-  background:#0754c8;
+  border:1px solid #101010;
+  background:#101010;
   color:#fff;
   font-size:10px;
   font-weight:700;
@@ -8496,10 +8496,10 @@ textarea:focus-visible {
   display:grid;
   min-height:138px;
   place-items:center;
-  border:1px dashed #97b6e9;
+  border:1px dashed #b5b5b5;
   background:
-    linear-gradient(90deg,rgba(7,84,200,.045) 1px,transparent 1px),
-    linear-gradient(rgba(7,84,200,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,0,0,.045) 1px,transparent 1px),
+    linear-gradient(rgba(0,0,0,.045) 1px,transparent 1px),
     var(--bg-soft);
   background-size:18px 18px;
 }
@@ -8507,29 +8507,35 @@ textarea:focus-visible {
   display:flex;
   align-items:center;
   gap:10px;
-  min-width:250px;
-  padding:12px 14px;
-  border:2px solid #0754c8;
-  color:#0754c8;
+  min-width:390px;
+  padding:9px 11px;
+  border:2px solid #101010;
+  color:#101010;
   background:rgba(255,255,255,.76);
 }
-.pdfstamp-seal > span { display:grid;place-items:center;color:#0754c8; }
+.pdfstamp-seal > span { display:grid;place-items:center;color:#101010; }
 .pdfstamp-seal svg { width:44px;height:44px; }
 .pdfstamp-seal div { display:grid;gap:2px; }
 .pdfstamp-seal b { font-family:var(--mono);font-size:20px;letter-spacing:1px; }
 .pdfstamp-seal strong,
 .pdfstamp-seal small { font-family:var(--mono);font-size:9px;letter-spacing:1px; }
+.pdfstamp-qr { display:grid !important;flex:0 0 62px;width:62px;height:62px;margin-left:auto;place-items:center;border-left:1px solid #101010;padding-left:5px;font-family:var(--mono);font-size:10px; }
+.pdfstamp-qr .qrdlg-qrbox { display:grid;place-items:center;width:58px;height:58px;overflow:hidden; }
+.pdfstamp-qr canvas,
+.pdfstamp-qr img,
+.pdfstamp-qr svg { display:block;width:58px !important;height:58px !important; }
 .pdfstamp-error { padding:10px 12px;border-left:4px solid #b42318;background:#fff0ee;color:#8b1c13;font-family:var(--mono);font-size:11px; }
 .pdfstamp-file { display:grid;gap:6px;min-width:0;padding:12px;border:1px solid var(--line);background:var(--bg-soft); }
 .pdfstamp-file b { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12px; }
-.pdfstamp-file code { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0754c8;font-family:var(--mono);font-size:10px; }
+.pdfstamp-file code { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#101010;font-family:var(--mono);font-size:10px; }
 .pdfstamp-controls { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;border:1px solid var(--line);background:var(--bg-soft); }
 .pdfstamp-controls label { display:grid;gap:7px;min-width:0; }
 .pdfstamp-controls select,
 .pdfstamp-controls input[type="number"] { width:100%;min-height:36px;padding:7px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font-family:var(--mono); }
-.pdfstamp-controls input[type="range"] { accent-color:#0754c8; }
+.pdfstamp-controls input[type="range"] { accent-color:#101010; }
 .pdfstamp-check { display:flex !important;align-items:center;gap:8px !important; }
-.pdfstamp-check input { accent-color:#0754c8; }
+.pdfstamp-check input { accent-color:#101010; }
+.pdfstamp-code-select { grid-column:1 / -1; }
 .pdfstamp-footer { display:flex;align-items:center;justify-content:space-between;gap:12px;align-self:end; }
 .pdfstamp-footer span { color:var(--ink-4);font-family:var(--mono);font-size:10px; }
 
@@ -8540,4 +8546,7 @@ textarea:focus-visible {
   .pdfstamp-main { min-height:430px; }
   .pdfstamp-controls { grid-template-columns:1fr; }
   .pdfstamp-footer { align-items:stretch;flex-direction:column; }
+  .pdfstamp-seal { min-width:0;max-width:100%; }
+  .pdfstamp-seal svg { width:34px;height:34px; }
+  .pdfstamp-seal b { font-size:16px; }
 }
