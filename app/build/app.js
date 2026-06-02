@@ -1272,7 +1272,9 @@ const ConfigBar = ({
   }, React.createElement("label", {
     className: "cfg-l",
     htmlFor: "generation-prefix"
-  }, language === 'es' ? 'Prefijo global de salida' : 'Global output prefix'), React.createElement("small", null, language === 'es' ? 'Aparece al inicio de cada code generado. Usa letras, numeros y . _ : / -' : 'Appears at the beginning of every generated code. Use letters, numbers and . _ : / -')), React.createElement("input", {
+  }, language === 'es' ? 'Prefijo global de salida' : 'Global output prefix'), React.createElement("small", null, language === 'es' ? 'Aparece al inicio de cada code generado. Usa letras, numeros y . _ : / -' : 'Appears at the beginning of every generated code. Use letters, numbers and . _ : / -')), React.createElement("div", {
+    className: "cfg-prefix-controls"
+  }, React.createElement("input", {
     id: "generation-prefix",
     className: "cfg-inp",
     value: generationPrefix,
@@ -1280,13 +1282,13 @@ const ConfigBar = ({
     placeholder: "HASHCOD:",
     maxLength: 40,
     spellCheck: "false"
-  }), React.createElement("button", {
+  }), React.createElement("span", {
+    className: "cfg-prefix-preview"
+  }, React.createElement("b", null, language === 'es' ? 'Vista previa' : 'Preview'), generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX')), React.createElement("button", {
     className: "cfg-prefix-clear",
     onClick: () => setGenerationPrefix(''),
     disabled: !generationPrefix
-  }, language === 'es' ? 'Limpiar' : 'Clear'), React.createElement("span", {
-    className: "cfg-prefix-preview"
-  }, generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX'))), type?.id === 'apikey' && React.createElement("div", {
+  }, language === 'es' ? 'Limpiar' : 'Clear'))), type?.id === 'apikey' && React.createElement("div", {
     className: "cfg-g"
   }, React.createElement("label", {
     className: "cfg-l"

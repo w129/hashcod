@@ -592,17 +592,19 @@ const ConfigBar = ({ type, length, setLength, strength, setStrength, generationP
           <label className="cfg-l" htmlFor="generation-prefix">{language === 'es' ? 'Prefijo global de salida' : 'Global output prefix'}</label>
           <small>{language === 'es' ? 'Aparece al inicio de cada code generado. Usa letras, numeros y . _ : / -' : 'Appears at the beginning of every generated code. Use letters, numbers and . _ : / -'}</small>
         </div>
-        <input
-          id="generation-prefix"
-          className="cfg-inp"
-          value={generationPrefix}
-          onChange={(event) => setGenerationPrefix(sanitizeGenerationPrefix(event.target.value))}
-          placeholder="HASHCOD:"
-          maxLength={40}
-          spellCheck="false"
-        />
-        <button className="cfg-prefix-clear" onClick={() => setGenerationPrefix('')} disabled={!generationPrefix}>{language === 'es' ? 'Limpiar' : 'Clear'}</button>
-        <span className="cfg-prefix-preview">{generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX')}</span>
+        <div className="cfg-prefix-controls">
+          <input
+            id="generation-prefix"
+            className="cfg-inp"
+            value={generationPrefix}
+            onChange={(event) => setGenerationPrefix(sanitizeGenerationPrefix(event.target.value))}
+            placeholder="HASHCOD:"
+            maxLength={40}
+            spellCheck="false"
+          />
+          <span className="cfg-prefix-preview"><b>{language === 'es' ? 'Vista previa' : 'Preview'}</b>{generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX')}</span>
+          <button className="cfg-prefix-clear" onClick={() => setGenerationPrefix('')} disabled={!generationPrefix}>{language === 'es' ? 'Limpiar' : 'Clear'}</button>
+        </div>
       </div>
 
       {type?.id === 'apikey' && (

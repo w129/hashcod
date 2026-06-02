@@ -2741,10 +2741,8 @@ kbd {
 .cfg-global-prefix {
   flex: 1 0 100%;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 420px) auto auto;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid var(--line);
   background: var(--bg-alt);
 }
@@ -2761,8 +2759,18 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.cfg-prefix-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 420px) minmax(120px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.cfg-prefix-controls .cfg-inp {
+  width: 100%;
+  min-width: 0;
+}
 .cfg-prefix-clear {
-  height: 30px;
+  height: 32px;
   border: 1px solid var(--line-2);
   background: var(--bg);
   color: var(--ink);
@@ -2773,18 +2781,35 @@ kbd {
 }
 .cfg-prefix-clear:disabled { color: var(--ink-4); }
 .cfg-prefix-preview {
-  max-width: 160px;
   overflow: hidden;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  min-height: 32px;
+  border-left: 1px solid var(--line);
   color: var(--ink-3);
+  padding: 0 10px;
   font-size: 9px;
   letter-spacing: 1px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.cfg-prefix-preview b {
+  color: var(--ink-4);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
 @media (max-width: 900px) {
-  .cfg-global-prefix { grid-template-columns: minmax(0,1fr) auto; }
-  .cfg-global-prefix-copy { grid-column: 1 / -1; }
-  .cfg-prefix-preview { display:none; }
+  .cfg-prefix-controls { grid-template-columns:minmax(0,1fr) auto; }
+  .cfg-prefix-preview { grid-column:1 / -1; grid-row:2; border-left:0; padding:0; }
+}
+@media (max-width: 520px) {
+  .cfg-prefix-controls { grid-template-columns:1fr; }
+  .cfg-prefix-preview { grid-column:auto; grid-row:auto; }
+  .cfg-prefix-clear { width:100%; }
 }
 
 /* Hashcod layered design studio */
