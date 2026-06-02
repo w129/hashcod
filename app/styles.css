@@ -7659,6 +7659,27 @@ body ::selection { background:#101010 !important; color:#ffffff !important; }
   animation:none !important;
 }
 
+/* Fluid runtime: render only visible catalog and output regions while scrolling. */
+.sb-cat {
+  contain:layout paint style;
+  content-visibility:auto;
+  contain-intrinsic-size:38px 320px;
+}
+
+.sb-list-more {
+  padding:7px 14px 7px 24px;
+  border-top:1px dashed var(--line);
+  color:var(--ink-4);
+  font-size:9px;
+  letter-spacing:.6px;
+  line-height:1.4;
+}
+
+.sb-nav,
+.out {
+  overscroll-behavior:contain;
+}
+
 /* Visible from the initial HTML response, before the React runtime is ready. */
 .instant-boot {
   min-height:100vh;

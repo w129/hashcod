@@ -130,6 +130,7 @@ function assert(ok, id, detail = '') {
   assert(jwt.split('.').length === 3, 'jwt-real-shape');
 
   const appSource = fs.readFileSync(path.join(ROOT, 'app/app.jsx'), 'utf8');
+  const stylesSource = fs.readFileSync(path.join(ROOT, 'app/styles.css'), 'utf8');
   const indexSource = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert(indexSource.includes('vendor/bootstrap.min.css?v=5.3.8'), 'bootstrap-local-stylesheet');
   assert(appSource.includes('app container-fluid p-0') && appSource.includes('tb-nav d-flex flex-nowrap overflow-x-auto'), 'bootstrap-shell-order-utilities');
@@ -146,7 +147,10 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes("const GENERATION_PREFIX_STORAGE_KEY = 'hashcod_generation_prefix_v1'") && appSource.includes('withGenerationPrefix(generatedValue, generationPrefix)'), 'generation-global-prefix-runtime');
   assert(appSource.includes('cfg-global-prefix') && appSource.includes('setGenerationPrefix={setGenerationPrefix}'), 'generation-global-prefix-ui');
   assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-generation-prefix-layout-1') && indexSource.includes('app/styles.css?v=hashcod-generation-prefix-layout-1'), 'app-cache-buster');
+  assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
+  assert(appSource.includes('const MAX_RENDERED_OUTPUT = 120;') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
+  assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-fluid-runtime-1') && indexSource.includes('app/styles.css?v=hashcod-fluid-runtime-1'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');

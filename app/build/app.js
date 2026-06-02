@@ -4,13 +4,16 @@ const {
   useEffect,
   useMemo,
   useRef,
-  useCallback
+  useCallback,
+  useDeferredValue,
+  memo
 } = React;
 const APP_VERSION = 12;
 window.APP_VERSION = APP_VERSION;
 const MAX_GENERATION_BATCH = 100000;
-const GENERATION_CHUNK_SIZE = 200;
-const MAX_RENDERED_OUTPUT = 300;
+const GENERATION_CHUNK_SIZE = 100;
+const MAX_RENDERED_OUTPUT = 120;
+const SIDEBAR_RENDER_LIMIT = 140;
 const PLAN_SIMILARITY_DENSITY = {
   free: 0.78,
   starter: 0.42,
@@ -1090,7 +1093,7 @@ const translateApprox = (lang, text) => {
   return out;
 };
 window.translateApprox = translateApprox;
-const Sidebar = ({
+const Sidebar = memo(({
   catalog,
   selectedId,
   onSelect,
@@ -1101,8 +1104,9 @@ const Sidebar = ({
   language,
   t
 }) => {
-  const [collapsed, setCollapsed] = useState({});
+  const [collapsed, setCollapsed] = useState(() => Object.fromEntries(catalog.map((cat, index) => [cat.id, index !== 0])));
   const [underlined, setUnderlined] = useState({});
+  const deferredQuery = useDeferredValue(query);
   const toggle = id => setCollapsed(p => ({
     ...p,
     [id]: !p[id]
@@ -1115,14 +1119,39 @@ const Sidebar = ({
     }));
   };
   const filtered = useMemo(() => {
-    if (!query.trim()) return catalog;
-    const q = query.toLowerCase();
+    if (!deferredQuery.trim()) return catalog;
+    const q = deferredQuery.toLowerCase();
     return catalog.map(c => ({
       ...c,
       types: c.types.filter(t => t.label.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.std.toLowerCase().includes(q) || t.badge.toLowerCase().includes(q))
     })).filter(c => c.types.length);
-  }, [catalog, query]);
-  const totalTypes = catalog.reduce((s, c) => s + c.types.length, 0);
+  }, [catalog, deferredQuery]);
+  const totalTypes = useMemo(() => catalog.reduce((s, c) => s + c.types.length, 0), [catalog]);
+  const selectedCategoryId = useMemo(() => catalog.find(cat => cat.types.some(type => type.id === selectedId))?.id || '', [catalog, selectedId]);
+  const sidebarGroups = useMemo(() => filtered.map(cat => {
+    const first = cat.types.slice(0, SIDEBAR_RENDER_LIMIT);
+    if (first.some(type => type.id === selectedId)) {
+      return {
+        ...cat,
+        visibleTypes: first,
+        hiddenCount: Math.max(0, cat.types.length - first.length)
+      };
+    }
+    const selected = cat.types.find(type => type.id === selectedId);
+    const visibleTypes = selected ? [...first.slice(0, Math.max(0, SIDEBAR_RENDER_LIMIT - 1)), selected] : first;
+    return {
+      ...cat,
+      visibleTypes,
+      hiddenCount: Math.max(0, cat.types.length - visibleTypes.length)
+    };
+  }), [filtered, selectedId]);
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+    setCollapsed(prev => prev[selectedCategoryId] === false ? prev : {
+      ...prev,
+      [selectedCategoryId]: false
+    });
+  }, [selectedCategoryId]);
   return React.createElement("aside", {
     className: `sb ${density}`
   }, React.createElement("div", {
@@ -1145,8 +1174,8 @@ const Sidebar = ({
     onClick: () => onQuery('')
   }, "\xD7")), React.createElement("nav", {
     className: "sb-nav"
-  }, filtered.map(cat => {
-    const open = !collapsed[cat.id];
+  }, sidebarGroups.map(cat => {
+    const open = deferredQuery.trim() ? true : !collapsed[cat.id];
     return React.createElement("section", {
       key: cat.id,
       className: "sb-cat"
@@ -1169,7 +1198,7 @@ const Sidebar = ({
       }
     })), open && React.createElement("ul", {
       className: "sb-list"
-    }, cat.types.map(t => React.createElement("li", {
+    }, cat.visibleTypes.map(t => React.createElement("li", {
       key: t.id,
       className: `sb-item ${selectedId === t.id ? 'on' : ''} ${underlined[t.id] ? 'marked' : ''}`,
       onClick: () => onSelect(t.id, cat.id)
@@ -1193,9 +1222,11 @@ const Sidebar = ({
       }
     })), React.createElement("span", {
       className: "sb-item-b"
-    }, t.badge)))));
+    }, t.badge))), cat.hiddenCount > 0 && React.createElement("li", {
+      className: "sb-list-more"
+    }, language === 'es' ? `+ ${cat.hiddenCount.toLocaleString()} codes. Usa buscar para filtrar.` : `+ ${cat.hiddenCount.toLocaleString()} codes. Use search to filter.`)));
   })));
-};
+});
 const normalizeGenerationStrength = value => Math.max(0.5, Math.min(5, Math.round((Number(value) || 1) * 20) / 20));
 const scaledGenerationLength = (baseLength, strength) => Math.max(4, Math.min(4096, Math.round((Number(baseLength) || 32) * normalizeGenerationStrength(strength))));
 const generationStrengthLabel = strength => {
@@ -2983,7 +3014,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   }
   return selected;
 };
-const OutputCard = ({
+const OutputCard = memo(({
   row,
   similarity,
   freeMode,
@@ -3316,7 +3347,7 @@ const OutputCard = ({
       __html: X_ICON
     }
   }))));
-};
+});
 const TOP_MENU_ICONS = {
   file: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="m25.707 17.293l-5-5A1 1 0 0 0 20 12h-6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V18a1 1 0 0 0-.293-.707ZM23.586 18H20v-3.586ZM14 28V14h4v4a2 2 0 0 0 2 2h4v8Z"/><path fill="currentColor" d="M8 27H4a2.002 2.002 0 0 1-2-2V5a2.002 2.002 0 0 1 2-2h7.586A1.986 1.986 0 0 1 13 3.586L16.414 7H28a2.002 2.002 0 0 1 2 2v8h-2V9H15.586l-4-4H4v20h4Z"/></svg>`,
   generate: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="currentColor" d="M27 11.94c0 2.79-2.243 5.06-5 5.06h-1v-2h1c1.683 0 3-1.345 3-3.06C25 10.263 23.71 9 22 9h-.867l-.123-.858C20.69 5.9 18.395 4.007 16 4.007S11.31 5.9 10.99 8.142L10.867 9H10c-1.71 0-3 1.264-3 2.94C7 13.654 8.317 15 10 15h1v2h-1c-2.757 0-5-2.27-5-5.06c0-2.494 1.78-4.5 4.18-4.877c.818-2.851 3.712-5.056 6.82-5.056s6.002 2.205 6.82 5.056C25.22 7.44 27 9.446 27 11.94M26 23c0 1.654-1.346 3-3 3s-3-1.346-3-3c0-.475.121-.919.319-1.319l-.026.026L17 18.414v5.77c1.162.414 2 1.514 2 2.816c0 1.654-1.346 3-3 3s-3-1.346-3-3c0-1.302.839-2.402 2-2.816v-5.77l-3.293 3.293l-.026-.026c.198.4.319.844.319 1.319c0 1.654-1.346 3-3 3s-3-1.346-3-3s1.346-3 3-3c.475 0 .919.121 1.319.319l-.026-.026L15 15.586v-5.172l-2.293 2.293l-1.414-1.414L16 6.586l4.707 4.707l-1.414 1.414L17 10.414v5.172l4.707 4.707l-.026.026c.4-.198.843-.32 1.319-.32c1.654 0 3 1.347 3 3Zm-16 0a1 1 0 0 0-2 0a1 1 0 0 0 2 0m7 4a1 1 0 0 0-2 0a1 1 0 0 0 2 0m7-4a1 1 0 1 0-2.001.001A1 1 0 0 0 24 23"/></svg>`,
@@ -21902,6 +21933,11 @@ const App = () => {
       }).catch(() => {});
     }
   }, [syncCopyDb]);
+  const rememberSingleCopied = useCallback(row => rememberCopied(row, 'single'), [rememberCopied]);
+  const selectPrimitive = useCallback((id, catId) => {
+    setSelectedId(id);
+    setSelectedCatId(catId);
+  }, []);
   const notify = useCallback(message => {
     setToast(message);
     window.clearTimeout(window.__ocgToastTimer);
@@ -25493,10 +25529,7 @@ const App = () => {
   }, React.createElement(Sidebar, {
     catalog: visibleCatalog,
     selectedId: selectedId,
-    onSelect: (id, catId) => {
-      setSelectedId(id);
-      setSelectedCatId(catId);
-    },
+    onSelect: selectPrimitive,
     query: query,
     onQuery: setQuery,
     density: density,
@@ -25559,7 +25592,7 @@ const App = () => {
     row: row,
     similarity: similarityMap.get(row.id),
     freeMode: activePlan.id === 'free',
-    onCopy: copiedRow => rememberCopied(copiedRow, 'single'),
+    onCopy: rememberSingleCopied,
     onDelete: deleteRow,
     onDownload: downloadOne,
     onQrDownload: downloadRowQrPng,

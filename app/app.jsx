@@ -1,11 +1,12 @@
 /* Hashcod v12 — main React app */
 
-const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const { useState, useEffect, useMemo, useRef, useCallback, useDeferredValue, memo } = React;
 const APP_VERSION = 12;
 window.APP_VERSION = APP_VERSION;
 const MAX_GENERATION_BATCH = 100000;
-const GENERATION_CHUNK_SIZE = 200;
-const MAX_RENDERED_OUTPUT = 300;
+const GENERATION_CHUNK_SIZE = 100;
+const MAX_RENDERED_OUTPUT = 120;
+const SIDEBAR_RENDER_LIMIT = 140;
 const PLAN_SIMILARITY_DENSITY = {
   free: 0.78,
   starter: 0.42,
@@ -452,9 +453,10 @@ window.translateApprox = translateApprox;
 
 
 // ── Sidebar ──
-const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searchRef, language, t }) => {
-  const [collapsed, setCollapsed] = useState({});
+const Sidebar = memo(({ catalog, selectedId, onSelect, query, onQuery, density, searchRef, language, t }) => {
+  const [collapsed, setCollapsed] = useState(() => Object.fromEntries(catalog.map((cat, index) => [cat.id, index !== 0])));
   const [underlined, setUnderlined] = useState({});
+  const deferredQuery = useDeferredValue(query);
   const toggle = id => setCollapsed(p => ({ ...p, [id]: !p[id] }));
   const toggleUnderline = (event, id) => {
     event.stopPropagation();
@@ -462,8 +464,8 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
   };
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return catalog;
-    const q = query.toLowerCase();
+    if (!deferredQuery.trim()) return catalog;
+    const q = deferredQuery.toLowerCase();
     return catalog.map(c => ({
       ...c,
       types: c.types.filter(t =>
@@ -473,9 +475,27 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
         t.badge.toLowerCase().includes(q)
       )
     })).filter(c => c.types.length);
-  }, [catalog, query]);
+  }, [catalog, deferredQuery]);
 
-  const totalTypes = catalog.reduce((s, c) => s + c.types.length, 0);
+  const totalTypes = useMemo(() => catalog.reduce((s, c) => s + c.types.length, 0), [catalog]);
+  const selectedCategoryId = useMemo(
+    () => catalog.find(cat => cat.types.some(type => type.id === selectedId))?.id || '',
+    [catalog, selectedId]
+  );
+  const sidebarGroups = useMemo(() => filtered.map(cat => {
+    const first = cat.types.slice(0, SIDEBAR_RENDER_LIMIT);
+    if (first.some(type => type.id === selectedId)) {
+      return { ...cat, visibleTypes: first, hiddenCount: Math.max(0, cat.types.length - first.length) };
+    }
+    const selected = cat.types.find(type => type.id === selectedId);
+    const visibleTypes = selected ? [...first.slice(0, Math.max(0, SIDEBAR_RENDER_LIMIT - 1)), selected] : first;
+    return { ...cat, visibleTypes, hiddenCount: Math.max(0, cat.types.length - visibleTypes.length) };
+  }), [filtered, selectedId]);
+
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+    setCollapsed(prev => prev[selectedCategoryId] === false ? prev : { ...prev, [selectedCategoryId]: false });
+  }, [selectedCategoryId]);
 
   return (
     <aside className={`sb ${density}`}>
@@ -492,8 +512,8 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
       </div>
 
       <nav className="sb-nav">
-        {filtered.map(cat => {
-          const open = !collapsed[cat.id];
+        {sidebarGroups.map(cat => {
+          const open = deferredQuery.trim() ? true : !collapsed[cat.id];
           return (
             <section key={cat.id} className="sb-cat">
               <button className="sb-cat-h" onClick={() => toggle(cat.id)}>
@@ -504,7 +524,7 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
               </button>
               {open && (
                 <ul className="sb-list">
-                  {cat.types.map(t => (
+                  {cat.visibleTypes.map(t => (
                     <li
                       key={t.id}
                       className={`sb-item ${selectedId === t.id ? 'on' : ''} ${underlined[t.id] ? 'marked' : ''}`}
@@ -525,6 +545,13 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
                       <span className="sb-item-b">{t.badge}</span>
                     </li>
                   ))}
+                  {cat.hiddenCount > 0 && (
+                    <li className="sb-list-more">
+                      {language === 'es'
+                        ? `+ ${cat.hiddenCount.toLocaleString()} codes. Usa buscar para filtrar.`
+                        : `+ ${cat.hiddenCount.toLocaleString()} codes. Use search to filter.`}
+                    </li>
+                  )}
                 </ul>
               )}
             </section>
@@ -533,7 +560,7 @@ const Sidebar = ({ catalog, selectedId, onSelect, query, onQuery, density, searc
       </nav>
     </aside>
   );
-};
+});
 
 // ── Config Bar ──
 const normalizeGenerationStrength = (value) => Math.max(0.5, Math.min(5, Math.round((Number(value) || 1) * 20) / 20));
@@ -2339,7 +2366,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, onSampleExtract, density, t, language }) => {
+const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, onSampleExtract, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -2528,7 +2555,7 @@ const OutputCard = ({ row, similarity, freeMode, onCopy, onDelete, onDownload, o
       </div>
     </div>
   );
-};
+});
 
 // ── Title-bar menu system ──
 const TOP_MENU_ICONS = {
@@ -17462,6 +17489,11 @@ const App = () => {
       }).catch(() => {});
     }
   }, [syncCopyDb]);
+  const rememberSingleCopied = useCallback((row) => rememberCopied(row, 'single'), [rememberCopied]);
+  const selectPrimitive = useCallback((id, catId) => {
+    setSelectedId(id);
+    setSelectedCatId(catId);
+  }, []);
 
   const notify = useCallback((message) => {
     setToast(message);
@@ -19160,7 +19192,7 @@ const App = () => {
           <Sidebar
             catalog={visibleCatalog}
             selectedId={selectedId}
-            onSelect={(id, catId) => { setSelectedId(id); setSelectedCatId(catId); }}
+            onSelect={selectPrimitive}
             query={query}
             onQuery={setQuery}
             density={density}
@@ -19211,7 +19243,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={(copiedRow) => rememberCopied(copiedRow, 'single')} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} onSampleExtract={extractCodeSample} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={rememberSingleCopied} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} onSampleExtract={extractCodeSample} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
