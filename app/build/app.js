@@ -9646,7 +9646,7 @@ const PdfStampDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.pdfStamp
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('Aplica un sello negro de Hashcod con un QR enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'Apply a black Hashcod stamp with a QR linked to a saved code and download a new PDF without uploading the file.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('BLACK QR v3: aplica un sello negro de Hashcod con un QR enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'BLACK QR v3: apply a black Hashcod stamp with a QR linked to a saved code and download a new PDF without uploading the file.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
