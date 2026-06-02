@@ -13673,6 +13673,9 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
     baseValue: DEFAULT_BASE,
     similarityCount: 2,
     processEnd: 'A',
+    status: 'draft',
+    phase: 'A1',
+    tags: '',
     indexValue: null,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -13681,6 +13684,8 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
   const [notes, setNotes] = useState([]);
   const [activeId, setActiveId] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
+  const [codeQuery, setCodeQuery] = useState('');
+  const [sequenceDigest, setSequenceDigest] = useState('');
 
   const normalizeNote = (note) => ({
     ...makeNote(),
@@ -13689,6 +13694,9 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
     codes: Array.isArray(note.codes) ? note.codes : (note.code ? [note.code] : []),
     baseValue: Number.isFinite(Number(note.baseValue)) ? Number(note.baseValue) : DEFAULT_BASE,
     similarityCount: Number.isFinite(Number(note.similarityCount)) ? Number(note.similarityCount) : 2,
+    status: note.status || 'draft',
+    phase: note.phase || 'A1',
+    tags: note.tags || '',
   });
 
   useEffect(() => {
@@ -13719,6 +13727,11 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
   }, [rows, selectedCode]);
 
   const activeNote = notes.find((n) => n.id === activeId) || notes[0] || null;
+  const filteredRows = useMemo(() => {
+    const query = codeQuery.trim().toLowerCase();
+    if (!query) return rows;
+    return rows.filter(row => `${row.type || ''} ${row.idx || ''} ${row.value || ''}`.toLowerCase().includes(query));
+  }, [rows, codeQuery]);
 
   const getCodeList = (note) => {
     const list = Array.isArray(note?.codes) ? note.codes.filter(Boolean) : [];
@@ -13744,6 +13757,66 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
     return { codeCount, similarity, base, index };
   };
 
+  const entropyOf = (value = '') => {
+    const chars = String(value);
+    if (!chars.length) return 0;
+    const frequencies = new Map();
+    for (const char of chars) frequencies.set(char, (frequencies.get(char) || 0) + 1);
+    return Array.from(frequencies.values()).reduce((sum, count) => {
+      const probability = count / chars.length;
+      return sum - probability * Math.log2(probability);
+    }, 0);
+  };
+
+  const sequenceMetrics = (note) => {
+    const codes = getCodeList(note);
+    const totalChars = codes.reduce((sum, code) => sum + String(code).length, 0);
+    const avgEntropy = codes.length
+      ? codes.reduce((sum, code) => sum + entropyOf(code), 0) / codes.length
+      : 0;
+    return {
+      codes,
+      uniqueCodes: new Set(codes).size,
+      totalChars,
+      avgEntropy: Number(avgEntropy.toFixed(3)),
+    };
+  };
+
+  const manifestForNote = (note) => {
+    const metrics = sequenceMetrics(note);
+    return {
+      schema: 'hashcod.sequence-a.manifest.v3',
+      id: note.id,
+      title: note.title,
+      status: note.status || 'draft',
+      phase: note.phase || 'A1',
+      tags: note.tags || '',
+      updatedAt: new Date(note.updatedAt || Date.now()).toISOString(),
+      index: calculateMarketIndex(note),
+      formula: 'I=-ABS((codes/similarities)*(base-0.428))',
+      kuzKeyFingerprint: String(note.kuzKey || '').slice(-16),
+      codeCount: metrics.codes.length,
+      uniqueCodes: metrics.uniqueCodes,
+      totalChars: metrics.totalChars,
+      averageEntropy: metrics.avgEntropy,
+      codes: metrics.codes,
+    };
+  };
+
+  const manifestText = activeNote ? JSON.stringify(manifestForNote(activeNote), null, 2) : '';
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!manifestText) {
+      setSequenceDigest('');
+      return undefined;
+    }
+    digestHex(manifestText).then((digest) => {
+      if (!cancelled) setSequenceDigest(digest);
+    });
+    return () => { cancelled = true; };
+  }, [manifestText]);
+
   const addNote = () => {
     const note = makeNote();
     setNotes((prev) => [note, ...prev]);
@@ -13764,6 +13837,27 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
     setNotes(next);
     setActiveId(next[0]?.id || '');
     notify && notify(L('Nota eliminada', 'Note deleted'));
+  };
+
+  const duplicateNote = (note) => {
+    if (!note) return;
+    const copy = {
+      ...note,
+      id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      title: `${note.title} COPY`,
+      kuzKey: generateKuznyechikKey(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    setNotes((prev) => [copy, ...prev]);
+    setActiveId(copy.id);
+    notify && notify(L('Secuencia duplicada con una key nueva', 'Sequence duplicated with a new key'));
+  };
+
+  const rotateKey = (note) => {
+    if (!note) return;
+    updateNote(note.id, { kuzKey: generateKuznyechikKey() });
+    notify && notify(L('Kuznyechik Key rotada', 'Kuznyechik Key rotated'));
   };
 
   const attachCode = (code) => {
@@ -13789,6 +13883,25 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
   const clearCodes = () => {
     if (!activeNote) return;
     updateNote(activeNote.id, { code: '', codes: [] });
+  };
+
+  const removeAttachedCode = (code) => {
+    if (!activeNote) return;
+    const nextCodes = getCodeList(activeNote).filter((item) => item !== code);
+    updateNote(activeNote.id, { code: nextCodes[0] || '', codes: nextCodes });
+  };
+
+  const copyText = (value, message) => {
+    navigator.clipboard?.writeText(String(value || ''));
+    notify && notify(message);
+  };
+
+  const exportJson = (note) => {
+    if (!note) return;
+    const manifest = { ...manifestForNote(note), manifestSha256: sequenceDigest || 'CALCULATING' };
+    const name = `sequence-a-${(note.title || 'note').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.json`;
+    triggerDownload(name, JSON.stringify(manifest, null, 2), 'application/json;charset=utf-8');
+    notify && notify(L('Manifiesto JSON descargado', 'JSON manifest downloaded'));
   };
 
   const escapeHtml = (value = '') => String(value)
@@ -13826,6 +13939,8 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
   if (!open) return null;
 
   const activeParts = activeNote ? formulaParts(activeNote) : { codeCount: 0, similarity: 1, base: DEFAULT_BASE, index: 0 };
+  const activeMetrics = activeNote ? sequenceMetrics(activeNote) : { codes: [], uniqueCodes: 0, totalChars: 0, avgEntropy: 0 };
+  const verificationQr = sequenceDigest && activeNote ? `HASHCOD:SEQUENCE-A:${activeNote.id}:${sequenceDigest}` : '';
   const indexSignClass = activeParts.index < 0 ? 'negative' : activeParts.index > 0 ? 'positive' : 'neutral';
 
   return (
@@ -13850,12 +13965,13 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
             <div className="textdlg-panel">
               <div className="textdlg-panel-k">{L('Moneda disponible', 'Available currency')}</div>
               <div className="mnotes-balance">
-                <strong>{rows.length}</strong>
-                <span>{L('codes en base de datos', 'codes in database')}</span>
+                <strong>{filteredRows.length}</strong>
+                <span>{L(`de ${rows.length} codes en base de datos`, `of ${rows.length} database codes`)}</span>
               </div>
+              <input className="textdlg-mini mnotes-code-search" value={codeQuery} onChange={(e) => setCodeQuery(e.target.value)} placeholder={L('Buscar por tipo, indice o valor', 'Search by type, index, or value')} />
               <select className="textdlg-mini" value={selectedCode} onChange={(e) => setSelectedCode(e.target.value)}>
                 <option value="">{L('Seleccionar code', 'Select code')}</option>
-                {rows.slice(0, 200).map((row, idx) => (
+                {filteredRows.slice(0, 400).map((row, idx) => (
                   <option key={`${row.value || 'code'}-${idx}`} value={row.value || ''}>{String(row.value || '').slice(0, 42)} · {row.type || 'code'}</option>
                 ))}
               </select>
@@ -13888,8 +14004,11 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
                     <button className="dbdlg-btn" onClick={attachLatestCode}>{L('Agregar último code', 'Add latest code')}</button>
                     <button className="dbdlg-btn" onClick={attachSelectedCode}>{L('Agregar code seleccionado', 'Add selected code')}</button>
                     <button className="dbdlg-btn" onClick={clearCodes}>{L('Limpiar codes', 'Clear codes')}</button>
+                    <button className="dbdlg-btn" onClick={() => duplicateNote(activeNote)}>{L('Duplicar', 'Duplicate')}</button>
                     <button className="dbdlg-btn" onClick={() => downloadPdf(activeNote)}>PDF</button>
                     <button className="dbdlg-btn" onClick={() => downloadHtml(activeNote)}>HTML</button>
+                    <button className="dbdlg-btn" onClick={() => exportJson(activeNote)}>JSON</button>
+                    <button className="dbdlg-btn" onClick={() => copyText(manifestText, L('Manifiesto copiado', 'Manifest copied'))}>{L('Copiar manifiesto', 'Copy manifest')}</button>
                     <button className="dbdlg-btn danger" onClick={() => removeNote(activeNote.id)}>{L('Eliminar', 'Delete')}</button>
                   </div>
                 </div>
@@ -13899,9 +14018,17 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
                   <div className="mnotes-kuz-key">
                     <span>Kuznyechik Key · 256-bit</span>
                     <b>{activeNote.kuzKey}</b>
-                    <button className="dbdlg-btn" onClick={() => { navigator.clipboard?.writeText(activeNote.kuzKey || ''); notify && notify(L('Kuznyechik Key copiada', 'Kuznyechik Key copied')); }}>{L('Copiar key', 'Copy key')}</button>
+                    <div className="mnotes-inline-actions">
+                      <button className="dbdlg-btn" onClick={() => copyText(activeNote.kuzKey, L('Kuznyechik Key copiada', 'Kuznyechik Key copied'))}>{L('Copiar key', 'Copy key')}</button>
+                      <button className="dbdlg-btn" onClick={() => rotateKey(activeNote)}>{L('Rotar key', 'Rotate key')}</button>
+                    </div>
                   </div>
                   <h3>{activeNote.title}</h3>
+                  <div className="mnotes-sequence-meta">
+                    <label><span>{L('Estado', 'Status')}</span><select value={activeNote.status} onChange={(e) => updateNote(activeNote.id, { status: e.target.value })}><option value="draft">DRAFT</option><option value="review">REVIEW</option><option value="verified">VERIFIED</option><option value="archived">ARCHIVED</option></select></label>
+                    <label><span>{L('Fase', 'Phase')}</span><input value={activeNote.phase} onChange={(e) => updateNote(activeNote.id, { phase: e.target.value })} placeholder="A1" /></label>
+                    <label><span>{L('Etiquetas', 'Tags')}</span><input value={activeNote.tags} onChange={(e) => updateNote(activeNote.id, { tags: e.target.value })} placeholder="audit, vault, api" /></label>
+                  </div>
                   <div className="mnotes-index-panel">
                     <div className="mnotes-index-left">
                       <span>{L('Índice de sequence - A', 'sequence - A Index')}</span>
@@ -13919,10 +14046,32 @@ const MarketNotesDialog = ({ open, onClose, notify, language, rows = [] }) => {
                     <div><span>{L('Constante', 'Constant')}</span><b>0.428</b></div>
                   </div>
 
+                  <div className="mnotes-metrics mnotes-metrics8">
+                    <div><span>{L('Codes unicos', 'Unique codes')}</span><b>{activeMetrics.uniqueCodes}</b></div>
+                    <div><span>{L('Caracteres', 'Characters')}</span><b>{activeMetrics.totalChars}</b></div>
+                    <div><span>{L('Entropia promedio', 'Average entropy')}</span><b>{activeMetrics.avgEntropy}</b></div>
+                    <div><span>{L('Fase activa', 'Active phase')}</span><b>{activeNote.phase || 'A1'}</b></div>
+                  </div>
+
+                  <div className="mnotes-verify">
+                    <div>
+                      <span>Manifest SHA-256</span>
+                      <code>{sequenceDigest || 'CALCULATING...'}</code>
+                      <small>{L('El QR representa el manifiesto verificable de esta secuencia.', 'The QR represents the verifiable manifest for this sequence.')}</small>
+                    </div>
+                    {verificationQr ? <QrCanvas payload={verificationQr} size={94} correctLevel="M" /> : null}
+                  </div>
+
                   <div className="mnotes-codebox">
                     <span>{L('Codes de la base de datos', 'Database codes')}</span>
                     {getCodeList(activeNote).length ? getCodeList(activeNote).map((code, idx) => (
-                      <p key={`${code}-${idx}`}><b>{String(idx + 1).padStart(2, '0')}</b> · {code}</p>
+                      <div className="mnotes-code-row" key={`${code}-${idx}`}>
+                        <p><b>{String(idx + 1).padStart(2, '0')}</b> · {code}</p>
+                        <div className="mnotes-code-actions">
+                          <button className="mnotes-code-mini" onClick={() => copyText(code, L('Code copiado', 'Code copied'))}>COPY</button>
+                          <button className="mnotes-code-mini danger" onClick={() => removeAttachedCode(code)}>X</button>
+                        </div>
+                      </div>
                     )) : <p>{L('Todavía no se ha agregado un code a esta nota.', 'No code has been added to this note yet.')}</p>}
                   </div>
                   <textarea className="mnotes-textarea" value={activeNote.text} onChange={(e) => updateNote(activeNote.id, { text: e.target.value })} placeholder={L('Escribe el contenido de la nota...', 'Write the note content...')} />

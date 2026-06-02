@@ -140,6 +140,9 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes("export json|txt|png") && appSource.includes("<button onClick={exportPng}>PNG</button>"), 'transform-cmd-png-command-ui');
   assert(appSource.includes('const FileZipPackagerDialog =') && appSource.includes('makeZipBlob(entries)'), 'file-zip-packager-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
+  assert(appSource.includes('const manifestForNote =') && appSource.includes('averageEntropy') && appSource.includes('manifestSha256'), 'sequence-a-verifiable-manifest');
+  assert(appSource.includes('duplicateNote') && appSource.includes('rotateKey') && appSource.includes('removeAttachedCode'), 'sequence-a-operational-actions');
+  assert(appSource.includes('<QrCanvas payload={verificationQr}') && appSource.includes('mnotes-code-search'), 'sequence-a-qr-search-ui');
   assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
   assert(indexSource.includes('app/build/app.js?v=hashcod-pdf-stamp-black-qr-3'), 'pdf-stamp-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');

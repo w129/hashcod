@@ -5248,6 +5248,31 @@ kbd {
   .mnotes-kuz-key { grid-template-columns: 1fr; }
 }
 
+.mnotes-code-search { width:100%; margin-bottom:8px; }
+.mnotes-inline-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.mnotes-sequence-meta { display:grid; grid-template-columns:minmax(140px,.72fr) minmax(100px,.45fr) minmax(180px,1.4fr); gap:10px; margin:0 0 18px; }
+.mnotes-sequence-meta label { display:grid; gap:7px; }
+.mnotes-sequence-meta span, .mnotes-verify span { font-size:10px; letter-spacing:1.8px; text-transform:uppercase; color:var(--ink-3); }
+.mnotes-sequence-meta input, .mnotes-sequence-meta select { min-width:0; height:40px; border:1px solid var(--line); background:#fff; color:#111; padding:0 10px; font-family:var(--mono); font-size:12px; }
+.mnotes-metrics8 { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.mnotes-verify { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; border:1px solid #111; background:#f7f7f7; padding:14px; margin-bottom:18px; }
+.mnotes-verify div:first-child { display:grid; gap:8px; min-width:0; }
+.mnotes-verify code { font-size:12px; line-height:1.55; word-break:break-all; }
+.mnotes-verify small { color:var(--ink-3); font-family:var(--mono); font-size:11px; line-height:1.45; }
+.mnotes-code-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; border-bottom:1px solid #ddd; }
+.mnotes-code-row p { min-width:0; }
+.mnotes-code-actions { display:flex; gap:5px; }
+.mnotes-code-mini { min-width:38px; height:28px; border:1px solid var(--line); background:#fff; color:#111; font-family:var(--mono); font-size:9px; letter-spacing:1px; }
+.mnotes-code-mini:hover { background:#111; color:#fff; }
+.mnotes-code-mini.danger:hover { background:#b00020; border-color:#b00020; }
+@media (max-width: 980px) {
+  .mnotes-sequence-meta, .mnotes-metrics8 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 520px) {
+  .mnotes-sequence-meta, .mnotes-metrics8, .mnotes-verify { grid-template-columns:1fr; }
+  .mnotes-code-row { grid-template-columns:1fr; padding:6px 0; }
+}
+
 /* Code Certificates */
 .certdlg { width: min(1580px, calc(100vw - 32px)); }
 .certdlg-layout { display:grid; grid-template-columns: 360px minmax(0,1fr); gap:16px; }
