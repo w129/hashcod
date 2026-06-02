@@ -21,6 +21,7 @@ const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
 const CODE_WALLET_FILE = path.join(DATA_DIR, 'code-wallet.enc');
 const BRAND_EVIDENCE_FILE = path.join(DATA_DIR, 'brand-evidence.enc');
+const CODE_REGISTRY_FILE = path.join(DATA_DIR, 'code-registry.enc');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
@@ -238,6 +239,7 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(ACCESS_HISTORY_FILE, 'access-history', stamp),
       backupFileIfExists(CODE_WALLET_FILE, 'code-wallet', stamp),
       backupFileIfExists(BRAND_EVIDENCE_FILE, 'brand-evidence', stamp),
+      backupFileIfExists(CODE_REGISTRY_FILE, 'code-registry', stamp),
     ].filter(Boolean).map(file => path.basename(file));
     fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
     audit('backup.automatic', { reason, files: files.length });
@@ -665,6 +667,25 @@ async function saveRenderBrandEvidenceDb(rows) {
   return true;
 }
 
+async function loadRenderCodeRegistryDb() {
+  if (!pgReady || !pgPool) return null;
+  const result = await pgPool.query('select value from hashcod_kv where key = $1 limit 1', ['code-registry']);
+  const encrypted = result.rows[0]?.value?.encrypted;
+  if (!encrypted) return null;
+  return decryptJson(encrypted, null);
+}
+
+async function saveRenderCodeRegistryDb(db) {
+  if (!pgReady || !pgPool) return false;
+  await pgPool.query(
+    `insert into hashcod_kv(key, value, updated_at)
+     values($1, $2::jsonb, now())
+     on conflict(key) do update set value = excluded.value, updated_at = now()`,
+    ['code-registry', JSON.stringify({ encrypted: encryptJson(db) })]
+  );
+  return true;
+}
+
 async function appendRenderAudit(row) {
   if (!pgReady || !pgPool || !row) return false;
   try {
@@ -780,6 +801,56 @@ async function writeBrandEvidence(rows) {
   if (pgReady) {
     try { await saveRenderBrandEvidenceDb(clean); }
     catch (err) { audit('brand_evidence.render_write_failed', { error: safeText(err.message, 160) }); }
+  }
+}
+
+function emptyCodeRegistry() {
+  return { rows: [], auditLogs: [], validations: [], meta: { sequence: 0, updatedAt: new Date().toISOString() } };
+}
+
+function normalizeCodeRegistry(db) {
+  const clean = db && typeof db === 'object' ? db : emptyCodeRegistry();
+  return {
+    rows: Array.isArray(clean.rows) ? clean.rows.slice(0, 10000) : [],
+    auditLogs: Array.isArray(clean.auditLogs) ? clean.auditLogs.slice(0, 3000) : [],
+    validations: Array.isArray(clean.validations) ? clean.validations.slice(0, 3000) : [],
+    meta: { sequence: Number(clean.meta?.sequence || 0), updatedAt: clean.meta?.updatedAt || new Date().toISOString() },
+  };
+}
+
+function readCodeRegistryCache() {
+  ensureDataDir();
+  if (!fs.existsSync(CODE_REGISTRY_FILE)) return emptyCodeRegistry();
+  return normalizeCodeRegistry(decryptJson(fs.readFileSync(CODE_REGISTRY_FILE, 'utf8'), emptyCodeRegistry()));
+}
+
+function writeCodeRegistryCache(db) {
+  ensureDataDir();
+  const clean = normalizeCodeRegistry(db);
+  fs.writeFileSync(CODE_REGISTRY_FILE, encryptJson(clean));
+  ensureAutomaticBackup('code-registry-write');
+}
+
+async function readCodeRegistry() {
+  try {
+    const remote = await loadRenderCodeRegistryDb();
+    if (remote) {
+      writeCodeRegistryCache(remote);
+      return normalizeCodeRegistry(remote);
+    }
+  } catch (err) {
+    audit('code_registry.render_read_failed', { error: safeText(err.message, 160) });
+  }
+  return readCodeRegistryCache();
+}
+
+async function writeCodeRegistry(db) {
+  const clean = normalizeCodeRegistry(db);
+  clean.meta.updatedAt = new Date().toISOString();
+  writeCodeRegistryCache(clean);
+  if (pgReady) {
+    try { await saveRenderCodeRegistryDb(clean); }
+    catch (err) { audit('code_registry.render_write_failed', { error: safeText(err.message, 160) }); }
   }
 }
 
@@ -1936,6 +2007,126 @@ async function handleCodeWallet(req, res) {
   send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
 }
 
+function codeRegistryAudit(db, auth, eventType, codeId, description, metadata = {}) {
+  const previousEventHash = db.auditLogs[0]?.eventHash || 'GENESIS';
+  const createdAt = new Date().toISOString();
+  const payload = JSON.stringify({ eventType, codeId, actor: auth.user.id, description, metadata, previousEventHash, createdAt });
+  const row = { id: `audit_${crypto.randomBytes(8).toString('hex')}`, eventType, codeId, actor: auth.user.id, description, metadata, previousEventHash, eventHash: crypto.createHash('sha256').update(payload).digest('hex'), createdAt };
+  db.auditLogs.unshift(row);
+  db.auditLogs = db.auditLogs.slice(0, 3000);
+  return row;
+}
+
+function publicCodeRegistryRow(row) {
+  return {
+    id: row.id, codeId: row.codeId, codeValue: row.codeValue, codeType: row.codeType,
+    title: row.title, description: row.description, hashSha256: row.hashSha256,
+    status: row.status, validationStatus: row.validationStatus, certificateActive: row.certificateActive,
+    certificateId: row.certificateId, verificationUrl: row.verificationUrl,
+    createdAt: row.createdAt, validationDate: row.validationDate, expirationDate: row.expirationDate,
+    timeline: row.timeline,
+  };
+}
+
+function registryValidationResult(row, inputValue) {
+  if (!row) return { result: 'INVALID', message: 'Code not found in Hashcod.' };
+  const calculatedHash = crypto.createHash('sha256').update(inputValue).digest('hex');
+  if (calculatedHash !== row.hashSha256) return { result: 'ALTERED', message: 'The code exists, but its SHA-256 does not match.', calculatedHash };
+  if (row.status === 'revoked') return { result: 'REVOKED', message: 'This code was revoked.', calculatedHash };
+  if (row.status === 'rejected') return { result: 'REJECTED', message: 'This code was rejected.', calculatedHash };
+  if (row.status === 'pending') return { result: 'PENDING', message: 'This code exists, but it is not validated yet.', calculatedHash };
+  if (row.expirationDate && Date.parse(row.expirationDate) < Date.now()) return { result: 'EXPIRED', message: 'This code expired.', calculatedHash };
+  if (!row.certificateActive) return { result: 'NO_CERTIFICATE', message: 'This code has no active technical certificate.', calculatedHash };
+  return { result: 'VALID', message: 'Code exists, hash matches, status is active, and technical certificate is present.', calculatedHash };
+}
+
+async function handleCodeRegistry(req, res) {
+  const auth = requireWalletAccess(req, res);
+  if (!auth) return;
+  const db = await readCodeRegistry();
+  const mine = db.rows.filter(row => row.userId === auth.user.id);
+  const url = new URL(req.url, 'http://localhost');
+  if (req.method === 'GET') {
+    const id = safeText(url.searchParams.get('id'), 120);
+    const rows = id ? mine.filter(row => row.id === id || row.codeId === id) : mine;
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, rows: rows.map(publicCodeRegistryRow), auditCount: db.auditLogs.filter(row => row.actor === auth.user.id).length, validationCount: db.validations.filter(row => row.actor === auth.user.id).length, storage: pgReady ? 'render-postgres+encrypted-cache' : 'encrypted-cache' }));
+    return;
+  }
+  if (req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req, 4 * 1024 * 1024);
+      const action = safeText(body.action, 40) || 'sync';
+      if (action === 'validate') {
+        const row = mine.find(item => item.id === body.id || item.codeId === body.id);
+        const inputValue = safeWalletPayload(body.codeValue || row?.codeValue, 20000);
+        const validation = registryValidationResult(row, inputValue);
+        const validationRow = { id: `validation_${crypto.randomBytes(8).toString('hex')}`, actor: auth.user.id, codeId: row?.codeId || safeText(body.id, 120), result: validation.result, calculatedHash: validation.calculatedHash || '', originalHash: row?.hashSha256 || '', ip: clientIp(req), userAgent: safeText(req.headers['user-agent'], 180), createdAt: new Date().toISOString() };
+        db.validations.unshift(validationRow);
+        db.validations = db.validations.slice(0, 3000);
+        codeRegistryAudit(db, auth, 'VALIDATE_CODE', validationRow.codeId, validation.message, { result: validation.result });
+        await writeCodeRegistry(db);
+        send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, validation: { ...validation, codeId: row?.codeId || '' } }));
+        return;
+      }
+      const incoming = Array.isArray(body.rows) ? body.rows.slice(0, 2000) : [];
+      let added = 0;
+      let duplicates = 0;
+      for (const source of incoming) {
+        const codeValue = safeWalletPayload(source.value || source.codeValue, 20000);
+        if (!codeValue) continue;
+        const hashSha256 = crypto.createHash('sha256').update(codeValue).digest('hex');
+        if (db.rows.some(row => row.userId === auth.user.id && row.hashSha256 === hashSha256)) {
+          duplicates += 1;
+          continue;
+        }
+        db.meta.sequence += 1;
+        const year = new Date().getUTCFullYear();
+        const codeId = `HCD-CODE-${year}-${String(db.meta.sequence).padStart(6, '0')}`;
+        const createdAt = new Date().toISOString();
+        const event = { at: createdAt, event: 'Code registered in Hashcod', hash: crypto.createHash('sha256').update(`${codeId}|${hashSha256}|${createdAt}`).digest('hex') };
+        const row = {
+          id: `registry_${hashSha256.slice(0, 18)}`, userId: auth.user.id, codeId, codeValue,
+          codeType: safeText(source.type, 100) || 'hashcod-code', title: safeText(source.title, 140) || `Hashcod saved code ${db.meta.sequence}`,
+          description: safeText(source.description, 500), hashSha256, status: 'pending', validationStatus: false,
+          certificateActive: true, certificateId: `CERT-${hashSha256.slice(0, 14).toUpperCase()}`,
+          verificationUrl: `/verify/${codeId}`, createdAt, validationDate: '', expirationDate: '', timeline: [event],
+        };
+        db.rows.unshift(row);
+        codeRegistryAudit(db, auth, 'CREATE_CODE', codeId, 'Code registered in Hashcod', { hashSha256, codeType: row.codeType });
+        added += 1;
+      }
+      db.rows = db.rows.slice(0, 10000);
+      await writeCodeRegistry(db);
+      audit('code_registry.synced', { actor: auth.user.id, ip: clientIp(req), added, duplicates, total: db.rows.length });
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, added, duplicates, rows: db.rows.filter(row => row.userId === auth.user.id).map(publicCodeRegistryRow) }));
+    } catch (err) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: safeText(err.message, 100) || 'invalid_registry_payload' }));
+    }
+    return;
+  }
+  if (req.method === 'PUT') {
+    try {
+      const body = await readJsonBody(req, 64 * 1024);
+      const allowed = ['pending', 'validated', 'rejected', 'revoked', 'expired'];
+      const status = allowed.includes(body.status) ? body.status : '';
+      const row = db.rows.find(item => item.userId === auth.user.id && (item.id === body.id || item.codeId === body.id));
+      if (!row || !status) throw new Error('registry_status_update_invalid');
+      const previousStatus = row.status;
+      row.status = status;
+      row.validationStatus = status === 'validated';
+      row.validationDate = status === 'validated' ? new Date().toISOString() : row.validationDate;
+      row.timeline.unshift({ at: new Date().toISOString(), event: `Status changed from ${previousStatus} to ${status}`, reason: safeText(body.reason, 240) });
+      codeRegistryAudit(db, auth, 'CHANGE_STATUS', row.codeId, `Status changed from ${previousStatus} to ${status}`, { previousStatus, status, reason: safeText(body.reason, 240) });
+      await writeCodeRegistry(db);
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, row: publicCodeRegistryRow(row) }));
+    } catch (err) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: safeText(err.message, 100) || 'registry_status_update_failed' }));
+    }
+    return;
+  }
+  send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+}
+
 function requireBrandEvidenceAccess(req, res) {
   const authenticated = getSession(req);
   if (authenticated) return requireAuth(req, res, 'viewer');
@@ -2806,6 +2997,14 @@ const server = http.createServer((req, res) => {
     handleCodeWallet(req, res).catch(err => {
       audit('wallet.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
       if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_request_failed' }));
+    });
+    return;
+  }
+
+  if (routePath === '/api/code-registry') {
+    handleCodeRegistry(req, res).catch(err => {
+      audit('code_registry.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
+      if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'code_registry_request_failed' }));
     });
     return;
   }

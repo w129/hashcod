@@ -2620,6 +2620,7 @@ const TOP_MENU_ICONS = {
   geometricCode: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.34 17.52a10 10 0 1 0-2.82 2.82"/><circle cx="19" cy="19" r="2"/><path d="m13.41 13.41 4.18 4.18"/><circle cx="12" cy="12" r="2"/></svg>`,
   designStudio: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 10 3 3"/><path d="M6.5 21A3.5 3.5 0 1 0 3 17.5a2.62 2.62 0 0 1-.708 1.792A1 1 0 0 0 3 21z"/><path d="M9.969 17.031 21.378 5.624a1 1 0 0 0-3.002-3.002L6.967 14.031"/></svg>`,
   codeWallet: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2"/><path d="M3 11h3c.8 0 1.6.3 2.1.9l1.1.9c1.6 1.6 4.1 1.6 5.7 0l1.1-.9c.5-.5 1.3-.9 2.1-.9H21"/></svg>`,
+  codeRegistry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>`,
   tokenInspector: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`,
   licenseShield: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
   evidenceVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/><path d="m7.9 7.9 2.7 2.7"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/><path d="m13.4 10.6 2.7-2.7"/><circle cx="7.5" cy="16.5" r=".5" fill="currentColor"/><path d="m7.9 16.1 2.7-2.7"/><circle cx="16.5" cy="16.5" r=".5" fill="currentColor"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/></svg>`,
@@ -7978,6 +7979,122 @@ const BrandEvidenceVaultDialog = ({ open, onClose, notify, language, rows = [] }
             <div className="brand-evidence-records">{records.map(row => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelectedId(row.id)}><b>{row.brandName}</b><small>{row.tokenId}</small></button>)}</div>
             {selected && <section className="brand-evidence-detail"><h3>{selected.brandName}</h3><code>{selected.tokenId}</code><p>SHA-256 {selected.packageHash}</p><p>{selected.status} | {(selected.files || []).length} {L('archivos', 'files')}</p><div><button onClick={() => downloadCertificate(selected)}>{L('Certificado PDF', 'PDF certificate')}</button><button onClick={() => downloadPackage(selected)}>{L('Paquete ZIP', 'ZIP package')}</button></div><small>{selected.legalNotice}</small></section>}
           </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const CodeRegistryTableDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [records, setRecords] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('all');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [storage, setStorage] = useState('');
+  const [validation, setValidation] = useState(null);
+  const selected = records.find(row => row.id === selectedId) || records[0] || null;
+  const syncRows = useMemo(() => rows.filter(row => row?.value).slice(0, 2000).map(row => ({
+    id: row.id || row.idx, type: row.type || 'hashcod-code', title: row.label || row.type || 'Hashcod saved code',
+    value: row.value, description: `Imported from saved database code ${row.idx || row.id || ''}`.trim(),
+  })), [rows]);
+  const filtered = useMemo(() => records.filter(row => {
+    const needle = query.trim().toLowerCase();
+    const matchesText = !needle || `${row.codeId} ${row.codeType} ${row.codeValue} ${row.hashSha256}`.toLowerCase().includes(needle);
+    return matchesText && (status === 'all' || row.status === status);
+  }), [records, query, status]);
+
+  const load = async () => {
+    const response = await authFetch('/api/code-registry');
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'code_registry_load_failed');
+    setRecords(data.rows || []);
+    setStorage(data.storage || '');
+    setSelectedId(current => current || data.rows?.[0]?.id || '');
+  };
+  const sync = async silent => {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await authFetch('/api/code-registry', { method: 'POST', body: JSON.stringify({ action: 'sync', rows: syncRows }) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'code_registry_sync_failed');
+      setRecords(data.rows || []);
+      setSelectedId(current => current || data.rows?.[0]?.id || '');
+      if (!silent) notify(L(`${data.added} codes agregados; ${data.duplicates} ya estaban registrados.`, `${data.added} codes added; ${data.duplicates} were already registered.`));
+    } catch (err) {
+      setError(String(err.message || err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  useEffect(() => {
+    if (!open) return;
+    load().then(() => sync(true)).catch(err => setError(String(err.message || err)));
+  }, [open, syncRows.length]);
+  if (!open) return null;
+
+  const validate = async row => {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await authFetch('/api/code-registry', { method: 'POST', body: JSON.stringify({ action: 'validate', id: row.id, codeValue: row.codeValue }) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'code_registry_validation_failed');
+      setValidation(data.validation);
+      notify(`${row.codeId}: ${data.validation.result}`);
+    } catch (err) {
+      setError(String(err.message || err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const changeStatus = async (row, nextStatus) => {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await authFetch('/api/code-registry', { method: 'PUT', body: JSON.stringify({ id: row.id, status: nextStatus, reason: 'Updated from Hashcod registry table' }) });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'code_registry_status_failed');
+      setRecords(current => current.map(item => item.id === data.row.id ? data.row : item));
+    } catch (err) {
+      setError(String(err.message || err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const exportRows = () => triggerDownload('hashcod-code-registry.json', JSON.stringify(records, null, 2), 'application/json');
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg code-registry-dlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h code-registry-head">
+          <span className="code-registry-icon" dangerouslySetInnerHTML={{ __html: TOP_MENU_ICONS.codeRegistry }} />
+          <div><h2>{L('Tabla de Registro Verificable', 'Verifiable Code Registry')}</h2><p>{L('Codes guardados, SHA-256, estados y auditoria encadenada.', 'Saved codes, SHA-256, states, and chained audit history.')}</p></div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="code-registry-toolbar">
+          <input placeholder={L('Buscar code, hash o tipo', 'Search code, hash, or type')} value={query} onChange={event => setQuery(event.target.value)} />
+          <select value={status} onChange={event => setStatus(event.target.value)}><option value="all">{L('Todos los estados', 'All states')}</option>{['pending', 'validated', 'rejected', 'revoked', 'expired'].map(item => <option key={item}>{item}</option>)}</select>
+          <button onClick={() => sync(false)} disabled={busy}>{L('Sincronizar DB', 'Sync DB')}</button>
+          <button onClick={exportRows}>{L('Exportar JSON', 'Export JSON')}</button>
+        </div>
+        {error && <div className="code-registry-error">{error}</div>}
+        <div className="code-registry-stats"><span>{records.length} {L('registrados', 'registered')}</span><span>{filtered.length} {L('visibles', 'visible')}</span><span>{storage || 'encrypted-cache'}</span></div>
+        <div className="code-registry-grid">
+          <div className="code-registry-table-wrap">
+            <table className="code-registry-table">
+              <thead><tr><th>ID</th><th>CODE</th><th>TYPE</th><th>SHA-256</th><th>STATE</th><th>CREATED</th><th>ACTIONS</th></tr></thead>
+              <tbody>{filtered.map(row => <tr key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelectedId(row.id)}>
+                <td>{row.codeId}</td><td title={row.codeValue}>{row.codeValue}</td><td>{row.codeType}</td><td>{row.hashSha256.slice(0, 16)}...</td><td><select value={row.status} onClick={event => event.stopPropagation()} onChange={event => changeStatus(row, event.target.value)}>{['pending', 'validated', 'rejected', 'revoked', 'expired'].map(item => <option key={item}>{item}</option>)}</select></td><td>{row.createdAt.slice(0, 10)}</td><td><button onClick={event => { event.stopPropagation(); validate(row); }}>{L('Validar', 'Validate')}</button></td>
+              </tr>)}</tbody>
+            </table>
+          </div>
+          <aside className="code-registry-detail">
+            {selected ? <><h3>{selected.codeId}</h3><code>{selected.hashSha256}</code><p>{selected.codeValue}</p><div><b>{L('Certificado tecnico', 'Technical certificate')}</b><span>{selected.certificateId}</span></div><div><b>{L('Estado', 'State')}</b><span>{selected.status}</span></div><div><b>{L('Historial', 'Timeline')}</b><span>{selected.timeline?.length || 0}</span></div>{validation && <strong className={`registry-result ${validation.result === 'VALID' ? 'ok' : ''}`}>{validation.result}: {validation.message}</strong>}<small>{L('Registro tecnico verificable; no sustituye una certificacion legal.', 'Verifiable technical registry; it does not replace legal certification.')}</small></> : <p>{L('Todavia no hay codes registrados.', 'There are no registered codes yet.')}</p>}
+          </aside>
         </div>
       </section>
     </div>
@@ -17537,6 +17654,7 @@ const App = () => {
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [filePackagerOpen, setFilePackagerOpen] = useState(false);
   const [brandEvidenceOpen, setBrandEvidenceOpen] = useState(false);
+  const [codeRegistryOpen, setCodeRegistryOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
@@ -18408,6 +18526,7 @@ const App = () => {
   const openFileViewer = () => setFileViewerOpen(true);
   const openFilePackager = () => setFilePackagerOpen(true);
   const openBrandEvidence = () => setBrandEvidenceOpen(true);
+  const openCodeRegistry = () => setCodeRegistryOpen(true);
   const openPdfStamp = () => setPdfStampOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
@@ -18681,6 +18800,12 @@ const App = () => {
     { label: language === 'es' ? 'Archivos originales y SHA-256' : 'Original files and SHA-256', onClick: openBrandEvidence },
     { label: language === 'es' ? 'Code guardado y firma interna' : 'Saved code and internal signature', onClick: openBrandEvidence },
     { label: language === 'es' ? 'Certificado PDF y paquete ZIP' : 'PDF certificate and ZIP package', onClick: openBrandEvidence },
+  ];
+  const codeRegistryItems = [
+    { label: language === 'es' ? 'Abrir tabla verificable' : 'Open verifiable registry', onClick: openCodeRegistry },
+    { label: language === 'es' ? 'Sincronizar codes guardados' : 'Sync saved codes', onClick: openCodeRegistry },
+    { label: language === 'es' ? 'Validar SHA-256 y estado' : 'Validate SHA-256 and state', onClick: openCodeRegistry },
+    { label: language === 'es' ? 'Auditoria encadenada' : 'Chained audit trail', onClick: openCodeRegistry },
   ];
   const pdfStampItems = [
     { label: language === 'es' ? 'Abrir sellador PDF Hashcod' : 'Open Hashcod PDF stamp', onClick: openPdfStamp },
@@ -19253,6 +19378,7 @@ const App = () => {
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <FileZipPackagerDialog open={filePackagerOpen} onClose={() => setFilePackagerOpen(false)} notify={notify} language={language} />
       <BrandEvidenceVaultDialog open={brandEvidenceOpen} onClose={() => setBrandEvidenceOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <CodeRegistryTableDialog open={codeRegistryOpen} onClose={() => setCodeRegistryOpen(false)} notify={notify} language={language} rows={copyDb} />
       <PdfStampDialog open={pdfStampOpen} onClose={() => setPdfStampOpen(false)} notify={notify} language={language} rows={copyDb} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -19330,6 +19456,7 @@ const App = () => {
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="FILE ZIP PACKAGER" icon={TOP_MENU_ICONS.filePackager} iconOnly items={filePackagerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFilePackager} />
             <MenuButton label="BRAND EVIDENCE" icon={TOP_MENU_ICONS.brandEvidence} iconOnly items={brandEvidenceItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBrandEvidence} />
+            <MenuButton label="CODE REGISTRY" icon={TOP_MENU_ICONS.codeRegistry} iconOnly items={codeRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeRegistry} />
             <MenuButton label="PDF STAMP" icon={TOP_MENU_ICONS.pdfStamp} iconOnly items={pdfStampItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPdfStamp} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
