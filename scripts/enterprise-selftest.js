@@ -48,8 +48,9 @@ async function pdfStampVectorSmoke() {
   const blue = rgb(0.035, 0.31, 0.78);
   const font = await pdf.embedFont(StandardFonts.HelveticaBold);
   page.drawRectangle({ x: 390, y: 28, width: 170, height: 66, borderColor: blue, borderWidth: 2 });
-  page.drawLine({ start: { x: 404, y: 76 }, end: { x: 432, y: 76 }, color: blue, thickness: 2 });
-  page.drawSvgPath('M 0 0 L 10 15 L 20 0 Z', { x: 408, y: 42, color: blue, scale: 1.1 });
+  const logoOptions = { x: 402, y: 78, color: blue, scale: 1.1 };
+  page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
+  page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
   page.drawText('HASHCOD', { x: 440, y: 66, size: 12, font, color: blue });
   const output = await pdf.save();
   const reopened = await PDFDocument.load(output);
@@ -141,6 +142,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
   assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
+  assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('TOP_MENU_ICONS.pdfStamp') && appSource.includes('PDF STAMP'), 'pdf-stamp-menu');
 
   console.log('ENTERPRISE SELFTEST OK');

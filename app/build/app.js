@@ -9501,19 +9501,7 @@ const PdfStampDialog = ({
     const logoSize = Math.max(23, boxHeight * 0.44);
     const logoX = x + 11;
     const logoY = y + (boxHeight - logoSize) / 2 + 2;
-    const monitorTop = logoY + logoSize * 0.78;
-    const monitorBottom = logoY + logoSize * 0.28;
-    const monitorRight = logoX + logoSize;
-    const monitorGapLeft = logoX + logoSize * 0.34;
-    const monitorGapRight = logoX + logoSize * 0.66;
     const lineWidth = Math.max(1.4, boxWidth / 110);
-    const drawLine = (start, end) => page.drawLine({
-      start,
-      end,
-      color: blue,
-      thickness: lineWidth,
-      opacity
-    });
     page.drawRectangle({
       x,
       y,
@@ -9523,48 +9511,15 @@ const PdfStampDialog = ({
       borderWidth: lineWidth,
       opacity
     });
-    drawLine({
+    const logoOptions = {
       x: logoX,
-      y: monitorTop
-    }, {
-      x: monitorRight,
-      y: monitorTop
-    });
-    drawLine({
-      x: logoX,
-      y: monitorTop
-    }, {
-      x: logoX,
-      y: monitorBottom
-    });
-    drawLine({
-      x: monitorRight,
-      y: monitorTop
-    }, {
-      x: monitorRight,
-      y: monitorBottom
-    });
-    drawLine({
-      x: logoX,
-      y: monitorBottom
-    }, {
-      x: monitorGapLeft,
-      y: monitorBottom
-    });
-    drawLine({
-      x: monitorGapRight,
-      y: monitorBottom
-    }, {
-      x: monitorRight,
-      y: monitorBottom
-    });
-    page.drawSvgPath('M 0 0 L 10 15 L 20 0 Z', {
-      x: logoX + logoSize * 0.2,
-      y: logoY + logoSize * 0.03,
+      y: logoY + logoSize,
       color: blue,
       opacity,
-      scale: logoSize / 30
-    });
+      scale: logoSize / 32
+    };
+    page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
+    page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
     const textX = logoX + logoSize + 9;
     const availableTextWidth = Math.max(50, boxWidth - (textX - x) - 8);
     const titleSize = Math.max(8, Math.min(13, availableTextWidth / 7.2));
