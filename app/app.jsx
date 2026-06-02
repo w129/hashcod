@@ -546,8 +546,11 @@ const generationStrengthLabel = (strength) => {
   return 'LIGHT';
 };
 const sanitizeApiPrefix = (value) => String(value || '').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 24);
+const GENERATION_PREFIX_STORAGE_KEY = 'hashcod_generation_prefix_v1';
+const sanitizeGenerationPrefix = (value) => String(value || '').replace(/[^a-zA-Z0-9_.:/-]/g, '').slice(0, 40);
+const withGenerationPrefix = (value, generationPrefix) => `${sanitizeGenerationPrefix(generationPrefix)}${String(value || '')}`;
 
-const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan, language }) => {
+const ConfigBar = ({ type, length, setLength, strength, setStrength, generationPrefix, setGenerationPrefix, qty, setQty, prefix, setPrefix, charset, setCharset, onGen, onClear, onCopy, onDownload, busy, hasOut, t, plan, language }) => {
   const maxBatch = plan?.maxBatch || MAX_GENERATION_BATCH;
   const setPlanQty = (value) => setQty(Math.max(1, Math.min(maxBatch, Number(value) || 1)));
   const effectiveLength = scaledGenerationLength(length, strength);
@@ -582,6 +585,24 @@ const ConfigBar = ({ type, length, setLength, strength, setStrength, qty, setQty
           <span>5.00</span>
         </div>
         <small>{language === 'es' ? 'Escala la longitud de los formatos configurables. Los estandares rigidos conservan su tamano obligatorio.' : 'Scales configurable formats. Fixed standards retain their mandatory size.'}</small>
+      </div>
+
+      <div className="cfg-global-prefix">
+        <div className="cfg-global-prefix-copy">
+          <label className="cfg-l" htmlFor="generation-prefix">{language === 'es' ? 'Prefijo global de salida' : 'Global output prefix'}</label>
+          <small>{language === 'es' ? 'Aparece al inicio de cada code generado. Usa letras, numeros y . _ : / -' : 'Appears at the beginning of every generated code. Use letters, numbers and . _ : / -'}</small>
+        </div>
+        <input
+          id="generation-prefix"
+          className="cfg-inp"
+          value={generationPrefix}
+          onChange={(event) => setGenerationPrefix(sanitizeGenerationPrefix(event.target.value))}
+          placeholder="HASHCOD:"
+          maxLength={40}
+          spellCheck="false"
+        />
+        <button className="cfg-prefix-clear" onClick={() => setGenerationPrefix('')} disabled={!generationPrefix}>{language === 'es' ? 'Limpiar' : 'Clear'}</button>
+        <span className="cfg-prefix-preview">{generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX')}</span>
       </div>
 
       {type?.id === 'apikey' && (
@@ -17269,6 +17290,7 @@ const App = () => {
   const [strength, setStrength] = useState(1);
   const [qty, setQty] = useState(10);
   const [prefix, setPrefix] = useState('ocg_');
+  const [generationPrefix, setGenerationPrefix] = useState(() => sanitizeGenerationPrefix(localStorage.getItem(GENERATION_PREFIX_STORAGE_KEY) || ''));
   const [charset, setCharset] = useState({ upper: true, lower: true, num: true, sym: false });
   const [output, setOutput] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -17359,6 +17381,10 @@ const App = () => {
   const activePlan = useMemo(() => activePlanFromLicense(planLicense), [planLicense]);
   const visibleCatalog = useMemo(() => limitCatalogByPlan(catalog, activePlan), [catalog, activePlan]);
   const visibleTypeIds = useMemo(() => new Set(visibleCatalog.flatMap(cat => cat.types.map(type => type.id))), [visibleCatalog]);
+
+  useEffect(() => {
+    localStorage.setItem(GENERATION_PREFIX_STORAGE_KEY, sanitizeGenerationPrefix(generationPrefix));
+  }, [generationPrefix]);
 
   const handleTopNavWheel = useCallback((e) => {
     const node = topNavRef.current;
@@ -17540,7 +17566,8 @@ const App = () => {
     const seen = new Set(output.map(o => o.value));
     for (let i = 0; i < total; i++) {
       const effectiveLength = scaledGenerationLength(length, strength);
-      const v = await window.OCG_GEN.generate(selectedType.id, effectiveLength, { ...charset, prefix, strength });
+      const generatedValue = await window.OCG_GEN.generate(selectedType.id, effectiveLength, { ...charset, prefix, strength });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({ id: idRef.current, idx: idRef.current, value: v, type: selectedType.id, ts: Date.now(), strength, baseLength: length, effectiveLength });
       seen.add(v);
@@ -17564,7 +17591,7 @@ const App = () => {
     if (activePlan.id === 'free') {
       setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
     }
-  }, [selectedType, selectedCat, length, strength, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
+  }, [selectedType, selectedCat, length, strength, qty, charset, prefix, generationPrefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
 
   const clearOutput = () => {
     hashcodLawRecord(hashcodLawAssessPayload({ action: 'output:clear', meta: { count: output.length } }));
@@ -18604,7 +18631,8 @@ const App = () => {
     for (let i = 0; i < total; i++) {
       const baseLength = type.hasLen ? length : 32;
       const effectiveLength = scaledGenerationLength(baseLength, strength);
-      const v = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
+      const generatedValue = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now(), strength, baseLength, effectiveLength });
       seen.add(v);
@@ -18619,7 +18647,7 @@ const App = () => {
       setFreeNudge(prev => ({ open: true, index: (prev.index + 1) % FREE_UPGRADE_STORIES.length }));
     }
     return items;
-  }, [busy, output, length, strength, charset, prefix, activePlan, reserveFreeDailyCodes]);
+  }, [busy, output, length, strength, charset, prefix, generationPrefix, activePlan, reserveFreeDailyCodes]);
 
   const generateAll619 = useCallback(async () => {
     if (busy) return;
@@ -18634,7 +18662,8 @@ const App = () => {
     for (const { type } of cmdTypes619) {
       const baseLength = type.hasLen ? length : 32;
       const effectiveLength = scaledGenerationLength(baseLength, strength);
-      const v = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
+      const generatedValue = await window.OCG_GEN.generate(type.id, effectiveLength, { ...charset, prefix, strength });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({ id: idRef.current, idx: idRef.current, value: v, type: type.id, ts: Date.now(), strength, baseLength, effectiveLength });
       seen.add(v);
@@ -18643,7 +18672,7 @@ const App = () => {
     setStats(prev => ({ ...prev, generated: prev.generated + items.length, unique: seen.size }));
     setBusy(false);
     return items;
-  }, [busy, output, cmdTypes619, length, strength, charset, prefix, activePlan, notify, language]);
+  }, [busy, output, cmdTypes619, length, strength, charset, prefix, generationPrefix, activePlan, notify, language]);
 
   const OCG_COMMAND_HELP_1000 = useMemo(() => {
     const named = [
@@ -19143,6 +19172,7 @@ const App = () => {
               type={selectedType}
               length={length} setLength={setLength}
               strength={strength} setStrength={setStrength}
+              generationPrefix={generationPrefix} setGenerationPrefix={setGenerationPrefix}
               qty={qty} setQty={setQty}
               prefix={prefix} setPrefix={setPrefix}
               charset={charset} setCharset={setCharset}

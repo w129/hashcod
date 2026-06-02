@@ -1206,12 +1206,17 @@ const generationStrengthLabel = strength => {
   return 'LIGHT';
 };
 const sanitizeApiPrefix = value => String(value || '').replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 24);
+const GENERATION_PREFIX_STORAGE_KEY = 'hashcod_generation_prefix_v1';
+const sanitizeGenerationPrefix = value => String(value || '').replace(/[^a-zA-Z0-9_.:/-]/g, '').slice(0, 40);
+const withGenerationPrefix = (value, generationPrefix) => `${sanitizeGenerationPrefix(generationPrefix)}${String(value || '')}`;
 const ConfigBar = ({
   type,
   length,
   setLength,
   strength,
   setStrength,
+  generationPrefix,
+  setGenerationPrefix,
   qty,
   setQty,
   prefix,
@@ -1260,7 +1265,28 @@ const ConfigBar = ({
   }), React.createElement("div", {
     className: "cfg-strength-scale",
     "aria-hidden": "true"
-  }, React.createElement("span", null, "0.50"), React.createElement("span", null, "1.00"), React.createElement("span", null, "2.50"), React.createElement("span", null, "5.00")), React.createElement("small", null, language === 'es' ? 'Escala la longitud de los formatos configurables. Los estandares rigidos conservan su tamano obligatorio.' : 'Scales configurable formats. Fixed standards retain their mandatory size.')), type?.id === 'apikey' && React.createElement("div", {
+  }, React.createElement("span", null, "0.50"), React.createElement("span", null, "1.00"), React.createElement("span", null, "2.50"), React.createElement("span", null, "5.00")), React.createElement("small", null, language === 'es' ? 'Escala la longitud de los formatos configurables. Los estandares rigidos conservan su tamano obligatorio.' : 'Scales configurable formats. Fixed standards retain their mandatory size.')), React.createElement("div", {
+    className: "cfg-global-prefix"
+  }, React.createElement("div", {
+    className: "cfg-global-prefix-copy"
+  }, React.createElement("label", {
+    className: "cfg-l",
+    htmlFor: "generation-prefix"
+  }, language === 'es' ? 'Prefijo global de salida' : 'Global output prefix'), React.createElement("small", null, language === 'es' ? 'Aparece al inicio de cada code generado. Usa letras, numeros y . _ : / -' : 'Appears at the beginning of every generated code. Use letters, numbers and . _ : / -')), React.createElement("input", {
+    id: "generation-prefix",
+    className: "cfg-inp",
+    value: generationPrefix,
+    onChange: event => setGenerationPrefix(sanitizeGenerationPrefix(event.target.value)),
+    placeholder: "HASHCOD:",
+    maxLength: 40,
+    spellCheck: "false"
+  }), React.createElement("button", {
+    className: "cfg-prefix-clear",
+    onClick: () => setGenerationPrefix(''),
+    disabled: !generationPrefix
+  }, language === 'es' ? 'Limpiar' : 'Clear'), React.createElement("span", {
+    className: "cfg-prefix-preview"
+  }, generationPrefix || (language === 'es' ? 'SIN PREFIJO' : 'NO PREFIX'))), type?.id === 'apikey' && React.createElement("div", {
     className: "cfg-g"
   }, React.createElement("label", {
     className: "cfg-l"
@@ -21678,6 +21704,7 @@ const App = () => {
   const [strength, setStrength] = useState(1);
   const [qty, setQty] = useState(10);
   const [prefix, setPrefix] = useState('ocg_');
+  const [generationPrefix, setGenerationPrefix] = useState(() => sanitizeGenerationPrefix(localStorage.getItem(GENERATION_PREFIX_STORAGE_KEY) || ''));
   const [charset, setCharset] = useState({
     upper: true,
     lower: true,
@@ -21785,6 +21812,9 @@ const App = () => {
   const activePlan = useMemo(() => activePlanFromLicense(planLicense), [planLicense]);
   const visibleCatalog = useMemo(() => limitCatalogByPlan(catalog, activePlan), [catalog, activePlan]);
   const visibleTypeIds = useMemo(() => new Set(visibleCatalog.flatMap(cat => cat.types.map(type => type.id))), [visibleCatalog]);
+  useEffect(() => {
+    localStorage.setItem(GENERATION_PREFIX_STORAGE_KEY, sanitizeGenerationPrefix(generationPrefix));
+  }, [generationPrefix]);
   const handleTopNavWheel = useCallback(e => {
     const node = topNavRef.current;
     if (!node) return;
@@ -21973,11 +22003,12 @@ const App = () => {
     const seen = new Set(output.map(o => o.value));
     for (let i = 0; i < total; i++) {
       const effectiveLength = scaledGenerationLength(length, strength);
-      const v = await window.OCG_GEN.generate(selectedType.id, effectiveLength, {
+      const generatedValue = await window.OCG_GEN.generate(selectedType.id, effectiveLength, {
         ...charset,
         prefix,
         strength
       });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({
         id: idRef.current,
@@ -22019,7 +22050,7 @@ const App = () => {
         index: (prev.index + 1) % FREE_UPGRADE_STORIES.length
       }));
     }
-  }, [selectedType, selectedCat, length, strength, qty, charset, prefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
+  }, [selectedType, selectedCat, length, strength, qty, charset, prefix, generationPrefix, busy, output, activePlan, notify, language, visibleTypeIds, reserveFreeDailyCodes]);
   const clearOutput = () => {
     hashcodLawRecord(hashcodLawAssessPayload({
       action: 'output:clear',
@@ -23512,11 +23543,12 @@ const App = () => {
     for (let i = 0; i < total; i++) {
       const baseLength = type.hasLen ? length : 32;
       const effectiveLength = scaledGenerationLength(baseLength, strength);
-      const v = await window.OCG_GEN.generate(type.id, effectiveLength, {
+      const generatedValue = await window.OCG_GEN.generate(type.id, effectiveLength, {
         ...charset,
         prefix,
         strength
       });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({
         id: idRef.current,
@@ -23547,7 +23579,7 @@ const App = () => {
       }));
     }
     return items;
-  }, [busy, output, length, strength, charset, prefix, activePlan, reserveFreeDailyCodes]);
+  }, [busy, output, length, strength, charset, prefix, generationPrefix, activePlan, reserveFreeDailyCodes]);
   const generateAll619 = useCallback(async () => {
     if (busy) return;
     if (activePlan.maxBatch < cmdTypes619.length) {
@@ -23563,11 +23595,12 @@ const App = () => {
     } of cmdTypes619) {
       const baseLength = type.hasLen ? length : 32;
       const effectiveLength = scaledGenerationLength(baseLength, strength);
-      const v = await window.OCG_GEN.generate(type.id, effectiveLength, {
+      const generatedValue = await window.OCG_GEN.generate(type.id, effectiveLength, {
         ...charset,
         prefix,
         strength
       });
+      const v = withGenerationPrefix(generatedValue, generationPrefix);
       idRef.current += 1;
       items.push({
         id: idRef.current,
@@ -23589,7 +23622,7 @@ const App = () => {
     }));
     setBusy(false);
     return items;
-  }, [busy, output, cmdTypes619, length, strength, charset, prefix, activePlan, notify, language]);
+  }, [busy, output, cmdTypes619, length, strength, charset, prefix, generationPrefix, activePlan, notify, language]);
   const OCG_COMMAND_HELP_1000 = useMemo(() => {
     const named = ['aes256', 'aes512', 'chacha20', 'xchacha20', 'ascon-key', 'ascon-nonce', 'kuznyechik-key', 'sm4-key', 'camellia-key', 'serpent-key', 'twofish-key', 'seed-phrase', 'recovery-code', 'license-key', 'api-key', 'jwt-secret', 'csrf-token', 'hmac-key', 'blake3-hash', 'keccak-hash', 'zk-seed', 'pq-session-key', 'kyber-seed', 'dilithium-ticket', 'threshold-share', 'hsm-slot-key', 'secure-enclave-ticket', 'did-anchor', 'certificate-seal', 'vault-master-key', 'qr-bundle-secret', 'storage-lock-key', 'webdav-access-key', 'deploy-token', 'webhook-secret', 'database-password', 'audit-session-id', 'backup-chain-key', 'cold-storage-key', 'universal-secure-code'];
     const lines = [];
@@ -25476,6 +25509,8 @@ const App = () => {
     setLength: setLength,
     strength: strength,
     setStrength: setStrength,
+    generationPrefix: generationPrefix,
+    setGenerationPrefix: setGenerationPrefix,
     qty: qty,
     setQty: setQty,
     prefix: prefix,

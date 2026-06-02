@@ -2738,6 +2738,54 @@ kbd {
   font-size: 9px;
   letter-spacing: .35px;
 }
+.cfg-global-prefix {
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 420px) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-alt);
+}
+.cfg-global-prefix-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.cfg-global-prefix-copy small {
+  overflow: hidden;
+  color: var(--ink-4);
+  font-size: 9px;
+  letter-spacing: .35px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cfg-prefix-clear {
+  height: 30px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 0 12px;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.cfg-prefix-clear:disabled { color: var(--ink-4); }
+.cfg-prefix-preview {
+  max-width: 160px;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .cfg-global-prefix { grid-template-columns: minmax(0,1fr) auto; }
+  .cfg-global-prefix-copy { grid-column: 1 / -1; }
+  .cfg-prefix-preview { display:none; }
+}
 
 /* Hashcod layered design studio */
 .designstudio-back {

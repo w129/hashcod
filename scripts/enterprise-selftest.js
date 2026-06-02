@@ -143,8 +143,10 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const manifestForNote =') && appSource.includes('averageEntropy') && appSource.includes('manifestSha256'), 'sequence-a-verifiable-manifest');
   assert(appSource.includes('duplicateNote') && appSource.includes('rotateKey') && appSource.includes('removeAttachedCode'), 'sequence-a-operational-actions');
   assert(appSource.includes('<QrCanvas payload={verificationQr}') && appSource.includes('mnotes-code-search'), 'sequence-a-qr-search-ui');
+  assert(appSource.includes("const GENERATION_PREFIX_STORAGE_KEY = 'hashcod_generation_prefix_v1'") && appSource.includes('withGenerationPrefix(generatedValue, generationPrefix)'), 'generation-global-prefix-runtime');
+  assert(appSource.includes('cfg-global-prefix') && appSource.includes('setGenerationPrefix={setGenerationPrefix}'), 'generation-global-prefix-ui');
   assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-sequence-a-ops-1'), 'app-cache-buster');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-generation-prefix-1'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');
