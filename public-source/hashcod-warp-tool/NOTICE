@@ -1,0 +1,23 @@
+Hashcod Warp Workspace
+======================
+
+This separated browser adapter is maintained by Hashcod.
+
+It is based on ideas and visual attribution from Warp, an agentic development
+environment published by Denver Technologies, Inc.
+
+Original project:
+https://github.com/warpdotdev/Warp
+
+Warp licensing:
+- The warpui_core and warpui crates are licensed under the MIT license.
+- The rest of the Warp repository is licensed under GNU AGPL v3.
+
+Hashcod changes:
+- Added a separated browser-based programming workspace.
+- Added a local JavaScript sandbox with network access blocked by CSP.
+- Added file tabs, local persistence, command input, downloads, and source disclosure.
+- Kept the native Warp source outside the private Hashcod core.
+
+This adapter is not the full native Warp desktop terminal and does not claim to
+replace Warp. It provides a focused programming surface inside Hashcod.

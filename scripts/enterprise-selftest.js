@@ -74,6 +74,35 @@ async function docusealAdapterPdfSmoke() {
   return { inputBytes: input.length, outputBytes: result.bytes.length, pages: reopened.getPageCount(), digest: result.sourceDigest };
 }
 
+function warpWorkspaceAdapterSmoke() {
+  const memory = {};
+  const ctx = {
+    window: {},
+    document: {
+      createElement: () => ({ click() {}, remove() {}, set href(_) {}, set download(_) {} }),
+      body: { appendChild() {} },
+    },
+    Blob,
+    URL: { createObjectURL: () => 'blob:hashcod-warp', revokeObjectURL() {} },
+    localStorage: { getItem: key => memory[key] || null, setItem: (key, value) => { memory[key] = String(value); } },
+    Date,
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8'), ctx);
+  const api = ctx.window.HashcodWarpWorkspace;
+  const ws = api.defaultWorkspace();
+  const saved = api.saveWorkspace(ctx.localStorage, { ...ws, files: [...ws.files, { name: 'test.js', language: 'javascript', content: "console.log('ok')" }], active: 'test.js' });
+  const loaded = api.loadWorkspace(ctx.localStorage);
+  const sandbox = api.sandboxDocument("console.log('x')");
+  return {
+    files: loaded.files.length,
+    active: loaded.active,
+    formatted: api.formatSource('a=1;\\n\\n\\n').split('\n').length,
+    sandboxLocked: sandbox.includes("connect-src 'none'") && sandbox.includes('hashcod-warp-log'),
+    savedActive: saved.active,
+  };
+}
+
 function loadBrowserFiles() {
   const ctx = {
     window: {},
@@ -109,6 +138,8 @@ function assert(ok, id, detail = '') {
   assert(pdfSmoke.pages === 1 && pdfSmoke.outputBytes > pdfSmoke.inputBytes, 'pdf-stamp-vector-smoke', `${pdfSmoke.inputBytes}->${pdfSmoke.outputBytes} bytes`);
   const docusealSmoke = await docusealAdapterPdfSmoke();
   assert(docusealSmoke.pages === 1 && docusealSmoke.outputBytes > docusealSmoke.inputBytes && docusealSmoke.digest.length === 64, 'docuseal-adapter-pdf-smoke', `${docusealSmoke.inputBytes}->${docusealSmoke.outputBytes} bytes`);
+  const warpSmoke = warpWorkspaceAdapterSmoke();
+  assert(warpSmoke.files >= 3 && warpSmoke.active === 'test.js' && warpSmoke.sandboxLocked, 'warp-workspace-adapter-smoke', `${warpSmoke.files} files`);
 
   const ctx = loadBrowserFiles();
   const catalog = ctx.window.OCG_CATALOG || [];
@@ -172,7 +203,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
   assert(appSource.includes('const MAX_RENDERED_OUTPUT = 120;') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
   assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-docuseal-signer-1') && indexSource.includes('app/styles.css?v=hashcod-docuseal-signer-1'), 'app-cache-buster');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-warp-workspace-1') && indexSource.includes('app/styles.css?v=hashcod-warp-workspace-1'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');
@@ -189,6 +220,13 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.docusealSigner') && appSource.includes('DOCUSEAL SIGNER'), 'docuseal-signer-menu');
   assert(appSource.includes('Download source code') && appSource.includes('AGPL-3.0') && appSource.includes('DocuSeal attribution retained'), 'docuseal-visible-source-disclosure');
   assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-docuseal-tool-source.zip')), 'docuseal-source-download');
+  assert(indexSource.includes('hashcod-warp-workspace.js?v=1.0.0'), 'warp-workspace-runtime');
+  assert(appSource.includes('const WarpWorkspaceDialog =') && appSource.includes('HashcodWarpWorkspace') && appSource.includes('sandbox=\"allow-scripts\"'), 'warp-workspace-dialog');
+  assert(appSource.includes('TOP_MENU_ICONS.warpWorkspace') && appSource.includes('WARP WORKSPACE'), 'warp-workspace-menu');
+  assert(appSource.includes('AGPL-3.0 + MIT') && appSource.includes('Warp upstream') && appSource.includes('Download source code'), 'warp-visible-source-disclosure');
+  assert(stylesSource.includes('.warp-dlg') && stylesSource.includes('.warp-terminal'), 'warp-workspace-css');
+  assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-warp-tool/LICENSE-AGPL')) && fs.existsSync(path.join(ROOT, 'public-source/hashcod-warp-tool/LICENSE-MIT')), 'warp-license-files');
+  assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-warp-tool-source.zip')), 'warp-source-download');
 
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {

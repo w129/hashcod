@@ -1,0 +1,8 @@
+$ErrorActionPreference = 'Stop'
+$toolRoot = Split-Path -Parent $PSScriptRoot
+$destination = Join-Path (Split-Path -Parent $toolRoot) 'hashcod-warp-tool-source.zip'
+if (Test-Path -LiteralPath $destination) {
+  Remove-Item -LiteralPath $destination -Force
+}
+Compress-Archive -Path $toolRoot -DestinationPath $destination -CompressionLevel Optimal
+Write-Host "Created $destination"

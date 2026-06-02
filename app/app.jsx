@@ -2598,6 +2598,7 @@ const TOP_MENU_ICONS = {
   brandEvidence: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6 2 2 4-4"/><path d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/></svg>`,
   pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
   docusealSigner: `<img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" />`,
+  warpWorkspace: `<img src="/public-source/hashcod-warp-tool/public/warp-logo-black.svg" alt="" />`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
@@ -8515,6 +8516,201 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
             </dl>
           </aside>
         </div>
+      </section>
+    </div>
+  );
+};
+
+const WarpWorkspaceDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const adapter = window.HashcodWarpWorkspace;
+  const iframeRef = useRef(null);
+  const [workspace, setWorkspace] = useState(() => adapter?.loadWorkspace?.(localStorage) || { active: 'main.js', files: [{ name: 'main.js', language: 'javascript', content: "console.log('Hashcod Warp Workspace ready');" }] });
+  const [terminal, setTerminal] = useState(() => [
+    { level: 'sys', text: 'Hashcod Warp Workspace ready. Commands: help, files, cat <file>, new <file>, rm <file>, run, save, format, download, clear, reset.' },
+  ]);
+  const [command, setCommand] = useState('');
+  const [filter, setFilter] = useState('');
+  const activeFile = workspace.files.find(file => file.name === workspace.active) || workspace.files[0];
+  const sourceUrl = '/public-source/hashcod-warp-tool-source.zip';
+
+  const appendTerminal = useCallback((level, text) => {
+    setTerminal(prev => [...prev, { level, text: String(text || '') }].slice(-220));
+  }, []);
+
+  const persistWorkspace = useCallback((next) => {
+    const saved = adapter?.saveWorkspace?.(localStorage, next) || next;
+    setWorkspace(saved);
+    return saved;
+  }, [adapter]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onMessage = event => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      if (event.data?.type !== 'hashcod-warp-log') return;
+      appendTerminal(event.data.level || 'log', event.data.text || '');
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [open, appendTerminal]);
+
+  if (!open) return null;
+
+  const updateActiveContent = (content) => {
+    persistWorkspace({
+      ...workspace,
+      files: workspace.files.map(file => file.name === activeFile.name ? { ...file, content } : file),
+      active: activeFile.name,
+    });
+  };
+
+  const setActive = (name) => persistWorkspace({ ...workspace, active: name });
+
+  const createFile = (name = window.prompt(L('Nombre del archivo', 'File name'), 'script.js')) => {
+    const clean = adapter?.cleanName?.(name) || sanitizeFilename(name || 'script.js');
+    if (!clean) return;
+    if (workspace.files.some(file => file.name === clean)) {
+      setActive(clean);
+      return;
+    }
+    persistWorkspace({
+      ...workspace,
+      active: clean,
+      files: [...workspace.files, { name: clean, language: clean.endsWith('.js') ? 'javascript' : 'text', content: clean.endsWith('.js') ? "console.log('new file');\n" : '' }],
+    });
+    appendTerminal('ok', `created ${clean}`);
+  };
+
+  const removeFile = (name = activeFile?.name) => {
+    if (!name || workspace.files.length <= 1) return;
+    const nextFiles = workspace.files.filter(file => file.name !== name);
+    persistWorkspace({ ...workspace, files: nextFiles, active: nextFiles[0]?.name || '' });
+    appendTerminal('warn', `removed ${name}`);
+  };
+
+  const runActive = () => {
+    if (!activeFile) return;
+    if (!/\.m?js$/i.test(activeFile.name)) {
+      appendTerminal('warn', 'Only JavaScript files run in the browser sandbox. Other files remain editable and downloadable.');
+      return;
+    }
+    appendTerminal('cmd', `run ${activeFile.name}`);
+    iframeRef.current.srcdoc = adapter?.sandboxDocument?.(activeFile.content) || '';
+  };
+
+  const downloadActive = () => {
+    if (!activeFile) return;
+    (adapter?.downloadBlob || triggerDownload)(activeFile.name, activeFile.content, 'text/plain;charset=utf-8');
+    appendTerminal('ok', `downloaded ${activeFile.name}`);
+  };
+
+  const exportProject = () => {
+    const entries = workspace.files.map(file => ({ name: file.name, content: file.content }));
+    entries.push({ name: 'hashcod-warp-workspace-manifest.json', content: JSON.stringify({ platform: 'Hashcod', tool: 'Warp Workspace', exportedAt: new Date().toISOString(), files: workspace.files.map(file => ({ name: file.name, bytes: file.content.length })) }, null, 2) });
+    triggerBlobDownload(`Hashcod-Warp-Workspace-${tsStamp()}.zip`, makeZipBlob(entries));
+    appendTerminal('ok', 'exported project ZIP');
+  };
+
+  const runCommand = () => {
+    const raw = command.trim();
+    if (!raw) return;
+    appendTerminal('prompt', `warp$ ${raw}`);
+    setCommand('');
+    const [verb, ...parts] = raw.split(/\s+/);
+    const arg = parts.join(' ');
+    if (verb === 'help') appendTerminal('sys', 'help | files | cat <file> | new <file> | rm <file> | run | save | format | download | export | clear | reset');
+    else if (verb === 'files') appendTerminal('log', workspace.files.map(file => `${file.name} (${file.content.length} chars)`).join('\n'));
+    else if (verb === 'cat') {
+      const file = workspace.files.find(item => item.name === arg) || activeFile;
+      appendTerminal('log', file?.content || 'file not found');
+    } else if (verb === 'new') createFile(arg || undefined);
+    else if (verb === 'rm') removeFile(arg || activeFile?.name);
+    else if (verb === 'run') runActive();
+    else if (verb === 'save') {
+      persistWorkspace(workspace);
+      appendTerminal('ok', 'workspace saved locally');
+    } else if (verb === 'format') {
+      updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '');
+      appendTerminal('ok', `formatted ${activeFile?.name}`);
+    } else if (verb === 'download') downloadActive();
+    else if (verb === 'export') exportProject();
+    else if (verb === 'clear') setTerminal([]);
+    else if (verb === 'reset') {
+      const next = adapter?.defaultWorkspace?.() || workspace;
+      persistWorkspace(next);
+      appendTerminal('warn', 'workspace reset');
+    } else appendTerminal('error', `unknown command: ${verb}`);
+  };
+
+  const visibleFiles = workspace.files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg warp-dlg" onClick={event => event.stopPropagation()}>
+        <header className="dlg-h warp-head">
+          <span className="warp-mark"><img src="/public-source/hashcod-warp-tool/public/warp-logo-black.svg" alt="" /></span>
+          <div>
+            <h2>Hashcod Warp Workspace</h2>
+            <p>{L('Editor de programacion local inspirado en Warp, con consola, archivos, sandbox JS y codigo fuente separado.', 'Warp-inspired local programming editor with console, files, JS sandbox, and separated source code.')}</p>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </header>
+        <div className="warp-shell">
+          <aside className="warp-files">
+            <div className="warp-license-card">
+              <b>Warp source split</b>
+              <span>AGPL-3.0 + MIT</span>
+              <a href={sourceUrl} download>{L('Descargar codigo fuente', 'Download source code')}</a>
+            </div>
+            <input value={filter} onChange={event => setFilter(event.target.value)} placeholder={L('Buscar archivo', 'Search file')} />
+            <div className="warp-file-list">
+              {visibleFiles.map(file => (
+                <button key={file.name} className={file.name === activeFile?.name ? 'active' : ''} onClick={() => setActive(file.name)}>
+                  <span>{file.name}</span><small>{file.language} | {file.content.length} ch</small>
+                </button>
+              ))}
+            </div>
+            <div className="warp-file-actions">
+              <button onClick={() => createFile()}>{L('Nuevo', 'New')}</button>
+              <button onClick={() => removeFile()} disabled={workspace.files.length <= 1}>{L('Borrar', 'Remove')}</button>
+              <button onClick={exportProject}>ZIP</button>
+            </div>
+          </aside>
+          <main className="warp-editor-pane">
+            <div className="warp-toolbar">
+              <span>{activeFile?.name || '---'}</span>
+              <button onClick={() => updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '')}>{L('Formato', 'Format')}</button>
+              <button onClick={downloadActive}>{L('Descargar', 'Download')}</button>
+              <button className="warp-run" onClick={runActive}>RUN</button>
+            </div>
+            <textarea spellCheck="false" value={activeFile?.content || ''} onChange={event => updateActiveContent(event.target.value)} />
+          </main>
+          <aside className="warp-terminal">
+            <div className="warp-term-output">
+              {terminal.map((line, index) => <pre key={`${index}-${line.level}`} className={`warp-${line.level}`}>{line.text}</pre>)}
+            </div>
+            <div className="warp-command">
+              <span>warp$</span>
+              <input value={command} onChange={event => setCommand(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') runCommand(); }} placeholder="help | run | files | export" />
+              <button onClick={runCommand}>ENTER</button>
+            </div>
+          </aside>
+          <aside className="warp-source">
+            <h3>{L('Licencia y separacion', 'License and separation')}</h3>
+            <p>{L('Esta herramienta publica solo el adaptador de Hashcod. El Warp nativo completo sigue en su repositorio upstream.', 'This tool publishes only the Hashcod adapter. The full native Warp app remains in its upstream repository.')}</p>
+            <a href="/public-source/hashcod-warp-tool/NOTICE" target="_blank" rel="noreferrer">NOTICE</a>
+            <a href="/public-source/hashcod-warp-tool/LICENSE-AGPL" target="_blank" rel="noreferrer">LICENSE-AGPL</a>
+            <a href="/public-source/hashcod-warp-tool/LICENSE-MIT" target="_blank" rel="noreferrer">LICENSE-MIT</a>
+            <a href="https://github.com/warpdotdev/Warp" target="_blank" rel="noreferrer">Warp upstream</a>
+            <dl>
+              <dt>Sandbox</dt><dd>CSP default-src none</dd>
+              <dt>{L('Persistencia', 'Persistence')}</dt><dd>localStorage</dd>
+              <dt>{L('Ejecucion', 'Execution')}</dt><dd>Browser JS iframe</dd>
+            </dl>
+          </aside>
+        </div>
+        <iframe ref={iframeRef} title="Hashcod Warp sandbox" sandbox="allow-scripts" className="warp-sandbox" />
       </section>
     </div>
   );
@@ -17834,6 +18030,7 @@ const App = () => {
   const [codeRegistryOpen, setCodeRegistryOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
   const [docusealSignerOpen, setDocusealSignerOpen] = useState(false);
+  const [warpWorkspaceOpen, setWarpWorkspaceOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
@@ -18707,6 +18904,7 @@ const App = () => {
     const openCodeRegistry = () => setCodeRegistryOpen(true);
     const openPdfStamp = () => setPdfStampOpen(true);
     const openDocusealSigner = () => setDocusealSignerOpen(true);
+    const openWarpWorkspace = () => setWarpWorkspaceOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
@@ -18997,6 +19195,12 @@ const App = () => {
       { label: language === 'es' ? 'Vista previa PDF local' : 'Local PDF preview', onClick: openDocusealSigner },
       { label: language === 'es' ? 'Firma escrita o PNG' : 'Typed or PNG signature', onClick: openDocusealSigner },
       { label: language === 'es' ? 'Codigo fuente AGPL visible' : 'Visible AGPL source code', onClick: openDocusealSigner },
+    ];
+    const warpWorkspaceItems = [
+      { label: language === 'es' ? 'Abrir Warp Workspace' : 'Open Warp Workspace', onClick: openWarpWorkspace },
+      { label: language === 'es' ? 'Editor de archivos local' : 'Local file editor', onClick: openWarpWorkspace },
+      { label: language === 'es' ? 'Consola y sandbox JavaScript' : 'Console and JavaScript sandbox', onClick: openWarpWorkspace },
+      { label: language === 'es' ? 'Licencias AGPL/MIT visibles' : 'Visible AGPL/MIT licenses', onClick: openWarpWorkspace },
     ];
   const graphLabItems = [
     { label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab', onClick: openGraphLab },
@@ -19566,6 +19770,7 @@ const App = () => {
       <CodeRegistryTableDialog open={codeRegistryOpen} onClose={() => setCodeRegistryOpen(false)} notify={notify} language={language} rows={copyDb} />
       <PdfStampDialog open={pdfStampOpen} onClose={() => setPdfStampOpen(false)} notify={notify} language={language} rows={copyDb} />
       <DocusealSignerDialog open={docusealSignerOpen} onClose={() => setDocusealSignerOpen(false)} notify={notify} language={language} />
+      <WarpWorkspaceDialog open={warpWorkspaceOpen} onClose={() => setWarpWorkspaceOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CodeIncubatorDialog open={codeIncubatorOpen} onClose={() => setCodeIncubatorOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} onSaveRows={rememberCopied} />
@@ -19645,6 +19850,7 @@ const App = () => {
             <MenuButton label="CODE REGISTRY" icon={TOP_MENU_ICONS.codeRegistry} iconOnly items={codeRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeRegistry} />
             <MenuButton label="PDF STAMP" icon={TOP_MENU_ICONS.pdfStamp} iconOnly items={pdfStampItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPdfStamp} />
             <MenuButton label="DOCUSEAL SIGNER" icon={TOP_MENU_ICONS.docusealSigner} iconOnly items={docusealSignerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDocusealSigner} />
+            <MenuButton label="WARP WORKSPACE" icon={TOP_MENU_ICONS.warpWorkspace} iconOnly items={warpWorkspaceItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openWarpWorkspace} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="CODE INCUBATOR" icon={TOP_MENU_ICONS.codeIncubator} iconOnly items={codeIncubatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeIncubator} />

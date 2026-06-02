@@ -3388,6 +3388,7 @@ const TOP_MENU_ICONS = {
   brandEvidence: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6 2 2 4-4"/><path d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/></svg>`,
   pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
   docusealSigner: `<img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" />`,
+  warpWorkspace: `<img src="/public-source/hashcod-warp-tool/public/warp-logo-black.svg" alt="" />`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
@@ -10542,6 +10543,254 @@ const DocusealSignerDialog = ({
     target: "_blank",
     rel: "noreferrer"
   }, "DocuSeal upstream"), React.createElement("p", null, L('Esta firma visual no sustituye una firma electronica cualificada ni una validacion legal de identidad.', 'This visible signature does not replace a qualified electronic signature or legal identity validation.')), React.createElement("dl", null, React.createElement("dt", null, L('Documento', 'Document')), React.createElement("dd", null, file?.name || '---'), React.createElement("dt", null, L('Paginas', 'Pages')), React.createElement("dd", null, pageCount || '---'), React.createElement("dt", null, "SHA-256"), React.createElement("dd", null, sourceDigest || '---'))))));
+};
+const WarpWorkspaceDialog = ({
+  open,
+  onClose,
+  notify,
+  language
+}) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const adapter = window.HashcodWarpWorkspace;
+  const iframeRef = useRef(null);
+  const [workspace, setWorkspace] = useState(() => adapter?.loadWorkspace?.(localStorage) || {
+    active: 'main.js',
+    files: [{
+      name: 'main.js',
+      language: 'javascript',
+      content: "console.log('Hashcod Warp Workspace ready');"
+    }]
+  });
+  const [terminal, setTerminal] = useState(() => [{
+    level: 'sys',
+    text: 'Hashcod Warp Workspace ready. Commands: help, files, cat <file>, new <file>, rm <file>, run, save, format, download, clear, reset.'
+  }]);
+  const [command, setCommand] = useState('');
+  const [filter, setFilter] = useState('');
+  const activeFile = workspace.files.find(file => file.name === workspace.active) || workspace.files[0];
+  const sourceUrl = '/public-source/hashcod-warp-tool-source.zip';
+  const appendTerminal = useCallback((level, text) => {
+    setTerminal(prev => [...prev, {
+      level,
+      text: String(text || '')
+    }].slice(-220));
+  }, []);
+  const persistWorkspace = useCallback(next => {
+    const saved = adapter?.saveWorkspace?.(localStorage, next) || next;
+    setWorkspace(saved);
+    return saved;
+  }, [adapter]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onMessage = event => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      if (event.data?.type !== 'hashcod-warp-log') return;
+      appendTerminal(event.data.level || 'log', event.data.text || '');
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [open, appendTerminal]);
+  if (!open) return null;
+  const updateActiveContent = content => {
+    persistWorkspace({
+      ...workspace,
+      files: workspace.files.map(file => file.name === activeFile.name ? {
+        ...file,
+        content
+      } : file),
+      active: activeFile.name
+    });
+  };
+  const setActive = name => persistWorkspace({
+    ...workspace,
+    active: name
+  });
+  const createFile = (name = window.prompt(L('Nombre del archivo', 'File name'), 'script.js')) => {
+    const clean = adapter?.cleanName?.(name) || sanitizeFilename(name || 'script.js');
+    if (!clean) return;
+    if (workspace.files.some(file => file.name === clean)) {
+      setActive(clean);
+      return;
+    }
+    persistWorkspace({
+      ...workspace,
+      active: clean,
+      files: [...workspace.files, {
+        name: clean,
+        language: clean.endsWith('.js') ? 'javascript' : 'text',
+        content: clean.endsWith('.js') ? "console.log('new file');\n" : ''
+      }]
+    });
+    appendTerminal('ok', `created ${clean}`);
+  };
+  const removeFile = (name = activeFile?.name) => {
+    if (!name || workspace.files.length <= 1) return;
+    const nextFiles = workspace.files.filter(file => file.name !== name);
+    persistWorkspace({
+      ...workspace,
+      files: nextFiles,
+      active: nextFiles[0]?.name || ''
+    });
+    appendTerminal('warn', `removed ${name}`);
+  };
+  const runActive = () => {
+    if (!activeFile) return;
+    if (!/\.m?js$/i.test(activeFile.name)) {
+      appendTerminal('warn', 'Only JavaScript files run in the browser sandbox. Other files remain editable and downloadable.');
+      return;
+    }
+    appendTerminal('cmd', `run ${activeFile.name}`);
+    iframeRef.current.srcdoc = adapter?.sandboxDocument?.(activeFile.content) || '';
+  };
+  const downloadActive = () => {
+    if (!activeFile) return;
+    (adapter?.downloadBlob || triggerDownload)(activeFile.name, activeFile.content, 'text/plain;charset=utf-8');
+    appendTerminal('ok', `downloaded ${activeFile.name}`);
+  };
+  const exportProject = () => {
+    const entries = workspace.files.map(file => ({
+      name: file.name,
+      content: file.content
+    }));
+    entries.push({
+      name: 'hashcod-warp-workspace-manifest.json',
+      content: JSON.stringify({
+        platform: 'Hashcod',
+        tool: 'Warp Workspace',
+        exportedAt: new Date().toISOString(),
+        files: workspace.files.map(file => ({
+          name: file.name,
+          bytes: file.content.length
+        }))
+      }, null, 2)
+    });
+    triggerBlobDownload(`Hashcod-Warp-Workspace-${tsStamp()}.zip`, makeZipBlob(entries));
+    appendTerminal('ok', 'exported project ZIP');
+  };
+  const runCommand = () => {
+    const raw = command.trim();
+    if (!raw) return;
+    appendTerminal('prompt', `warp$ ${raw}`);
+    setCommand('');
+    const [verb, ...parts] = raw.split(/\s+/);
+    const arg = parts.join(' ');
+    if (verb === 'help') appendTerminal('sys', 'help | files | cat <file> | new <file> | rm <file> | run | save | format | download | export | clear | reset');else if (verb === 'files') appendTerminal('log', workspace.files.map(file => `${file.name} (${file.content.length} chars)`).join('\n'));else if (verb === 'cat') {
+      const file = workspace.files.find(item => item.name === arg) || activeFile;
+      appendTerminal('log', file?.content || 'file not found');
+    } else if (verb === 'new') createFile(arg || undefined);else if (verb === 'rm') removeFile(arg || activeFile?.name);else if (verb === 'run') runActive();else if (verb === 'save') {
+      persistWorkspace(workspace);
+      appendTerminal('ok', 'workspace saved locally');
+    } else if (verb === 'format') {
+      updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '');
+      appendTerminal('ok', `formatted ${activeFile?.name}`);
+    } else if (verb === 'download') downloadActive();else if (verb === 'export') exportProject();else if (verb === 'clear') setTerminal([]);else if (verb === 'reset') {
+      const next = adapter?.defaultWorkspace?.() || workspace;
+      persistWorkspace(next);
+      appendTerminal('warn', 'workspace reset');
+    } else appendTerminal('error', `unknown command: ${verb}`);
+  };
+  const visibleFiles = workspace.files.filter(file => file.name.toLowerCase().includes(filter.toLowerCase()));
+  return React.createElement("div", {
+    className: "dlg-back",
+    onClick: onClose
+  }, React.createElement("section", {
+    className: "dlg warp-dlg",
+    onClick: event => event.stopPropagation()
+  }, React.createElement("header", {
+    className: "dlg-h warp-head"
+  }, React.createElement("span", {
+    className: "warp-mark"
+  }, React.createElement("img", {
+    src: "/public-source/hashcod-warp-tool/public/warp-logo-black.svg",
+    alt: ""
+  })), React.createElement("div", null, React.createElement("h2", null, "Hashcod Warp Workspace"), React.createElement("p", null, L('Editor de programacion local inspirado en Warp, con consola, archivos, sandbox JS y codigo fuente separado.', 'Warp-inspired local programming editor with console, files, JS sandbox, and separated source code.'))), React.createElement("button", {
+    className: "dlg-x",
+    onClick: onClose
+  }, "x")), React.createElement("div", {
+    className: "warp-shell"
+  }, React.createElement("aside", {
+    className: "warp-files"
+  }, React.createElement("div", {
+    className: "warp-license-card"
+  }, React.createElement("b", null, "Warp source split"), React.createElement("span", null, "AGPL-3.0 + MIT"), React.createElement("a", {
+    href: sourceUrl,
+    download: true
+  }, L('Descargar codigo fuente', 'Download source code'))), React.createElement("input", {
+    value: filter,
+    onChange: event => setFilter(event.target.value),
+    placeholder: L('Buscar archivo', 'Search file')
+  }), React.createElement("div", {
+    className: "warp-file-list"
+  }, visibleFiles.map(file => React.createElement("button", {
+    key: file.name,
+    className: file.name === activeFile?.name ? 'active' : '',
+    onClick: () => setActive(file.name)
+  }, React.createElement("span", null, file.name), React.createElement("small", null, file.language, " | ", file.content.length, " ch")))), React.createElement("div", {
+    className: "warp-file-actions"
+  }, React.createElement("button", {
+    onClick: () => createFile()
+  }, L('Nuevo', 'New')), React.createElement("button", {
+    onClick: () => removeFile(),
+    disabled: workspace.files.length <= 1
+  }, L('Borrar', 'Remove')), React.createElement("button", {
+    onClick: exportProject
+  }, "ZIP"))), React.createElement("main", {
+    className: "warp-editor-pane"
+  }, React.createElement("div", {
+    className: "warp-toolbar"
+  }, React.createElement("span", null, activeFile?.name || '---'), React.createElement("button", {
+    onClick: () => updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '')
+  }, L('Formato', 'Format')), React.createElement("button", {
+    onClick: downloadActive
+  }, L('Descargar', 'Download')), React.createElement("button", {
+    className: "warp-run",
+    onClick: runActive
+  }, "RUN")), React.createElement("textarea", {
+    spellCheck: "false",
+    value: activeFile?.content || '',
+    onChange: event => updateActiveContent(event.target.value)
+  })), React.createElement("aside", {
+    className: "warp-terminal"
+  }, React.createElement("div", {
+    className: "warp-term-output"
+  }, terminal.map((line, index) => React.createElement("pre", {
+    key: `${index}-${line.level}`,
+    className: `warp-${line.level}`
+  }, line.text))), React.createElement("div", {
+    className: "warp-command"
+  }, React.createElement("span", null, "warp$"), React.createElement("input", {
+    value: command,
+    onChange: event => setCommand(event.target.value),
+    onKeyDown: event => {
+      if (event.key === 'Enter') runCommand();
+    },
+    placeholder: "help | run | files | export"
+  }), React.createElement("button", {
+    onClick: runCommand
+  }, "ENTER"))), React.createElement("aside", {
+    className: "warp-source"
+  }, React.createElement("h3", null, L('Licencia y separacion', 'License and separation')), React.createElement("p", null, L('Esta herramienta publica solo el adaptador de Hashcod. El Warp nativo completo sigue en su repositorio upstream.', 'This tool publishes only the Hashcod adapter. The full native Warp app remains in its upstream repository.')), React.createElement("a", {
+    href: "/public-source/hashcod-warp-tool/NOTICE",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "NOTICE"), React.createElement("a", {
+    href: "/public-source/hashcod-warp-tool/LICENSE-AGPL",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "LICENSE-AGPL"), React.createElement("a", {
+    href: "/public-source/hashcod-warp-tool/LICENSE-MIT",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "LICENSE-MIT"), React.createElement("a", {
+    href: "https://github.com/warpdotdev/Warp",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "Warp upstream"), React.createElement("dl", null, React.createElement("dt", null, "Sandbox"), React.createElement("dd", null, "CSP default-src none"), React.createElement("dt", null, L('Persistencia', 'Persistence')), React.createElement("dd", null, "localStorage"), React.createElement("dt", null, L('Ejecucion', 'Execution')), React.createElement("dd", null, "Browser JS iframe")))), React.createElement("iframe", {
+    ref: iframeRef,
+    title: "Hashcod Warp sandbox",
+    sandbox: "allow-scripts",
+    className: "warp-sandbox"
+  })));
 };
 const ComplexEntropyMapDialog = ({
   open,
@@ -22526,6 +22775,7 @@ const App = () => {
   const [codeRegistryOpen, setCodeRegistryOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
   const [docusealSignerOpen, setDocusealSignerOpen] = useState(false);
+  const [warpWorkspaceOpen, setWarpWorkspaceOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
@@ -23506,6 +23756,7 @@ const App = () => {
   const openCodeRegistry = () => setCodeRegistryOpen(true);
   const openPdfStamp = () => setPdfStampOpen(true);
   const openDocusealSigner = () => setDocusealSignerOpen(true);
+  const openWarpWorkspace = () => setWarpWorkspaceOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
@@ -24074,6 +24325,19 @@ const App = () => {
   }, {
     label: language === 'es' ? 'Codigo fuente AGPL visible' : 'Visible AGPL source code',
     onClick: openDocusealSigner
+  }];
+  const warpWorkspaceItems = [{
+    label: language === 'es' ? 'Abrir Warp Workspace' : 'Open Warp Workspace',
+    onClick: openWarpWorkspace
+  }, {
+    label: language === 'es' ? 'Editor de archivos local' : 'Local file editor',
+    onClick: openWarpWorkspace
+  }, {
+    label: language === 'es' ? 'Consola y sandbox JavaScript' : 'Console and JavaScript sandbox',
+    onClick: openWarpWorkspace
+  }, {
+    label: language === 'es' ? 'Licencias AGPL/MIT visibles' : 'Visible AGPL/MIT licenses',
+    onClick: openWarpWorkspace
   }];
   const graphLabItems = [{
     label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab',
@@ -25634,6 +25898,11 @@ const App = () => {
     onClose: () => setDocusealSignerOpen(false),
     notify: notify,
     language: language
+  }), React.createElement(WarpWorkspaceDialog, {
+    open: warpWorkspaceOpen,
+    onClose: () => setWarpWorkspaceOpen(false),
+    notify: notify,
+    language: language
   }), React.createElement(GraphLabDialog, {
     open: graphLabOpen,
     onClose: () => setGraphLabOpen(false),
@@ -26145,6 +26414,14 @@ const App = () => {
     activeMenu: activeMenu,
     setActiveMenu: setActiveMenu,
     primaryAction: openDocusealSigner
+  }), React.createElement(MenuButton, {
+    label: "WARP WORKSPACE",
+    icon: TOP_MENU_ICONS.warpWorkspace,
+    iconOnly: true,
+    items: warpWorkspaceItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openWarpWorkspace
   }), React.createElement(MenuButton, {
     label: "GRAPH LAB",
     icon: TOP_MENU_ICONS.graphLab,
