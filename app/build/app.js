@@ -9607,7 +9607,7 @@ const BrandEvidenceVaultDialog = ({
     const black = rgb(0.05, 0.05, 0.05);
     const logoOptions = {
       x: 58,
-      y: 782,
+      y: 776,
       color: black,
       scale: 1.05
     };

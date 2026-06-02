@@ -143,7 +143,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
   assert(appSource.includes('const BrandEvidenceVaultDialog =') && appSource.includes("authFetch('/api/brand-evidence'"), 'brand-evidence-vault-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.brandEvidence') && appSource.includes('BRAND EVIDENCE'), 'brand-evidence-vault-menu');
-  assert(appSource.includes("const logoOptions = { x: 58, y: 782, color: black, scale: 1.05 }") && appSource.includes("page.drawText('HASHCOD', { x: 102, y: 750"), 'brand-evidence-certificate-logo');
+  assert(appSource.includes("const logoOptions = { x: 58, y: 776, color: black, scale: 1.05 }") && appSource.includes("page.drawText('HASHCOD', { x: 102, y: 750"), 'brand-evidence-certificate-logo');
   assert(appSource.includes('const manifestForNote =') && appSource.includes('averageEntropy') && appSource.includes('manifestSha256'), 'sequence-a-verifiable-manifest');
   assert(appSource.includes('duplicateNote') && appSource.includes('rotateKey') && appSource.includes('removeAttachedCode'), 'sequence-a-operational-actions');
   assert(appSource.includes('<QrCanvas payload={verificationQr}') && appSource.includes('mnotes-code-search'), 'sequence-a-qr-search-ui');
@@ -153,7 +153,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
   assert(appSource.includes('const MAX_RENDERED_OUTPUT = 120;') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
   assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-brand-evidence-2') && indexSource.includes('app/styles.css?v=hashcod-brand-evidence-2'), 'app-cache-buster');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-brand-evidence-3') && indexSource.includes('app/styles.css?v=hashcod-brand-evidence-3'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');
