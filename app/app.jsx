@@ -18636,15 +18636,15 @@ const App = () => {
       <PixelNoteDialog open={!!pixelNoteRow} onClose={() => setPixelNoteRow(null)} row={pixelNoteRow} notify={notify} language={language} />
       <input ref={fileInputRef} type="file" accept=".json,.ocg.json,application/json" className="hidden-file" onChange={handleSessionFile} />
       {toast && <div className="ocg-toast">{toast}</div>}
-      <div className={`app ${density}`} onClick={() => activeMenu && setActiveMenu(null)}>
+      <div className={`app container-fluid p-0 ${density}`} onClick={() => activeMenu && setActiveMenu(null)}>
         {/* Title bar */}
         <header className="tb">
-          <div className="tb-brand">
+          <div className="tb-brand d-flex align-items-center flex-shrink-0">
             <span className="tb-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(20)}} />
             <span className="tb-name"><b>{PLATFORM_DISPLAY_NAME}</b><i>Cryptographic Platform</i></span>
             <span className="tb-tag">{PLATFORM_DISPLAY_NAME} Cryptographic Generator · v12</span>
           </div>
-          <nav ref={topNavRef} className="tb-nav" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
+          <nav ref={topNavRef} className="tb-nav d-flex flex-nowrap overflow-x-auto" onClick={e => e.stopPropagation()} onWheel={handleTopNavWheel}>
             <MenuButton label={t('menuFile')} icon={TOP_MENU_ICONS.file} iconOnly items={fileItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuGenerate')} icon={TOP_MENU_ICONS.generate} iconOnly items={generateItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuExport')} icon={TOP_MENU_ICONS.export} iconOnly items={exportItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
@@ -18700,7 +18700,7 @@ const App = () => {
             <MenuButton label="HOS" icon={TOP_MENU_ICONS.hos} iconOnly items={hosItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHos} />
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
-          <div className="tb-right">
+          <div className="tb-right d-flex align-items-center flex-shrink-0">
             <button className="tb-cli" onClick={() => setCodeTransformCliOpen(true)} title={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'} aria-label={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'}>
               <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
             </button>
@@ -18712,7 +18712,7 @@ const App = () => {
         </header>
 
         {/* Status / breadcrumb bar */}
-        <div className="bcr">
+        <div className="bcr d-flex align-items-center">
           <span className="bcr-l">{getCategoryLabel(selectedCat, language)}</span>
           <span className="bcr-sep" dangerouslySetInnerHTML={{__html: CHEV_R}} />
           <span className="bcr-c">{selectedType?.label || '—'}</span>
@@ -18723,7 +18723,7 @@ const App = () => {
         </div>
 
         {/* Main body */}
-        <div className="body">
+        <div className="body d-grid">
           <Sidebar
             catalog={visibleCatalog}
             selectedId={selectedId}
@@ -18736,7 +18736,7 @@ const App = () => {
             t={t}
           />
 
-          <main className="ed">
+          <main className="ed d-flex flex-column overflow-hidden">
             <ConfigBar
               type={selectedType}
               length={length} setLength={setLength}
@@ -18751,7 +18751,7 @@ const App = () => {
               language={language}
             />
 
-            <div className="out-tb">
+            <div className="out-tb d-flex align-items-center">
               <span className="out-tb-l">{t('output')}</span>
               <span className="out-tb-n">{output.length} {output.length === 1 ? t('value') : t('values')}</span>
               <span className="out-tb-spacer" />

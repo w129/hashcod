@@ -24421,12 +24421,12 @@ const App = () => {
   }), toast && React.createElement("div", {
     className: "ocg-toast"
   }, toast), React.createElement("div", {
-    className: `app ${density}`,
+    className: `app container-fluid p-0 ${density}`,
     onClick: () => activeMenu && setActiveMenu(null)
   }, React.createElement("header", {
     className: "tb"
   }, React.createElement("div", {
-    className: "tb-brand"
+    className: "tb-brand d-flex align-items-center flex-shrink-0"
   }, React.createElement("span", {
     className: "tb-mark",
     dangerouslySetInnerHTML: {
@@ -24438,7 +24438,7 @@ const App = () => {
     className: "tb-tag"
   }, PLATFORM_DISPLAY_NAME, " Cryptographic Generator \xB7 v12")), React.createElement("nav", {
     ref: topNavRef,
-    className: "tb-nav",
+    className: "tb-nav d-flex flex-nowrap overflow-x-auto",
     onClick: e => e.stopPropagation(),
     onWheel: handleTopNavWheel
   }, React.createElement(MenuButton, {
@@ -24868,7 +24868,7 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openHcp
   })), React.createElement("div", {
-    className: "tb-right"
+    className: "tb-right d-flex align-items-center flex-shrink-0"
   }, React.createElement("button", {
     className: "tb-cli",
     onClick: () => setCodeTransformCliOpen(true),
@@ -24890,7 +24890,7 @@ const App = () => {
   })), React.createElement("div", {
     className: "tb-clk"
   }, clock))), React.createElement("div", {
-    className: "bcr"
+    className: "bcr d-flex align-items-center"
   }, React.createElement("span", {
     className: "bcr-l"
   }, getCategoryLabel(selectedCat, language)), React.createElement("span", {
@@ -24909,7 +24909,7 @@ const App = () => {
   }, React.createElement("b", null, stats.unique), " ", t('unique')), React.createElement("span", {
     className: "bcr-st"
   }, t('session'), " ", React.createElement("b", null, sessionTime))), React.createElement("div", {
-    className: "body"
+    className: "body d-grid"
   }, React.createElement(Sidebar, {
     catalog: visibleCatalog,
     selectedId: selectedId,
@@ -24924,7 +24924,7 @@ const App = () => {
     language: language,
     t: t
   }), React.createElement("main", {
-    className: "ed"
+    className: "ed d-flex flex-column overflow-hidden"
   }, React.createElement(ConfigBar, {
     type: selectedType,
     length: length,
@@ -24947,7 +24947,7 @@ const App = () => {
     plan: activePlan,
     language: language
   }), React.createElement("div", {
-    className: "out-tb"
+    className: "out-tb d-flex align-items-center"
   }, React.createElement("span", {
     className: "out-tb-l"
   }, t('output')), React.createElement("span", {

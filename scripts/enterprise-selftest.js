@@ -109,6 +109,9 @@ function assert(ok, id, detail = '') {
   assert(jwt.split('.').length === 3, 'jwt-real-shape');
 
   const appSource = fs.readFileSync(path.join(ROOT, 'app/app.jsx'), 'utf8');
+  const indexSource = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert(indexSource.includes('vendor/bootstrap.min.css?v=5.3.8'), 'bootstrap-local-stylesheet');
+  assert(appSource.includes('app container-fluid p-0') && appSource.includes('tb-nav d-flex flex-nowrap overflow-x-auto'), 'bootstrap-shell-order-utilities');
   assert(appSource.includes('const CODE_TRANSFORM_CLI_TOTAL = 1100;'), 'transform-cmd-total-1100');
   assert(appSource.includes("['segment-permute', 'TRANSFORM'") && appSource.includes("['integrity-envelope', 'FORMAT'"), 'transform-cmd-extension-operations');
   assert(appSource.includes("'1100 commands: hcx0001 - hcx1100'"), 'transform-cmd-menu-range');
