@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.12.0"
   }
 }

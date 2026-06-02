@@ -2545,6 +2545,7 @@ const TOP_MENU_ICONS = {
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   filePackager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h2"/><path d="M12 18h6"/></svg>`,
+  pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
@@ -7747,6 +7748,220 @@ const FileZipPackagerDialog = ({ open, onClose, notify, language }) => {
               <span>{L('ZIP almacenado sin ejecutar archivos.', 'ZIP stored without executing files.')}</span>
               <button className="filepack-mainbtn" onClick={downloadZip} disabled={!files.length || busy}>
                 {busy ? L('Creando ZIP...', 'Creating ZIP...') : L('Descargar ZIP', 'Download ZIP')}
+              </button>
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const PdfStampDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const inputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [fileDigest, setFileDigest] = useState('');
+  const [position, setPosition] = useState('bottom-right');
+  const [stampWidth, setStampWidth] = useState(168);
+  const [opacity, setOpacity] = useState(0.88);
+  const [allPages, setAllPages] = useState(true);
+  const [singlePage, setSinglePage] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const MAX_PDF_BYTES = 48 * 1024 * 1024;
+
+  if (!open) return null;
+
+  const prettyBytes = (value = 0) => {
+    const bytes = Number(value) || 0;
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+  const hashBytes = async bytes => {
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
+  };
+  const resetFile = () => {
+    setFile(null);
+    setPageCount(0);
+    setFileDigest('');
+    setError('');
+    if (inputRef.current) inputRef.current.value = '';
+  };
+  const loadPdf = async selected => {
+    if (!selected) return;
+    setError('');
+    if (!/\.pdf$/i.test(selected.name) && selected.type !== 'application/pdf') {
+      setError(L('Selecciona un documento PDF valido.', 'Select a valid PDF document.'));
+      return;
+    }
+    if (selected.size > MAX_PDF_BYTES) {
+      setError(L('El PDF supera el limite local de 48 MB.', 'PDF exceeds the 48 MB local limit.'));
+      return;
+    }
+    if (!window.PDFLib?.PDFDocument) {
+      setError(L('El motor PDF local no esta disponible.', 'The local PDF engine is not available.'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const bytes = await selected.arrayBuffer();
+      const pdf = await window.PDFLib.PDFDocument.load(bytes);
+      setFile(selected);
+      setPageCount(pdf.getPageCount());
+      setSinglePage(1);
+      setFileDigest(await hashBytes(bytes));
+    } catch (err) {
+      console.error(err);
+      resetFile();
+      setError(L('No se pudo abrir el PDF. Revisa si esta cifrado o danado.', 'Could not open the PDF. Check whether it is encrypted or damaged.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const drawHashcodStamp = (page, pdf, fonts, digest, stampedAt) => {
+    const { rgb } = window.PDFLib;
+    const blue = rgb(0.035, 0.31, 0.78);
+    const { width, height } = page.getSize();
+    const margin = 22;
+    const boxWidth = Math.min(Number(stampWidth) || 168, Math.max(112, width - margin * 2));
+    const boxHeight = Math.max(56, boxWidth * 0.39);
+    const coords = {
+      'top-left': [margin, height - margin - boxHeight],
+      'top-right': [width - margin - boxWidth, height - margin - boxHeight],
+      'bottom-left': [margin, margin],
+      'bottom-right': [width - margin - boxWidth, margin],
+    };
+    const [x, y] = coords[position] || coords['bottom-right'];
+    const logoSize = Math.max(23, boxHeight * 0.44);
+    const logoX = x + 11;
+    const logoY = y + (boxHeight - logoSize) / 2 + 2;
+    const monitorTop = logoY + logoSize * 0.78;
+    const monitorBottom = logoY + logoSize * 0.28;
+    const monitorRight = logoX + logoSize;
+    const monitorGapLeft = logoX + logoSize * 0.34;
+    const monitorGapRight = logoX + logoSize * 0.66;
+    const lineWidth = Math.max(1.4, boxWidth / 110);
+    const drawLine = (start, end) => page.drawLine({ start, end, color: blue, thickness: lineWidth, opacity });
+    page.drawRectangle({ x, y, width: boxWidth, height: boxHeight, borderColor: blue, borderWidth: lineWidth, opacity });
+    drawLine({ x: logoX, y: monitorTop }, { x: monitorRight, y: monitorTop });
+    drawLine({ x: logoX, y: monitorTop }, { x: logoX, y: monitorBottom });
+    drawLine({ x: monitorRight, y: monitorTop }, { x: monitorRight, y: monitorBottom });
+    drawLine({ x: logoX, y: monitorBottom }, { x: monitorGapLeft, y: monitorBottom });
+    drawLine({ x: monitorGapRight, y: monitorBottom }, { x: monitorRight, y: monitorBottom });
+    page.drawSvgPath('M 0 0 L 10 15 L 20 0 Z', {
+      x: logoX + logoSize * 0.2,
+      y: logoY + logoSize * 0.03,
+      color: blue,
+      opacity,
+      scale: logoSize / 30,
+    });
+    const textX = logoX + logoSize + 9;
+    const availableTextWidth = Math.max(50, boxWidth - (textX - x) - 8);
+    const titleSize = Math.max(8, Math.min(13, availableTextWidth / 7.2));
+    const metaSize = Math.max(5.5, Math.min(7.2, titleSize * 0.56));
+    page.drawText('HASHCOD', { x: textX, y: y + boxHeight * 0.6, size: titleSize, font: fonts.bold, color: blue, opacity });
+    page.drawText('VERIFIED PDF STAMP', { x: textX, y: y + boxHeight * 0.39, size: metaSize, font: fonts.bold, color: blue, opacity });
+    page.drawText(`SHA256 ${digest.slice(0, 16).toUpperCase()}`, { x: textX, y: y + boxHeight * 0.22, size: metaSize, font: fonts.regular, color: blue, opacity });
+    page.drawText(stampedAt.slice(0, 19) + 'Z', { x: textX, y: y + boxHeight * 0.07, size: metaSize, font: fonts.regular, color: blue, opacity });
+  };
+  const stampAndDownload = async () => {
+    if (!file || busy || !window.PDFLib?.PDFDocument) return;
+    setBusy(true);
+    setError('');
+    try {
+      const bytes = await file.arrayBuffer();
+      const pdf = await window.PDFLib.PDFDocument.load(bytes);
+      const pages = pdf.getPages();
+      const targetIndexes = allPages
+        ? pages.map((_, index) => index)
+        : [Math.max(0, Math.min(pages.length - 1, Number(singlePage || 1) - 1))];
+      const fonts = {
+        bold: await pdf.embedFont(window.PDFLib.StandardFonts.HelveticaBold),
+        regular: await pdf.embedFont(window.PDFLib.StandardFonts.Helvetica),
+      };
+      const stampedAt = new Date().toISOString();
+      targetIndexes.forEach(index => drawHashcodStamp(pages[index], pdf, fonts, fileDigest, stampedAt));
+      pdf.setProducer('Hashcod Cryptographic Platform');
+      pdf.setCreator('Hashcod PDF Stamp');
+      pdf.setSubject(`Hashcod blue vector stamp | original SHA-256 ${fileDigest}`);
+      pdf.setModificationDate(new Date());
+      const output = await pdf.save();
+      const name = String(file.name || 'document.pdf').replace(/\.pdf$/i, '');
+      triggerBlobDownload(`${sanitizeFilename(name)}-Hashcod-stamped-${tsStamp()}.pdf`, new Blob([output], { type: 'application/pdf' }));
+      notify?.(L(`PDF sellado en ${targetIndexes.length} pagina(s).`, `PDF stamped on ${targetIndexes.length} page(s).`));
+    } catch (err) {
+      console.error(err);
+      setError(L('No se pudo sellar el PDF. Revisa el documento e intenta otra vez.', 'Could not stamp the PDF. Review the document and try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg pdfstampdlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h pdfstamp-head">
+          <div className="pdfstamp-title">
+            <span className="pdfstamp-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pdfStamp}} />
+            <div>
+              <h2>{L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')}</h2>
+              <p>{L('Aplica un sello vectorial azul de Hashcod y descarga un PDF nuevo sin subir el archivo.', 'Apply a blue Hashcod vector stamp and download a new PDF without uploading the file.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="pdfstamp-shell">
+          <aside className="pdfstamp-side">
+            <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="hidden-file" onChange={event => loadPdf(event.target.files?.[0])} />
+            <button className="pdfstamp-mainbtn" onClick={() => inputRef.current?.click()} disabled={busy}>{L('Subir PDF', 'Upload PDF')}</button>
+            <button className="pdfstamp-subbtn" onClick={resetFile} disabled={!file || busy}>{L('Quitar PDF', 'Remove PDF')}</button>
+            <div className="pdfstamp-stats">
+              <div><span>{L('Paginas', 'Pages')}</span><b>{pageCount || '---'}</b></div>
+              <div><span>{L('Tamano', 'Size')}</span><b>{file ? prettyBytes(file.size) : '---'}</b></div>
+              <div><span>{L('Proceso', 'Process')}</span><b>{L('Local', 'Local')}</b></div>
+              <div><span>{L('Salida', 'Output')}</span><b>PDF</b></div>
+            </div>
+            <p className="pdfstamp-note">{L('El original permanece intacto. El navegador crea un segundo PDF con el sello vectorial y la huella SHA-256 del documento original.', 'The original remains unchanged. The browser creates a second PDF with the vector stamp and the original document SHA-256 digest.')}</p>
+          </aside>
+          <main className="pdfstamp-main">
+            <div className="pdfstamp-preview">
+              <div className="pdfstamp-seal">
+                <span dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(48)}} />
+                <div>
+                  <b>HASHCOD</b>
+                  <strong>VERIFIED PDF STAMP</strong>
+                  <small>SHA256 {fileDigest ? fileDigest.slice(0, 16).toUpperCase() : '----------------'}</small>
+                </div>
+              </div>
+            </div>
+            {error && <div className="pdfstamp-error">{error}</div>}
+            <div className="pdfstamp-file">
+              <span>{L('Documento seleccionado', 'Selected document')}</span>
+              <b>{file?.name || L('Todavia no has subido un PDF.', 'No PDF uploaded yet.')}</b>
+              {fileDigest && <code>{fileDigest}</code>}
+            </div>
+            <div className="pdfstamp-controls">
+              <label><span>{L('Posicion del sello', 'Stamp position')}</span>
+                <select value={position} onChange={event => setPosition(event.target.value)}>
+                  <option value="bottom-right">{L('Abajo derecha', 'Bottom right')}</option>
+                  <option value="bottom-left">{L('Abajo izquierda', 'Bottom left')}</option>
+                  <option value="top-right">{L('Arriba derecha', 'Top right')}</option>
+                  <option value="top-left">{L('Arriba izquierda', 'Top left')}</option>
+                </select>
+              </label>
+              <label><span>{L('Ancho', 'Width')} {stampWidth}px</span><input type="range" min="120" max="240" step="4" value={stampWidth} onChange={event => setStampWidth(Number(event.target.value))} /></label>
+              <label><span>{L('Opacidad', 'Opacity')} {Math.round(opacity * 100)}%</span><input type="range" min="0.35" max="1" step="0.05" value={opacity} onChange={event => setOpacity(Number(event.target.value))} /></label>
+              <label className="pdfstamp-check"><input type="checkbox" checked={allPages} onChange={event => setAllPages(event.target.checked)} /><span>{L('Sellar todas las paginas', 'Stamp all pages')}</span></label>
+              {!allPages && <label><span>{L('Pagina', 'Page')}</span><input type="number" min="1" max={Math.max(1, pageCount)} value={singlePage} onChange={event => setSinglePage(Number(event.target.value))} /></label>}
+            </div>
+            <div className="pdfstamp-footer">
+              <span>{L('Sello azul vectorial | SHA-256 | procesamiento local', 'Blue vector stamp | SHA-256 | local processing')}</span>
+              <button className="pdfstamp-mainbtn" onClick={stampAndDownload} disabled={!file || busy}>
+                {busy ? L('Procesando PDF...', 'Processing PDF...') : L('Descargar PDF sellado', 'Download stamped PDF')}
               </button>
             </div>
           </main>
@@ -16916,6 +17131,7 @@ const App = () => {
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [filePackagerOpen, setFilePackagerOpen] = useState(false);
+  const [pdfStampOpen, setPdfStampOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
@@ -17775,6 +17991,7 @@ const App = () => {
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
   const openFilePackager = () => setFilePackagerOpen(true);
+  const openPdfStamp = () => setPdfStampOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
@@ -18041,6 +18258,12 @@ const App = () => {
     { label: language === 'es' ? 'Subir y agrupar varios archivos' : 'Upload and bundle multiple files', onClick: openFilePackager },
     { label: language === 'es' ? 'Manifiesto Hashcod incluido' : 'Hashcod manifest included', onClick: openFilePackager },
     { label: language === 'es' ? 'Descarga ZIP local' : 'Local ZIP download', onClick: openFilePackager },
+  ];
+  const pdfStampItems = [
+    { label: language === 'es' ? 'Abrir sellador PDF Hashcod' : 'Open Hashcod PDF stamp', onClick: openPdfStamp },
+    { label: language === 'es' ? 'Sello vectorial azul Hashcod' : 'Blue Hashcod vector stamp', onClick: openPdfStamp },
+    { label: language === 'es' ? 'Huella SHA-256 del original' : 'Original SHA-256 digest', onClick: openPdfStamp },
+    { label: language === 'es' ? 'Descarga PDF local' : 'Local PDF download', onClick: openPdfStamp },
   ];
   const graphLabItems = [
     { label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab', onClick: openGraphLab },
@@ -18604,6 +18827,7 @@ const App = () => {
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <FileZipPackagerDialog open={filePackagerOpen} onClose={() => setFilePackagerOpen(false)} notify={notify} language={language} />
+      <PdfStampDialog open={pdfStampOpen} onClose={() => setPdfStampOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CodeIncubatorDialog open={codeIncubatorOpen} onClose={() => setCodeIncubatorOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} onSaveRows={rememberCopied} />
@@ -18679,6 +18903,7 @@ const App = () => {
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="FILE ZIP PACKAGER" icon={TOP_MENU_ICONS.filePackager} iconOnly items={filePackagerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFilePackager} />
+            <MenuButton label="PDF STAMP" icon={TOP_MENU_ICONS.pdfStamp} iconOnly items={pdfStampItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPdfStamp} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
             <MenuButton label="CODE INCUBATOR" icon={TOP_MENU_ICONS.codeIncubator} iconOnly items={codeIncubatorItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeIncubator} />

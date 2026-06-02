@@ -2,6 +2,7 @@ const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
 const { webcrypto } = require('crypto');
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 
 const ROOT = path.resolve(__dirname, '..');
 const enc = new TextEncoder();
@@ -38,6 +39,23 @@ async function aesGcmKnownVectorHex() {
   return toHex(out);
 }
 
+async function pdfStampVectorSmoke() {
+  const source = await PDFDocument.create();
+  source.addPage([595, 842]);
+  const input = await source.save();
+  const pdf = await PDFDocument.load(input);
+  const page = pdf.getPages()[0];
+  const blue = rgb(0.035, 0.31, 0.78);
+  const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+  page.drawRectangle({ x: 390, y: 28, width: 170, height: 66, borderColor: blue, borderWidth: 2 });
+  page.drawLine({ start: { x: 404, y: 76 }, end: { x: 432, y: 76 }, color: blue, thickness: 2 });
+  page.drawSvgPath('M 0 0 L 10 15 L 20 0 Z', { x: 408, y: 42, color: blue, scale: 1.1 });
+  page.drawText('HASHCOD', { x: 440, y: 66, size: 12, font, color: blue });
+  const output = await pdf.save();
+  const reopened = await PDFDocument.load(output);
+  return { inputBytes: input.length, outputBytes: output.length, pages: reopened.getPageCount() };
+}
+
 function loadBrowserFiles() {
   const ctx = {
     window: {},
@@ -69,6 +87,8 @@ function assert(ok, id, detail = '') {
   assert(await hmacSha256Hex('key', 'The quick brown fox jumps over the lazy dog') === 'f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8', 'hmac-sha256-known-vector');
   assert(await pbkdf2Sha256Hex('password', 'salt', 1, 32) === '120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b', 'pbkdf2-sha256-known-vector');
   assert(await aesGcmKnownVectorHex() === '0388dace60b6a392f328c2b971b2fe78ab6e47d42cec13bdf53a67b21257bddf', 'aes-gcm-known-vector');
+  const pdfSmoke = await pdfStampVectorSmoke();
+  assert(pdfSmoke.pages === 1 && pdfSmoke.outputBytes > pdfSmoke.inputBytes, 'pdf-stamp-vector-smoke', `${pdfSmoke.inputBytes}->${pdfSmoke.outputBytes} bytes`);
 
   const ctx = loadBrowserFiles();
   const catalog = ctx.window.OCG_CATALOG || [];
@@ -119,6 +139,9 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes("export json|txt|png") && appSource.includes("<button onClick={exportPng}>PNG</button>"), 'transform-cmd-png-command-ui');
   assert(appSource.includes('const FileZipPackagerDialog =') && appSource.includes('makeZipBlob(entries)'), 'file-zip-packager-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
+  assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
+  assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
+  assert(appSource.includes('TOP_MENU_ICONS.pdfStamp') && appSource.includes('PDF STAMP'), 'pdf-stamp-menu');
 
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {
