@@ -57,6 +57,23 @@ async function pdfStampVectorSmoke() {
   return { inputBytes: input.length, outputBytes: output.length, pages: reopened.getPageCount() };
 }
 
+async function docusealAdapterPdfSmoke() {
+  const ctx = { window: { PDFLib: { PDFDocument, StandardFonts, rgb }, crypto: webcrypto, Date } };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'public-source/hashcod-docuseal-tool/app/hashcod-docuseal-adapter.js'), 'utf8'), ctx);
+  const source = await PDFDocument.create();
+  source.addPage([595, 842]);
+  const input = await source.save();
+  const result = await ctx.window.HashcodDocuSealAdapter.signPdf({
+    sourceBytes: input,
+    signer: 'Hashcod Test Signer',
+    signatureText: 'Hashcod Test Signature',
+    position: 'bottom-right',
+  });
+  const reopened = await PDFDocument.load(result.bytes);
+  return { inputBytes: input.length, outputBytes: result.bytes.length, pages: reopened.getPageCount(), digest: result.sourceDigest };
+}
+
 function loadBrowserFiles() {
   const ctx = {
     window: {},
@@ -90,6 +107,8 @@ function assert(ok, id, detail = '') {
   assert(await aesGcmKnownVectorHex() === '0388dace60b6a392f328c2b971b2fe78ab6e47d42cec13bdf53a67b21257bddf', 'aes-gcm-known-vector');
   const pdfSmoke = await pdfStampVectorSmoke();
   assert(pdfSmoke.pages === 1 && pdfSmoke.outputBytes > pdfSmoke.inputBytes, 'pdf-stamp-vector-smoke', `${pdfSmoke.inputBytes}->${pdfSmoke.outputBytes} bytes`);
+  const docusealSmoke = await docusealAdapterPdfSmoke();
+  assert(docusealSmoke.pages === 1 && docusealSmoke.outputBytes > docusealSmoke.inputBytes && docusealSmoke.digest.length === 64, 'docuseal-adapter-pdf-smoke', `${docusealSmoke.inputBytes}->${docusealSmoke.outputBytes} bytes`);
 
   const ctx = loadBrowserFiles();
   const catalog = ctx.window.OCG_CATALOG || [];
@@ -153,7 +172,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
   assert(appSource.includes('const MAX_RENDERED_OUTPUT = 120;') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
   assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-code-registry-1') && indexSource.includes('app/styles.css?v=hashcod-code-registry-1'), 'app-cache-buster');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-docuseal-signer-1') && indexSource.includes('app/styles.css?v=hashcod-docuseal-signer-1'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');
@@ -165,6 +184,11 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.codeRegistry') && appSource.includes('CODE REGISTRY'), 'code-registry-menu');
   assert(serverSource.includes('async function handleCodeRegistry') && serverSource.includes("routePath === '/api/code-registry'"), 'code-registry-persistent-api');
   assert(serverSource.includes('codeRegistryAudit') && serverSource.includes('GENESIS') && serverSource.includes('hashSha256'), 'code-registry-chained-audit');
+  assert(indexSource.includes('hashcod-docuseal-adapter.js?v=1.0.0'), 'docuseal-adapter-runtime');
+  assert(appSource.includes('const DocusealSignerDialog =') && appSource.includes('HashcodDocuSealAdapter.signPdf'), 'docuseal-signer-dialog');
+  assert(appSource.includes('TOP_MENU_ICONS.docusealSigner') && appSource.includes('DOCUSEAL SIGNER'), 'docuseal-signer-menu');
+  assert(appSource.includes('Download source code') && appSource.includes('AGPL-3.0') && appSource.includes('DocuSeal attribution retained'), 'docuseal-visible-source-disclosure');
+  assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-docuseal-tool-source.zip')), 'docuseal-source-download');
 
   console.log('ENTERPRISE SELFTEST OK');
 })().catch(err => {

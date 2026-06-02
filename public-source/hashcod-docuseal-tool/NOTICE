@@ -1,0 +1,13 @@
+Hashcod DocuSeal Tool
+Copyright (c) 2026 Hashcod contributors.
+
+This separated integration package is based on DocuSeal.
+Original project: https://github.com/docusealco/docuseal
+
+DocuSeal is distributed under the GNU Affero General Public License v3.0 with
+Section 7(b) additional terms. Unless otherwise noted by the upstream project,
+the original DocuSeal files are Copyright (c) 2023-2026 DocuSeal LLC.
+
+The upstream source archive and its original license files are included in this
+package. Hashcod private core source, credentials, private keys, customer data,
+and signed customer documents are intentionally excluded.

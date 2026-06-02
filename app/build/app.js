@@ -3387,6 +3387,7 @@ const TOP_MENU_ICONS = {
   filePackager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h2"/><path d="M12 18h6"/></svg>`,
   brandEvidence: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6 2 2 4-4"/><path d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/></svg>`,
   pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
+  docusealSigner: `<img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" />`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
   codeIncubator: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="m8 18 4-4"/><path d="M8 10v8h8"/></svg>`,
@@ -10324,6 +10325,223 @@ const PdfStampDialog = ({
     onClick: stampAndDownload,
     disabled: !file || !selectedCodeValue || busy
   }, busy ? L('Procesando PDF...', 'Processing PDF...') : L('Descargar PDF sellado', 'Download stamped PDF')))))));
+};
+const DocusealSignerDialog = ({
+  open,
+  onClose,
+  notify,
+  language
+}) => {
+  const L = (es, en) => language === 'es' ? es : en;
+  const pdfInputRef = useRef(null);
+  const signatureInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [pageCount, setPageCount] = useState(0);
+  const [sourceDigest, setSourceDigest] = useState('');
+  const [signer, setSigner] = useState('');
+  const [signatureText, setSignatureText] = useState('');
+  const [signaturePng, setSignaturePng] = useState('');
+  const [signatureImageName, setSignatureImageName] = useState('');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [position, setPosition] = useState('bottom-right');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const MAX_PDF_BYTES = 48 * 1024 * 1024;
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+  if (!open) return null;
+  const loadPdf = async selected => {
+    if (!selected) return;
+    setError('');
+    if (!/\.pdf$/i.test(selected.name) && selected.type !== 'application/pdf') {
+      setError(L('Selecciona un documento PDF valido.', 'Select a valid PDF document.'));
+      return;
+    }
+    if (selected.size > MAX_PDF_BYTES) {
+      setError(L('El PDF supera el limite local de 48 MB.', 'The PDF exceeds the local 48 MB limit.'));
+      return;
+    }
+    if (!window.PDFLib?.PDFDocument || !window.HashcodDocuSealAdapter) {
+      setError(L('El motor PDF local no esta disponible.', 'The local PDF engine is unavailable.'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const bytes = await selected.arrayBuffer();
+      const pdf = await window.PDFLib.PDFDocument.load(bytes);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setFile(selected);
+      setPreviewUrl(URL.createObjectURL(selected));
+      setPageCount(pdf.getPageCount());
+      setPageNumber(1);
+      setSourceDigest(await window.HashcodDocuSealAdapter.sha256(bytes));
+    } catch (err) {
+      console.error(err);
+      setError(L('No se pudo abrir el PDF. Revisa si esta cifrado o danado.', 'Could not open the PDF. Check whether it is encrypted or damaged.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const loadSignatureImage = selected => {
+    if (!selected) return;
+    if (!/^image\/png$/i.test(selected.type) && !/\.png$/i.test(selected.name)) {
+      setError(L('Usa una firma PNG con fondo transparente.', 'Use a transparent-background PNG signature.'));
+      return;
+    }
+    if (selected.size > 3 * 1024 * 1024) {
+      setError(L('La firma PNG supera 3 MB.', 'The PNG signature exceeds 3 MB.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSignaturePng(String(reader.result || ''));
+      setSignatureImageName(selected.name);
+      setError('');
+    };
+    reader.onerror = () => setError(L('No se pudo leer la imagen de firma.', 'Could not read the signature image.'));
+    reader.readAsDataURL(selected);
+  };
+  const clearPdf = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(null);
+    setPreviewUrl('');
+    setPageCount(0);
+    setSourceDigest('');
+    setPageNumber(1);
+    setError('');
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
+  };
+  const downloadSignedPdf = async () => {
+    if (!file || !signer.trim() || busy || !window.HashcodDocuSealAdapter) return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await window.HashcodDocuSealAdapter.signPdf({
+        sourceBytes: await file.arrayBuffer(),
+        signer: signer.trim(),
+        signatureText: signatureText.trim() || signer.trim(),
+        signaturePng,
+        pageIndex: Math.max(0, Number(pageNumber || 1) - 1),
+        position
+      });
+      const base = String(file.name || 'document.pdf').replace(/\.pdf$/i, '');
+      triggerBlobDownload(`${sanitizeFilename(base)}-Hashcod-signed-${tsStamp()}.pdf`, new Blob([result.bytes], {
+        type: 'application/pdf'
+      }));
+      notify?.(L('PDF firmado descargado. El documento original no fue modificado.', 'Signed PDF downloaded. The original document was not modified.'));
+    } catch (err) {
+      console.error(err);
+      setError(L('No se pudo firmar el PDF. Revisa el documento e intenta otra vez.', 'Could not sign the PDF. Review the document and try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return React.createElement("div", {
+    className: "dlg-back",
+    onClick: onClose
+  }, React.createElement("section", {
+    className: "dlg docuseal-dlg",
+    onClick: event => event.stopPropagation()
+  }, React.createElement("header", {
+    className: "dlg-h docuseal-head"
+  }, React.createElement("span", {
+    className: "docuseal-mark"
+  }, React.createElement("img", {
+    src: "/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg",
+    alt: ""
+  })), React.createElement("div", null, React.createElement("h2", null, L('Firma documental Hashcod + DocuSeal', 'Hashcod + DocuSeal Document Signer')), React.createElement("p", null, L('Previsualiza un PDF, coloca una firma visible y descarga una nueva copia firmada. El archivo se procesa localmente.', 'Preview a PDF, place a visible signature, and download a newly signed copy. The file is processed locally.'))), React.createElement("button", {
+    className: "dlg-x",
+    onClick: onClose
+  }, "x")), React.createElement("div", {
+    className: "docuseal-grid"
+  }, React.createElement("aside", {
+    className: "docuseal-controls"
+  }, React.createElement("input", {
+    ref: pdfInputRef,
+    type: "file",
+    accept: "application/pdf,.pdf",
+    className: "hidden-file",
+    onChange: event => loadPdf(event.target.files?.[0])
+  }), React.createElement("input", {
+    ref: signatureInputRef,
+    type: "file",
+    accept: "image/png,.png",
+    className: "hidden-file",
+    onChange: event => loadSignatureImage(event.target.files?.[0])
+  }), React.createElement("button", {
+    className: "docuseal-primary",
+    onClick: () => pdfInputRef.current?.click(),
+    disabled: busy
+  }, L('Subir PDF', 'Upload PDF')), React.createElement("button", {
+    onClick: clearPdf,
+    disabled: !file || busy
+  }, L('Quitar PDF', 'Remove PDF')), React.createElement("label", null, React.createElement("span", null, L('Nombre del firmante', 'Signer name')), React.createElement("input", {
+    value: signer,
+    onChange: event => setSigner(event.target.value),
+    placeholder: L('Nombre completo', 'Full name')
+  })), React.createElement("label", null, React.createElement("span", null, L('Firma escrita', 'Typed signature')), React.createElement("input", {
+    value: signatureText,
+    onChange: event => setSignatureText(event.target.value),
+    placeholder: L('Usa el nombre si se deja vacio', 'Uses signer name when empty')
+  })), React.createElement("button", {
+    onClick: () => signatureInputRef.current?.click()
+  }, L('Subir firma PNG', 'Upload PNG signature')), React.createElement("small", null, signatureImageName || L('Opcional: PNG transparente de hasta 3 MB.', 'Optional: transparent PNG up to 3 MB.')), signaturePng && React.createElement("button", {
+    onClick: () => {
+      setSignaturePng('');
+      setSignatureImageName('');
+    }
+  }, L('Quitar imagen de firma', 'Remove signature image')), React.createElement("div", {
+    className: "docuseal-row"
+  }, React.createElement("label", null, React.createElement("span", null, L('Pagina', 'Page')), React.createElement("input", {
+    type: "number",
+    min: "1",
+    max: Math.max(1, pageCount),
+    value: pageNumber,
+    onChange: event => setPageNumber(Number(event.target.value))
+  })), React.createElement("label", null, React.createElement("span", null, L('Posicion', 'Position')), React.createElement("select", {
+    value: position,
+    onChange: event => setPosition(event.target.value)
+  }, React.createElement("option", {
+    value: "bottom-right"
+  }, L('Abajo derecha', 'Bottom right')), React.createElement("option", {
+    value: "bottom-left"
+  }, L('Abajo izquierda', 'Bottom left')), React.createElement("option", {
+    value: "top-right"
+  }, L('Arriba derecha', 'Top right')), React.createElement("option", {
+    value: "top-left"
+  }, L('Arriba izquierda', 'Top left'))))), error && React.createElement("div", {
+    className: "docuseal-error"
+  }, error), React.createElement("button", {
+    className: "docuseal-primary",
+    onClick: downloadSignedPdf,
+    disabled: !file || !signer.trim() || busy
+  }, busy ? L('Procesando...', 'Processing...') : L('Descargar PDF firmado', 'Download signed PDF'))), React.createElement("main", {
+    className: "docuseal-preview"
+  }, previewUrl ? React.createElement("object", {
+    data: previewUrl,
+    type: "application/pdf",
+    "aria-label": file?.name || 'PDF preview'
+  }, React.createElement("p", null, L('Tu navegador no puede mostrar el PDF.', 'Your browser cannot preview this PDF.'))) : React.createElement("div", {
+    className: "docuseal-empty"
+  }, React.createElement("img", {
+    src: "/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg",
+    alt: ""
+  }), React.createElement("b", null, L('Sube un PDF para comenzar', 'Upload a PDF to begin')), React.createElement("span", null, L('La previsualizacion aparece aqui.', 'The preview appears here.')))), React.createElement("aside", {
+    className: "docuseal-source"
+  }, React.createElement("h3", null, L('Codigo fuente y licencia', 'Source code and license')), React.createElement("div", null, React.createElement("b", null, "AGPL-3.0"), React.createElement("span", null, L('Licencia del modulo separado', 'Separated module license'))), React.createElement("div", null, React.createElement("b", null, L('Basado en DocuSeal', 'Based on DocuSeal')), React.createElement("span", null, "DocuSeal attribution retained")), React.createElement("div", null, React.createElement("b", null, L('Cambios por Hashcod', 'Changes by Hashcod')), React.createElement("span", null, L('Vista PDF, firma local y exportacion', 'PDF preview, local signature, and export'))), React.createElement("a", {
+    href: "/public-source/hashcod-docuseal-tool-source.zip",
+    download: true
+  }, L('Descargar codigo fuente', 'Download source code')), React.createElement("a", {
+    href: "/public-source/hashcod-docuseal-tool/LICENSE",
+    target: "_blank",
+    rel: "noreferrer"
+  }, L('Ver licencia AGPL-3.0', 'View AGPL-3.0 license')), React.createElement("a", {
+    href: "https://github.com/docusealco/docuseal",
+    target: "_blank",
+    rel: "noreferrer"
+  }, "DocuSeal upstream"), React.createElement("p", null, L('Esta firma visual no sustituye una firma electronica cualificada ni una validacion legal de identidad.', 'This visible signature does not replace a qualified electronic signature or legal identity validation.')), React.createElement("dl", null, React.createElement("dt", null, L('Documento', 'Document')), React.createElement("dd", null, file?.name || '---'), React.createElement("dt", null, L('Paginas', 'Pages')), React.createElement("dd", null, pageCount || '---'), React.createElement("dt", null, "SHA-256"), React.createElement("dd", null, sourceDigest || '---'))))));
 };
 const ComplexEntropyMapDialog = ({
   open,
@@ -22307,6 +22525,7 @@ const App = () => {
   const [brandEvidenceOpen, setBrandEvidenceOpen] = useState(false);
   const [codeRegistryOpen, setCodeRegistryOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
+  const [docusealSignerOpen, setDocusealSignerOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
   const [codeIncubatorOpen, setCodeIncubatorOpen] = useState(false);
@@ -23286,6 +23505,7 @@ const App = () => {
   const openBrandEvidence = () => setBrandEvidenceOpen(true);
   const openCodeRegistry = () => setCodeRegistryOpen(true);
   const openPdfStamp = () => setPdfStampOpen(true);
+  const openDocusealSigner = () => setDocusealSignerOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
   const openCodeIncubator = () => setCodeIncubatorOpen(true);
@@ -23841,6 +24061,19 @@ const App = () => {
   }, {
     label: language === 'es' ? 'Descarga PDF local' : 'Local PDF download',
     onClick: openPdfStamp
+  }];
+  const docusealSignerItems = [{
+    label: language === 'es' ? 'Abrir firma documental' : 'Open document signer',
+    onClick: openDocusealSigner
+  }, {
+    label: language === 'es' ? 'Vista previa PDF local' : 'Local PDF preview',
+    onClick: openDocusealSigner
+  }, {
+    label: language === 'es' ? 'Firma escrita o PNG' : 'Typed or PNG signature',
+    onClick: openDocusealSigner
+  }, {
+    label: language === 'es' ? 'Codigo fuente AGPL visible' : 'Visible AGPL source code',
+    onClick: openDocusealSigner
   }];
   const graphLabItems = [{
     label: language === 'es' ? 'Abrir graficadora' : 'Open graph lab',
@@ -25396,6 +25629,11 @@ const App = () => {
     notify: notify,
     language: language,
     rows: copyDb
+  }), React.createElement(DocusealSignerDialog, {
+    open: docusealSignerOpen,
+    onClose: () => setDocusealSignerOpen(false),
+    notify: notify,
+    language: language
   }), React.createElement(GraphLabDialog, {
     open: graphLabOpen,
     onClose: () => setGraphLabOpen(false),
@@ -25899,6 +26137,14 @@ const App = () => {
     activeMenu: activeMenu,
     setActiveMenu: setActiveMenu,
     primaryAction: openPdfStamp
+  }), React.createElement(MenuButton, {
+    label: "DOCUSEAL SIGNER",
+    icon: TOP_MENU_ICONS.docusealSigner,
+    iconOnly: true,
+    items: docusealSignerItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openDocusealSigner
   }), React.createElement(MenuButton, {
     label: "GRAPH LAB",
     icon: TOP_MENU_ICONS.graphLab,

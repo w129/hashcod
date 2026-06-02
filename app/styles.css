@@ -8732,3 +8732,45 @@ textarea:focus-visible {
   .code-registry-grid { grid-template-columns:1fr;min-height:auto; }
   .code-registry-detail { border-top:1px solid var(--line);border-left:0; }
 }
+
+/* Hashcod separated DocuSeal PDF signing adapter */
+.tb-n-icon img { display:block;width:18px;height:18px;object-fit:contain;filter:grayscale(1) contrast(2); }
+.docuseal-dlg { width:min(1540px,calc(100vw - 24px)); }
+.docuseal-head { display:flex;align-items:center;gap:14px;padding:14px 16px; }
+.docuseal-head div { min-width:0;flex:1; }
+.docuseal-head h2 { margin:0;font-size:22px; }
+.docuseal-head p { margin:4px 0 0;color:var(--ink-4);font-family:var(--mono);font-size:11px; }
+.docuseal-mark { display:grid;place-items:center;width:44px;height:44px;border:1px solid #101010;background:#fff; }
+.docuseal-mark img { width:30px;height:30px;object-fit:contain;filter:grayscale(1) contrast(2); }
+.docuseal-grid { display:grid;grid-template-columns:290px minmax(420px,1fr) 270px;min-height:690px;border-top:1px solid var(--line); }
+.docuseal-controls,.docuseal-source { display:grid;align-content:start;gap:9px;padding:14px;background:var(--bg-soft); }
+.docuseal-controls { border-right:1px solid var(--line); }
+.docuseal-source { border-left:1px solid var(--line); }
+.docuseal-controls button,.docuseal-source a { display:grid;place-items:center;min-height:38px;padding:8px 10px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-align:center;text-decoration:none;text-transform:uppercase; }
+.docuseal-controls button:hover,.docuseal-source a:hover { border-color:#101010;background:#101010;color:#fff; }
+.docuseal-primary { background:#101010 !important;color:#fff !important; }
+.docuseal-controls label { display:grid;gap:5px;min-width:0; }
+.docuseal-controls span,.docuseal-controls small,.docuseal-source span,.docuseal-source p,.docuseal-source dt,.docuseal-source dd { color:var(--ink-4);font-family:var(--mono);font-size:10px;line-height:1.55;overflow-wrap:anywhere; }
+.docuseal-controls input,.docuseal-controls select { width:100%;min-height:38px;padding:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:11px; }
+.docuseal-row { display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px; }
+.docuseal-preview { min-width:0;padding:14px;background:#d6d6d2; }
+.docuseal-preview object { width:100%;height:100%;min-height:650px;border:1px solid var(--line-2);background:#fff; }
+.docuseal-empty { display:grid;place-items:center;align-content:center;gap:12px;height:100%;min-height:650px;border:1px solid var(--line-2);background:#fff;text-align:center; }
+.docuseal-empty img { width:92px;height:92px;object-fit:contain;filter:grayscale(1) contrast(2);opacity:.22; }
+.docuseal-empty span { color:var(--ink-4);font-family:var(--mono);font-size:11px; }
+.docuseal-source h3 { margin:0 0 4px;font-size:19px; }
+.docuseal-source div { display:grid;gap:2px;padding:9px;border:1px solid var(--line);background:var(--bg); }
+.docuseal-source b { font-size:12px; }
+.docuseal-source dl { display:grid;gap:5px;margin:3px 0 0;padding:9px;border:1px solid var(--line);background:var(--bg); }
+.docuseal-source dd { margin:0; }
+.docuseal-error { padding:9px;border-left:4px solid #b42318;background:#fff0ee;color:#8b1c13;font-family:var(--mono);font-size:10px; }
+@media (max-width:960px) {
+  .docuseal-grid { grid-template-columns:260px minmax(340px,1fr); }
+  .docuseal-source { grid-column:1 / -1;border-top:1px solid var(--line);border-left:0; }
+}
+@media (max-width:680px) {
+  .docuseal-dlg { width:calc(100vw - 10px); }
+  .docuseal-grid { grid-template-columns:1fr;min-height:auto; }
+  .docuseal-controls { border-right:0;border-bottom:1px solid var(--line); }
+  .docuseal-preview object,.docuseal-empty { min-height:460px; }
+}
