@@ -9604,14 +9604,23 @@ const BrandEvidenceVaultDialog = ({
       borderWidth: 2,
       borderColor: rgb(0.05, 0.05, 0.05)
     });
-    page.drawText('HASHCOD', {
+    const black = rgb(0.05, 0.05, 0.05);
+    const logoOptions = {
       x: 58,
+      y: 782,
+      color: black,
+      scale: 1.05
+    };
+    page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
+    page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
+    page.drawText('HASHCOD', {
+      x: 102,
       y: 750,
       size: 25,
       font: bold
     });
     page.drawText('TOKENIZED BRAND EVIDENCE CERTIFICATE', {
-      x: 58,
+      x: 102,
       y: 721,
       size: 12,
       font: bold

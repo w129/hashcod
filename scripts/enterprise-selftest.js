@@ -143,6 +143,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
   assert(appSource.includes('const BrandEvidenceVaultDialog =') && appSource.includes("authFetch('/api/brand-evidence'"), 'brand-evidence-vault-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.brandEvidence') && appSource.includes('BRAND EVIDENCE'), 'brand-evidence-vault-menu');
+  assert(appSource.includes("const logoOptions = { x: 58, y: 782, color: black, scale: 1.05 }") && appSource.includes("page.drawText('HASHCOD', { x: 102, y: 750"), 'brand-evidence-certificate-logo');
   assert(appSource.includes('const manifestForNote =') && appSource.includes('averageEntropy') && appSource.includes('manifestSha256'), 'sequence-a-verifiable-manifest');
   assert(appSource.includes('duplicateNote') && appSource.includes('rotateKey') && appSource.includes('removeAttachedCode'), 'sequence-a-operational-actions');
   assert(appSource.includes('<QrCanvas payload={verificationQr}') && appSource.includes('mnotes-code-search'), 'sequence-a-qr-search-ui');
