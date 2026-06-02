@@ -20,6 +20,7 @@ const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
 const CODE_WALLET_FILE = path.join(DATA_DIR, 'code-wallet.enc');
+const BRAND_EVIDENCE_FILE = path.join(DATA_DIR, 'brand-evidence.enc');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
@@ -236,6 +237,7 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(AUDIT_FILE, 'audit', stamp),
       backupFileIfExists(ACCESS_HISTORY_FILE, 'access-history', stamp),
       backupFileIfExists(CODE_WALLET_FILE, 'code-wallet', stamp),
+      backupFileIfExists(BRAND_EVIDENCE_FILE, 'brand-evidence', stamp),
     ].filter(Boolean).map(file => path.basename(file));
     fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
     audit('backup.automatic', { reason, files: files.length });
@@ -642,6 +644,27 @@ async function saveRenderWalletDb(rows) {
   return true;
 }
 
+async function loadRenderBrandEvidenceDb() {
+  if (!pgReady || !pgPool) return null;
+  const result = await pgPool.query('select value from hashcod_kv where key = $1 limit 1', ['brand-evidence']);
+  const encrypted = result.rows[0]?.value?.encrypted;
+  if (!encrypted) return null;
+  const rows = decryptJson(encrypted, []);
+  return Array.isArray(rows) ? rows : null;
+}
+
+async function saveRenderBrandEvidenceDb(rows) {
+  if (!pgReady || !pgPool) return false;
+  const cleanRows = (Array.isArray(rows) ? rows : []).slice(0, 1000);
+  await pgPool.query(
+    `insert into hashcod_kv(key, value, updated_at)
+     values($1, $2::jsonb, now())
+     on conflict(key) do update set value = excluded.value, updated_at = now()`,
+    ['brand-evidence', JSON.stringify({ encrypted: encryptJson(cleanRows), count: cleanRows.length })]
+  );
+  return true;
+}
+
 async function appendRenderAudit(row) {
   if (!pgReady || !pgPool || !row) return false;
   try {
@@ -722,6 +745,41 @@ async function writeCodeWallet(rows) {
   if (pgReady) {
     try { await saveRenderWalletDb(clean); }
     catch (err) { audit('wallet.render_write_failed', { error: safeText(err.message, 160) }); }
+  }
+}
+
+function readBrandEvidenceCache() {
+  ensureDataDir();
+  if (!fs.existsSync(BRAND_EVIDENCE_FILE)) return [];
+  const rows = decryptJson(fs.readFileSync(BRAND_EVIDENCE_FILE, 'utf8'), []);
+  return Array.isArray(rows) ? rows : [];
+}
+
+function writeBrandEvidenceCache(rows) {
+  ensureDataDir();
+  fs.writeFileSync(BRAND_EVIDENCE_FILE, encryptJson((Array.isArray(rows) ? rows : []).slice(0, 1000)));
+  ensureAutomaticBackup('brand-evidence-write');
+}
+
+async function readBrandEvidence() {
+  try {
+    const remote = await loadRenderBrandEvidenceDb();
+    if (remote) {
+      writeBrandEvidenceCache(remote);
+      return remote;
+    }
+  } catch (err) {
+    audit('brand_evidence.render_read_failed', { error: safeText(err.message, 160) });
+  }
+  return readBrandEvidenceCache();
+}
+
+async function writeBrandEvidence(rows) {
+  const clean = (Array.isArray(rows) ? rows : []).slice(0, 1000);
+  writeBrandEvidenceCache(clean);
+  if (pgReady) {
+    try { await saveRenderBrandEvidenceDb(clean); }
+    catch (err) { audit('brand_evidence.render_write_failed', { error: safeText(err.message, 160) }); }
   }
 }
 
@@ -1878,6 +1936,128 @@ async function handleCodeWallet(req, res) {
   send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
 }
 
+function requireBrandEvidenceAccess(req, res) {
+  const authenticated = getSession(req);
+  if (authenticated) return requireAuth(req, res, 'viewer');
+  const privateEntry = getPrivateEntrySession(req);
+  if (!privateEntry) {
+    send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_required' }));
+    return null;
+  }
+  const cookies = parseCookies(req);
+  const scope = cookies.hashcod_wallet_scope || privateEntry.sid || cookies.hashcod_private_entry || `${clientIp(req)}|${safeText(req.headers['user-agent'], 180)}`;
+  const id = `evidence_private_${crypto.createHash('sha256').update(scope).digest('hex').slice(0, 24)}`;
+  return { user: { id, email: '' }, actorId: id, privateSession: true };
+}
+
+function brandEvidenceEvent(previousHash, action, meta = {}) {
+  const at = new Date().toISOString();
+  const payload = JSON.stringify({ previousHash: previousHash || 'GENESIS', at, action, meta });
+  return { at, action, meta, previousHash: previousHash || 'GENESIS', eventHash: crypto.createHash('sha256').update(payload).digest('hex') };
+}
+
+function publicBrandEvidence(row, includeFiles = false) {
+  if (!row) return null;
+  return {
+    id: row.id, tokenId: row.tokenId, ownerName: row.ownerName,
+    ownerDocument: row.ownerDocument ? `${row.ownerDocument.slice(0, 3)}***` : '',
+    email: row.email, phone: row.phone, brandName: row.brandName,
+    evidenceType: row.evidenceType, description: row.description, status: row.status,
+    createdAt: row.createdAt, updatedAt: row.updatedAt, packageHash: row.packageHash,
+    signature: row.signature, sourceCode: row.sourceCode, timeline: row.timeline,
+    files: (row.files || []).map(file => ({
+      id: file.id, name: file.name, mime: file.mime, size: file.size,
+      sha256: file.sha256, uploadedAt: file.uploadedAt,
+      ...(includeFiles ? { contentBase64: file.contentBase64 } : {}),
+    })),
+    legalNotice: row.legalNotice,
+  };
+}
+
+async function handleBrandEvidence(req, res) {
+  const auth = requireBrandEvidenceAccess(req, res);
+  if (!auth) return;
+  const url = new URL(req.url, 'http://localhost');
+  const rows = await readBrandEvidence();
+  const mine = rows.filter(row => row.userId === auth.user.id);
+  if (req.method === 'GET') {
+    const id = safeText(url.searchParams.get('id'), 120);
+    const includeFiles = url.searchParams.get('download') === '1';
+    if (id) {
+      const row = mine.find(item => item.id === id || item.tokenId === id);
+      if (!row) {
+        send(res, 404, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'brand_evidence_not_found' }));
+        return;
+      }
+      send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, row: publicBrandEvidence(row, includeFiles) }));
+      return;
+    }
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, rows: mine.map(row => publicBrandEvidence(row)), storage: pgReady ? 'render-postgres+encrypted-cache' : 'encrypted-cache' }));
+    return;
+  }
+  if (req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req, 18 * 1024 * 1024);
+      const ownerName = safeText(body.ownerName, 140);
+      const email = safeText(body.email, 180).toLowerCase();
+      const brandName = safeText(body.brandName, 140);
+      if (!ownerName || !validEmail(email) || !brandName) throw new Error('brand_evidence_required_fields');
+      const allowedTypes = ['marca', 'logo', 'codigo', 'dominio', 'publicacion', 'factura', 'contrato', 'empaque', 'otro'];
+      const evidenceType = allowedTypes.includes(body.evidenceType) ? body.evidenceType : 'marca';
+      const uploaded = Array.isArray(body.files) ? body.files.slice(0, 8) : [];
+      const files = uploaded.map((file, index) => {
+        const contentBase64 = String(file.contentBase64 || '').replace(/\s/g, '');
+        const bytes = Buffer.from(contentBase64, 'base64');
+        if (!bytes.length || bytes.length > 1536 * 1024) throw new Error('invalid_evidence_file');
+        return {
+          id: `file_${crypto.randomBytes(8).toString('hex')}`,
+          name: safeText(file.name, 180) || `evidence-${index + 1}.bin`,
+          mime: safeText(file.mime, 100) || 'application/octet-stream',
+          size: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+          contentBase64, uploadedAt: new Date().toISOString(),
+        };
+      });
+      if (!files.length) throw new Error('brand_evidence_file_required');
+      const createdAt = new Date().toISOString();
+      const sourceCodeValue = safeWalletPayload(body.sourceCode?.value, 12000);
+      const sourceCode = sourceCodeValue ? {
+        id: safeText(body.sourceCode?.id, 120), type: safeText(body.sourceCode?.type, 100),
+        value: sourceCodeValue, sha256: crypto.createHash('sha256').update(sourceCodeValue).digest('hex'),
+      } : null;
+      const packageHash = crypto.createHash('sha256').update(JSON.stringify({
+        ownerName, email, brandName, evidenceType, createdAt,
+        files: files.map(file => [file.name, file.sha256, file.size]), sourceCode: sourceCode?.sha256 || '',
+      })).digest('hex');
+      const tokenId = `HASHCOD-BRAND-HBE-${new Date().getUTCFullYear()}-${packageHash.slice(0, 12).toUpperCase()}`;
+      const firstEvent = brandEvidenceEvent('', 'EXPEDIENT_CREATED', { tokenId, brandName, fileCount: files.length, packageHash });
+      const signature = crypto.createHmac('sha256', authSecretKey()).update(`${tokenId}|${packageHash}|${firstEvent.eventHash}`).digest('hex');
+      const row = {
+        id: `brand_${packageHash.slice(0, 20)}`, userId: auth.user.id, tokenId, ownerName,
+        ownerDocument: safeText(body.ownerDocument, 60), email, phone: safeText(body.phone, 60),
+        brandName, evidenceType, description: safeText(body.description, 1000), status: 'EVIDENCE_PRESERVED',
+        createdAt, updatedAt: createdAt, packageHash, signature, sourceCode, files, timeline: [firstEvent],
+        legalNotice: 'Hashcod no sustituye el registro oficial de marcas ante ONAPI ni ofrece asesoria legal. Este expediente documenta evidencia digital de existencia, fecha, integridad y uso aportada por el usuario.',
+      };
+      rows.unshift(row);
+      await writeBrandEvidence(rows);
+      audit('brand_evidence.created', { actor: auth.user.id, ip: clientIp(req), id: row.id, tokenId, files: files.length, packageHash });
+      send(res, 201, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, row: publicBrandEvidence(row) }));
+    } catch (err) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: safeText(err.message, 100) || 'invalid_brand_evidence' }));
+    }
+    return;
+  }
+  if (req.method === 'DELETE') {
+    const id = safeText(url.searchParams.get('id'), 120);
+    const next = rows.filter(row => !(row.id === id && row.userId === auth.user.id));
+    await writeBrandEvidence(next);
+    audit('brand_evidence.deleted', { actor: auth.user.id, ip: clientIp(req), id, deleted: rows.length - next.length });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, deleted: rows.length - next.length }));
+    return;
+  }
+  send(res, 405, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+}
+
 function verifyGatewayDevice(db, deviceId, deviceSecret) {
   const device = db.devices.find(row => row.id === safeText(deviceId, 120) && row.status !== 'DISABLED');
   if (!device) return null;
@@ -2626,6 +2806,14 @@ const server = http.createServer((req, res) => {
     handleCodeWallet(req, res).catch(err => {
       audit('wallet.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
       if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'wallet_request_failed' }));
+    });
+    return;
+  }
+
+  if (routePath === '/api/brand-evidence') {
+    handleBrandEvidence(req, res).catch(err => {
+      audit('brand_evidence.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
+      if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'brand_evidence_request_failed' }));
     });
     return;
   }

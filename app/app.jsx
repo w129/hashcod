@@ -2595,6 +2595,7 @@ const TOP_MENU_ICONS = {
   derivatives: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>`,
   fileViewer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="19" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="20" cy="19" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="8" cy="12" r="2"/></svg>`,
   filePackager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h2"/><path d="M12 18h6"/></svg>`,
+  brandEvidence: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6 2 2 4-4"/><path d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/></svg>`,
   pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
   parametricAnalyzer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v16H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><circle cx="14" cy="12" r="8"/></svg>`,
@@ -7800,6 +7801,178 @@ const FileZipPackagerDialog = ({ open, onClose, notify, language }) => {
                 {busy ? L('Creando ZIP...', 'Creating ZIP...') : L('Descargar ZIP', 'Download ZIP')}
               </button>
             </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const BrandEvidenceVaultDialog = ({ open, onClose, notify, language, rows = [] }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const inputRef = useRef(null);
+  const [records, setRecords] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [files, setFiles] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ ownerName: '', ownerDocument: '', email: '', phone: '', brandName: '', evidenceType: 'marca', description: '', sourceCodeId: '' });
+  const selected = records.find(row => row.id === selectedId) || records[0] || null;
+  const savedCodes = useMemo(() => rows.filter(row => row?.value).slice(0, 1200), [rows]);
+  const update = (key, value) => setForm(current => ({ ...current, [key]: value }));
+
+  const refresh = async () => {
+    try {
+      const response = await authFetch('/api/brand-evidence');
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'brand_evidence_load_failed');
+      setRecords(data.rows || []);
+      if (!selectedId && data.rows?.[0]?.id) setSelectedId(data.rows[0].id);
+    } catch (err) {
+      setError(String(err.message || err));
+    }
+  };
+  useEffect(() => { if (open) refresh(); }, [open]);
+  if (!open) return null;
+
+  const hashBytes = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), byte => byte.toString(16).padStart(2, '0')).join('');
+  const toBase64 = bytes => {
+    let binary = '';
+    new Uint8Array(bytes).forEach(byte => { binary += String.fromCharCode(byte); });
+    return btoa(binary);
+  };
+  const fromBase64 = value => Uint8Array.from(atob(value || ''), char => char.charCodeAt(0));
+  const addFiles = async incoming => {
+    setError('');
+    try {
+      const next = [];
+      for (const file of Array.from(incoming || []).slice(0, Math.max(0, 8 - files.length))) {
+        if (file.size > 1536 * 1024) throw new Error(L('Cada archivo debe pesar menos de 1.5 MB.', 'Each file must be smaller than 1.5 MB.'));
+        const bytes = await file.arrayBuffer();
+        next.push({ id: `${file.name}-${file.size}-${file.lastModified}`, name: file.name, mime: file.type || 'application/octet-stream', size: file.size, sha256: await hashBytes(bytes), contentBase64: toBase64(bytes) });
+      }
+      setFiles(current => [...current, ...next]);
+    } catch (err) {
+      setError(String(err.message || err));
+    }
+  };
+  const createRecord = async () => {
+    if (!form.ownerName || !form.email || !form.brandName || !files.length) {
+      setError(L('Completa propietario, email, marca y al menos un archivo.', 'Complete owner, email, brand, and at least one file.'));
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const source = savedCodes.find(row => String(row.id || row.idx) === form.sourceCodeId);
+      const response = await authFetch('/api/brand-evidence', {
+        method: 'POST',
+        body: JSON.stringify({ ...form, files, sourceCode: source ? { id: source.id || source.idx, type: source.type, value: source.value } : null }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'brand_evidence_create_failed');
+      setFiles([]);
+      setSelectedId(data.row.id);
+      await refresh();
+      notify(L('Expediente tokenizado guardado.', 'Tokenized evidence record saved.'));
+    } catch (err) {
+      setError(String(err.message || err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const fullRecord = async row => {
+    const response = await authFetch(`/api/brand-evidence?id=${encodeURIComponent(row.id)}&download=1`);
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || 'brand_evidence_download_failed');
+    return data.row;
+  };
+  const manifestYaml = row => [
+    `token_id: "${row.tokenId}"`, `brand: "${row.brandName}"`, `owner: "${row.ownerName}"`,
+    `created_at: "${row.createdAt}"`, `status: "${row.status}"`, `package_sha256: "${row.packageHash}"`,
+    `signature: "${row.signature}"`, 'files:', ...(row.files || []).map(file => `  - name: "${file.name}"\n    sha256: "${file.sha256}"\n    size: ${file.size}`),
+  ].join('\n');
+  const certificatePdf = async row => {
+    if (!window.PDFLib?.PDFDocument) throw new Error('PDF engine unavailable');
+    const pdf = await window.PDFLib.PDFDocument.create();
+    const page = pdf.addPage([595, 842]);
+    const { rgb, StandardFonts } = window.PDFLib;
+    const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdf.embedFont(StandardFonts.Helvetica);
+    page.drawRectangle({ x: 34, y: 42, width: 527, height: 758, borderWidth: 2, borderColor: rgb(0.05, 0.05, 0.05) });
+    page.drawText('HASHCOD', { x: 58, y: 750, size: 25, font: bold });
+    page.drawText('TOKENIZED BRAND EVIDENCE CERTIFICATE', { x: 58, y: 721, size: 12, font: bold });
+    const fields = [
+      ['TOKEN', row.tokenId], ['BRAND', row.brandName], ['OWNER', row.ownerName], ['TYPE', row.evidenceType],
+      ['ISSUED', row.createdAt], ['STATUS', row.status], ['PACKAGE SHA-256', row.packageHash], ['HASHCOD SIGNATURE', row.signature],
+    ];
+    let y = 680;
+    fields.forEach(([label, value]) => {
+      page.drawText(label, { x: 58, y, size: 8, font: bold });
+      page.drawText(String(value || '').slice(0, 90), { x: 58, y: y - 15, size: 9, font: regular });
+      y -= 46;
+    });
+    page.drawText(`FILES PRESERVED: ${(row.files || []).length}`, { x: 58, y: 302, size: 10, font: bold });
+    page.drawText('TECHNICAL NOTICE', { x: 58, y: 245, size: 9, font: bold });
+    page.drawText('This certificate preserves declared authorship, timestamp and integrity evidence.', { x: 58, y: 228, size: 8, font: regular });
+    page.drawText('It does not replace an official trademark registration before ONAPI or legal advice.', { x: 58, y: 214, size: 8, font: regular });
+    page.drawText('VERIFY WITH TOKEN ID AND PACKAGE SHA-256', { x: 58, y: 86, size: 9, font: bold });
+    return pdf.save();
+  };
+  const downloadCertificate = async row => {
+    try { triggerBlobDownload(`${sanitizeFilename(row.tokenId)}.pdf`, new Blob([await certificatePdf(row)], { type: 'application/pdf' })); }
+    catch (err) { setError(String(err.message || err)); }
+  };
+  const downloadPackage = async row => {
+    setBusy(true);
+    try {
+      const full = await fullRecord(row);
+      const pdf = await certificatePdf(full);
+      const entries = [
+        { name: 'certificate.pdf', content: pdf },
+        { name: 'manifest.json', content: JSON.stringify(full, null, 2) },
+        { name: 'manifest.yaml', content: manifestYaml(full) },
+        { name: 'hashes.txt', content: (full.files || []).map(file => `${file.sha256}  ${file.name}`).join('\n') },
+        { name: 'timeline.json', content: JSON.stringify(full.timeline || [], null, 2) },
+        { name: 'LEGAL-NOTICE.txt', content: full.legalNotice || '' },
+        ...(full.files || []).map(file => ({ name: `originals/${file.name}`, content: fromBase64(file.contentBase64) })),
+      ];
+      triggerBlobDownload(`${sanitizeFilename(full.tokenId)}.zip`, makeZipBlob(entries));
+    } catch (err) {
+      setError(String(err.message || err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg brand-evidence-dlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h brand-evidence-head">
+          <span className="brand-evidence-icon" dangerouslySetInnerHTML={{ __html: TOP_MENU_ICONS.brandEvidence }} />
+          <div><h2>{L('Expediente Tokenizado de Marca', 'Tokenized Brand Evidence')}</h2><p>{L('Preserva archivos, hashes SHA-256, un code guardado, firma interna y cronologia verificable.', 'Preserve files, SHA-256 hashes, a saved code, internal signature, and a verifiable timeline.')}</p></div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="brand-evidence-grid">
+          <aside className="brand-evidence-form">
+            <input placeholder={L('Nombre del propietario', 'Owner name')} value={form.ownerName} onChange={e => update('ownerName', e.target.value)} />
+            <input placeholder={L('Email verificado', 'Verified email')} value={form.email} onChange={e => update('email', e.target.value)} />
+            <input placeholder={L('Cedula / RNC opcional', 'ID / RNC optional')} value={form.ownerDocument} onChange={e => update('ownerDocument', e.target.value)} />
+            <input placeholder={L('Telefono opcional', 'Phone optional')} value={form.phone} onChange={e => update('phone', e.target.value)} />
+            <input placeholder={L('Nombre de la marca', 'Brand name')} value={form.brandName} onChange={e => update('brandName', e.target.value)} />
+            <select value={form.evidenceType} onChange={e => update('evidenceType', e.target.value)}>{['marca', 'logo', 'codigo', 'dominio', 'publicacion', 'factura', 'contrato', 'empaque', 'otro'].map(type => <option key={type}>{type}</option>)}</select>
+            <select value={form.sourceCodeId} onChange={e => update('sourceCodeId', e.target.value)}><option value="">{L('Code guardado opcional', 'Optional saved code')}</option>{savedCodes.map(row => <option key={row.id || row.idx} value={row.id || row.idx}>{String(row.idx || row.id).padStart(5, '0')} | {row.type || 'Hashcod code'}</option>)}</select>
+            <textarea rows="3" placeholder={L('Descripcion del expediente', 'Evidence description')} value={form.description} onChange={e => update('description', e.target.value)} />
+            <input ref={inputRef} className="hidden-file" type="file" multiple onChange={e => { addFiles(e.target.files); e.target.value = ''; }} />
+            <button onClick={() => inputRef.current?.click()}>{L('Agregar evidencias', 'Add evidence files')}</button>
+            <button className="brand-evidence-primary" onClick={createRecord} disabled={busy}>{busy ? L('Procesando...', 'Processing...') : L('Crear expediente HBE', 'Create HBE record')}</button>
+            {error && <div className="brand-evidence-error">{error}</div>}
+          </aside>
+          <main className="brand-evidence-main">
+            <div className="brand-evidence-files">{files.map(file => <article key={file.id}><b>{file.name}</b><small>{file.size} B | SHA-256 {file.sha256.slice(0, 20)}...</small></article>)}</div>
+            <header><b>{L('Expedientes persistentes', 'Persistent records')}</b><span>{records.length}</span></header>
+            <div className="brand-evidence-records">{records.map(row => <button key={row.id} className={selected?.id === row.id ? 'selected' : ''} onClick={() => setSelectedId(row.id)}><b>{row.brandName}</b><small>{row.tokenId}</small></button>)}</div>
+            {selected && <section className="brand-evidence-detail"><h3>{selected.brandName}</h3><code>{selected.tokenId}</code><p>SHA-256 {selected.packageHash}</p><p>{selected.status} | {(selected.files || []).length} {L('archivos', 'files')}</p><div><button onClick={() => downloadCertificate(selected)}>{L('Certificado PDF', 'PDF certificate')}</button><button onClick={() => downloadPackage(selected)}>{L('Paquete ZIP', 'ZIP package')}</button></div><small>{selected.legalNotice}</small></section>}
           </main>
         </div>
       </section>
@@ -17359,6 +17532,7 @@ const App = () => {
   const [derivativesOpen, setDerivativesOpen] = useState(false);
   const [fileViewerOpen, setFileViewerOpen] = useState(false);
   const [filePackagerOpen, setFilePackagerOpen] = useState(false);
+  const [brandEvidenceOpen, setBrandEvidenceOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
   const [parametricAnalyzerOpen, setParametricAnalyzerOpen] = useState(false);
@@ -18229,6 +18403,7 @@ const App = () => {
   const openDerivativesLab = () => setDerivativesOpen(true);
   const openFileViewer = () => setFileViewerOpen(true);
   const openFilePackager = () => setFilePackagerOpen(true);
+  const openBrandEvidence = () => setBrandEvidenceOpen(true);
   const openPdfStamp = () => setPdfStampOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
   const openParametricAnalyzer = () => setParametricAnalyzerOpen(true);
@@ -18496,6 +18671,12 @@ const App = () => {
     { label: language === 'es' ? 'Subir y agrupar varios archivos' : 'Upload and bundle multiple files', onClick: openFilePackager },
     { label: language === 'es' ? 'Manifiesto Hashcod incluido' : 'Hashcod manifest included', onClick: openFilePackager },
     { label: language === 'es' ? 'Descarga ZIP local' : 'Local ZIP download', onClick: openFilePackager },
+  ];
+  const brandEvidenceItems = [
+    { label: language === 'es' ? 'Abrir expediente tokenizado' : 'Open tokenized evidence record', onClick: openBrandEvidence },
+    { label: language === 'es' ? 'Archivos originales y SHA-256' : 'Original files and SHA-256', onClick: openBrandEvidence },
+    { label: language === 'es' ? 'Code guardado y firma interna' : 'Saved code and internal signature', onClick: openBrandEvidence },
+    { label: language === 'es' ? 'Certificado PDF y paquete ZIP' : 'PDF certificate and ZIP package', onClick: openBrandEvidence },
   ];
   const pdfStampItems = [
     { label: language === 'es' ? 'Abrir sellador PDF Hashcod' : 'Open Hashcod PDF stamp', onClick: openPdfStamp },
@@ -19067,6 +19248,7 @@ const App = () => {
       <DerivativesLabDialog open={derivativesOpen} onClose={() => setDerivativesOpen(false)} rows={copyDb} notify={notify} language={language} onSaveRows={rememberCopied} />
       <UniversalFileViewerDialog open={fileViewerOpen} onClose={() => setFileViewerOpen(false)} notify={notify} language={language} />
       <FileZipPackagerDialog open={filePackagerOpen} onClose={() => setFilePackagerOpen(false)} notify={notify} language={language} />
+      <BrandEvidenceVaultDialog open={brandEvidenceOpen} onClose={() => setBrandEvidenceOpen(false)} notify={notify} language={language} rows={copyDb} />
       <PdfStampDialog open={pdfStampOpen} onClose={() => setPdfStampOpen(false)} notify={notify} language={language} rows={copyDb} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
       <ParametricCryptoAnalyzerDialog open={parametricAnalyzerOpen} onClose={() => setParametricAnalyzerOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -19143,6 +19325,7 @@ const App = () => {
             <MenuButton label="DERIVATIVES LAB" icon={TOP_MENU_ICONS.derivatives} iconOnly items={derivativesItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDerivativesLab} />
             <MenuButton label="FILE VIEWER" icon={TOP_MENU_ICONS.fileViewer} iconOnly items={fileViewerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFileViewer} />
             <MenuButton label="FILE ZIP PACKAGER" icon={TOP_MENU_ICONS.filePackager} iconOnly items={filePackagerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openFilePackager} />
+            <MenuButton label="BRAND EVIDENCE" icon={TOP_MENU_ICONS.brandEvidence} iconOnly items={brandEvidenceItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBrandEvidence} />
             <MenuButton label="PDF STAMP" icon={TOP_MENU_ICONS.pdfStamp} iconOnly items={pdfStampItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPdfStamp} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
             <MenuButton label="PARAMETRIC ANALYZER" icon={TOP_MENU_ICONS.parametricAnalyzer} iconOnly items={parametricAnalyzerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openParametricAnalyzer} />
