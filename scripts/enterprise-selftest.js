@@ -220,8 +220,10 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.docusealSigner') && appSource.includes('DOCUSEAL SIGNER'), 'docuseal-signer-menu');
   assert(appSource.includes('Download source code') && appSource.includes('AGPL-3.0') && appSource.includes('DocuSeal attribution retained'), 'docuseal-visible-source-disclosure');
   assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-docuseal-tool-source.zip')), 'docuseal-source-download');
-  assert(indexSource.includes('hashcod-warp-workspace.js?v=1.0.0'), 'warp-workspace-runtime');
+  assert(indexSource.includes('hashcod-warp-workspace.js?v=1.1.0'), 'warp-workspace-runtime');
   assert(appSource.includes('const WarpWorkspaceDialog =') && appSource.includes('HashcodWarpWorkspace') && appSource.includes('sandbox=\"allow-scripts\"'), 'warp-workspace-dialog');
+  assert(appSource.includes('template <language>') && appSource.includes('setActiveLanguage') && appSource.includes('warp-preview'), 'warp-multilanguage-ui');
+  assert(fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8').includes('LANGUAGE_PROFILES') && fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8').includes('compilePlan'), 'warp-multilanguage-adapter');
   assert(appSource.includes('TOP_MENU_ICONS.warpWorkspace') && appSource.includes('WARP WORKSPACE'), 'warp-workspace-menu');
   assert(appSource.includes('AGPL-3.0 + MIT') && appSource.includes('Warp upstream') && appSource.includes('Download source code'), 'warp-visible-source-disclosure');
   assert(stylesSource.includes('.warp-dlg') && stylesSource.includes('.warp-terminal'), 'warp-workspace-css');

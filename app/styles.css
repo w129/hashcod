@@ -8808,7 +8808,7 @@ textarea:focus-visible {
 .warp-head p { margin:4px 0 0;color:var(--ink-4);font-family:var(--mono);font-size:11px; }
 .warp-mark { display:grid;place-items:center;width:44px;height:44px;border:1px solid #101010;background:#fff; }
 .warp-mark img { display:block;width:30px;height:30px;object-fit:contain;filter:grayscale(1) contrast(2); }
-.warp-shell { display:grid;grid-template-columns:240px minmax(360px,1.1fr) minmax(360px,.95fr) 260px;min-height:700px;border-top:1px solid var(--line); }
+.warp-shell { display:grid;grid-template-columns:260px minmax(420px,1.15fr) minmax(360px,.95fr) 300px;min-height:740px;border-top:1px solid var(--line); }
 .warp-files,.warp-source { display:grid;align-content:start;gap:9px;padding:14px;background:var(--bg-soft); }
 .warp-files { border-right:1px solid var(--line); }
 .warp-source { border-left:1px solid var(--line); }
@@ -8830,7 +8830,7 @@ textarea:focus-visible {
   text-transform:uppercase;
 }
 .warp-license-card a:hover,.warp-source a:hover { background:#fff;color:#101010;border-color:#101010; }
-.warp-files input,.warp-command input {
+.warp-files input,.warp-command input,.warp-language-card select,.warp-toolbar select {
   width:100%;
   min-height:38px;
   padding:8px 9px;
@@ -8855,7 +8855,15 @@ textarea:focus-visible {
 .warp-file-list span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11px; }
 .warp-file-list small { color:var(--ink-4);font-family:var(--mono);font-size:9px; }
 .warp-file-actions { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px; }
-.warp-file-actions button,.warp-toolbar button,.warp-command button {
+.warp-language-card { display:grid;gap:7px;padding:10px;border:1px solid var(--line);background:var(--bg); }
+.warp-language-card span {
+  color:var(--ink-4);
+  font-family:var(--mono);
+  font-size:9px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.warp-file-actions button,.warp-toolbar button,.warp-command button,.warp-language-card button {
   min-height:36px;
   padding:7px 9px;
   border:1px solid var(--line-2);
@@ -8867,13 +8875,14 @@ textarea:focus-visible {
   letter-spacing:1px;
   text-transform:uppercase;
 }
-.warp-file-actions button:hover,.warp-toolbar button:hover,.warp-command button:hover,
-.warp-file-actions button:focus-visible,.warp-toolbar button:focus-visible,.warp-command button:focus-visible {
+.warp-file-actions button:hover,.warp-toolbar button:hover,.warp-command button:hover,.warp-language-card button:hover,
+.warp-file-actions button:focus-visible,.warp-toolbar button:focus-visible,.warp-command button:focus-visible,.warp-language-card button:focus-visible {
   background:#101010;color:#fff;border-color:#101010;
 }
 .warp-editor-pane { display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;background:#f4f4f1; }
-.warp-toolbar { display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:#fff; }
+.warp-toolbar { display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:#fff;flex-wrap:wrap; }
 .warp-toolbar span { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:11px;font-weight:700; }
+.warp-toolbar select { width:auto;min-width:130px;background:#fff; }
 .warp-run { background:#101010 !important;color:#fff !important; }
 .warp-editor-pane textarea {
   width:100%;
@@ -8903,6 +8912,10 @@ textarea:focus-visible {
 .warp-source h3 { margin:0;font-size:18px; }
 .warp-source dl { display:grid;gap:4px;margin:0;padding:9px;border:1px solid var(--line);background:var(--bg); }
 .warp-source dt { color:#101010;font-weight:700; }
+.warp-preview { display:grid;gap:8px;border:1px solid var(--line);background:#fff;padding:10px;min-height:160px; }
+.warp-preview b { font-family:var(--mono);font-size:10px;letter-spacing:1.4px;text-transform:uppercase; }
+.warp-preview iframe { width:100%;height:190px;border:1px solid var(--line);background:#fff; }
+.warp-preview pre { max-height:220px;overflow:auto;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Consolas,"Cascadia Code",monospace;font-size:11px;line-height:1.5;color:#101010; }
 .warp-sandbox { position:absolute;width:1px;height:1px;left:-9999px;top:-9999px;border:0; }
 @media (max-width:1120px) {
   .warp-shell { grid-template-columns:230px minmax(360px,1fr) minmax(300px,.9fr); }

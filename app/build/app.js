@@ -10565,11 +10565,25 @@ const WarpWorkspaceDialog = ({
   });
   const [terminal, setTerminal] = useState(() => [{
     level: 'sys',
-    text: 'Hashcod Warp Workspace ready. Commands: help, files, cat <file>, new <file>, rm <file>, run, save, format, download, clear, reset.'
+    text: 'Hashcod Warp Workspace ready. Commands: help, languages, files, cat <file>, new <file>, template <language>, lang <language>, rm <file>, run, preview, save, format, download, copy, clear, reset.'
   }]);
   const [command, setCommand] = useState('');
   const [filter, setFilter] = useState('');
+  const [languagePick, setLanguagePick] = useState('javascript');
+  const [preview, setPreview] = useState(null);
   const activeFile = workspace.files.find(file => file.name === workspace.active) || workspace.files[0];
+  const activeLanguage = activeFile?.language || adapter?.languageFromName?.(activeFile?.name) || 'text';
+  const languageProfiles = adapter?.LANGUAGE_PROFILES || {
+    javascript: {
+      run: 'sandbox',
+      command: 'node main.js'
+    },
+    text: {
+      run: 'analysis',
+      command: 'inspect text'
+    }
+  };
+  const cryptoSnippets = adapter?.CRYPTO_SNIPPETS || {};
   const sourceUrl = '/public-source/hashcod-warp-tool-source.zip';
   const appendTerminal = useCallback((level, text) => {
     setTerminal(prev => [...prev, {
@@ -10607,6 +10621,19 @@ const WarpWorkspaceDialog = ({
     ...workspace,
     active: name
   });
+  const setActiveLanguage = language => {
+    if (!activeFile) return;
+    persistWorkspace({
+      ...workspace,
+      files: workspace.files.map(file => file.name === activeFile.name ? {
+        ...file,
+        language
+      } : file),
+      active: activeFile.name
+    });
+    setLanguagePick(language);
+    appendTerminal('ok', `language set: ${language}`);
+  };
   const createFile = (name = window.prompt(L('Nombre del archivo', 'File name'), 'script.js')) => {
     const clean = adapter?.cleanName?.(name) || sanitizeFilename(name || 'script.js');
     if (!clean) return;
@@ -10619,11 +10646,28 @@ const WarpWorkspaceDialog = ({
       active: clean,
       files: [...workspace.files, {
         name: clean,
-        language: clean.endsWith('.js') ? 'javascript' : 'text',
-        content: clean.endsWith('.js') ? "console.log('new file');\n" : ''
+        language: adapter?.languageFromName?.(clean) || languagePick || 'text',
+        content: ''
       }]
     });
     appendTerminal('ok', `created ${clean}`);
+  };
+  const createTemplate = (language = languagePick) => {
+    const profile = languageProfiles[language] || languageProfiles.javascript;
+    const ext = profile?.ext?.[0] || '.txt';
+    const name = adapter?.cleanName?.(`hashcod_${language}${ext}`) || `hashcod_${language}.txt`;
+    const finalName = workspace.files.some(file => file.name === name) ? `${name.replace(/\.[^.]+$/, '')}_${Date.now()}${ext}` : name;
+    const content = cryptoSnippets[language] || `// Hashcod ${language} workspace\n// Command: ${profile?.command || 'inspect'}\n`;
+    persistWorkspace({
+      ...workspace,
+      active: finalName,
+      files: [...workspace.files, {
+        name: finalName,
+        language,
+        content
+      }]
+    });
+    appendTerminal('ok', `template created ${finalName}`);
   };
   const removeFile = (name = activeFile?.name) => {
     if (!name || workspace.files.length <= 1) return;
@@ -10635,14 +10679,50 @@ const WarpWorkspaceDialog = ({
     });
     appendTerminal('warn', `removed ${name}`);
   };
-  const runActive = () => {
+  const runActive = async () => {
     if (!activeFile) return;
-    if (!/\.m?js$/i.test(activeFile.name)) {
-      appendTerminal('warn', 'Only JavaScript files run in the browser sandbox. Other files remain editable and downloadable.');
+    const plan = await adapter?.compilePlan?.(activeFile, workspace.files);
+    appendTerminal('cmd', `${plan?.command || 'run'} # ${activeFile.name}`);
+    appendTerminal('sys', JSON.stringify({
+      language: plan?.language || activeLanguage,
+      mode: plan?.mode || 'analysis',
+      sha256: plan?.digest,
+      lines: plan?.metrics?.lines,
+      cryptoHits: plan?.metrics?.cryptoHits,
+      verdict: plan?.verdict
+    }, null, 2));
+    if (plan?.mode === 'validate' && activeLanguage === 'json') {
+      try {
+        JSON.parse(activeFile.content || '{}');
+        appendTerminal('ok', 'JSON valid. Process exited with code 0');
+      } catch (error) {
+        appendTerminal('error', `JSON parse error: ${error.message}`);
+      }
       return;
     }
-    appendTerminal('cmd', `run ${activeFile.name}`);
-    iframeRef.current.srcdoc = adapter?.sandboxDocument?.(activeFile.content) || '';
+    if (plan?.mode === 'preview') {
+      setPreview({
+        language: activeLanguage,
+        content: activeFile.content,
+        digest: plan?.digest
+      });
+      appendTerminal('ok', `preview ready for ${activeFile.name}`);
+      return;
+    }
+    if (plan?.mode === 'sandbox' || /\.m?js$/i.test(activeFile.name)) {
+      iframeRef.current.srcdoc = adapter?.sandboxDocument?.(activeFile.content) || '';
+      return;
+    }
+    appendTerminal('warn', `${activeLanguage} is prepared as a secure compile plan in this browser build. Export the workspace ZIP to run the command in a native toolchain.`);
+  };
+  const copyActive = async () => {
+    if (!activeFile) return;
+    try {
+      await navigator.clipboard.writeText(activeFile.content || '');
+      appendTerminal('ok', `copied ${activeFile.name}`);
+    } catch {
+      appendTerminal('warn', 'clipboard unavailable; select text manually');
+    }
   };
   const downloadActive = () => {
     if (!activeFile) return;
@@ -10660,9 +10740,12 @@ const WarpWorkspaceDialog = ({
         platform: 'Hashcod',
         tool: 'Warp Workspace',
         exportedAt: new Date().toISOString(),
+        runtime: 'browser sandbox + language compile plans',
         files: workspace.files.map(file => ({
           name: file.name,
-          bytes: file.content.length
+          language: file.language,
+          bytes: file.content.length,
+          command: languageProfiles[file.language]?.command || 'inspect'
         }))
       }, null, 2)
     });
@@ -10676,16 +10759,20 @@ const WarpWorkspaceDialog = ({
     setCommand('');
     const [verb, ...parts] = raw.split(/\s+/);
     const arg = parts.join(' ');
-    if (verb === 'help') appendTerminal('sys', 'help | files | cat <file> | new <file> | rm <file> | run | save | format | download | export | clear | reset');else if (verb === 'files') appendTerminal('log', workspace.files.map(file => `${file.name} (${file.content.length} chars)`).join('\n'));else if (verb === 'cat') {
+    if (verb === 'help') appendTerminal('sys', 'help | languages | files | cat <file> | new <file> | template <language> | lang <language> | rm <file> | run | preview | save | format | download | copy | export | clear | reset');else if (verb === 'languages') appendTerminal('log', Object.keys(languageProfiles).map(key => `${key} -> ${languageProfiles[key].command}`).join('\n'));else if (verb === 'files') appendTerminal('log', workspace.files.map(file => `${file.name} (${file.content.length} chars)`).join('\n'));else if (verb === 'cat') {
       const file = workspace.files.find(item => item.name === arg) || activeFile;
       appendTerminal('log', file?.content || 'file not found');
-    } else if (verb === 'new') createFile(arg || undefined);else if (verb === 'rm') removeFile(arg || activeFile?.name);else if (verb === 'run') runActive();else if (verb === 'save') {
+    } else if (verb === 'new') createFile(arg || undefined);else if (verb === 'template') createTemplate(arg || languagePick);else if (verb === 'lang') setActiveLanguage(arg || languagePick);else if (verb === 'rm') removeFile(arg || activeFile?.name);else if (verb === 'run') runActive();else if (verb === 'preview') setPreview({
+      language: activeLanguage,
+      content: activeFile?.content || '',
+      digest: ''
+    });else if (verb === 'save') {
       persistWorkspace(workspace);
       appendTerminal('ok', 'workspace saved locally');
     } else if (verb === 'format') {
       updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '');
       appendTerminal('ok', `formatted ${activeFile?.name}`);
-    } else if (verb === 'download') downloadActive();else if (verb === 'export') exportProject();else if (verb === 'clear') setTerminal([]);else if (verb === 'reset') {
+    } else if (verb === 'download') downloadActive();else if (verb === 'copy') copyActive();else if (verb === 'export') exportProject();else if (verb === 'clear') setTerminal([]);else if (verb === 'reset') {
       const next = adapter?.defaultWorkspace?.() || workspace;
       persistWorkspace(next);
       appendTerminal('warn', 'workspace reset');
@@ -10736,13 +10823,31 @@ const WarpWorkspaceDialog = ({
     disabled: workspace.files.length <= 1
   }, L('Borrar', 'Remove')), React.createElement("button", {
     onClick: exportProject
-  }, "ZIP"))), React.createElement("main", {
+  }, "ZIP")), React.createElement("div", {
+    className: "warp-language-card"
+  }, React.createElement("span", null, L('Lenguaje', 'Language')), React.createElement("select", {
+    value: languagePick,
+    onChange: event => setLanguagePick(event.target.value)
+  }, Object.keys(languageProfiles).map(lang => React.createElement("option", {
+    key: lang,
+    value: lang
+  }, lang))), React.createElement("button", {
+    onClick: () => createTemplate(languagePick)
+  }, L('Plantilla crypto', 'Crypto template')))), React.createElement("main", {
     className: "warp-editor-pane"
   }, React.createElement("div", {
     className: "warp-toolbar"
-  }, React.createElement("span", null, activeFile?.name || '---'), React.createElement("button", {
+  }, React.createElement("span", null, activeFile?.name || '---'), React.createElement("select", {
+    value: activeLanguage,
+    onChange: event => setActiveLanguage(event.target.value)
+  }, Object.keys(languageProfiles).map(lang => React.createElement("option", {
+    key: lang,
+    value: lang
+  }, lang))), React.createElement("button", {
     onClick: () => updateActiveContent(adapter?.formatSource?.(activeFile?.content || '') || activeFile?.content || '')
   }, L('Formato', 'Format')), React.createElement("button", {
+    onClick: copyActive
+  }, L('Copiar', 'Copy')), React.createElement("button", {
     onClick: downloadActive
   }, L('Descargar', 'Download')), React.createElement("button", {
     className: "warp-run",
@@ -10787,7 +10892,13 @@ const WarpWorkspaceDialog = ({
     href: "https://github.com/warpdotdev/Warp",
     target: "_blank",
     rel: "noreferrer"
-  }, "Warp upstream"), React.createElement("dl", null, React.createElement("dt", null, "Sandbox"), React.createElement("dd", null, "CSP default-src none"), React.createElement("dt", null, L('Persistencia', 'Persistence')), React.createElement("dd", null, "localStorage"), React.createElement("dt", null, L('Ejecucion', 'Execution')), React.createElement("dd", null, "Browser JS iframe")))), React.createElement("iframe", {
+  }, "Warp upstream"), React.createElement("dl", null, React.createElement("dt", null, "Sandbox"), React.createElement("dd", null, "CSP default-src none"), React.createElement("dt", null, L('Persistencia', 'Persistence')), React.createElement("dd", null, "localStorage"), React.createElement("dt", null, L('Ejecucion', 'Execution')), React.createElement("dd", null, "JS sandbox, HTML/MD preview, JSON validation, compile plans for native languages"), React.createElement("dt", null, L('Activo', 'Active')), React.createElement("dd", null, activeLanguage, " \xB7 ", languageProfiles[activeLanguage]?.command || 'inspect')), preview && React.createElement("div", {
+    className: "warp-preview"
+  }, React.createElement("b", null, L('Preview', 'Preview'), " \xB7 ", preview.language), preview.language === 'html' ? React.createElement("iframe", {
+    title: "Hashcod Warp preview",
+    sandbox: "",
+    srcDoc: preview.content
+  }) : React.createElement("pre", null, preview.content)))), React.createElement("iframe", {
     ref: iframeRef,
     title: "Hashcod Warp sandbox",
     sandbox: "allow-scripts",
