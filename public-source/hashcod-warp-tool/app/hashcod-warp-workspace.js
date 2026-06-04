@@ -142,7 +142,7 @@
   function sandboxDocument(source) {
     const payload = JSON.stringify(String(source || ''));
     return `<!doctype html><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src 'none'; style-src 'unsafe-inline'">
 <script>
 const send=(level,args)=>parent.postMessage({type:'hashcod-warp-log',level,text:args.map(v=>typeof v==='string'?v:JSON.stringify(v)).join(' ')},'*');
 console.log=(...args)=>send('log',args);console.info=(...args)=>send('info',args);console.warn=(...args)=>send('warn',args);console.error=(...args)=>send('error',args);

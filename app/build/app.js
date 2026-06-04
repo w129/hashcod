@@ -10709,7 +10709,7 @@ const WarpWorkspaceDialog = ({
       appendTerminal('ok', `preview ready for ${activeFile.name}`);
       return;
     }
-    if (plan?.mode === 'sandbox' || /\.m?js$/i.test(activeFile.name)) {
+    if (plan?.mode === 'sandbox') {
       iframeRef.current.srcdoc = adapter?.sandboxDocument?.(activeFile.content) || '';
       return;
     }

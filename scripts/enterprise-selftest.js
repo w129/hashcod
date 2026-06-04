@@ -74,7 +74,7 @@ async function docusealAdapterPdfSmoke() {
   return { inputBytes: input.length, outputBytes: result.bytes.length, pages: reopened.getPageCount(), digest: result.sourceDigest };
 }
 
-function warpWorkspaceAdapterSmoke() {
+async function warpWorkspaceAdapterSmoke() {
   const memory = {};
   const ctx = {
     window: {},
@@ -86,6 +86,8 @@ function warpWorkspaceAdapterSmoke() {
     URL: { createObjectURL: () => 'blob:hashcod-warp', revokeObjectURL() {} },
     localStorage: { getItem: key => memory[key] || null, setItem: (key, value) => { memory[key] = String(value); } },
     Date,
+    crypto: webcrypto,
+    TextEncoder,
   };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8'), ctx);
@@ -94,11 +96,13 @@ function warpWorkspaceAdapterSmoke() {
   const saved = api.saveWorkspace(ctx.localStorage, { ...ws, files: [...ws.files, { name: 'test.js', language: 'javascript', content: "console.log('ok')" }], active: 'test.js' });
   const loaded = api.loadWorkspace(ctx.localStorage);
   const sandbox = api.sandboxDocument("console.log('x')");
+  const pythonPlan = await api.compilePlan({ name: 'main.js', language: 'python', content: 'print("ok")' }, loaded.files);
   return {
     files: loaded.files.length,
     active: loaded.active,
     formatted: api.formatSource('a=1;\\n\\n\\n').split('\n').length,
-    sandboxLocked: sandbox.includes("connect-src 'none'") && sandbox.includes('hashcod-warp-log'),
+    sandboxLocked: sandbox.includes("connect-src 'none'") && sandbox.includes('hashcod-warp-log') && sandbox.includes("'unsafe-eval'"),
+    pythonModeRespected: pythonPlan.language === 'python' && pythonPlan.mode === 'analysis',
     savedActive: saved.active,
   };
 }
@@ -138,8 +142,8 @@ function assert(ok, id, detail = '') {
   assert(pdfSmoke.pages === 1 && pdfSmoke.outputBytes > pdfSmoke.inputBytes, 'pdf-stamp-vector-smoke', `${pdfSmoke.inputBytes}->${pdfSmoke.outputBytes} bytes`);
   const docusealSmoke = await docusealAdapterPdfSmoke();
   assert(docusealSmoke.pages === 1 && docusealSmoke.outputBytes > docusealSmoke.inputBytes && docusealSmoke.digest.length === 64, 'docuseal-adapter-pdf-smoke', `${docusealSmoke.inputBytes}->${docusealSmoke.outputBytes} bytes`);
-  const warpSmoke = warpWorkspaceAdapterSmoke();
-  assert(warpSmoke.files >= 3 && warpSmoke.active === 'test.js' && warpSmoke.sandboxLocked, 'warp-workspace-adapter-smoke', `${warpSmoke.files} files`);
+  const warpSmoke = await warpWorkspaceAdapterSmoke();
+  assert(warpSmoke.files >= 3 && warpSmoke.active === 'test.js' && warpSmoke.sandboxLocked && warpSmoke.pythonModeRespected, 'warp-workspace-adapter-smoke', `${warpSmoke.files} files`);
 
   const ctx = loadBrowserFiles();
   const catalog = ctx.window.OCG_CATALOG || [];
@@ -224,6 +228,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const WarpWorkspaceDialog =') && appSource.includes('HashcodWarpWorkspace') && appSource.includes('sandbox=\"allow-scripts\"'), 'warp-workspace-dialog');
   assert(appSource.includes('template <language>') && appSource.includes('setActiveLanguage') && appSource.includes('warp-preview'), 'warp-multilanguage-ui');
   assert(fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8').includes('LANGUAGE_PROFILES') && fs.readFileSync(path.join(ROOT, 'public-source/hashcod-warp-tool/app/hashcod-warp-workspace.js'), 'utf8').includes('compilePlan'), 'warp-multilanguage-adapter');
+  assert(appSource.includes("if (plan?.mode === 'sandbox')") && !appSource.includes("plan?.mode === 'sandbox' || /\\.m?js$/i.test(activeFile.name)"), 'warp-run-respects-selected-language');
   assert(appSource.includes('TOP_MENU_ICONS.warpWorkspace') && appSource.includes('WARP WORKSPACE'), 'warp-workspace-menu');
   assert(appSource.includes('AGPL-3.0 + MIT') && appSource.includes('Warp upstream') && appSource.includes('Download source code'), 'warp-visible-source-disclosure');
   assert(stylesSource.includes('.warp-dlg') && stylesSource.includes('.warp-terminal'), 'warp-workspace-css');
