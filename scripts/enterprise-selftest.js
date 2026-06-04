@@ -201,7 +201,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('cfg-global-prefix') && appSource.includes('setGenerationPrefix={setGenerationPrefix}'), 'generation-global-prefix-ui');
   assert(indexSource.includes('vendor/pdf-lib.min.js?v=1.17.1'), 'pdf-lib-local-runtime');
   assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
-  assert(appSource.includes('const MAX_RENDERED_OUTPUT = 120;') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
+  assert(appSource.includes('const OUTPUT_INITIAL_RENDER_LIMIT = 1000;') && appSource.includes('showMoreOutput') && appSource.includes('out-window-actions') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
   assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
   assert(indexSource.includes('app/build/app.js?v=hashcod-warp-workspace-1') && indexSource.includes('app/styles.css?v=hashcod-warp-workspace-1'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');

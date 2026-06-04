@@ -5,7 +5,9 @@ const APP_VERSION = 12;
 window.APP_VERSION = APP_VERSION;
 const MAX_GENERATION_BATCH = 100000;
 const GENERATION_CHUNK_SIZE = 100;
-const MAX_RENDERED_OUTPUT = 120;
+const OUTPUT_INITIAL_RENDER_LIMIT = 1000;
+const OUTPUT_RENDER_CHUNK = 1000;
+const OUTPUT_RENDER_ALL_LIMIT = 10000;
 const SIDEBAR_RENDER_LIMIT = 140;
 const PLAN_SIMILARITY_DENSITY = {
   free: 0.78,
@@ -17989,6 +17991,7 @@ const App = () => {
   const [generationPrefix, setGenerationPrefix] = useState(() => sanitizeGenerationPrefix(localStorage.getItem(GENERATION_PREFIX_STORAGE_KEY) || ''));
   const [charset, setCharset] = useState({ upper: true, lower: true, num: true, sym: false });
   const [output, setOutput] = useState([]);
+  const [outputVisibleCount, setOutputVisibleCount] = useState(OUTPUT_INITIAL_RENDER_LIMIT);
   const [busy, setBusy] = useState(false);
   const [stats, setStats] = useState({ generated: 0, unique: 0, sessionStart: Date.now() });
   const [clock, setClock] = useState('');
@@ -18301,11 +18304,13 @@ const App = () => {
   const clearOutput = () => {
     hashcodLawRecord(hashcodLawAssessPayload({ action: 'output:clear', meta: { count: output.length } }));
     setOutput([]);
+    setOutputVisibleCount(OUTPUT_INITIAL_RENDER_LIMIT);
     notify(t('outputCleared'));
   };
   const newSession = () => {
     hashcodLawRecord(hashcodLawAssessPayload({ action: 'session:new', meta: { output: output.length, database: copyDb.length } }));
     setOutput([]);
+    setOutputVisibleCount(OUTPUT_INITIAL_RENDER_LIMIT);
     setQuery('');
     setSelectedId('aes256');
     setSelectedCatId('symmetric');
@@ -18853,9 +18858,16 @@ const App = () => {
   }, [stats.sessionStart, clock]);
 
   const withQty = (n) => { const next = Math.max(1, Math.min(activePlan.maxBatch, Number(n) || 1)); setQty(next); generate(next); };
-  const visibleOutput = useMemo(() => output.slice(0, MAX_RENDERED_OUTPUT), [output]);
+  const outputWindowCount = Math.max(1, Math.min(outputVisibleCount, output.length || OUTPUT_INITIAL_RENDER_LIMIT));
+  const visibleOutput = useMemo(() => output.slice(0, outputWindowCount), [output, outputWindowCount]);
   const hashSystemRows = useMemo(() => [...output.slice(0, 240), ...copyDb.slice(0, 240)], [output, copyDb]);
   const similarityMap = useMemo(() => buildSimilarityMap(visibleOutput, activePlan), [visibleOutput, activePlan]);
+  const showMoreOutput = useCallback(() => {
+    setOutputVisibleCount(prev => Math.min(output.length, Math.max(prev, visibleOutput.length) + OUTPUT_RENDER_CHUNK));
+  }, [output.length, visibleOutput.length]);
+  const showAllOutput = useCallback(() => {
+    setOutputVisibleCount(Math.min(output.length, OUTPUT_RENDER_ALL_LIMIT));
+  }, [output.length]);
   const scrollTop = () => { if (outRef.current) outRef.current.scrollTop = 0; notify(t('showingNewest')); };
   const focusSearch = () => { searchRef.current && searchRef.current.focus(); };
 
@@ -19944,9 +19956,21 @@ const App = () => {
                 <>
                   {output.length > visibleOutput.length && (
                     <div className="out-window-note">
-                      {language === 'es'
-                        ? `Mostrando los ${visibleOutput.length.toLocaleString()} codes mas recientes de ${output.length.toLocaleString()}. Exportar/copiar usa el lote completo.`
-                        : `Showing the latest ${visibleOutput.length.toLocaleString()} codes out of ${output.length.toLocaleString()}. Export/copy uses the full batch.`}
+                      <span>
+                        {language === 'es'
+                          ? `${output.length.toLocaleString()} codes generados. Viendo ${visibleOutput.length.toLocaleString()} ahora; copiar/exportar usa el lote completo.`
+                          : `${output.length.toLocaleString()} codes generated. Showing ${visibleOutput.length.toLocaleString()} now; copy/export uses the full batch.`}
+                      </span>
+                      <div className="out-window-actions">
+                        <button onClick={showMoreOutput}>
+                          {language === 'es' ? `Ver +${OUTPUT_RENDER_CHUNK.toLocaleString()}` : `Show +${OUTPUT_RENDER_CHUNK.toLocaleString()}`}
+                        </button>
+                        <button onClick={showAllOutput} disabled={visibleOutput.length >= Math.min(output.length, OUTPUT_RENDER_ALL_LIMIT)}>
+                          {output.length > OUTPUT_RENDER_ALL_LIMIT
+                            ? (language === 'es' ? `Ver ${OUTPUT_RENDER_ALL_LIMIT.toLocaleString()}` : `Show ${OUTPUT_RENDER_ALL_LIMIT.toLocaleString()}`)
+                            : (language === 'es' ? 'Ver todo' : 'Show all')}
+                        </button>
+                      </div>
                     </div>
                   )}
                   {visibleOutput.map(row => (
