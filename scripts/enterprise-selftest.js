@@ -214,6 +214,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('rows={copyDb}') && appSource.includes('Database identifier code'), 'pdf-stamp-database-selector');
   assert(appSource.includes('TOP_MENU_ICONS.pdfStamp') && appSource.includes('PDF STAMP'), 'pdf-stamp-menu');
   const serverSource = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  assert(serverSource.includes("frame-src 'self' blob: data:"), 'csp-allows-pdf-blob-preview');
   assert(serverSource.includes('async function handleBrandEvidence') && serverSource.includes("['brand-evidence'"), 'brand-evidence-persistent-api');
   assert(appSource.includes('const CodeRegistryTableDialog =') && appSource.includes("authFetch('/api/code-registry'"), 'code-registry-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.codeRegistry') && appSource.includes('CODE REGISTRY'), 'code-registry-menu');

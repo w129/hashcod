@@ -118,6 +118,7 @@ const SECURITY_HEADERS = {
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob:",
     "connect-src 'self'",
+    "frame-src 'self' blob: data:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
