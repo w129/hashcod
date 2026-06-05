@@ -27388,6 +27388,15 @@ const App = () => {
   })), React.createElement("div", {
     className: "tb-right d-flex align-items-center flex-shrink-0"
   }, React.createElement("button", {
+    className: "tb-cli tb-equet-pin",
+    onClick: openEquetMatrix,
+    title: "EQUET MATRIX",
+    "aria-label": "EQUET MATRIX"
+  }, React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.equetMatrix
+    }
+  }), React.createElement("b", null, "EQUET")), React.createElement("button", {
     className: "tb-cli",
     onClick: () => setCodeTransformCliOpen(true),
     title: language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console',

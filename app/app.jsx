@@ -20452,6 +20452,10 @@ const App = () => {
             <MenuButton label="HCP" icon={TOP_MENU_ICONS.hcp} iconOnly items={hcpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openHcp} />
           </nav>
           <div className="tb-right d-flex align-items-center flex-shrink-0">
+            <button className="tb-cli tb-equet-pin" onClick={openEquetMatrix} title="EQUET MATRIX" aria-label="EQUET MATRIX">
+              <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.equetMatrix}} />
+              <b>EQUET</b>
+            </button>
             <button className="tb-cli" onClick={() => setCodeTransformCliOpen(true)} title={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'} aria-label={language === 'es' ? 'Consola CMD de transformacion' : 'Transform CMD console'}>
               <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeTransformCli}} />
             </button>
