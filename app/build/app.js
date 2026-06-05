@@ -10580,12 +10580,15 @@ const DocusealSignerDialog = ({
     className: "docuseal-preview-frame"
   }, React.createElement("div", {
     className: "docuseal-preview-status"
-  }, React.createElement("b", null, signedPreviewUrl ? L('Vista firmada', 'Signed preview') : L('Vista original', 'Original preview')), React.createElement("span", null, previewBusy ? L('Actualizando firma...', 'Updating signature...') : file?.name)), React.createElement("object", {
+  }, React.createElement("b", null, signedPreviewUrl ? L('Vista firmada', 'Signed preview') : L('Vista original', 'Original preview')), React.createElement("span", null, previewBusy ? L('Actualizando firma...', 'Updating signature...') : file?.name), React.createElement("a", {
+    href: signedPreviewUrl || previewUrl,
+    target: "_blank",
+    rel: "noreferrer"
+  }, L('Abrir PDF', 'Open PDF'))), React.createElement("iframe", {
     key: signedPreviewUrl || previewUrl,
-    data: signedPreviewUrl || previewUrl,
-    type: "application/pdf",
-    "aria-label": file?.name || 'PDF preview'
-  }, React.createElement("p", null, L('Tu navegador no puede mostrar el PDF.', 'Your browser cannot preview this PDF.')))) : React.createElement("div", {
+    src: signedPreviewUrl || previewUrl,
+    title: file?.name || 'PDF preview'
+  })) : React.createElement("div", {
     className: "docuseal-empty"
   }, React.createElement("img", {
     src: "/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg",

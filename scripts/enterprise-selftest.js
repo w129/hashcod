@@ -221,7 +221,7 @@ function assert(ok, id, detail = '') {
   assert(serverSource.includes('codeRegistryAudit') && serverSource.includes('GENESIS') && serverSource.includes('hashSha256'), 'code-registry-chained-audit');
   assert(indexSource.includes('hashcod-docuseal-adapter.js?v=1.0.0'), 'docuseal-adapter-runtime');
   assert(appSource.includes('const DocusealSignerDialog =') && appSource.includes('HashcodDocuSealAdapter.signPdf'), 'docuseal-signer-dialog');
-  assert(appSource.includes('signedPreviewUrl') && appSource.includes('Vista firmada') && appSource.includes('signedPreviewUrl || previewUrl'), 'docuseal-live-signed-preview');
+  assert(appSource.includes('signedPreviewUrl') && appSource.includes('Vista firmada') && appSource.includes('signedPreviewUrl || previewUrl') && appSource.includes('<iframe key={signedPreviewUrl || previewUrl}'), 'docuseal-live-signed-preview');
   assert(appSource.includes('TOP_MENU_ICONS.docusealSigner') && appSource.includes('DOCUSEAL SIGNER'), 'docuseal-signer-menu');
   assert(appSource.includes('Download source code') && appSource.includes('AGPL-3.0') && appSource.includes('DocuSeal attribution retained'), 'docuseal-visible-source-disclosure');
   assert(fs.existsSync(path.join(ROOT, 'public-source/hashcod-docuseal-tool-source.zip')), 'docuseal-source-download');
