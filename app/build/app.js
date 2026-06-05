@@ -13626,6 +13626,41 @@ const tryRenderQr = async (host, payload, size, preferred = 'Q') => {
   }
   throw lastErr || new Error('QR rendering failed');
 };
+const qrNodeToCanvas = async (node, fallbackSize = 240) => {
+  if (!node) return null;
+  if (node.tagName && node.tagName.toLowerCase() === 'canvas') return node;
+  return await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth || img.width || fallbackSize;
+      c.height = img.naturalHeight || img.height || fallbackSize;
+      const cctx = c.getContext('2d');
+      cctx.drawImage(img, 0, 0, c.width, c.height);
+      resolve(c);
+    };
+    img.onerror = reject;
+    img.src = node.src;
+  });
+};
+const buildHashcodQrCanvas = async (payload, size = 250, correctLevel = 'Q') => {
+  if (!window.QRCode) throw new Error('QRCode unavailable');
+  const host = document.createElement('div');
+  host.style.position = 'fixed';
+  host.style.left = '-99999px';
+  host.style.top = '0';
+  host.style.width = `${size}px`;
+  host.style.height = `${size}px`;
+  document.body.appendChild(host);
+  try {
+    const {
+      node
+    } = await tryRenderQr(host, payload, size, correctLevel);
+    return await qrNodeToCanvas(node, size);
+  } finally {
+    host.remove();
+  }
+};
 const QrCanvas = ({
   payload,
   size,
@@ -20869,50 +20904,138 @@ const HashcodEquetMatrixDialog = ({
     stride,
     parameters
   }, null, 2), 'application/json;charset=utf-8');
-  const exportTicket = () => {
+  const exportTicket = async () => {
     if (!selectedParam) return;
+    const code = equetCodeText(selected);
+    const issuedAt = new Date().toISOString();
+    const ticketId = `HCEQ-${equetSimpleHash(`${selectedParam.parameter}|${selectedParam.bind}|${code}|${issuedAt}`).slice(0, 14).toUpperCase()}`;
+    const qrPayload = JSON.stringify({
+      platform: PLATFORM_DISPLAY_NAME,
+      ticket: ticketId,
+      tool: 'Equet Matrix Ultra Math',
+      parameter: selectedParam.parameter,
+      direction: selectedParam.direction,
+      vector: selectedParam.vector,
+      bind: selectedParam.bind,
+      code_label: selected ? equetCodeLabel(selected, 0) : 'Hashcod code',
+      code_hash: equetSimpleHash(code),
+      issued_at: issuedAt
+    });
+    let qrCanvas = null;
+    try {
+      qrCanvas = await buildHashcodQrCanvas(qrPayload, 260, 'Q');
+    } catch (err) {
+      console.error(err);
+      notify?.(L('QR no disponible; ticket generado sin QR.', 'QR unavailable; ticket generated without QR.'));
+    }
     const canvas = document.createElement('canvas');
-    canvas.width = 1400;
-    canvas.height = 900;
+    canvas.width = 1600;
+    canvas.height = 1000;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#f7f7f3';
+    const pad = 64;
+    const rightX = 1080;
+    const wrapText = (text, x, y, maxWidth, lineHeight, maxLines = 4) => {
+      const words = String(text || '').split(/\s+/);
+      let line = '';
+      let lines = 0;
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          ctx.fillText(line, x, y);
+          y += lineHeight;
+          lines += 1;
+          line = word;
+          if (lines >= maxLines) return y;
+        } else {
+          line = test;
+        }
+      }
+      if (line && lines < maxLines) ctx.fillText(line, x, y);
+      return y + lineHeight;
+    };
+    const drawLabelValue = (label, value, x, y, w) => {
+      ctx.fillStyle = '#777';
+      ctx.font = '700 15px Consolas, monospace';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(String(label).toUpperCase(), x, y);
+      ctx.letterSpacing = '0px';
+      ctx.fillStyle = '#111';
+      ctx.font = '800 22px Consolas, monospace';
+      wrapText(value, x, y + 28, w, 26, 2);
+    };
+    ctx.fillStyle = '#f6f6f1';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#111';
     ctx.strokeStyle = '#111';
-    ctx.lineWidth = 5;
-    ctx.strokeRect(42, 42, 1316, 816);
-    drawHashcodCanvasLogo(ctx, 72, 72, 142, '#111');
-    ctx.font = '800 54px Segoe UI, Arial';
-    ctx.fillText('HASHCOD', 205, 122);
-    ctx.font = '700 20px Consolas, monospace';
-    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 205, 158);
-    ctx.font = '700 72px Consolas, monospace';
-    ctx.fillText(selectedParam.parameter, 72, 265);
-    ctx.font = '700 30px Consolas, monospace';
-    ctx.fillText(`DIRECTION: ${selectedParam.direction}`, 72, 318);
-    ctx.fillText(`VECTOR: ${selectedParam.vector}`, 72, 360);
-    ctx.fillText(`WEIGHT: ${selectedParam.weight}`, 72, 402);
-    ctx.fillText(`BIND: ${selectedParam.bind}`, 72, 444);
-    ctx.font = '700 22px Consolas, monospace';
-    ctx.fillText(`CODE: ${equetCodeLabel(selected, 0)}`, 72, 505);
-    ctx.font = '16px Consolas, monospace';
-    const code = equetCodeText(selected);
-    for (let i = 0; i < 4; i++) ctx.fillText(code.slice(i * 86, (i + 1) * 86), 72, 536 + i * 24);
+    ctx.lineWidth = 6;
+    ctx.strokeRect(pad, pad, canvas.width - pad * 2, canvas.height - pad * 2);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(pad + 18, pad + 18, canvas.width - pad * 2 - 36, 170);
+    drawHashcodCanvasLogo(ctx, pad + 54, pad + 52, 108, '#111');
+    ctx.font = '900 62px Segoe UI, Arial, sans-serif';
+    ctx.fillText('HASHCOD', pad + 180, pad + 98);
+    ctx.font = '800 21px Consolas, monospace';
+    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', pad + 180, pad + 138);
+    ctx.font = '700 15px Consolas, monospace';
+    ctx.fillStyle = '#444';
+    ctx.fillText(ticketId, pad + 180, pad + 164);
+    ctx.fillStyle = '#111';
+    if (qrCanvas) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(canvas.width - pad - 198, pad + 26, 154, 154);
+      ctx.strokeRect(canvas.width - pad - 198, pad + 26, 154, 154);
+      ctx.drawImage(qrCanvas, canvas.width - pad - 188, pad + 36, 134, 134);
+      ctx.fillStyle = '#111';
+      ctx.font = '800 13px Consolas, monospace';
+      ctx.fillText('VERIFY QR', canvas.width - pad - 190, pad + 202);
+    }
+    ctx.fillStyle = '#111';
+    ctx.font = '900 78px Consolas, monospace';
+    ctx.fillText(selectedParam.parameter, pad + 32, 295);
+    drawLabelValue('Direction', selectedParam.direction, pad + 36, 342, 210);
+    drawLabelValue('Vector', selectedParam.vector, pad + 294, 342, 300);
+    drawLabelValue('Weight', selectedParam.weight, pad + 630, 342, 180);
+    drawLabelValue('Bind', selectedParam.bind, pad + 36, 438, 610);
+    drawLabelValue('Code source', selected ? equetCodeLabel(selected, 0) : 'Hashcod code', pad + 36, 532, 760);
+    ctx.font = '700 16px Consolas, monospace';
+    ctx.fillStyle = '#222';
+    wrapText(code.slice(0, 420), pad + 36, 626, 820, 23, 5);
     const cell = 42;
-    const sx = 915;
-    const sy = 172;
-    ctx.font = '700 20px Consolas, monospace';
-    ctx.fillText('SOURCE MATRIX', sx, sy - 24);
+    const sx = rightX;
+    const sy = 260;
+    ctx.fillStyle = '#111';
+    ctx.font = '800 20px Consolas, monospace';
+    ctx.fillText('SOURCE MATRIX', sx, sy - 28);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(sx - 8, sy - 8, cell * 8 + 16, cell * 8 + 16);
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 2;
       ctx.strokeRect(sx + c * cell, sy + r * cell, cell, cell);
+      ctx.fillStyle = '#111';
+      ctx.font = '800 20px Consolas, monospace';
       ctx.fillText(String(matrix[r][c]), sx + c * cell + 15, sy + r * cell + 28);
     }
-    const preview = parameters.slice(0, 8).map(row => row.parameter).join('  ');
-    ctx.font = '16px Consolas, monospace';
-    ctx.fillText(`PARAMETER STREAM: ${preview}`, 72, 780);
-    ctx.fillText(`TOTAL PARAMETERS: ${parameters.length}  |  STRIDE: ${stride}  |  GENERATED: ${new Date().toISOString()}`, 72, 816);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(rightX - 18, 628, 408, 210);
+    ctx.font = '800 16px Consolas, monospace';
+    ctx.fillText('PARAMETER STREAM', rightX, 658);
+    ctx.font = '700 14px Consolas, monospace';
+    parameters.slice(0, 5).forEach((row, i) => {
+      ctx.fillText(`${String(row.i).padStart(4, '0')}  ${row.parameter}  ${row.direction}`, rightX, 690 + i * 28);
+    });
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(pad + 32, 858);
+    ctx.lineTo(canvas.width - pad - 32, 858);
+    ctx.stroke();
+    ctx.fillStyle = '#111';
+    ctx.font = '800 17px Consolas, monospace';
+    ctx.fillText(`TOTAL PARAMETERS ${parameters.length}  |  STRIDE ${stride}  |  GENERATED ${issuedAt}`, pad + 36, 898);
+    ctx.font = '700 13px Consolas, monospace';
+    ctx.fillText('Hashcod verified mathematical ticket · QR payload contains ticket id, parameter, source digest and bind.', pad + 36, 930);
     canvas.toBlob(blob => {
       if (!blob) return;
       triggerBlobDownload(`Hashcod-EquetMatrix-ticket-${selectedParam.parameter}-${tsStamp()}.jpg`, blob);
