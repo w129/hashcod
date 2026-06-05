@@ -20184,6 +20184,7 @@ const App = () => {
             <MenuButton label={t('menuHelp')} icon={TOP_MENU_ICONS.help} iconOnly items={helpItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuLanguages')} icon={TOP_MENU_ICONS.languages} iconOnly items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuDatabase')} icon={TOP_MENU_ICONS.database} iconOnly items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
+            <MenuButton label="ORDER REGISTRY" icon={TOP_MENU_ICONS.orderRegistry} iconOnly items={orderRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOrderRegistry} />
             <MenuButton label="TRANSFORM CMD" icon={TOP_MENU_ICONS.codeTransformCli} iconOnly items={codeTransformCliItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeTransformCli} />
             <MenuButton label={t('qrMenu')} icon={TOP_MENU_ICONS.qr} iconOnly items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
             <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} icon={TOP_MENU_ICONS.textLab} iconOnly items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
@@ -20227,7 +20228,6 @@ const App = () => {
             <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
             <MenuButton label="BILLING TIMER" icon={TOP_MENU_ICONS.billingTimer} iconOnly items={billingTimerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBillingTimer} />
             <MenuButton label="CLIENT VAULT" icon={TOP_MENU_ICONS.clientVault} iconOnly items={clientVaultItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openClientVault} />
-            <MenuButton label="ORDER REGISTRY" icon={TOP_MENU_ICONS.orderRegistry} iconOnly items={orderRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOrderRegistry} />
             <MenuButton label={`${PLATFORM_DISPLAY_NAME} PLATFORM`} icon={TOP_MENU_ICONS.building} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
@@ -20364,6 +20364,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setCodeLibraryOpen(true)} title={language === 'es' ? 'Biblioteca de codes' : 'Code library'} aria-label={language === 'es' ? 'Biblioteca de codes' : 'Code library'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.codeLibrary}} />
                 <b>{language === 'es' ? 'Biblioteca' : 'Library'}</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setOrderRegistryOpen(true)} title={language === 'es' ? 'Registro de pedidos' : 'Order registry'} aria-label={language === 'es' ? 'Registro de pedidos' : 'Order registry'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.orderRegistry}} />
+                <b>{language === 'es' ? 'Pedidos' : 'Orders'}</b>
               </button>
               <button type="button" className="bottom-tool-icon" onClick={() => setCryptoIdeOpen(true)} title={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'} aria-label={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoIde}} />

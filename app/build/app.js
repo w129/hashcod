@@ -26678,6 +26678,14 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openDatabase
   }), React.createElement(MenuButton, {
+    label: "ORDER REGISTRY",
+    icon: TOP_MENU_ICONS.orderRegistry,
+    iconOnly: true,
+    items: orderRegistryItems,
+    activeMenu: activeMenu,
+    setActiveMenu: setActiveMenu,
+    primaryAction: openOrderRegistry
+  }), React.createElement(MenuButton, {
     label: "TRANSFORM CMD",
     icon: TOP_MENU_ICONS.codeTransformCli,
     iconOnly: true,
@@ -27022,14 +27030,6 @@ const App = () => {
     setActiveMenu: setActiveMenu,
     primaryAction: openClientVault
   }), React.createElement(MenuButton, {
-    label: "ORDER REGISTRY",
-    icon: TOP_MENU_ICONS.orderRegistry,
-    iconOnly: true,
-    items: orderRegistryItems,
-    activeMenu: activeMenu,
-    setActiveMenu: setActiveMenu,
-    primaryAction: openOrderRegistry
-  }), React.createElement(MenuButton, {
     label: `${PLATFORM_DISPLAY_NAME} PLATFORM`,
     icon: TOP_MENU_ICONS.building,
     iconOnly: true,
@@ -27291,6 +27291,16 @@ const App = () => {
       __html: TOP_MENU_ICONS.codeLibrary
     }
   }), React.createElement("b", null, language === 'es' ? 'Biblioteca' : 'Library')), React.createElement("button", {
+    type: "button",
+    className: "bottom-tool-icon",
+    onClick: () => setOrderRegistryOpen(true),
+    title: language === 'es' ? 'Registro de pedidos' : 'Order registry',
+    "aria-label": language === 'es' ? 'Registro de pedidos' : 'Order registry'
+  }, React.createElement("span", {
+    dangerouslySetInnerHTML: {
+      __html: TOP_MENU_ICONS.orderRegistry
+    }
+  }), React.createElement("b", null, language === 'es' ? 'Pedidos' : 'Orders')), React.createElement("button", {
     type: "button",
     className: "bottom-tool-icon",
     onClick: () => setCryptoIdeOpen(true),
