@@ -8779,7 +8779,11 @@ textarea:focus-visible {
 .docuseal-controls input,.docuseal-controls select { width:100%;min-height:38px;padding:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:11px; }
 .docuseal-row { display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px; }
 .docuseal-preview { min-width:0;padding:14px;background:#d6d6d2; }
-.docuseal-preview object { width:100%;height:100%;min-height:650px;border:1px solid var(--line-2);background:#fff; }
+.docuseal-preview-frame { display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;min-height:650px;border:1px solid var(--line-2);background:#fff; }
+.docuseal-preview-status { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px;padding:8px 10px;border-bottom:1px solid var(--line);background:#f7f7f5;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase; }
+.docuseal-preview-status b { color:#101010; }
+.docuseal-preview-status span { color:var(--ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none;letter-spacing:0; }
+.docuseal-preview object { width:100%;height:100%;min-height:610px;border:0;background:#fff; }
 .docuseal-empty { display:grid;place-items:center;align-content:center;gap:12px;height:100%;min-height:650px;border:1px solid var(--line-2);background:#fff;text-align:center; }
 .docuseal-empty img { width:92px;height:92px;object-fit:contain;filter:grayscale(1) contrast(2);opacity:.22; }
 .docuseal-empty span { color:var(--ink-4);font-family:var(--mono);font-size:11px; }
@@ -8797,7 +8801,8 @@ textarea:focus-visible {
   .docuseal-dlg { width:calc(100vw - 10px); }
   .docuseal-grid { grid-template-columns:1fr;min-height:auto; }
   .docuseal-controls { border-right:0;border-bottom:1px solid var(--line); }
-  .docuseal-preview object,.docuseal-empty { min-height:460px; }
+  .docuseal-preview-frame,.docuseal-empty { min-height:460px; }
+  .docuseal-preview object { min-height:420px; }
 }
 
 /* Hashcod separated Warp programming workspace adapter */

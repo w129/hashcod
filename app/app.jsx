@@ -8353,6 +8353,9 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
   const signatureInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [signedPreviewUrl, setSignedPreviewUrl] = useState('');
+  const previewUrlRef = useRef('');
+  const signedPreviewUrlRef = useRef('');
   const [pageCount, setPageCount] = useState(0);
   const [sourceDigest, setSourceDigest] = useState('');
   const [signer, setSigner] = useState('');
@@ -8362,12 +8365,58 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [position, setPosition] = useState('bottom-right');
   const [busy, setBusy] = useState(false);
+  const [previewBusy, setPreviewBusy] = useState(false);
   const [error, setError] = useState('');
   const MAX_PDF_BYTES = 48 * 1024 * 1024;
+  const hasVisibleSignature = Boolean(signer.trim() || signatureText.trim() || signaturePng);
 
+  useEffect(() => { previewUrlRef.current = previewUrl; }, [previewUrl]);
+  useEffect(() => { signedPreviewUrlRef.current = signedPreviewUrl; }, [signedPreviewUrl]);
   useEffect(() => () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    if (signedPreviewUrlRef.current) URL.revokeObjectURL(signedPreviewUrlRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !file || !hasVisibleSignature || !window.HashcodDocuSealAdapter) {
+      if (signedPreviewUrl) {
+        URL.revokeObjectURL(signedPreviewUrl);
+        setSignedPreviewUrl('');
+      }
+      return undefined;
+    }
+    let cancelled = false;
+    let nextUrl = '';
+    setPreviewBusy(true);
+    file.arrayBuffer()
+      .then(sourceBytes => window.HashcodDocuSealAdapter.signPdf({
+        sourceBytes,
+        signer: signer.trim() || signatureText.trim() || 'Hashcod signer',
+        signatureText: signatureText.trim() || signer.trim() || 'Hashcod signature',
+        signaturePng,
+        pageIndex: Math.max(0, Number(pageNumber || 1) - 1),
+        position,
+      }))
+      .then(result => {
+        if (cancelled) return;
+        nextUrl = URL.createObjectURL(new Blob([result.bytes], { type: 'application/pdf' }));
+        setSignedPreviewUrl(current => {
+          if (current) URL.revokeObjectURL(current);
+          return nextUrl;
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        if (!cancelled) setError(L('No se pudo generar la vista previa firmada.', 'Could not generate the signed preview.'));
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewBusy(false);
+      });
+    return () => {
+      cancelled = true;
+      if (nextUrl) URL.revokeObjectURL(nextUrl);
+    };
+  }, [open, file, signer, signatureText, signaturePng, pageNumber, position]);
 
   if (!open) return null;
 
@@ -8391,8 +8440,10 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
       const bytes = await selected.arrayBuffer();
       const pdf = await window.PDFLib.PDFDocument.load(bytes);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (signedPreviewUrl) URL.revokeObjectURL(signedPreviewUrl);
       setFile(selected);
       setPreviewUrl(URL.createObjectURL(selected));
+      setSignedPreviewUrl('');
       setPageCount(pdf.getPageCount());
       setPageNumber(1);
       setSourceDigest(await window.HashcodDocuSealAdapter.sha256(bytes));
@@ -8426,8 +8477,10 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
 
   const clearPdf = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (signedPreviewUrl) URL.revokeObjectURL(signedPreviewUrl);
     setFile(null);
     setPreviewUrl('');
+    setSignedPreviewUrl('');
     setPageCount(0);
     setSourceDigest('');
     setPageNumber(1);
@@ -8436,14 +8489,14 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
   };
 
   const downloadSignedPdf = async () => {
-    if (!file || !signer.trim() || busy || !window.HashcodDocuSealAdapter) return;
+    if (!file || !hasVisibleSignature || busy || !window.HashcodDocuSealAdapter) return;
     setBusy(true);
     setError('');
     try {
       const result = await window.HashcodDocuSealAdapter.signPdf({
         sourceBytes: await file.arrayBuffer(),
-        signer: signer.trim(),
-        signatureText: signatureText.trim() || signer.trim(),
+        signer: signer.trim() || signatureText.trim() || 'Hashcod signer',
+        signatureText: signatureText.trim() || signer.trim() || 'Hashcod signature',
         signaturePng,
         pageIndex: Math.max(0, Number(pageNumber || 1) - 1),
         position,
@@ -8493,13 +8546,19 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
               </label>
             </div>
             {error && <div className="docuseal-error">{error}</div>}
-            <button className="docuseal-primary" onClick={downloadSignedPdf} disabled={!file || !signer.trim() || busy}>
+            <button className="docuseal-primary" onClick={downloadSignedPdf} disabled={!file || !hasVisibleSignature || busy}>
               {busy ? L('Procesando...', 'Processing...') : L('Descargar PDF firmado', 'Download signed PDF')}
             </button>
           </aside>
           <main className="docuseal-preview">
             {previewUrl
-              ? <object data={previewUrl} type="application/pdf" aria-label={file?.name || 'PDF preview'}><p>{L('Tu navegador no puede mostrar el PDF.', 'Your browser cannot preview this PDF.')}</p></object>
+              ? <div className="docuseal-preview-frame">
+                  <div className="docuseal-preview-status">
+                    <b>{signedPreviewUrl ? L('Vista firmada', 'Signed preview') : L('Vista original', 'Original preview')}</b>
+                    <span>{previewBusy ? L('Actualizando firma...', 'Updating signature...') : file?.name}</span>
+                  </div>
+                  <object key={signedPreviewUrl || previewUrl} data={signedPreviewUrl || previewUrl} type="application/pdf" aria-label={file?.name || 'PDF preview'}><p>{L('Tu navegador no puede mostrar el PDF.', 'Your browser cannot preview this PDF.')}</p></object>
+                </div>
               : <div className="docuseal-empty"><img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" /><b>{L('Sube un PDF para comenzar', 'Upload a PDF to begin')}</b><span>{L('La previsualizacion aparece aqui.', 'The preview appears here.')}</span></div>}
           </main>
           <aside className="docuseal-source">
@@ -8514,6 +8573,7 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
             <dl>
               <dt>{L('Documento', 'Document')}</dt><dd>{file?.name || '---'}</dd>
               <dt>{L('Paginas', 'Pages')}</dt><dd>{pageCount || '---'}</dd>
+              <dt>{L('Vista', 'Preview')}</dt><dd>{signedPreviewUrl ? L('Firmada en vivo', 'Live signed') : previewUrl ? L('Original', 'Original') : '---'}</dd>
               <dt>SHA-256</dt><dd>{sourceDigest || '---'}</dd>
             </dl>
           </aside>
