@@ -8556,9 +8556,9 @@ const DocusealSignerDialog = ({ open, onClose, notify, language }) => {
                   <div className="docuseal-preview-status">
                     <b>{signedPreviewUrl ? L('Vista firmada', 'Signed preview') : L('Vista original', 'Original preview')}</b>
                     <span>{previewBusy ? L('Actualizando firma...', 'Updating signature...') : file?.name}</span>
-                    <a href={signedPreviewUrl || previewUrl} target="_blank" rel="noreferrer">{L('Abrir PDF', 'Open PDF')}</a>
+                    <a href={`${signedPreviewUrl || previewUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH&zoom=page-width`} target="_blank" rel="noreferrer">{L('Abrir PDF', 'Open PDF')}</a>
                   </div>
-                  <iframe key={signedPreviewUrl || previewUrl} src={signedPreviewUrl || previewUrl} title={file?.name || 'PDF preview'} />
+                  <iframe key={signedPreviewUrl || previewUrl} src={`${signedPreviewUrl || previewUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH&zoom=page-width`} title={file?.name || 'PDF preview'} />
                 </div>
               : <div className="docuseal-empty"><img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" /><b>{L('Sube un PDF para comenzar', 'Upload a PDF to begin')}</b><span>{L('La previsualizacion aparece aqui.', 'The preview appears here.')}</span></div>}
           </main>

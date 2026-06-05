@@ -10581,12 +10581,12 @@ const DocusealSignerDialog = ({
   }, React.createElement("div", {
     className: "docuseal-preview-status"
   }, React.createElement("b", null, signedPreviewUrl ? L('Vista firmada', 'Signed preview') : L('Vista original', 'Original preview')), React.createElement("span", null, previewBusy ? L('Actualizando firma...', 'Updating signature...') : file?.name), React.createElement("a", {
-    href: signedPreviewUrl || previewUrl,
+    href: `${signedPreviewUrl || previewUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH&zoom=page-width`,
     target: "_blank",
     rel: "noreferrer"
   }, L('Abrir PDF', 'Open PDF'))), React.createElement("iframe", {
     key: signedPreviewUrl || previewUrl,
-    src: signedPreviewUrl || previewUrl,
+    src: `${signedPreviewUrl || previewUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH&zoom=page-width`,
     title: file?.name || 'PDF preview'
   })) : React.createElement("div", {
     className: "docuseal-empty"
