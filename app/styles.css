@@ -4253,6 +4253,46 @@ kbd {
 .client-thumbs { display:grid; grid-template-columns:repeat(4, 72px); gap:8px; min-height:0; }
 .client-thumbs img { height:54px; border:1px solid #2A2A2A; background:#0F0F0F; }
 .client-list footer { display:flex; gap:8px; flex-wrap:wrap; }
+.orderdlg { width:min(1480px, calc(100vw - 24px)); max-height:calc(100vh - 28px); display:flex; flex-direction:column; background:#1A1A1A; color:#F5F5F5; border-color:#2A2A2A; }
+.order-head { flex:0 0 auto; background:#1A1A1A; border-bottom:1px solid #2A2A2A; }
+.order-title { display:flex; align-items:center; gap:14px; min-width:0; }
+.order-title h2 { margin:0; color:#F5F5F5; }
+.order-title p { margin:4px 0 0; color:#A3A3A3; font-family:var(--mono); font-size:12px; line-height:1.45; }
+.order-mark { width:48px; height:48px; display:grid; place-items:center; color:#F5F5F5; background:#0F0F0F; border:1px solid #2A2A2A; flex:0 0 auto; }
+.order-mark svg { width:32px; height:32px; }
+.order-toolbar { flex:0 0 auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid #2A2A2A; background:#0F0F0F; }
+.order-toolbar button, .order-formula input, .order-formula select {
+  min-height:36px;
+  border:1px solid #2A2A2A;
+  background:#1A1A1A;
+  color:#F5F5F5;
+  padding:0 11px;
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+}
+.order-toolbar button:hover:not(:disabled) { background:#F5F5F5; color:#0F0F0F; border-color:#F5F5F5; }
+.order-toolbar button:disabled { opacity:.38; cursor:not-allowed; }
+.order-formula { flex:0 0 auto; display:grid; grid-template-columns:minmax(260px, 1fr) 190px repeat(3, 150px); gap:1px; background:#2A2A2A; border-bottom:1px solid #2A2A2A; }
+.order-formula label, .order-formula div { min-width:0; display:grid; gap:6px; padding:10px 12px; background:#111; }
+.order-formula span { color:#A3A3A3; font-family:var(--mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; }
+.order-formula input, .order-formula select { width:100%; min-width:0; text-transform:none; letter-spacing:.4px; }
+.order-formula b { color:#F5F5F5; font-family:var(--mono); font-size:13px; overflow-wrap:anywhere; }
+.order-formula .total { background:#F5F5F5; }
+.order-formula .total span, .order-formula .total b { color:#0F0F0F; }
+.order-gridwrap { min-height:0; overflow:auto; background:#0F0F0F; flex:1 1 auto; }
+.order-grid { width:100%; min-width:1680px; border-collapse:collapse; table-layout:fixed; }
+.order-grid th { position:sticky; top:0; z-index:2; background:#1A1A1A; color:#A3A3A3; border:1px solid #2A2A2A; padding:9px 7px; font-family:var(--mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; text-align:left; }
+.order-grid td { border:1px solid #2A2A2A; background:#0F0F0F; color:#F5F5F5; padding:0; font-family:var(--mono); font-size:11px; height:38px; vertical-align:middle; }
+.order-grid tr.selected td { background:#171f1a; box-shadow:inset 0 0 0 1px #F5F5F5; }
+.order-grid tr:hover td { background:#151515; }
+.order-grid td:first-child { width:52px; padding:0 8px; color:#A3A3A3; text-align:right; }
+.order-grid input, .order-grid select { width:100%; height:38px; border:0; background:transparent; color:#F5F5F5; padding:0 8px; font-family:var(--mono); font-size:11px; outline:none; min-width:0; }
+.order-grid input:focus, .order-grid select:focus { background:#F5F5F5; color:#0F0F0F; }
+.order-grid code { display:block; padding:0 8px; color:#F5F5F5; font-family:var(--mono); font-size:11px; white-space:nowrap; }
+.order-empty { padding:24px !important; color:#A3A3A3 !important; text-align:center !important; }
+.order-statusbar { flex:0 0 auto; display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:8px 12px; border-top:1px solid #2A2A2A; background:#0F0F0F; color:#A3A3A3; font-family:var(--mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; }
 @media (max-width: 920px) {
   .quotedlg { width:calc(100vw - 16px); }
   .quote-docbar, .quote-top, .quote-billing, .quote-shell { grid-template-columns:1fr; }
@@ -4265,6 +4305,9 @@ kbd {
   .clientdlg { width:calc(100vw - 16px); }
   .client-shell, .client-form, .client-tools { grid-template-columns:1fr; }
   .client-thumbs { grid-template-columns:repeat(2, 72px); }
+  .orderdlg { width:calc(100vw - 12px); }
+  .order-formula { grid-template-columns:1fr; }
+  .order-grid { min-width:1400px; }
 }
 .cliconsdlg { width:min(1080px, calc(100vw - 42px)); }
 .clicons-form { padding:18px; border-bottom:1px solid var(--line); background:#f7f7f4; display:grid; gap:10px; }

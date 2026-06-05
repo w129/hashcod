@@ -195,6 +195,8 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes("export json|txt|png") && appSource.includes("<button onClick={exportPng}>PNG</button>"), 'transform-cmd-png-command-ui');
   assert(appSource.includes('const FileZipPackagerDialog =') && appSource.includes('makeZipBlob(entries)'), 'file-zip-packager-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
+  assert(appSource.includes('const HashcodOrderRegistryDialog =') && appSource.includes('HASHCOD_ORDER_REGISTRY_KEY'), 'order-registry-dialog');
+  assert(appSource.includes('TOP_MENU_ICONS.orderRegistry') && appSource.includes('ORDER REGISTRY'), 'order-registry-menu');
   assert(appSource.includes('const BrandEvidenceVaultDialog =') && appSource.includes("authFetch('/api/brand-evidence'"), 'brand-evidence-vault-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.brandEvidence') && appSource.includes('BRAND EVIDENCE'), 'brand-evidence-vault-menu');
   assert(appSource.includes("const logoOptions = { x: 58, y: 776, color: black, scale: 1.05 }") && appSource.includes("page.drawText('HASHCOD', { x: 102, y: 750"), 'brand-evidence-certificate-logo');

@@ -2617,6 +2617,7 @@ const TOP_MENU_ICONS = {
   quoteSystem: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>`,
   billingTimer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l-2 4"/></svg>`,
   clientVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M12 9v11"/><path d="M2 9h13a2 2 0 0 1 2 2v9"/></svg>`,
+  orderRegistry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12.01h.01"/><path d="M18 8v4a8 8 0 0 1-1.07 4"/><circle cx="10" cy="12" r="4"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   building: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
@@ -16722,6 +16723,201 @@ const fileToDataUrl = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+const HASHCOD_ORDER_REGISTRY_KEY = 'hashcod_order_registry_v1';
+const orderUid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+const orderDefaultRow = (index = 1) => ({
+  id: orderUid(),
+  orderNo: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(index).padStart(3, '0')}`,
+  date: new Date().toISOString().slice(0, 10),
+  customer: '',
+  phone: '',
+  service: '',
+  codeRef: '',
+  qty: 1,
+  unitPrice: 0,
+  discount: 0,
+  tax: 0,
+  status: 'pending',
+  payment: 'unpaid',
+  delivery: '',
+  notes: '',
+  updatedAt: new Date().toISOString(),
+});
+const normalizeOrderRows = (rows) => (Array.isArray(rows) ? rows : []).map((row, index) => ({
+  ...orderDefaultRow(index + 1),
+  ...row,
+  id: row.id || orderUid(),
+  qty: Number(row.qty) || 0,
+  unitPrice: Number(row.unitPrice) || 0,
+  discount: Number(row.discount) || 0,
+  tax: Number(row.tax) || 0,
+}));
+const readOrderRegistryRows = () => normalizeOrderRows(safeJsonParse(localStorage.getItem(HASHCOD_ORDER_REGISTRY_KEY) || '[]', []));
+const writeOrderRegistryRows = (rows) => localStorage.setItem(HASHCOD_ORDER_REGISTRY_KEY, JSON.stringify(normalizeOrderRows(rows).slice(0, 2500)));
+const orderLineTotals = (row) => {
+  const subtotal = Math.max(0, Number(row.qty) || 0) * Math.max(0, Number(row.unitPrice) || 0);
+  const discountValue = subtotal * Math.max(0, Number(row.discount) || 0) / 100;
+  const taxable = Math.max(0, subtotal - discountValue);
+  const taxValue = taxable * Math.max(0, Number(row.tax) || 0) / 100;
+  return { subtotal, discountValue, taxValue, total: taxable + taxValue };
+};
+const orderRowsToCsv = (rows) => {
+  const headers = ['order_no','date','customer','phone','service','code_ref','qty','unit_price_usd','discount_percent','tax_percent','status','payment','delivery','notes','total_usd'];
+  const body = rows.map(row => {
+    const totals = orderLineTotals(row);
+    return [row.orderNo, row.date, row.customer, row.phone, row.service, row.codeRef, row.qty, row.unitPrice, row.discount, row.tax, row.status, row.payment, row.delivery, row.notes, totals.total.toFixed(2)];
+  });
+  return [headers, ...body].map(line => line.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+};
+
+const HashcodOrderRegistryDialog = ({ open, onClose, language, notify }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [rows, setRows] = useState(() => readOrderRegistryRows());
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('all');
+  const [selectedId, setSelectedId] = useState('');
+  const saveRows = (next) => {
+    const normalized = normalizeOrderRows(next);
+    setRows(normalized);
+    writeOrderRegistryRows(normalized);
+  };
+  const filteredRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return rows.filter(row => {
+      const statusOk = status === 'all' || row.status === status || row.payment === status;
+      const text = `${row.orderNo} ${row.customer} ${row.phone} ${row.service} ${row.codeRef} ${row.notes}`.toLowerCase();
+      return statusOk && (!q || text.includes(q));
+    });
+  }, [rows, query, status]);
+  const totals = useMemo(() => filteredRows.reduce((acc, row) => {
+    const line = orderLineTotals(row);
+    acc.subtotal += line.subtotal;
+    acc.tax += line.taxValue;
+    acc.total += line.total;
+    return acc;
+  }, { subtotal: 0, tax: 0, total: 0 }), [filteredRows]);
+  const updateCell = (id, key, value) => {
+    saveRows(rows.map(row => row.id === id ? { ...row, [key]: value, updatedAt: new Date().toISOString() } : row));
+  };
+  const addRow = () => {
+    const next = [orderDefaultRow(rows.length + 1), ...rows];
+    saveRows(next);
+    notify?.(L('Pedido agregado.', 'Order added.'));
+  };
+  const duplicateSelected = () => {
+    const base = rows.find(row => row.id === selectedId) || filteredRows[0];
+    if (!base) return addRow();
+    const clone = { ...base, id: orderUid(), orderNo: `${base.orderNo}-COPY`, date: new Date().toISOString().slice(0, 10), status: 'pending', updatedAt: new Date().toISOString() };
+    saveRows([clone, ...rows]);
+    setSelectedId(clone.id);
+  };
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    saveRows(rows.filter(row => row.id !== selectedId));
+    setSelectedId('');
+  };
+  const clearCompleted = () => {
+    const next = rows.filter(row => row.status !== 'completed' && row.payment !== 'paid');
+    saveRows(next);
+    notify?.(L('Pedidos completados removidos de la vista guardada.', 'Completed orders removed from saved view.'));
+  };
+  const exportJson = () => {
+    triggerDownload(`Hashcod-order-registry-${tsStamp()}.json`, JSON.stringify({ platform: 'Hashcod', exportedAt: new Date().toISOString(), count: rows.length, rows }, null, 2), 'application/json;charset=utf-8');
+  };
+  const exportCsv = () => {
+    triggerDownload(`Hashcod-order-registry-${tsStamp()}.csv`, orderRowsToCsv(filteredRows), 'text/csv;charset=utf-8');
+  };
+  const printSheet = () => {
+    const logo = window.OCG_ICONS?.brand ? window.OCG_ICONS.brand(44) : '';
+    const tableRows = filteredRows.map((row, index) => {
+      const line = orderLineTotals(row);
+      return `<tr><td>${index + 1}</td><td>${escapeHtmlStrict(row.orderNo)}</td><td>${escapeHtmlStrict(row.date)}</td><td>${escapeHtmlStrict(row.customer)}</td><td>${escapeHtmlStrict(row.service)}</td><td>${escapeHtmlStrict(row.codeRef)}</td><td>${row.qty}</td><td>${quoteMoney(row.unitPrice)}</td><td>${escapeHtmlStrict(row.status)}</td><td>${escapeHtmlStrict(row.payment)}</td><td>${quoteMoney(line.total)}</td></tr>`;
+    }).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Hashcod Order Registry</title><style>body{margin:0;padding:24px;background:#f4f4f4;color:#111;font-family:"Segoe UI",Arial,sans-serif}.sheet{background:#fff;border:2px solid #111;box-shadow:10px 10px 0 #d7d7d2}.head{display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:3px solid #111}.head svg{width:44px;height:44px}h1{margin:0;font-size:30px}.meta{font:11px Consolas,monospace;letter-spacing:2px;text-transform:uppercase;color:#666}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;font-size:11px;text-align:left}th{background:#111;color:#fff;text-transform:uppercase;letter-spacing:1px}.totals{display:flex;justify-content:flex-end;gap:20px;padding:16px 22px;font-weight:700}.print{margin:0 0 16px;padding:12px 18px;background:#111;color:#fff;border:0;letter-spacing:2px;text-transform:uppercase}@media print{body{padding:0;background:#fff}.print{display:none}.sheet{box-shadow:none}}</style></head><body><button class="print" onclick="window.print()">Download PDF</button><section class="sheet"><div class="head">${logo}<div><div class="meta">Hashcod order registry</div><h1>Pedidos registrados</h1><div class="meta">${new Date().toISOString()} | ${filteredRows.length} rows</div></div></div><table><thead><tr><th>#</th><th>Order</th><th>Date</th><th>Customer</th><th>Service</th><th>Code</th><th>Qty</th><th>Unit</th><th>Status</th><th>Payment</th><th>Total</th></tr></thead><tbody>${tableRows || '<tr><td colspan="11">No orders</td></tr>'}</tbody></table><div class="totals"><span>Subtotal ${quoteMoney(totals.subtotal)}</span><span>Tax ${quoteMoney(totals.tax)}</span><span>Total ${quoteMoney(totals.total)}</span></div></section></body></html>`;
+    const win = window.open('', '_blank', 'width=1280,height=900');
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => { try { win.focus(); win.print(); } catch {} }, 300);
+  };
+  useEffect(() => {
+    if (open) setRows(readOrderRegistryRows());
+  }, [open]);
+  if (!open) return null;
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg orderdlg" onClick={e => e.stopPropagation()}>
+        <div className="dlg-h order-head">
+          <div className="order-title">
+            <span className="order-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.orderRegistry}} />
+            <div>
+              <h2>{L('Registro de pedidos Hashcod', 'Hashcod Order Registry')}</h2>
+              <p>{L('Hoja editable tipo LibreOffice para registrar pedidos, calcular totales, filtrar y exportar.', 'LibreOffice-style editable sheet for orders, totals, filters and exports.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="order-toolbar">
+          <button onClick={addRow}>{L('Nuevo pedido', 'New order')}</button>
+          <button onClick={duplicateSelected}>{L('Duplicar', 'Duplicate')}</button>
+          <button onClick={deleteSelected} disabled={!selectedId}>{L('Eliminar fila', 'Delete row')}</button>
+          <button onClick={clearCompleted}>{L('Limpiar completados', 'Clear completed')}</button>
+          <button onClick={exportCsv}>CSV</button>
+          <button onClick={exportJson}>JSON</button>
+          <button onClick={printSheet}>PDF</button>
+        </div>
+        <div className="order-formula">
+          <label><span>{L('Buscar', 'Search')}</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder={L('Cliente, pedido, telefono, code...', 'Customer, order, phone, code...')} /></label>
+          <label><span>{L('Estado', 'Status')}</span><select value={status} onChange={e => setStatus(e.target.value)}><option value="all">{L('Todos', 'All')}</option><option value="pending">pending</option><option value="processing">processing</option><option value="completed">completed</option><option value="cancelled">cancelled</option><option value="paid">paid</option><option value="unpaid">unpaid</option></select></label>
+          <div><span>{L('Subtotal', 'Subtotal')}</span><b>{quoteMoney(totals.subtotal)}</b></div>
+          <div><span>{L('Impuesto', 'Tax')}</span><b>{quoteMoney(totals.tax)}</b></div>
+          <div className="total"><span>Total</span><b>{quoteMoney(totals.total)}</b></div>
+        </div>
+        <div className="order-gridwrap">
+          <table className="order-grid">
+            <thead>
+              <tr><th>#</th><th>{L('Pedido', 'Order')}</th><th>{L('Fecha', 'Date')}</th><th>{L('Cliente', 'Customer')}</th><th>{L('Telefono', 'Phone')}</th><th>{L('Servicio', 'Service')}</th><th>Code</th><th>Qty</th><th>USD</th><th>Disc%</th><th>Tax%</th><th>{L('Estado', 'Status')}</th><th>{L('Pago', 'Payment')}</th><th>{L('Entrega', 'Delivery')}</th><th>Total</th><th>{L('Notas', 'Notes')}</th></tr>
+            </thead>
+            <tbody>
+              {filteredRows.map((row, index) => {
+                const line = orderLineTotals(row);
+                const selected = selectedId === row.id;
+                return (
+                  <tr key={row.id} className={selected ? 'selected' : ''} onClick={() => setSelectedId(row.id)}>
+                    <td>{String(index + 1).padStart(3, '0')}</td>
+                    <td><input value={row.orderNo} onChange={e => updateCell(row.id, 'orderNo', e.target.value)} /></td>
+                    <td><input type="date" value={row.date} onChange={e => updateCell(row.id, 'date', e.target.value)} /></td>
+                    <td><input value={row.customer} onChange={e => updateCell(row.id, 'customer', e.target.value)} /></td>
+                    <td><input value={row.phone} onChange={e => updateCell(row.id, 'phone', e.target.value)} /></td>
+                    <td><input value={row.service} onChange={e => updateCell(row.id, 'service', e.target.value)} /></td>
+                    <td><input value={row.codeRef} onChange={e => updateCell(row.id, 'codeRef', e.target.value)} /></td>
+                    <td><input type="number" min="0" value={row.qty} onChange={e => updateCell(row.id, 'qty', e.target.value)} /></td>
+                    <td><input type="number" min="0" step="0.01" value={row.unitPrice} onChange={e => updateCell(row.id, 'unitPrice', e.target.value)} /></td>
+                    <td><input type="number" min="0" step="0.01" value={row.discount} onChange={e => updateCell(row.id, 'discount', e.target.value)} /></td>
+                    <td><input type="number" min="0" step="0.01" value={row.tax} onChange={e => updateCell(row.id, 'tax', e.target.value)} /></td>
+                    <td><select value={row.status} onChange={e => updateCell(row.id, 'status', e.target.value)}><option value="pending">pending</option><option value="processing">processing</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></td>
+                    <td><select value={row.payment} onChange={e => updateCell(row.id, 'payment', e.target.value)}><option value="unpaid">unpaid</option><option value="partial">partial</option><option value="paid">paid</option><option value="refunded">refunded</option></select></td>
+                    <td><input value={row.delivery} onChange={e => updateCell(row.id, 'delivery', e.target.value)} /></td>
+                    <td><code>{quoteMoney(line.total)}</code></td>
+                    <td><input value={row.notes} onChange={e => updateCell(row.id, 'notes', e.target.value)} /></td>
+                  </tr>
+                );
+              })}
+              {!filteredRows.length && <tr><td colSpan="16" className="order-empty">{L('No hay pedidos registrados para este filtro.', 'No registered orders for this filter.')}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="order-statusbar">
+          <span>{filteredRows.length} {L('filas visibles', 'visible rows')}</span>
+          <span>{rows.length} {L('pedidos guardados', 'saved orders')}</span>
+          <span>{selectedId ? `SEL ${selectedId.slice(0, 8)}` : L('Sin seleccion', 'No selection')}</span>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const HashcodClientVaultDialog = ({ open, onClose, language, notify }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const emptyForm = () => ({
@@ -18198,6 +18394,7 @@ const App = () => {
   const [quoteSystemOpen, setQuoteSystemOpen] = useState(false);
   const [billingTimerOpen, setBillingTimerOpen] = useState(false);
   const [clientVaultOpen, setClientVaultOpen] = useState(false);
+  const [orderRegistryOpen, setOrderRegistryOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
@@ -19077,6 +19274,7 @@ const App = () => {
   const openQuoteSystem = () => setQuoteSystemOpen(true);
   const openBillingTimer = () => setBillingTimerOpen(true);
   const openClientVault = () => setClientVaultOpen(true);
+  const openOrderRegistry = () => setOrderRegistryOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openCryptoExam = () => setCryptoExamOpen(true);
@@ -19428,6 +19626,12 @@ const App = () => {
     { label: language === 'es' ? 'Abrir vault de clientes' : 'Open client vault', onClick: openClientVault },
     { label: language === 'es' ? 'Token identificador por cliente' : 'Identifier token per client', onClick: openClientVault },
     { label: language === 'es' ? 'Datos, credenciales e imagenes JPG' : 'Data, credentials and JPG images', onClick: openClientVault },
+  ];
+  const orderRegistryItems = [
+    { label: language === 'es' ? 'Abrir registro de pedidos' : 'Open order registry', onClick: openOrderRegistry },
+    { label: language === 'es' ? 'Tabla editable tipo LibreOffice' : 'LibreOffice-style editable sheet', onClick: openOrderRegistry },
+    { label: language === 'es' ? 'Totales, impuestos y estados' : 'Totals, taxes and statuses', onClick: openOrderRegistry },
+    { label: language === 'es' ? 'Exportar CSV, JSON o PDF' : 'Export CSV, JSON or PDF', onClick: openOrderRegistry },
   ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
@@ -19947,6 +20151,7 @@ const App = () => {
       <HashcodQuoteSystemDialog open={quoteSystemOpen} onClose={() => setQuoteSystemOpen(false)} catalog={catalog} notify={notify} language={language} />
       <HashcodBillingTimerDialog open={billingTimerOpen} onClose={() => setBillingTimerOpen(false)} notify={notify} language={language} />
       <HashcodClientVaultDialog open={clientVaultOpen} onClose={() => setClientVaultOpen(false)} notify={notify} language={language} />
+      <HashcodOrderRegistryDialog open={orderRegistryOpen} onClose={() => setOrderRegistryOpen(false)} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CryptoExamSuiteDialog open={cryptoExamOpen} onClose={() => setCryptoExamOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -20022,6 +20227,7 @@ const App = () => {
             <MenuButton label="QUOTE SYSTEM" icon={TOP_MENU_ICONS.quoteSystem} iconOnly items={quoteSystemItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQuoteSystem} />
             <MenuButton label="BILLING TIMER" icon={TOP_MENU_ICONS.billingTimer} iconOnly items={billingTimerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBillingTimer} />
             <MenuButton label="CLIENT VAULT" icon={TOP_MENU_ICONS.clientVault} iconOnly items={clientVaultItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openClientVault} />
+            <MenuButton label="ORDER REGISTRY" icon={TOP_MENU_ICONS.orderRegistry} iconOnly items={orderRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOrderRegistry} />
             <MenuButton label={`${PLATFORM_DISPLAY_NAME} PLATFORM`} icon={TOP_MENU_ICONS.building} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="LAUNCH CENTER" icon={TOP_MENU_ICONS.launchCenter} iconOnly items={launchCenterItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openLaunchCenter} />
             <MenuButton label="PIVOT KERNEL" icon={TOP_MENU_ICONS.pivotKernel} iconOnly items={pivotKernelItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPivotKernel} />
