@@ -20924,7 +20924,7 @@ const HashcodEquetMatrixDialog = ({
   }, React.createElement("section", {
     className: "dlg equetdlg"
   }, React.createElement("header", {
-    className: "dlg-head"
+    className: "equet-head"
   }, React.createElement("div", {
     className: "equet-title"
   }, React.createElement("span", {

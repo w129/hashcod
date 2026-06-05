@@ -16916,7 +16916,7 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
   return (
     <div className="modal-backdrop">
       <section className="dlg equetdlg">
-        <header className="dlg-head">
+        <header className="equet-head">
           <div className="equet-title">
             <span className="equet-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.equetMatrix}} />
             <div><h2>{L('Equet Matrix Ultra Math', 'Equet Matrix Ultra Math')}</h2><p>{L('Genera miles de parametros direccionales desde el cuadro y los asigna a un code guardado.', 'Generate thousands of directional parameters from the square and bind them to a saved code.')}</p></div>
