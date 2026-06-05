@@ -197,6 +197,8 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('TOP_MENU_ICONS.filePackager') && appSource.includes('FILE ZIP PACKAGER'), 'file-zip-packager-menu');
   assert(appSource.includes('const HashcodOrderRegistryDialog =') && appSource.includes('HASHCOD_ORDER_REGISTRY_KEY'), 'order-registry-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.orderRegistry') && appSource.includes('ORDER REGISTRY'), 'order-registry-menu');
+  assert(appSource.includes('const HashcodEquetMatrixDialog =') && appSource.includes('EQUET_MATRIX_DEFAULT') && appSource.includes('buildEquetParameters'), 'equet-matrix-dialog');
+  assert(appSource.includes('TOP_MENU_ICONS.equetMatrix') && appSource.includes('EQUET MATRIX'), 'equet-matrix-menu');
   assert(appSource.includes('const BrandEvidenceVaultDialog =') && appSource.includes("authFetch('/api/brand-evidence'"), 'brand-evidence-vault-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.brandEvidence') && appSource.includes('BRAND EVIDENCE'), 'brand-evidence-vault-menu');
   assert(appSource.includes("const logoOptions = { x: 58, y: 776, color: black, scale: 1.05 }") && appSource.includes("page.drawText('HASHCOD', { x: 102, y: 750"), 'brand-evidence-certificate-logo');

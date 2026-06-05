@@ -2618,6 +2618,7 @@ const TOP_MENU_ICONS = {
   billingTimer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l-2 4"/></svg>`,
   clientVault: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M12 9v11"/><path d="M2 9h13a2 2 0 0 1 2 2v9"/></svg>`,
   orderRegistry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12.01h.01"/><path d="M18 8v4a8 8 0 0 1-1.07 4"/><circle cx="10" cy="12" r="4"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>`,
+  equetMatrix: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h20"/><path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l.9-.45a2 2 0 0 1 2.09.2l4.02 3a2 2 0 0 0 2.1.2l4.19-2.06a2.41 2.41 0 0 1 1.73-.17L21 7a1.4 1.4 0 0 1 .87 1.99l-.38.76c-.23.46-.6.84-1.07 1.08L7.58 17.2a2 2 0 0 1-1.22.18Z"/></svg>`,
   launchCenter: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 4-2 4s2.74-.5 4-2"/><path d="M9 15 4 10l6-2 4-4c2.1-2.1 5.2-2.5 7-1.8.7 1.8.3 4.9-1.8 7l-4 4z"/><path d="M15 9h.01"/><path d="M10 14 8 22l6-4"/></svg>`,
   building: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M12 6h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/><path d="M8 6h.01"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><rect x="4" y="2" width="16" height="20" rx="2"/></svg>`,
   pivotKernel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/></svg>`,
@@ -16770,6 +16771,208 @@ const orderRowsToCsv = (rows) => {
   return [headers, ...body].map(line => line.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
 };
 
+const EQUET_MATRIX_DEFAULT = [
+  [2, 2, 4, 7, 1, 6, 2, 6],
+  [8, 9, 8, 8, 6, 5, 0, 4],
+  [7, 1, 9, 0, 9, 2, 0, 3],
+  [1, 1, 5, 0, 5, 4, 7, 2],
+  [3, 6, 8, 1, 7, 5, 1, 2],
+  [2, 3, 5, 6, 3, 2, 0, 7],
+  [3, 0, 1, 6, 0, 9, 0, 5],
+  [7, 7, 2, 1, 1, 9, 1, 9],
+];
+const EQUET_MATRIX_KEY = 'hashcod_equet_matrix_v1';
+const EQUET_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const normalizeEquetMatrix = (value) => {
+  const source = Array.isArray(value) ? value : EQUET_MATRIX_DEFAULT;
+  return Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => {
+    const n = Number(source?.[r]?.[c]);
+    return Number.isFinite(n) ? Math.max(0, Math.min(9, Math.floor(Math.abs(n)))) : EQUET_MATRIX_DEFAULT[r][c];
+  }));
+};
+const readEquetMatrix = () => {
+  try { return normalizeEquetMatrix(JSON.parse(localStorage.getItem(EQUET_MATRIX_KEY) || 'null')); }
+  catch { return normalizeEquetMatrix(); }
+};
+const writeEquetMatrix = (matrix) => {
+  try { localStorage.setItem(EQUET_MATRIX_KEY, JSON.stringify(normalizeEquetMatrix(matrix))); } catch {}
+};
+const equetCodeText = row => String(row?.value || row?.code || row?.digest || row?.type || row?.label || 'HASHCOD-CODE');
+const equetCodeLabel = (row, i = 0) => `${String(row?.idx || row?.index || i + 1).padStart(5, '0')} | ${row?.type || row?.name || row?.primitiveLabel || 'Hashcod code'}`;
+const equetSimpleHash = (text = '') => {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+};
+const buildEquetParameters = ({ matrix, codeRow, count = 2048, stride = 37 }) => {
+  const m = normalizeEquetMatrix(matrix);
+  const code = equetCodeText(codeRow);
+  const seed = equetSimpleHash(`${code}|${JSON.stringify(m)}|${stride}`);
+  const flat = m.flat();
+  const diagA = m.reduce((sum, row, i) => sum + row[i], 0);
+  const diagB = m.reduce((sum, row, i) => sum + row[7 - i], 0);
+  const rows = [];
+  const total = Math.max(1, Math.min(25000, Number(count) || 2048));
+  const step = Math.max(1, Math.min(997, Number(stride) || 37));
+  for (let i = 0; i < total; i++) {
+    const a = flat[(i * step + seed) % 64];
+    const b = flat[(i * 7 + (seed >>> 3)) % 64];
+    const c = flat[(i * 13 + (seed >>> 7)) % 64];
+    const row = i % 8;
+    const col = Math.floor(i / 8) % 8;
+    const ring = Math.max(Math.abs(row - 3.5), Math.abs(col - 3.5));
+    const band = m[row].reduce((sum, n) => sum + n, 0) + m.reduce((sum, r) => sum + r[col], 0);
+    const wave = (a * 100 + b * 10 + c + band + diagA * (row + 1) + diagB * (col + 1) + i + seed) >>> 0;
+    const p1 = String((wave % 97) + 1).padStart(2, '0');
+    const p2 = String(((wave >>> 5) % 900) + 100).padStart(3, '0');
+    const p3 = String(((wave >>> 13) % 900) + 100).padStart(3, '0');
+    const directionIndex = (a + b + c + row + col + Math.floor(ring * 3) + (seed % 8)) % EQUET_DIRECTIONS.length;
+    rows.push({
+      i: i + 1,
+      parameter: `${p1}.${p2}.${p3}`,
+      direction: EQUET_DIRECTIONS[directionIndex],
+      row: row + 1,
+      col: col + 1,
+      ring: Number(ring.toFixed(1)),
+      vector: `${row + 1}:${col + 1}:${EQUET_DIRECTIONS[directionIndex]}`,
+      weight: (band + a * 11 + b * 7 + c * 5) % 1000,
+      bind: `${String(codeRow?.idx || codeRow?.index || 0).padStart(5, '0')}-${p1}${p2}${p3}`,
+    });
+  }
+  return rows;
+};
+
+const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [matrix, setMatrix] = useState(() => readEquetMatrix());
+  const [count, setCount] = useState(2048);
+  const [stride, setStride] = useState(37);
+  const [query, setQuery] = useState('');
+  const sources = useMemo(() => [...(rows || []), ...(outputRows || [])].filter(row => row?.value).slice(0, 5000), [rows, outputRows]);
+  const [sourceId, setSourceId] = useState('');
+  const selected = sources.find((row, i) => String(row.id || row.copiedAt || row.idx || i) === sourceId) || sources[0] || null;
+  const parameters = useMemo(() => buildEquetParameters({ matrix, codeRow: selected, count, stride }), [matrix, selected, count, stride]);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? parameters.filter(row => `${row.parameter} ${row.direction} ${row.vector} ${row.bind}`.toLowerCase().includes(q)) : parameters;
+  }, [parameters, query]);
+  useEffect(() => { if (open) writeEquetMatrix(matrix); }, [matrix, open]);
+  if (!open) return null;
+  const selectedParam = filtered[0] || parameters[0];
+  const updateCell = (r, c, value) => setMatrix(current => current.map((row, ri) => row.map((cell, ci) => (ri === r && ci === c ? Math.max(0, Math.min(9, Number(value) || 0)) : cell))));
+  const exportJson = () => triggerDownload(`Hashcod-EquetMatrix-${tsStamp()}.json`, JSON.stringify({ platform: PLATFORM_DISPLAY_NAME, source: selected ? { label: equetCodeLabel(selected), value: equetCodeText(selected).slice(0, 512) } : null, matrix, count, stride, parameters }, null, 2), 'application/json;charset=utf-8');
+  const exportTicket = () => {
+    if (!selectedParam) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1400;
+    canvas.height = 900;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f7f7f3';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111';
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(42, 42, 1316, 816);
+    ctx.strokeRect(72, 78, 86, 62);
+    ctx.fillRect(102, 132, 50, 50);
+    ctx.beginPath();
+    ctx.moveTo(127, 112);
+    ctx.lineTo(92, 178);
+    ctx.lineTo(164, 178);
+    ctx.closePath();
+    ctx.fill();
+    ctx.font = '800 54px Segoe UI, Arial';
+    ctx.fillText('HASHCOD', 190, 122);
+    ctx.font = '700 20px Consolas, monospace';
+    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 190, 158);
+    ctx.font = '700 72px Consolas, monospace';
+    ctx.fillText(selectedParam.parameter, 72, 265);
+    ctx.font = '700 30px Consolas, monospace';
+    ctx.fillText(`DIRECTION: ${selectedParam.direction}`, 72, 318);
+    ctx.fillText(`VECTOR: ${selectedParam.vector}`, 72, 360);
+    ctx.fillText(`WEIGHT: ${selectedParam.weight}`, 72, 402);
+    ctx.fillText(`BIND: ${selectedParam.bind}`, 72, 444);
+    ctx.font = '700 22px Consolas, monospace';
+    ctx.fillText(`CODE: ${equetCodeLabel(selected, 0)}`, 72, 505);
+    ctx.font = '16px Consolas, monospace';
+    const code = equetCodeText(selected);
+    for (let i = 0; i < 4; i++) ctx.fillText(code.slice(i * 86, (i + 1) * 86), 72, 536 + i * 24);
+    const cell = 42;
+    const sx = 915;
+    const sy = 172;
+    ctx.font = '700 20px Consolas, monospace';
+    ctx.fillText('SOURCE MATRIX', sx, sy - 24);
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx + c * cell, sy + r * cell, cell, cell);
+      ctx.fillText(String(matrix[r][c]), sx + c * cell + 15, sy + r * cell + 28);
+    }
+    const preview = parameters.slice(0, 8).map(row => row.parameter).join('  ');
+    ctx.font = '16px Consolas, monospace';
+    ctx.fillText(`PARAMETER STREAM: ${preview}`, 72, 780);
+    ctx.fillText(`TOTAL PARAMETERS: ${parameters.length}  |  STRIDE: ${stride}  |  GENERATED: ${new Date().toISOString()}`, 72, 816);
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      triggerBlobDownload(`Hashcod-EquetMatrix-ticket-${selectedParam.parameter}-${tsStamp()}.jpg`, blob);
+      notify?.(L('Ticket JPG descargado.', 'JPG ticket downloaded.'));
+    }, 'image/jpeg', 0.94);
+  };
+  return (
+    <div className="modal-backdrop">
+      <section className="dlg equetdlg">
+        <header className="dlg-head">
+          <div className="equet-title">
+            <span className="equet-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.equetMatrix}} />
+            <div><h2>{L('Equet Matrix Ultra Math', 'Equet Matrix Ultra Math')}</h2><p>{L('Genera miles de parametros direccionales desde el cuadro y los asigna a un code guardado.', 'Generate thousands of directional parameters from the square and bind them to a saved code.')}</p></div>
+          </div>
+          <button onClick={onClose}>x</button>
+        </header>
+        <div className="equet-shell">
+          <aside className="equet-side">
+            <label>{L('Code guardado', 'Saved code')}</label>
+            <select value={sourceId} onChange={e => setSourceId(e.target.value)}>
+              {sources.length ? sources.map((row, i) => <option key={row.id || row.copiedAt || i} value={String(row.id || row.copiedAt || row.idx || i)}>{equetCodeLabel(row, i)}</option>) : <option value="">{L('Sin codes guardados', 'No saved codes')}</option>}
+            </select>
+            <label>{L('Cantidad de parametros', 'Parameter count')}</label>
+            <input type="number" min="100" max="25000" value={count} onChange={e => setCount(e.target.value)} />
+            <label>{L('Salto matematico', 'Mathematical stride')}</label>
+            <input type="number" min="1" max="997" value={stride} onChange={e => setStride(e.target.value)} />
+            <label>{L('Buscar parametro', 'Search parameter')}</label>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="23.183.283 / NE / bind" />
+            <div className="equet-actions">
+              <button onClick={() => setMatrix(normalizeEquetMatrix())}>{L('Restaurar cuadro', 'Reset square')}</button>
+              <button onClick={exportJson}>JSON</button>
+              <button onClick={exportTicket}>{L('Ticket JPG', 'JPG ticket')}</button>
+            </div>
+          </aside>
+          <main className="equet-main">
+            <div className="equet-grid">
+              {matrix.map((row, r) => row.map((cell, c) => (
+                <input key={`${r}-${c}`} value={cell} onChange={e => updateCell(r, c, e.target.value)} inputMode="numeric" />
+              )))}
+            </div>
+            <div className="equet-summary">
+              <article><span>{L('Parametros', 'Parameters')}</span><b>{parameters.length.toLocaleString()}</b></article>
+              <article><span>{L('Asignado', 'Assigned')}</span><b>{selected ? equetCodeLabel(selected, 0) : '---'}</b></article>
+              <article><span>{L('Primera direccion', 'First direction')}</span><b>{selectedParam?.direction || '---'}</b></article>
+            </div>
+            <div className="equet-tablewrap">
+              <table className="equet-table">
+                <thead><tr><th>#</th><th>{L('Parametro', 'Parameter')}</th><th>{L('Direccion', 'Direction')}</th><th>R:C</th><th>Ring</th><th>Weight</th><th>Bind</th></tr></thead>
+                <tbody>{filtered.slice(0, 1500).map(row => <tr key={row.i}><td>{row.i}</td><td><b>{row.parameter}</b></td><td>{row.direction}</td><td>{row.row}:{row.col}</td><td>{row.ring}</td><td>{row.weight}</td><td>{row.bind}</td></tr>)}</tbody>
+              </table>
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const HashcodOrderRegistryDialog = ({ open, onClose, language, notify }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const [rows, setRows] = useState(() => readOrderRegistryRows());
@@ -18395,6 +18598,7 @@ const App = () => {
   const [billingTimerOpen, setBillingTimerOpen] = useState(false);
   const [clientVaultOpen, setClientVaultOpen] = useState(false);
   const [orderRegistryOpen, setOrderRegistryOpen] = useState(false);
+  const [equetMatrixOpen, setEquetMatrixOpen] = useState(false);
   const [launchCenterOpen, setLaunchCenterOpen] = useState(false);
   const [pivotKernelOpen, setPivotKernelOpen] = useState(false);
   const [cryptoExamOpen, setCryptoExamOpen] = useState(false);
@@ -19275,6 +19479,7 @@ const App = () => {
   const openBillingTimer = () => setBillingTimerOpen(true);
   const openClientVault = () => setClientVaultOpen(true);
   const openOrderRegistry = () => setOrderRegistryOpen(true);
+  const openEquetMatrix = () => setEquetMatrixOpen(true);
   const openLaunchCenter = () => setLaunchCenterOpen(true);
   const openPivotKernel = () => setPivotKernelOpen(true);
   const openCryptoExam = () => setCryptoExamOpen(true);
@@ -19633,6 +19838,12 @@ const App = () => {
     { label: language === 'es' ? 'Totales, impuestos y estados' : 'Totals, taxes and statuses', onClick: openOrderRegistry },
     { label: language === 'es' ? 'Exportar CSV, JSON o PDF' : 'Export CSV, JSON or PDF', onClick: openOrderRegistry },
   ];
+  const equetMatrixItems = [
+    { label: language === 'es' ? 'Abrir Equet Matrix' : 'Open Equet Matrix', onClick: openEquetMatrix },
+    { label: language === 'es' ? 'Miles de parametros 23.183.283' : 'Thousands of 23.183.283 parameters', onClick: openEquetMatrix },
+    { label: language === 'es' ? 'Asignar direccion a code guardado' : 'Bind direction to saved code', onClick: openEquetMatrix },
+    { label: language === 'es' ? 'Descargar ticket JPG Hashcod' : 'Download Hashcod JPG ticket', onClick: openEquetMatrix },
+  ];
   const launchCenterItems = [
     { label: language === 'es' ? 'Abrir Launch Center' : 'Open Launch Center', onClick: openLaunchCenter },
     { label: language === 'es' ? 'Checklist de salida al mercado' : 'Go-to-market checklist', onClick: openLaunchCenter },
@@ -19869,7 +20080,7 @@ const App = () => {
         incubator: openCodeIncubator, incubadora: openCodeIncubator, incubate: openCodeIncubator, incubar: openCodeIncubator, embryo: openCodeIncubator, embrion: openCodeIncubator, 'code-incubator': openCodeIncubator,
         complex: openComplexEntropy, complexentropy: openComplexEntropy, 'complex-entropy': openComplexEntropy, complexmap: openComplexEntropy, 'complex-map': openComplexEntropy, shredder: openComplexEntropy,
         licenses: openHashcodLicenses, licensefactory: openHashcodLicenses, hclic: openHashcodLicenses, copyright: openHashcodLicenses, licencias: openHashcodLicenses,
-        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault,
+        quote: openQuoteSystem, quotes: openQuoteSystem, quotation: openQuoteSystem, cotizacion: openQuoteSystem, cotizaciones: openQuoteSystem, pricing: openQuoteSystem, precios: openQuoteSystem, invoice: openQuoteSystem, invoices: openQuoteSystem, factura: openQuoteSystem, facturas: openQuoteSystem, facturacion: openQuoteSystem, billing: openQuoteSystem, timer: openBillingTimer, chrono: openBillingTimer, cronometro: openBillingTimer, stopwatch: openBillingTimer, clientvault: openClientVault, clients: openClientVault, clientes: openClientVault, credenciales: openClientVault, equet: openEquetMatrix, matrix: openEquetMatrix, matriz: openEquetMatrix, parametros: openEquetMatrix, parameters: openEquetMatrix,
         launch: openLaunchCenter, market: openLaunchCenter, mercado: openLaunchCenter, launchcenter: openLaunchCenter, 'launch-center': openLaunchCenter, gotomarket: openLaunchCenter, 'go-market': openLaunchCenter,
         pivot: openPivotKernel, pivotkernel: openPivotKernel, 'pivot-kernel': openPivotKernel, kernel: openPivotKernel, detector: openPivotKernel, cryptoexam: openCryptoExam, examen: openCryptoExam, examenes: openCryptoExam, exams: openCryptoExam,
         geometric: openGeometricCode, geometrico: openGeometricCode, geometry: openGeometricCode, geocode: openGeometricCode, radius: openGeometricCode, radio: openGeometricCode,
@@ -20100,7 +20311,7 @@ const App = () => {
     if (cmd === 'load' || (cmd === 'session' && sub === 'load')) { openSession(); pushCmd('Selecciona un archivo de sesión.', 'ok'); return; }
 
     pushCmd(`Comando no reconocido: ${cmd}. Escribe help o commands1000.`, 'err');
-  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openCodeIncubator, openCodeTransformCli, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
+  }, [pushCmd, catalog, selectedType, output, copyDb, stats, qty, length, charset, prefix, sessionTime, generate, copyAll, exportFormat, clearOutput, clearDatabase, newSession, saveSession, openSession, changeLanguage, findTypeById, rememberCopied, openDatabase, openQrVault, openTextLab, openDriveLab, openPandora, openDesk, openOSDGRest, openMarkdownDesk, openMarketNotes, openCertificates, openCommandManual, openColorForge, openFormatForge, openBaseMat, openHns, openHos, openHcp, openHnsBrowser, openCryptoAi, openTranslator, openContainerPort, openDerivativesLab, openFileViewer, openGraphLab, openParametricAnalyzer, openCodeIncubator, openCodeTransformCli, openComplexEntropy, openHashcodLicenses, openQuoteSystem, openBillingTimer, openClientVault, openEquetMatrix, openLaunchCenter, openPivotKernel, openCryptoExam, openGeometricCode, openSecuritySuite, setTweak, cmdTypes619, cmd619Text, resolveCmdType, generateForType, generateAll619, OCG_COMMAND_HELP_1000, activePlan]);
 
   return (
     <>
@@ -20152,6 +20363,7 @@ const App = () => {
       <HashcodBillingTimerDialog open={billingTimerOpen} onClose={() => setBillingTimerOpen(false)} notify={notify} language={language} />
       <HashcodClientVaultDialog open={clientVaultOpen} onClose={() => setClientVaultOpen(false)} notify={notify} language={language} />
       <HashcodOrderRegistryDialog open={orderRegistryOpen} onClose={() => setOrderRegistryOpen(false)} notify={notify} language={language} />
+      <HashcodEquetMatrixDialog open={equetMatrixOpen} onClose={() => setEquetMatrixOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <HashcodLaunchCenterDialog open={launchCenterOpen} onClose={() => setLaunchCenterOpen(false)} notify={notify} language={language} />
       <HashcodPivotKernelDialog open={pivotKernelOpen} onClose={() => setPivotKernelOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
       <CryptoExamSuiteDialog open={cryptoExamOpen} onClose={() => setCryptoExamOpen(false)} rows={copyDb} outputRows={output} notify={notify} language={language} />
@@ -20185,6 +20397,7 @@ const App = () => {
             <MenuButton label={t('menuLanguages')} icon={TOP_MENU_ICONS.languages} iconOnly items={languageItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
             <MenuButton label={t('menuDatabase')} icon={TOP_MENU_ICONS.database} iconOnly items={databaseItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDatabase} />
             <MenuButton label="ORDER REGISTRY" icon={TOP_MENU_ICONS.orderRegistry} iconOnly items={orderRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openOrderRegistry} />
+            <MenuButton label="EQUET MATRIX" icon={TOP_MENU_ICONS.equetMatrix} iconOnly items={equetMatrixItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openEquetMatrix} />
             <MenuButton label="TRANSFORM CMD" icon={TOP_MENU_ICONS.codeTransformCli} iconOnly items={codeTransformCliItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeTransformCli} />
             <MenuButton label={t('qrMenu')} icon={TOP_MENU_ICONS.qr} iconOnly items={qrItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openQrVault} />
             <MenuButton label={language === 'es' ? 'TEXT LAB' : 'TEXT LAB'} icon={TOP_MENU_ICONS.textLab} iconOnly items={textItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openTextLab} />
@@ -20368,6 +20581,10 @@ const App = () => {
               <button type="button" className="bottom-tool-icon" onClick={() => setOrderRegistryOpen(true)} title={language === 'es' ? 'Registro de pedidos' : 'Order registry'} aria-label={language === 'es' ? 'Registro de pedidos' : 'Order registry'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.orderRegistry}} />
                 <b>{language === 'es' ? 'Pedidos' : 'Orders'}</b>
+              </button>
+              <button type="button" className="bottom-tool-icon" onClick={() => setEquetMatrixOpen(true)} title={language === 'es' ? 'Equet Matrix Ultra Math' : 'Equet Matrix Ultra Math'} aria-label={language === 'es' ? 'Equet Matrix Ultra Math' : 'Equet Matrix Ultra Math'}>
+                <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.equetMatrix}} />
+                <b>Equet</b>
               </button>
               <button type="button" className="bottom-tool-icon" onClick={() => setCryptoIdeOpen(true)} title={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'} aria-label={language === 'es' ? 'IDE criptografico' : 'Cryptographic IDE'}>
                 <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.cryptoIde}} />
