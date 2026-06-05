@@ -20920,7 +20920,7 @@ const HashcodEquetMatrixDialog = ({
     }, 'image/jpeg', 0.94);
   };
   return React.createElement("div", {
-    className: "modal-backdrop"
+    className: "dlg-back"
   }, React.createElement("section", {
     className: "dlg equetdlg"
   }, React.createElement("header", {

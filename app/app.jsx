@@ -16914,7 +16914,7 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
     }, 'image/jpeg', 0.94);
   };
   return (
-    <div className="modal-backdrop">
+    <div className="dlg-back">
       <section className="dlg equetdlg">
         <header className="equet-head">
           <div className="equet-title">
