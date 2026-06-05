@@ -16844,7 +16844,6 @@ const buildEquetParameters = ({ matrix, codeRow, count = 2048, stride = 37 }) =>
   }
   return rows;
 };
-
 const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const [matrix, setMatrix] = useState(() => readEquetMatrix());
@@ -16876,18 +16875,11 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
     ctx.strokeStyle = '#111';
     ctx.lineWidth = 5;
     ctx.strokeRect(42, 42, 1316, 816);
-    ctx.strokeRect(72, 78, 86, 62);
-    ctx.fillRect(102, 132, 50, 50);
-    ctx.beginPath();
-    ctx.moveTo(127, 112);
-    ctx.lineTo(92, 178);
-    ctx.lineTo(164, 178);
-    ctx.closePath();
-    ctx.fill();
+    drawHashcodCanvasLogo(ctx, 72, 72, 142, '#111');
     ctx.font = '800 54px Segoe UI, Arial';
-    ctx.fillText('HASHCOD', 190, 122);
+    ctx.fillText('HASHCOD', 205, 122);
     ctx.font = '700 20px Consolas, monospace';
-    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 190, 158);
+    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 205, 158);
     ctx.font = '700 72px Consolas, monospace';
     ctx.fillText(selectedParam.parameter, 72, 265);
     ctx.font = '700 30px Consolas, monospace';
@@ -16929,7 +16921,7 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
             <span className="equet-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.equetMatrix}} />
             <div><h2>{L('Equet Matrix Ultra Math', 'Equet Matrix Ultra Math')}</h2><p>{L('Genera miles de parametros direccionales desde el cuadro y los asigna a un code guardado.', 'Generate thousands of directional parameters from the square and bind them to a saved code.')}</p></div>
           </div>
-          <button onClick={onClose}>x</button>
+          <button className="equet-close" onClick={onClose} aria-label="Close">x</button>
         </header>
         <div className="equet-shell">
           <aside className="equet-side">
@@ -16950,10 +16942,30 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
             </div>
           </aside>
           <main className="equet-main">
-            <div className="equet-grid">
-              {matrix.map((row, r) => row.map((cell, c) => (
-                <input key={`${r}-${c}`} value={cell} onChange={e => updateCell(r, c, e.target.value)} inputMode="numeric" />
-              )))}
+            <div className="equet-worktop">
+              <div className="equet-board">
+                <span className="equet-corner" />
+                {Array.from({ length: 8 }, (_, c) => <span key={`h-${c}`} className="equet-axis">{c + 1}</span>)}
+                {matrix.map((row, r) => (
+                  <React.Fragment key={`row-${r}`}>
+                    <span className="equet-axis">{r + 1}</span>
+                    {row.map((cell, c) => (
+                      <input key={`${r}-${c}`} value={cell} onChange={e => updateCell(r, c, e.target.value)} inputMode="numeric" aria-label={`Matrix ${r + 1}:${c + 1}`} />
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+              <section className="equet-live">
+                <span>{L('Parametro principal', 'Main parameter')}</span>
+                <strong>{selectedParam?.parameter || '---'}</strong>
+                <dl>
+                  <div><dt>{L('Direccion', 'Direction')}</dt><dd>{selectedParam?.direction || '---'}</dd></div>
+                  <div><dt>Vector</dt><dd>{selectedParam?.vector || '---'}</dd></div>
+                  <div><dt>Bind</dt><dd>{selectedParam?.bind || '---'}</dd></div>
+                  <div><dt>{L('Peso', 'Weight')}</dt><dd>{selectedParam?.weight ?? '---'}</dd></div>
+                </dl>
+                <button onClick={exportTicket}>{L('Descargar ticket JPG', 'Download JPG ticket')}</button>
+              </section>
             </div>
             <div className="equet-summary">
               <article><span>{L('Parametros', 'Parameters')}</span><b>{parameters.length.toLocaleString()}</b></article>

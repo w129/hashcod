@@ -20881,18 +20881,11 @@ const HashcodEquetMatrixDialog = ({
     ctx.strokeStyle = '#111';
     ctx.lineWidth = 5;
     ctx.strokeRect(42, 42, 1316, 816);
-    ctx.strokeRect(72, 78, 86, 62);
-    ctx.fillRect(102, 132, 50, 50);
-    ctx.beginPath();
-    ctx.moveTo(127, 112);
-    ctx.lineTo(92, 178);
-    ctx.lineTo(164, 178);
-    ctx.closePath();
-    ctx.fill();
+    drawHashcodCanvasLogo(ctx, 72, 72, 142, '#111');
     ctx.font = '800 54px Segoe UI, Arial';
-    ctx.fillText('HASHCOD', 190, 122);
+    ctx.fillText('HASHCOD', 205, 122);
     ctx.font = '700 20px Consolas, monospace';
-    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 190, 158);
+    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 205, 158);
     ctx.font = '700 72px Consolas, monospace';
     ctx.fillText(selectedParam.parameter, 72, 265);
     ctx.font = '700 30px Consolas, monospace';
@@ -20940,7 +20933,9 @@ const HashcodEquetMatrixDialog = ({
       __html: TOP_MENU_ICONS.equetMatrix
     }
   }), React.createElement("div", null, React.createElement("h2", null, L('Equet Matrix Ultra Math', 'Equet Matrix Ultra Math')), React.createElement("p", null, L('Genera miles de parametros direccionales desde el cuadro y los asigna a un code guardado.', 'Generate thousands of directional parameters from the square and bind them to a saved code.')))), React.createElement("button", {
-    onClick: onClose
+    className: "equet-close",
+    onClick: onClose,
+    "aria-label": "Close"
   }, "x")), React.createElement("div", {
     className: "equet-shell"
   }, React.createElement("aside", {
@@ -20980,13 +20975,31 @@ const HashcodEquetMatrixDialog = ({
   }, L('Ticket JPG', 'JPG ticket')))), React.createElement("main", {
     className: "equet-main"
   }, React.createElement("div", {
-    className: "equet-grid"
-  }, matrix.map((row, r) => row.map((cell, c) => React.createElement("input", {
+    className: "equet-worktop"
+  }, React.createElement("div", {
+    className: "equet-board"
+  }, React.createElement("span", {
+    className: "equet-corner"
+  }), Array.from({
+    length: 8
+  }, (_, c) => React.createElement("span", {
+    key: `h-${c}`,
+    className: "equet-axis"
+  }, c + 1)), matrix.map((row, r) => React.createElement(React.Fragment, {
+    key: `row-${r}`
+  }, React.createElement("span", {
+    className: "equet-axis"
+  }, r + 1), row.map((cell, c) => React.createElement("input", {
     key: `${r}-${c}`,
     value: cell,
     onChange: e => updateCell(r, c, e.target.value),
-    inputMode: "numeric"
-  })))), React.createElement("div", {
+    inputMode: "numeric",
+    "aria-label": `Matrix ${r + 1}:${c + 1}`
+  }))))), React.createElement("section", {
+    className: "equet-live"
+  }, React.createElement("span", null, L('Parametro principal', 'Main parameter')), React.createElement("strong", null, selectedParam?.parameter || '---'), React.createElement("dl", null, React.createElement("div", null, React.createElement("dt", null, L('Direccion', 'Direction')), React.createElement("dd", null, selectedParam?.direction || '---')), React.createElement("div", null, React.createElement("dt", null, "Vector"), React.createElement("dd", null, selectedParam?.vector || '---')), React.createElement("div", null, React.createElement("dt", null, "Bind"), React.createElement("dd", null, selectedParam?.bind || '---')), React.createElement("div", null, React.createElement("dt", null, L('Peso', 'Weight')), React.createElement("dd", null, selectedParam?.weight ?? '---'))), React.createElement("button", {
+    onClick: exportTicket
+  }, L('Descargar ticket JPG', 'Download JPG ticket')))), React.createElement("div", {
     className: "equet-summary"
   }, React.createElement("article", null, React.createElement("span", null, L('Parametros', 'Parameters')), React.createElement("b", null, parameters.length.toLocaleString())), React.createElement("article", null, React.createElement("span", null, L('Asignado', 'Assigned')), React.createElement("b", null, selected ? equetCodeLabel(selected, 0) : '---')), React.createElement("article", null, React.createElement("span", null, L('Primera direccion', 'First direction')), React.createElement("b", null, selectedParam?.direction || '---'))), React.createElement("div", {
     className: "equet-tablewrap"
