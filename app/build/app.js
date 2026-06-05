@@ -20920,7 +20920,7 @@ const HashcodEquetMatrixDialog = ({
     }, 'image/jpeg', 0.94);
   };
   return React.createElement("div", {
-    className: "dlg-back"
+    className: "dlg-back equet-back"
   }, React.createElement("section", {
     className: "dlg equetdlg"
   }, React.createElement("header", {
@@ -20999,7 +20999,11 @@ const HashcodEquetMatrixDialog = ({
     className: "equet-live"
   }, React.createElement("span", null, L('Parametro principal', 'Main parameter')), React.createElement("strong", null, selectedParam?.parameter || '---'), React.createElement("dl", null, React.createElement("div", null, React.createElement("dt", null, L('Direccion', 'Direction')), React.createElement("dd", null, selectedParam?.direction || '---')), React.createElement("div", null, React.createElement("dt", null, "Vector"), React.createElement("dd", null, selectedParam?.vector || '---')), React.createElement("div", null, React.createElement("dt", null, "Bind"), React.createElement("dd", null, selectedParam?.bind || '---')), React.createElement("div", null, React.createElement("dt", null, L('Peso', 'Weight')), React.createElement("dd", null, selectedParam?.weight ?? '---'))), React.createElement("button", {
     onClick: exportTicket
-  }, L('Descargar ticket JPG', 'Download JPG ticket')))), React.createElement("div", {
+  }, L('Descargar ticket JPG', 'Download JPG ticket')), React.createElement("div", {
+    className: "equet-preview"
+  }, React.createElement("span", null, L('Muestra de parametros', 'Parameter preview')), filtered.slice(0, 5).map(row => React.createElement("p", {
+    key: `preview-${row.i}`
+  }, React.createElement("b", null, row.parameter), React.createElement("em", null, row.direction), React.createElement("small", null, row.bind)))))), React.createElement("div", {
     className: "equet-summary"
   }, React.createElement("article", null, React.createElement("span", null, L('Parametros', 'Parameters')), React.createElement("b", null, parameters.length.toLocaleString())), React.createElement("article", null, React.createElement("span", null, L('Asignado', 'Assigned')), React.createElement("b", null, selected ? equetCodeLabel(selected, 0) : '---')), React.createElement("article", null, React.createElement("span", null, L('Primera direccion', 'First direction')), React.createElement("b", null, selectedParam?.direction || '---'))), React.createElement("div", {
     className: "equet-tablewrap"

@@ -16914,7 +16914,7 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
     }, 'image/jpeg', 0.94);
   };
   return (
-    <div className="dlg-back">
+    <div className="dlg-back equet-back">
       <section className="dlg equetdlg">
         <header className="equet-head">
           <div className="equet-title">
@@ -16965,6 +16965,12 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
                   <div><dt>{L('Peso', 'Weight')}</dt><dd>{selectedParam?.weight ?? '---'}</dd></div>
                 </dl>
                 <button onClick={exportTicket}>{L('Descargar ticket JPG', 'Download JPG ticket')}</button>
+                <div className="equet-preview">
+                  <span>{L('Muestra de parametros', 'Parameter preview')}</span>
+                  {filtered.slice(0, 5).map(row => (
+                    <p key={`preview-${row.i}`}><b>{row.parameter}</b><em>{row.direction}</em><small>{row.bind}</small></p>
+                  ))}
+                </div>
               </section>
             </div>
             <div className="equet-summary">
