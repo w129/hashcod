@@ -135,6 +135,37 @@
       font-size:13px;
       line-height:1.5;
     }
+    .reward {
+      margin-top:14px;
+      border:2px solid #111;
+      background:#111;
+      color:#fff;
+      padding:14px;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:12px;
+      line-height:1.45;
+      letter-spacing:1.2px;
+      text-transform:uppercase;
+    }
+    .reward b {
+      display:block;
+      margin-bottom:4px;
+      font-size:18px;
+      letter-spacing:2px;
+    }
+    .coupon {
+      display:none;
+      margin-top:12px;
+      border:2px dashed #11823b;
+      background:#f7fff9;
+      color:#11823b;
+      padding:12px;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:13px;
+      font-weight:900;
+      line-height:1.45;
+    }
+    .coupon.is-visible { display:block; }
     .arena-card { overflow:hidden; }
     .arena-head {
       display:flex;
@@ -258,6 +289,11 @@
         <button id="resetBtn">Reiniciar</button>
       </div>
       <div class="notice">Regla: ganas solo si el centro del castor queda dentro del cuadro en el instante exacto de pausa. El modo esta calibrado para ser casi imposible.</div>
+      <div class="reward">
+        <b>Premio del reto</b>
+        Si logras pausar el castor dentro del cuadro, obtienes 50% de descuento en servicios Hashcod.
+      </div>
+      <div class="coupon" id="coupon">CUPON BLOQUEADO - gana el reto para activar el 50%.</div>
     </section>
 
     <section class="arena-card">
@@ -302,6 +338,7 @@
     const bestEl = $('best');
     const stateEl = $('state');
     const resultEl = $('result');
+    const couponEl = $('coupon');
     const startBtn = $('startBtn');
     const pauseBtn = $('pauseBtn');
     const resetBtn = $('resetBtn');
@@ -320,6 +357,7 @@
     let speedBoost = 1;
     let targetBox = { x: 0, y: 0, w: 122, h: 122 };
     let nextChaos = 0;
+    let lastCoupon = '';
 
     const fmt = ms => {
       const total = Math.floor(ms);
@@ -372,6 +410,31 @@
       arena.appendChild(dot);
       setTimeout(() => dot.remove(), 360);
     };
+    const shortDigest = async text => {
+      const data = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return [...new Uint8Array(digest)]
+        .slice(0, 8)
+        .map(n => n.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase();
+    };
+    const syncCoupon = () => {
+      couponEl.className = lastCoupon ? 'coupon is-visible' : 'coupon';
+      couponEl.textContent = lastCoupon
+        ? `CUPON ACTIVO: ${lastCoupon} - 50% OFF Hashcod.`
+        : 'CUPON BLOQUEADO - gana el reto para activar el 50%.';
+    };
+    const unlockCoupon = async (ms, hit) => {
+      const seed = `HASHCOD-CASTOR-50|${Date.now()}|${ms}|${hit.dist.toFixed(4)}|${tries}`;
+      lastCoupon = `HASHCOD-CASTOR-50-${await shortDigest(seed)}`;
+      couponEl.className = 'coupon is-visible';
+      couponEl.textContent = `DESCUENTO ACTIVADO: 50% OFF - CODIGO ${lastCoupon} - valida con captura del resultado.`;
+      try {
+        localStorage.setItem('hashcod_castor_discount_coupon', lastCoupon);
+        localStorage.setItem('hashcod_castor_discount_time', new Date().toISOString());
+      } catch {}
+    };
     const tick = now => {
       if (!running) return;
       if (!lastFrame) lastFrame = now;
@@ -416,6 +479,7 @@
       lastFrame = 0;
       resultEl.className = 'result';
       resultEl.textContent = 'El castor esta en movimiento. Pausa solo cuando el centro caiga dentro del cuadro.';
+      syncCoupon();
       stateEl.textContent = 'RUNNING · NIGHTMARE';
       startBtn.textContent = 'Corriendo';
       raf = requestAnimationFrame(tick);
@@ -433,14 +497,19 @@
         resultEl.className = 'result win';
         resultEl.textContent = `WIN imposible conseguido. Tiempo ${fmt(gameMs)} · centro exacto dentro del cuadro.`;
         stateEl.textContent = 'WIN';
+        resultEl.textContent += ' Premio: 50% de descuento Hashcod.';
+        unlockCoupon(gameMs, hit);
       } else if (hit.inside) {
         resultEl.className = 'result win';
         resultEl.textContent = `Casi perfecto: dentro del cuadro. Tiempo ${fmt(gameMs)} · error ${hit.dist.toFixed(2)}px.`;
         stateEl.textContent = 'HIT';
+        resultEl.textContent += ' Premio: 50% de descuento Hashcod.';
+        unlockCoupon(gameMs, hit);
       } else {
         resultEl.className = 'result fail';
         resultEl.textContent = `Fallo. El castor quedo fuera del cuadro por ${hit.dist.toFixed(2)}px. Reinicia para otro intento.`;
         stateEl.textContent = 'FAILED';
+        syncCoupon();
       }
       startBtn.textContent = 'Iniciar otra vez';
     };
@@ -452,6 +521,7 @@
       speedEl.textContent = '0x';
       resultEl.className = 'result';
       resultEl.textContent = 'Reiniciado. Presiona iniciar cuando estes listo.';
+      syncCoupon();
       stateEl.textContent = 'Ready';
       startBtn.textContent = 'Iniciar';
       placeTarget();
@@ -468,6 +538,10 @@
       }
     });
     window.addEventListener('resize', reset);
+    try {
+      lastCoupon = localStorage.getItem('hashcod_castor_discount_coupon') || '';
+      syncCoupon();
+    } catch {}
     placeTarget();
     resetMotion();
   </script>
