@@ -1401,6 +1401,49 @@ const digestHex = async (value, algo = 'SHA-256') => {
   return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
 };
 
+const canonicalizeSecurityValue = (value) => {
+  if (Array.isArray(value)) return `[${value.map(canonicalizeSecurityValue).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalizeSecurityValue(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
+};
+
+const hmacSha256Hex = async (secret, value) => {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(secret || '')), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(String(value || '')));
+  return Array.from(new Uint8Array(sig), b => b.toString(16).padStart(2, '0')).join('');
+};
+
+const platformGatePayloadHash = async (token, key, resourceId = 'HASHCOD-PLATFORM', action = 'ACCESS') => {
+  const tokenHash = await digestHex(String(token || '').trim());
+  const keyHash = await digestHex(String(key || '').trim());
+  return digestHex(canonicalizeSecurityValue({
+    action,
+    key_hash: keyHash,
+    resource_id: resourceId,
+    token_hash: tokenHash,
+  }));
+};
+
+const buildPlatformGateSignedOperation = async ({ token, key, challenge }) => {
+  const operation = {
+    action: challenge.action || 'ACCESS',
+    challenge: challenge.challenge,
+    challenge_id: challenge.challenge_id,
+    credential_id: challenge.credential_id,
+    expires_at: challenge.expires_at,
+    payload_hash: await platformGatePayloadHash(token, key, challenge.resource_id, challenge.action || 'ACCESS'),
+    permission: challenge.permission || 'READ',
+    resource_id: challenge.resource_id || 'HASHCOD-PLATFORM',
+    server_nonce: challenge.server_nonce,
+    version: challenge.version || 1,
+  };
+  const signature = await hmacSha256Hex(key, canonicalizeSecurityValue(operation));
+  return { operation, signature };
+};
+
 const hmacSha3ContainerHex = async (keyText, payload) => {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(String(keyText || 'HASHCOD-IH-HMAC-SHA3-256')), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -5363,21 +5406,31 @@ const AuthGate = ({ children }) => {
   const unlockPlatformGate = async (e) => {
     e.preventDefault();
     setError('');
-    setNotice('');
+    setNotice('Generando challenge de acceso...');
     try {
+      const challengeRes = await fetch('/api/platform-gate/challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resource_id: 'HASHCOD-PLATFORM', action: 'ACCESS' }),
+      });
+      const challenge = await challengeRes.json();
+      if (!challengeRes.ok || !challenge.ok) throw new Error(challenge.error || 'challenge_failed');
+      const signed = await buildPlatformGateSignedOperation({ token: platformGate.token, key: platformGate.key, challenge });
+      setNotice('Firmando operacion Zero Trust...');
       const res = await fetch('/api/platform-gate/unlock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: platformGate.token, key: platformGate.key }),
+        body: JSON.stringify({ token: platformGate.token, key: platformGate.key, ...signed }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || 'gate_failed');
-      hashcodLawRecord(hashcodLawAssessPayload({ action: 'platform-gate:unlock', meta: { expiresAt: data.expiresAt } }));
+      hashcodLawRecord(hashcodLawAssessPayload({ action: 'platform-gate:unlock', meta: { expiresAt: data.expiresAt, capability: data.capability?.mode, auditHash: data.capability?.auditHash } }));
       setPlatformGate(prev => ({ ...prev, unlocked: true, loading: false, token: '', key: '', expiresAt: data.expiresAt || null }));
       await refresh();
     } catch (err) {
       const msg = String(err.message || '');
-      setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : msg === 'invalid_gate_key' ? 'Clave de entrada invalida.' : 'Gate invalido. Pega el token completo sv/sig/se y la clave correcta.');
+      setNotice('');
+      setError(msg === 'gate_token_expired' ? 'Token expirado. Necesitas un nuevo acceso.' : msg === 'invalid_gate_key' ? 'Clave de entrada invalida.' : msg.startsWith('capability_') ? 'Operacion firmada rechazada: ' + msg : 'Gate invalido. Pega el token completo sv/sig/se y la clave correcta.');
     }
   };
   if (platformGate.loading || auth.loading) return <div className="authgate"><div className="authbox"><h1>{PLATFORM_DISPLAY_NAME}</h1><p>Loading secure session...</p></div></div>;
@@ -5395,10 +5448,11 @@ const AuthGate = ({ children }) => {
             <aside className="auth-handshake" aria-label="Platform gate checks">
               <b>GATE CHECK</b>
               <span><i /> SHA-256 server compare</span>
-              <span><i /> Access key required</span>
+              <span><i /> Challenge + nonce unico</span>
+              <span><i /> Capability signature</span>
               <span><i /> Expiration check</span>
               <span><i /> HttpOnly gate cookie</span>
-              <span><i /> API routes locked</span>
+              <span><i /> Immutable audit chain</span>
             </aside>
           </div>
           <textarea
@@ -20875,18 +20929,18 @@ const HASHCOD_ZERO_TRUST_AUDIT_KEY = 'hashcod_zero_trust_audit_chain_v1';
 const HASHCOD_ZERO_TRUST_SESSION_KEY = 'hashcod_zero_trust_manifest_v1';
 const HASHCOD_ZERO_TRUST_FAIL_KEY = 'hashcod_zero_trust_fail_count_v1';
 const ZERO_TRUST_CONTROLS = [
-  ['zero-trust', 'ゼロトラストアクセス', 'プラットフォームを開く前に、重要な操作を毎回検証します。'],
-  ['e2ee', 'エンドツーエンド暗号化', 'WebCrypto によるローカル暗号化とダイジェストを確認します。'],
-  ['client-side', 'クライアント側暗号化', '保存前にブラウザ側でデータを暗号化できる状態です。'],
-  ['hardware-kms', 'ハードウェア鍵管理', 'WebAuthn / passkeys をハードウェア鍵基盤として検出します。'],
-  ['signed-reports', '署名付きレポート', 'ローカル HMAC 署名付きの入場マニフェストを作成します。'],
-  ['vault', 'セキュアVault', '暗号化Vault用の隔離ストレージを確認します。'],
-  ['sandbox', 'サンドボックス解析', 'ファイルやトークンを信頼せず、分離セッションで解析します。'],
-  ['scanner', 'シークレットスキャナー', 'キーをログに露出せず入力を検査します。'],
-  ['audit', '不変監査ログ', 'ローカルのハッシュチェーンでイベントを記録します。'],
-  ['api-gateway', 'APIセキュリティゲートウェイ', 'キー検証が完了するまでルートをロックします。'],
-  ['threat', '脅威検出エンジン', '失敗回数や安全でない環境に応じてリスクを上げます。'],
-  ['recovery', '復旧・インシデント対応', '障害の証跡を残し、対応に使えるようにします。'],
+  ['zero-trust', 'Zero Trust Access', 'Ningun usuario, archivo, token, API o sesion se acepta por defecto.'],
+  ['e2ee', 'Cifrado WebCrypto', 'Valida que el navegador soporte digest y firma local antes de abrir.'],
+  ['client-side', 'Cifrado del cliente', 'La sesion puede sellarse en el navegador antes de guardar estado local.'],
+  ['hardware-kms', 'Passkeys listas', 'Detecta WebAuthn para preparar llaves respaldadas por hardware.'],
+  ['signed-reports', 'Manifiesto firmado', 'Crea un manifiesto de entrada firmado con HMAC-SHA256.'],
+  ['vault', 'Secure Vault', 'Verifica almacenamiento local aislado para vault y sesion.'],
+  ['sandbox', 'Sandbox Analyzer', 'Trata archivos, tokens y payloads como entradas no confiables.'],
+  ['scanner', 'Secret Scanner', 'Revisa la entrada sin exponer la clave completa en logs.'],
+  ['audit', 'Audit hash-chain', 'Cada intento queda enlazado por hash para detectar manipulacion.'],
+  ['api-gateway', 'API Gateway Lock', 'Las rutas API quedan bloqueadas hasta validar la capacidad.'],
+  ['threat', 'Threat Engine', 'Los intentos fallidos elevan el riesgo de la sesion.'],
+  ['recovery', 'Recovery System', 'Conserva evidencia local para respuesta a incidentes.'],
 ];
 
 const zeroTrustStorageReady = (storage) => {
@@ -20929,7 +20983,7 @@ const getZeroTrustChecks = () => {
     label,
     detail,
     ok: !!base[id],
-    status: base[id] ? '有効' : '制限あり',
+    status: base[id] ? 'ACTIVE' : 'LIMITED',
   }));
 };
 const readZeroTrustAudit = () => {
@@ -21037,7 +21091,7 @@ const HashcodSingleKeyGate = ({ children }) => {
       hashcodLawRecord(hashcodLawAssessPayload({ action: 'entry-key:unlock', meta: { gate: 'zero-trust', manifest: manifest.gateId } }));
       setUnlocked(true);
     } catch {
-      setError('キーを検証できませんでした。');
+      setError('No se pudo verificar la clave de entrada.');
       setChecking(false);
     }
   };
@@ -21047,13 +21101,13 @@ const HashcodSingleKeyGate = ({ children }) => {
       <form className="singlekey-card zero-trust-card" onSubmit={submit}>
         <section className="zta-hero">
           <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
-          <span>{PLATFORM_DISPLAY_NAME} 検証可能セキュリティレイヤー</span>
-          <h1>ゼロトラストアクセス</h1>
-          <p>ユーザー、トークン、ファイル、API、セッションは既定で信頼されません。{PLATFORM_DISPLAY_NAME} は起動前に環境を検証し、入場マニフェストへ署名し、監査チェーンへ記録します。</p>
+          <span>{PLATFORM_DISPLAY_NAME} VERIFIABLE SECURITY LAYER</span>
+          <h1>Zero Trust Access</h1>
+          <p>Hashcod verifica entorno, clave, WebCrypto, vault local, auditoria hash-chain y manifiesto firmado antes de abrir la plataforma.</p>
         </section>
 
         <aside className="zta-panel">
-          <b>セキュリティスタック</b>
+          <b>SECURITY STACK</b>
           <div className="zta-stack">
             {checks.map(check => (
               <i key={check.id} className={check.ok ? 'ok' : 'warn'}>
@@ -21065,46 +21119,46 @@ const HashcodSingleKeyGate = ({ children }) => {
         </aside>
 
         <section className="zta-keybox">
-          <label>エントリーキー</label>
+          <label>ENTRY CAPABILITY KEY</label>
           <input
             type="password"
             value={keyText}
             onChange={e => setKeyText(e.target.value)}
-            placeholder={`${PLATFORM_DISPLAY_NAME} アクセスキー`}
+            placeholder={PLATFORM_DISPLAY_NAME + ' access key'}
             autoComplete="off"
             autoFocus
           />
           {error && <em>{error}</em>}
-          <button disabled={checking || !keyText.trim()}>{checking ? 'ゼロトラスト検証中...' : `${PLATFORM_DISPLAY_NAME}を解除`}</button>
+          <button disabled={checking || !keyText.trim()}>{checking ? 'VERIFYING ZERO TRUST...' : 'UNLOCK ' + PLATFORM_DISPLAY_NAME}</button>
         </section>
 
         <section className="zta-metrics" aria-label="Zero Trust status">
           <div>
-            <span>脅威スコア</span>
+            <span>Threat score</span>
             <strong>{threatScore}/100</strong>
-            <small>{threatScore >= 70 ? 'インシデント監視' : threatScore >= 35 ? '上昇中' : '制御済み'}</small>
+            <small>{threatScore >= 70 ? 'Incident watch' : threatScore >= 35 ? 'Elevated' : 'Controlled'}</small>
           </div>
           <div>
-            <span>監査チェーン</span>
+            <span>Audit chain</span>
             <strong>{auditRows.length}</strong>
-            <small>{auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : '起点'}</small>
+            <small>{auditRows.length ? auditRows[auditRows.length - 1].entryHash.slice(0, 14) : 'GENESIS'}</small>
           </div>
           <div>
-            <span>暗号エンジン</span>
-            <strong>{checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : '制限あり'}</strong>
+            <span>Crypto engine</span>
+            <strong>{checks.find(c => c.id === 'e2ee')?.ok ? 'WEBCRYPTO' : 'LIMITED'}</strong>
             <small>SHA-256 + HMAC manifest</small>
           </div>
           <div>
-            <span>Vault状態</span>
-            <strong>{checks.find(c => c.id === 'vault')?.ok ? '準備完了' : '制限あり'}</strong>
-            <small>ローカル封印セッション</small>
+            <span>Vault state</span>
+            <strong>{checks.find(c => c.id === 'vault')?.ok ? 'READY' : 'LIMITED'}</strong>
+            <small>Local sealed session</small>
           </div>
         </section>
 
         <section className="zta-controls">
           {checks.map(check => (
             <article key={check.id}>
-              <span className={check.ok ? 'ok' : 'warn'}>{check.ok ? '有効' : '制限あり'}</span>
+              <span className={check.ok ? 'ok' : 'warn'}>{check.ok ? 'ACTIVE' : 'LIMITED'}</span>
               <b>{check.label}</b>
               <p>{check.detail}</p>
             </article>
@@ -21114,7 +21168,6 @@ const HashcodSingleKeyGate = ({ children }) => {
     </div>
   );
 };
-
 
 const BRAND_MARK_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.2 1.2 8.4a4.8 4.8 0 0 0 4.4 6.4h4.8a4.8 4.8 0 0 0 4.4-6.4L8 1.2Zm-2 6.6h1.4v5H6Zm2.6 0H10v5H8.6Z"/></svg>`;
 const IDEA_SHELL_ICON = `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5c3.3 0 6 2.7 6 6 0 2.9-2.1 5.4-4.9 5.9l-.5 1.1H7.4l-.5-1.1C4.1 12.9 2 10.4 2 7.5c0-3.3 2.7-6 6-6Zm0 1.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 3.1 2 3.9a9.9 9.9 0 0 1 6.1-5.6A4.5 4.5 0 0 0 8 3Zm4.2 4.1a8.4 8.4 0 0 0-5.3 5 4.5 4.5 0 0 0 5.3-5Z"/></svg>`;

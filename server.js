@@ -17,6 +17,7 @@ const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
 const SMS_GATEWAY_FILE = path.join(DATA_DIR, 'sms-gateway.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'security-audit.jsonl');
+const PLATFORM_GATE_AUDIT_FILE = path.join(DATA_DIR, 'platform-gate-audit.json');
 const AUTH_DB_FILE = path.join(DATA_DIR, 'auth-db.enc');
 const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
 const CODE_WALLET_FILE = path.join(DATA_DIR, 'code-wallet.enc');
@@ -32,6 +33,7 @@ const sessions = new Map();
 const adminPanelSessions = new Map();
 const securityKingSessions = new Map();
 const platformGateSessions = new Map();
+const platformGateChallenges = new Map();
 const privateEntrySessions = new Map();
 const oauthStates = new Map();
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -43,6 +45,8 @@ const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e
 const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
 const PLATFORM_GATE_TOKEN_HASH = process.env.HASHCOD_PLATFORM_GATE_TOKEN_HASH || '1d5529b450b29daeb44bf7a2df59c8aff349dff105a29d0661c70e372bfe98a7';
 const PLATFORM_GATE_KEY_HASH = process.env.HASHCOD_PLATFORM_GATE_KEY_HASH || '0a8b089d57a477e2eb6393aa22592665b1d9406b22086ef147cbb1a2b446e82c';
+const PLATFORM_GATE_RESOURCE_ID = 'HASHCOD-PLATFORM';
+const PLATFORM_GATE_CREDENTIAL_ID = 'HSC-ACCESS-CAPABILITY';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
 const SMS_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || process.env.HASHCOD_SMS_AUTH_TOKEN || '';
 const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SMS_FROM_NUMBER || '';
@@ -535,6 +539,29 @@ function validatePublicPayload(fields) {
 
 function b64url(buf) {
   return Buffer.from(buf).toString('base64url');
+}
+
+function sha256Hex(value) {
+  return crypto.createHash('sha256').update(String(value || '')).digest('hex');
+}
+
+function hmacSha256Hex(secret, value) {
+  return crypto.createHmac('sha256', String(secret || '')).update(String(value || '')).digest('hex');
+}
+
+function timingSafeHexEqual(a, b) {
+  const left = String(a || '');
+  const right = String(b || '');
+  if (!/^[a-f0-9]+$/i.test(left) || !/^[a-f0-9]+$/i.test(right) || left.length !== right.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(left, 'hex'), Buffer.from(right, 'hex'));
+}
+
+function canonicalizeSecurityValue(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalizeSecurityValue).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalizeSecurityValue(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
 }
 
 function authSecretKey() {
@@ -1049,7 +1076,124 @@ function verifyPlatformGateToken(token, key) {
   if (!crypto.timingSafeEqual(Buffer.from(keyHash), Buffer.from(expectedKey))) return { ok: false, error: 'invalid_gate_key' };
   const expiresAt = platformGateExpiryFromToken(raw);
   if (!expiresAt || expiresAt <= Date.now()) return { ok: false, error: 'gate_token_expired' };
-  return { ok: true, expiresAt };
+  return { ok: true, expiresAt, tokenHash: hash, keyHash };
+}
+
+function platformGatePayloadHash(tokenHash, keyHash, resourceId = PLATFORM_GATE_RESOURCE_ID, action = 'ACCESS') {
+  return sha256Hex(canonicalizeSecurityValue({
+    action,
+    key_hash: keyHash,
+    resource_id: resourceId,
+    token_hash: tokenHash,
+  }));
+}
+
+function appendPlatformGateAudit(event, data = {}) {
+  try {
+    ensureDataDir();
+    let rows = [];
+    if (fs.existsSync(PLATFORM_GATE_AUDIT_FILE)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(PLATFORM_GATE_AUDIT_FILE, 'utf8'));
+        rows = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        rows = [];
+      }
+    }
+    const previousEventHash = rows.length ? rows[rows.length - 1].event_hash : 'GENESIS';
+    const row = {
+      event_id: `HSC-AUD-${Date.now().toString(36).toUpperCase()}-${b64url(crypto.randomBytes(5)).toUpperCase()}`,
+      at: new Date().toISOString(),
+      event,
+      resource_id: data.resource_id || PLATFORM_GATE_RESOURCE_ID,
+      credential_fingerprint: data.credential_fingerprint || null,
+      result: data.result || 'RECORDED',
+      ip: data.ip || null,
+      user_agent_hash: data.userAgent ? sha256Hex(data.userAgent) : null,
+      details: data.details || {},
+      previous_event_hash: previousEventHash,
+    };
+    row.event_hash = sha256Hex(canonicalizeSecurityValue(row));
+    rows.push(row);
+    fs.writeFileSync(PLATFORM_GATE_AUDIT_FILE, JSON.stringify(rows.slice(-1000), null, 2));
+    audit(`platform_gate.capability.${event}`, { ip: data.ip, result: row.result, eventHash: row.event_hash });
+    return row;
+  } catch {
+    return null;
+  }
+}
+
+function cleanupPlatformGateChallenges() {
+  const now = Date.now();
+  for (const [id, row] of platformGateChallenges.entries()) {
+    if (row.used || row.expiresAt < now) platformGateChallenges.delete(id);
+  }
+}
+
+function makePlatformGateChallenge(req) {
+  cleanupPlatformGateChallenges();
+  const challengeId = `HSC-CHL-${Date.now().toString(36).toUpperCase()}-${b64url(crypto.randomBytes(8)).toUpperCase()}`;
+  const challenge = b64url(crypto.randomBytes(32));
+  const serverNonce = b64url(crypto.randomBytes(24));
+  const expiresAt = Date.now() + 1000 * 60 * 2;
+  platformGateChallenges.set(challengeId, {
+    credentialId: PLATFORM_GATE_CREDENTIAL_ID,
+    resourceId: PLATFORM_GATE_RESOURCE_ID,
+    action: 'ACCESS',
+    permission: 'READ',
+    challengeHash: sha256Hex(challenge),
+    nonceHash: sha256Hex(serverNonce),
+    expiresAt,
+    used: false,
+    ip: clientIp(req),
+  });
+  appendPlatformGateAudit('challenge_issued', {
+    ip: clientIp(req),
+    userAgent: req.headers['user-agent'],
+    result: 'CHALLENGE_READY',
+    details: { challenge_id: challengeId, expires_at: new Date(expiresAt).toISOString() },
+  });
+  return {
+    ok: true,
+    version: 1,
+    credential_id: PLATFORM_GATE_CREDENTIAL_ID,
+    resource_id: PLATFORM_GATE_RESOURCE_ID,
+    action: 'ACCESS',
+    permission: 'READ',
+    challenge_id: challengeId,
+    challenge,
+    server_nonce: serverNonce,
+    expires_at: new Date(expiresAt).toISOString(),
+  };
+}
+
+function verifyPlatformGateCapability(req, verified, operation, signature, rawKey) {
+  if (!operation || typeof operation !== 'object' || !signature) return { ok: false, error: 'capability_required' };
+  const allowedKeys = ['action', 'challenge', 'challenge_id', 'credential_id', 'expires_at', 'payload_hash', 'permission', 'resource_id', 'server_nonce', 'version'];
+  const keys = Object.keys(operation).sort();
+  if (keys.join('|') !== allowedKeys.sort().join('|')) return { ok: false, error: 'capability_schema_rejected' };
+  if (operation.version !== 1) return { ok: false, error: 'capability_version_rejected' };
+  if (operation.credential_id !== PLATFORM_GATE_CREDENTIAL_ID) return { ok: false, error: 'capability_credential_rejected' };
+  if (operation.resource_id !== PLATFORM_GATE_RESOURCE_ID || operation.action !== 'ACCESS' || operation.permission !== 'READ') return { ok: false, error: 'capability_scope_rejected' };
+  const row = platformGateChallenges.get(operation.challenge_id);
+  if (!row || row.used) return { ok: false, error: 'capability_challenge_used' };
+  if (row.expiresAt < Date.now() || Date.parse(operation.expires_at) < Date.now()) return { ok: false, error: 'capability_challenge_expired' };
+  if (row.ip !== clientIp(req)) return { ok: false, error: 'capability_origin_changed' };
+  if (row.challengeHash !== sha256Hex(operation.challenge) || row.nonceHash !== sha256Hex(operation.server_nonce)) return { ok: false, error: 'capability_nonce_rejected' };
+  const expectedPayloadHash = platformGatePayloadHash(verified.tokenHash, verified.keyHash, operation.resource_id, operation.action);
+  if (!timingSafeHexEqual(operation.payload_hash, expectedPayloadHash)) return { ok: false, error: 'capability_payload_rejected' };
+  const canonical = canonicalizeSecurityValue(operation);
+  const expectedSignature = hmacSha256Hex(rawKey, canonical);
+  if (!timingSafeHexEqual(signature, expectedSignature)) return { ok: false, error: 'capability_signature_rejected' };
+  row.used = true;
+  const event = appendPlatformGateAudit('operation_verified', {
+    ip: clientIp(req),
+    userAgent: req.headers['user-agent'],
+    result: 'ACCESS_GRANTED',
+    credential_fingerprint: sha256Hex(verified.keyHash).slice(0, 32),
+    details: { challenge_id: operation.challenge_id, payload_hash: operation.payload_hash.slice(0, 24) },
+  });
+  return { ok: true, eventHash: event?.event_hash || null };
 }
 
 function makePlatformGateSession(req, expiresAt) {
@@ -1352,6 +1496,20 @@ async function handlePlatformGate(req, res) {
     return;
   }
 
+  if (route === '/api/platform-gate/challenge' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req, 8 * 1024);
+      if (body.resource_id && body.resource_id !== PLATFORM_GATE_RESOURCE_ID) {
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'capability_resource_rejected' }));
+        return;
+      }
+      send(res, 200, { 'Content-Type': MIME['.json' ] }, JSON.stringify(makePlatformGateChallenge(req)));
+    } catch {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
+    }
+    return;
+  }
+
   if (route === '/api/platform-gate/unlock' && req.method === 'POST') {
     try {
       const body = await readJsonBody(req, 32 * 1024);
@@ -1360,13 +1518,32 @@ async function handlePlatformGate(req, res) {
       const verified = verifyPlatformGateToken(token, key);
       if (!verified.ok) {
         audit('platform_gate.unlock_failed', { ip: clientIp(req), error: verified.error });
+        appendPlatformGateAudit('operation_rejected', {
+          ip: clientIp(req),
+          userAgent: req.headers['user-agent'],
+          result: 'CREDENTIAL_REJECTED',
+          details: { error: verified.error },
+        });
         send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: verified.error }));
+        return;
+      }
+      const capability = verifyPlatformGateCapability(req, verified, body.operation, body.signature, key);
+      if (!capability.ok) {
+        audit('platform_gate.unlock_failed', { ip: clientIp(req), error: capability.error });
+        appendPlatformGateAudit('operation_rejected', {
+          ip: clientIp(req),
+          userAgent: req.headers['user-agent'],
+          result: 'CAPABILITY_REJECTED',
+          credential_fingerprint: sha256Hex(verified.keyHash).slice(0, 32),
+          details: { error: capability.error },
+        });
+        send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: capability.error }));
         return;
       }
       const session = makePlatformGateSession(req, verified.expiresAt);
       const maxAge = Math.max(1, Math.floor((verified.expiresAt - Date.now()) / 1000));
-      audit('platform_gate.unlock', { ip: clientIp(req), expiresAt: new Date(verified.expiresAt).toISOString() });
-      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_platform_gate=${encodeURIComponent(session.sid)}; ${cookieOptions(req, maxAge)}` }, JSON.stringify({ ok: true, expiresAt: new Date(verified.expiresAt).toISOString() }));
+      audit('platform_gate.unlock', { ip: clientIp(req), expiresAt: new Date(verified.expiresAt).toISOString(), capability: true });
+      send(res, 200, { 'Content-Type': MIME['.json'], 'Set-Cookie': `hashcod_platform_gate=${encodeURIComponent(session.sid)}; ${cookieOptions(req, maxAge)}` }, JSON.stringify({ ok: true, expiresAt: new Date(verified.expiresAt).toISOString(), capability: { mode: 'SIGNED_OPERATION_CHALLENGE', auditHash: capability.eventHash } }));
     } catch {
       send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_json' }));
     }
