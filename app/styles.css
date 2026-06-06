@@ -9247,7 +9247,7 @@ body {
 .tb-mark .ocg-brand-icon {
   color:#fff !important;
   stroke:#fff !important;
-  filter:none !important;
+  filter:brightness(0) invert(1) drop-shadow(0 0 6px rgba(255,255,255,.18)) !important;
 }
 
 .tb-name b {

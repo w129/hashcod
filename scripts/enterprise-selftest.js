@@ -211,7 +211,7 @@ function assert(ok, id, detail = '') {
   assert(appSource.includes('const SIDEBAR_RENDER_LIMIT = 140;') && appSource.includes('useDeferredValue(query)') && appSource.includes('visibleTypes'), 'fluid-sidebar-window');
   assert(appSource.includes('const OUTPUT_INITIAL_RENDER_LIMIT = 1000;') && appSource.includes('showMoreOutput') && appSource.includes('out-window-actions') && appSource.includes('const OutputCard = memo(') && appSource.includes('onCopy={rememberSingleCopied}'), 'fluid-output-window');
   assert(stylesSource.includes('content-visibility:auto') && stylesSource.includes('.sb-list-more'), 'fluid-render-css');
-  assert(indexSource.includes('app/build/app.js?v=hashcod-reference-skin-20260605-3') && indexSource.includes('app/styles.css?v=hashcod-reference-skin-20260605-3'), 'app-cache-buster');
+  assert(indexSource.includes('app/build/app.js?v=hashcod-reference-skin-20260605-4') && indexSource.includes('app/styles.css?v=hashcod-reference-skin-20260605-4'), 'app-cache-buster');
   assert(appSource.includes('const PdfStampDialog =') && appSource.includes('drawHashcodStamp'), 'pdf-stamp-dialog');
   assert(appSource.includes('M22.996 30H9.004') && appSource.includes('M28 24h-4v-2h4V6H4v16h4v2H4'), 'pdf-stamp-official-hashcod-svg');
   assert(appSource.includes('Hashcod black QR stamp') && appSource.includes('buildStampQrPng') && appSource.includes('pdf.embedPng'), 'pdf-stamp-black-database-qr');
