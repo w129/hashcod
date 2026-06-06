@@ -9486,3 +9486,52 @@ body {
   position:relative !important;
   z-index:1 !important;
 }
+
+/* Transparent functional surfaces so the architectural drawing remains visible */
+.cfg,
+.cfg-strength,
+.cfg-global-prefix,
+.out-tb,
+.out,
+.rp,
+.rp .side-grid,
+.rp .side-table,
+.rp .side-card,
+.rp section,
+.rp article,
+.equet-live,
+.equet-summary,
+.equet-tablewrap {
+  background-color:rgba(255,255,255,.70) !important;
+  backdrop-filter:blur(2px) saturate(1.05) !important;
+}
+
+.rp {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.76), rgba(255,255,255,.62)),
+    url("hashcod-architectural-bg.svg") right center / auto 100% no-repeat !important;
+}
+
+.rp .side-grid > *,
+.rp .side-table > *,
+.rp .side-card > *,
+.rp table,
+.rp tr,
+.rp td,
+.rp th {
+  background-color:rgba(255,255,255,.58) !important;
+}
+
+.cfg input,
+.cfg button,
+.cfg .btn,
+.rp button,
+.rp input,
+.rp select,
+.rp textarea {
+  background-color:rgba(255,255,255,.78) !important;
+}
+
+.out-empty {
+  background:transparent !important;
+}
