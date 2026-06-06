@@ -3124,6 +3124,8 @@ function isPublicStaticAsset(routePath = '') {
     || route.startsWith('/vendor/')
     || route.startsWith('/public-source/')
     || route === '/favicon.ico'
+    || route === '/orders.html'
+    || route === '/pedidos.html'
     || route === '/phone-os-sw.js';
 }
 
