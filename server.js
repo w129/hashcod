@@ -3117,6 +3117,16 @@ function enforceHttps(req, res) {
   return true;
 }
 
+function isPublicStaticAsset(routePath = '') {
+  const route = String(routePath || '').toLowerCase();
+  return route.startsWith('/app/')
+    || route.startsWith('/data/')
+    || route.startsWith('/vendor/')
+    || route.startsWith('/public-source/')
+    || route === '/favicon.ico'
+    || route === '/phone-os-sw.js';
+}
+
 const server = http.createServer((req, res) => {
   if (enforceHttps(req, res)) return;
   if (!rateLimit(req, res)) return;
@@ -3132,7 +3142,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (!getPrivateEntrySession(req)) {
+  if (!getPrivateEntrySession(req) && !isPublicStaticAsset(routePath)) {
     if (routePath.startsWith('/api/')) {
       send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'private_entry_required' }));
       return;
