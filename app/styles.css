@@ -8694,7 +8694,7 @@ textarea:focus-visible {
 .pdfstamp-main { display:grid;grid-template-rows:auto auto auto auto 1fr auto;align-content:start;gap:12px;min-width:0;padding:16px; }
 .pdfstamp-preview {
   display:grid;
-  min-height:138px;
+  min-height:238px;
   place-items:center;
   border:1px dashed #b5b5b5;
   background:
@@ -8704,26 +8704,41 @@ textarea:focus-visible {
   background-size:18px 18px;
 }
 .pdfstamp-seal {
-  display:flex;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 2px 132px;
   align-items:center;
-  gap:10px;
-  min-width:390px;
-  padding:9px 11px;
-  border:2px solid #101010;
+  gap:20px;
+  width:min(100%,620px);
+  min-height:174px;
+  padding:18px 20px;
+  border:4px solid #101010;
+  box-shadow:inset 0 0 0 4px rgba(255,255,255,.96), inset 0 0 0 6px #101010, 0 8px 22px rgba(0,0,0,.1);
   color:#101010;
-  background:rgba(255,255,255,.76);
+  background:rgba(255,255,255,.86);
 }
-.pdfstamp-seal > span { display:grid;place-items:center;color:#101010; }
-.pdfstamp-seal svg { width:44px;height:44px; }
-.pdfstamp-seal div { display:grid;gap:2px; }
-.pdfstamp-seal b { font-family:var(--mono);font-size:20px;letter-spacing:1px; }
-.pdfstamp-seal strong,
-.pdfstamp-seal small { font-family:var(--mono);font-size:9px;letter-spacing:1px; }
-.pdfstamp-qr { display:grid !important;flex:0 0 62px;width:62px;height:62px;margin-left:auto;place-items:center;border-left:1px solid #101010;padding-left:5px;font-family:var(--mono);font-size:10px; }
-.pdfstamp-qr .qrdlg-qrbox { display:grid;place-items:center;width:58px;height:58px;overflow:hidden; }
+.pdfstamp-seal-left { display:grid;gap:8px;min-width:0; }
+.pdfstamp-brand-row { display:flex;align-items:center;gap:18px;min-width:0; }
+.pdfstamp-brand-row > span { display:grid;place-items:center;color:#101010; }
+.pdfstamp-seal svg { width:72px;height:72px; }
+.pdfstamp-seal b { font-family:var(--mono);font-size:41px;letter-spacing:4px;line-height:.9; }
+.pdfstamp-verified-row { display:flex;align-items:center;gap:14px;margin-top:4px; }
+.pdfstamp-shield { display:grid;place-items:center;width:34px;height:34px;border:3px solid #101010;border-radius:0 0 12px 12px;font-family:var(--mono);font-size:9px;font-weight:900; }
+.pdfstamp-seal strong { font-family:var(--mono);font-size:18px;letter-spacing:7px;white-space:nowrap; }
+.pdfstamp-seal small { display:block;font-family:var(--mono);font-size:14px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.pdfstamp-dots { color:#101010;letter-spacing:2px !important;line-height:1; }
+.pdfstamp-code-line { font-size:16px !important; }
+.pdfstamp-pdf-line { font-size:22px !important;letter-spacing:6px !important;font-weight:800; }
+.pdfstamp-divider { width:2px;height:132px;background:#101010;position:relative;justify-self:center; }
+.pdfstamp-divider::before,
+.pdfstamp-divider::after { content:"";position:absolute;left:50%;width:10px;height:2px;background:#101010;transform:translateX(-50%); }
+.pdfstamp-divider::before { top:0; }
+.pdfstamp-divider::after { bottom:0; }
+.pdfstamp-qr { display:grid !important;width:122px;height:122px;place-items:center;border:2px solid #101010;padding:10px;font-family:var(--mono);font-size:11px;position:relative;background:rgba(255,255,255,.8); }
+.pdfstamp-qr::before { content:"";position:absolute;inset:7px;border:2px solid #101010;clip-path:polygon(0 0,25% 0,25% 8%,8% 8%,8% 25%,0 25%,0 0,75% 0,100% 0,100% 25%,92% 25%,92% 8%,75% 8%,75% 0,100% 75%,100% 100%,75% 100%,75% 92%,92% 92%,92% 75%,100% 75%,25% 100%,0 100%,0 75%,8% 75%,8% 92%,25% 92%,25% 100%);pointer-events:none; }
+.pdfstamp-qr .qrdlg-qrbox { display:grid;place-items:center;width:96px;height:96px;overflow:hidden; }
 .pdfstamp-qr canvas,
 .pdfstamp-qr img,
-.pdfstamp-qr svg { display:block;width:58px !important;height:58px !important; }
+.pdfstamp-qr svg { display:block;width:96px !important;height:96px !important; }
 .pdfstamp-error { padding:10px 12px;border-left:4px solid #b42318;background:#fff0ee;color:#8b1c13;font-family:var(--mono);font-size:11px; }
 .pdfstamp-file { display:grid;gap:6px;min-width:0;padding:12px;border:1px solid var(--line);background:var(--bg-soft); }
 .pdfstamp-file b { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12px; }
@@ -8746,9 +8761,10 @@ textarea:focus-visible {
   .pdfstamp-main { min-height:430px; }
   .pdfstamp-controls { grid-template-columns:1fr; }
   .pdfstamp-footer { align-items:stretch;flex-direction:column; }
-  .pdfstamp-seal { min-width:0;max-width:100%; }
-  .pdfstamp-seal svg { width:34px;height:34px; }
-  .pdfstamp-seal b { font-size:16px; }
+  .pdfstamp-preview { min-height:250px;overflow:auto;justify-content:start; }
+  .pdfstamp-seal { width:560px;transform:scale(.72);transform-origin:left center; }
+  .pdfstamp-seal b { font-size:34px; }
+  .pdfstamp-seal strong { font-size:14px;letter-spacing:5px; }
 }
 
 .brand-evidence-dlg { width:min(1180px,calc(100vw - 36px)); }

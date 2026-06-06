@@ -10079,7 +10079,7 @@ const PdfStampDialog = ({
   const [fileDigest, setFileDigest] = useState('');
   const [selectedCodeIndex, setSelectedCodeIndex] = useState('0');
   const [position, setPosition] = useState('bottom-right');
-  const [stampWidth, setStampWidth] = useState(286);
+  const [stampWidth, setStampWidth] = useState(520);
   const [opacity, setOpacity] = useState(0.88);
   const [allPages, setAllPages] = useState(true);
   const [singlePage, setSinglePage] = useState(1);
@@ -10090,6 +10090,11 @@ const PdfStampDialog = ({
   const selectedCode = availableCodes[Math.max(0, Math.min(availableCodes.length - 1, Number(selectedCodeIndex) || 0))] || null;
   const selectedCodeValue = String(selectedCode?.value || '');
   const selectedCodeId = selectedCode ? `HC-${String(selectedCode.idx || selectedCode.id || Number(selectedCodeIndex) + 1).padStart(5, '0')}-${String(selectedCode.type || 'CODE').toUpperCase()}` : '';
+  const makePdfStampCodeLabel = (id = selectedCodeId, digest = '') => {
+    const normalizedId = String(id || 'HC-00000-CODE').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 28);
+    const suffix = String(digest || selectedCodeValue || 'CODE').replace(/[^A-Za-z0-9]+/g, '').slice(0, 10) || 'CODE';
+    return `HC-db_${normalizedId}_${suffix}-CODE`;
+  };
   if (!open) return null;
   const prettyBytes = (value = 0) => {
     const bytes = Number(value) || 0;
@@ -10165,8 +10170,8 @@ const PdfStampDialog = ({
       height
     } = page.getSize();
     const margin = 22;
-    const boxWidth = Math.min(Number(stampWidth) || 286, Math.max(216, width - margin * 2));
-    const boxHeight = Math.max(76, boxWidth * 0.3);
+    const boxWidth = Math.min(Number(stampWidth) || 520, Math.max(300, width - margin * 2));
+    const boxHeight = Math.max(132, boxWidth * 0.34);
     const coords = {
       'top-left': [margin, height - margin - boxHeight],
       'top-right': [width - margin - boxWidth, height - margin - boxHeight],
@@ -10174,13 +10179,8 @@ const PdfStampDialog = ({
       'bottom-right': [width - margin - boxWidth, margin]
     };
     const [x, y] = coords[position] || coords['bottom-right'];
-    const logoSize = Math.max(23, boxHeight * 0.44);
-    const logoX = x + 11;
-    const logoY = y + (boxHeight - logoSize) / 2 + 2;
-    const lineWidth = Math.max(1.4, boxWidth / 110);
-    const qrSize = Math.max(48, boxHeight - 14);
-    const qrX = x + boxWidth - qrSize - 7;
-    const qrY = y + (boxHeight - qrSize) / 2;
+    const s = boxWidth / 520;
+    const lineWidth = Math.max(1.4, 2.4 * s);
     page.drawRectangle({
       x,
       y,
@@ -10188,6 +10188,61 @@ const PdfStampDialog = ({
       height: boxHeight,
       borderColor: black,
       borderWidth: lineWidth,
+      opacity
+    });
+    page.drawRectangle({
+      x: x + 5 * s,
+      y: y + 5 * s,
+      width: boxWidth - 10 * s,
+      height: boxHeight - 10 * s,
+      borderColor: black,
+      borderWidth: Math.max(0.8, 1.2 * s),
+      opacity
+    });
+    const logoSize = 58 * s;
+    const logoX = x + 34 * s;
+    const logoY = y + boxHeight - 86 * s;
+    const qrSize = 118 * s;
+    const qrX = x + boxWidth - qrSize - 26 * s;
+    const qrY = y + (boxHeight - qrSize) / 2;
+    const dividerX = qrX - 28 * s;
+    page.drawLine({
+      start: {
+        x: dividerX,
+        y: y + 24 * s
+      },
+      end: {
+        x: dividerX,
+        y: y + boxHeight - 24 * s
+      },
+      thickness: Math.max(1.2, 1.5 * s),
+      color: black,
+      opacity
+    });
+    page.drawLine({
+      start: {
+        x: dividerX - 3 * s,
+        y: y + 24 * s
+      },
+      end: {
+        x: dividerX + 3 * s,
+        y: y + 24 * s
+      },
+      thickness: Math.max(1.2, 1.5 * s),
+      color: black,
+      opacity
+    });
+    page.drawLine({
+      start: {
+        x: dividerX - 3 * s,
+        y: y + boxHeight - 24 * s
+      },
+      end: {
+        x: dividerX + 3 * s,
+        y: y + boxHeight - 24 * s
+      },
+      thickness: Math.max(1.2, 1.5 * s),
+      color: black,
       opacity
     });
     const logoOptions = {
@@ -10199,55 +10254,85 @@ const PdfStampDialog = ({
     };
     page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
     page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
-    const textX = logoX + logoSize + 9;
-    const availableTextWidth = Math.max(50, qrX - textX - 6);
-    const titleSize = Math.max(8, Math.min(13, availableTextWidth / 7.2));
-    const metaSize = Math.max(5.5, Math.min(7.2, titleSize * 0.56));
+    const textX = x + 122 * s;
     page.drawText('HASHCOD', {
       x: textX,
-      y: y + boxHeight * 0.69,
-      size: titleSize,
+      y: y + boxHeight - 55 * s,
+      size: 36 * s,
       font: fonts.bold,
+      color: black,
+      opacity
+    });
+    page.drawSvgPath('M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z', {
+      x: x + 38 * s,
+      y: y + boxHeight - 100 * s,
+      scale: 1.28 * s,
+      color: black,
+      opacity
+    });
+    page.drawSvgPath('M9 12l2 2 4-5', {
+      x: x + 38 * s,
+      y: y + boxHeight - 100 * s,
+      scale: 1.28 * s,
       color: black,
       opacity
     });
     page.drawText('VERIFIED PDF STAMP', {
-      x: textX,
-      y: y + boxHeight * 0.5,
-      size: metaSize,
+      x: x + 72 * s,
+      y: y + boxHeight - 102 * s,
+      size: 17 * s,
       font: fonts.bold,
       color: black,
       opacity
     });
-    page.drawText(codeId.slice(0, 34), {
-      x: textX,
-      y: y + boxHeight * 0.34,
-      size: metaSize,
+    const dotted = '.'.repeat(58);
+    const stampCode = makePdfStampCodeLabel(codeId, codeDigest);
+    page.drawText(dotted, {
+      x: x + 36 * s,
+      y: y + boxHeight - 124 * s,
+      size: 8 * s,
       font: fonts.regular,
       color: black,
       opacity
     });
-    page.drawText(`CODE ${codeDigest.slice(0, 14).toUpperCase()}`, {
-      x: textX,
-      y: y + boxHeight * 0.19,
-      size: metaSize,
+    page.drawText(stampCode.slice(0, 50), {
+      x: x + 36 * s,
+      y: y + boxHeight - 150 * s,
+      size: 17 * s,
       font: fonts.regular,
       color: black,
       opacity
     });
-    page.drawText(`PDF ${digest.slice(0, 14).toUpperCase()} | ${stampedAt.slice(0, 10)}`, {
-      x: textX,
-      y: y + boxHeight * 0.05,
-      size: metaSize,
+    page.drawText(dotted, {
+      x: x + 36 * s,
+      y: y + 24 * s,
+      size: 8 * s,
       font: fonts.regular,
       color: black,
       opacity
     });
-    page.drawImage(qrImage, {
+    page.drawText('PDF ----------', {
+      x: x + 36 * s,
+      y: y + 8 * s,
+      size: 19 * s,
+      font: fonts.bold,
+      color: black,
+      opacity
+    });
+    page.drawRectangle({
       x: qrX,
       y: qrY,
       width: qrSize,
       height: qrSize,
+      borderColor: black,
+      borderWidth: Math.max(1, 1.2 * s),
+      opacity
+    });
+    page.drawImage(qrImage, {
+      x: qrX + 9 * s,
+      y: qrY + 9 * s,
+      width: qrSize - 18 * s,
+      height: qrSize - 18 * s,
       opacity
     });
   };
@@ -10300,7 +10385,7 @@ const PdfStampDialog = ({
     dangerouslySetInnerHTML: {
       __html: TOP_MENU_ICONS.pdfStamp
     }
-  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('BLACK QR v3: aplica un sello negro de Hashcod con un QR enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'BLACK QR v3: apply a black Hashcod stamp with a QR linked to a saved code and download a new PDF without uploading the file.')))), React.createElement("button", {
+  }), React.createElement("div", null, React.createElement("h2", null, L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')), React.createElement("p", null, L('BLACK QR v4: aplica un sello horizontal negro de Hashcod con QR real enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'BLACK QR v4: apply a horizontal black Hashcod stamp with a real QR linked to a saved code and download a new PDF without uploading the file.')))), React.createElement("button", {
     className: "dlg-x",
     onClick: onClose
   }, "x")), React.createElement("div", {
@@ -10331,11 +10416,29 @@ const PdfStampDialog = ({
     className: "pdfstamp-preview"
   }, React.createElement("div", {
     className: "pdfstamp-seal"
+  }, React.createElement("div", {
+    className: "pdfstamp-seal-left"
+  }, React.createElement("div", {
+    className: "pdfstamp-brand-row"
   }, React.createElement("span", {
     dangerouslySetInnerHTML: {
-      __html: window.OCG_ICONS.brand(48)
+      __html: window.OCG_ICONS.brand(72)
     }
-  }), React.createElement("div", null, React.createElement("b", null, "HASHCOD"), React.createElement("strong", null, "VERIFIED PDF STAMP"), React.createElement("small", null, selectedCodeId || 'HC----- SELECT DATABASE CODE'), React.createElement("small", null, "PDF ", fileDigest ? fileDigest.slice(0, 14).toUpperCase() : '--------------')), React.createElement("div", {
+  }), React.createElement("b", null, "HASHCOD")), React.createElement("div", {
+    className: "pdfstamp-verified-row"
+  }, React.createElement("span", {
+    className: "pdfstamp-shield"
+  }, "OK"), React.createElement("strong", null, "VERIFIED PDF STAMP")), React.createElement("small", {
+    className: "pdfstamp-dots"
+  }, "................................................"), React.createElement("small", {
+    className: "pdfstamp-code-line"
+  }, selectedCodeId ? makePdfStampCodeLabel(selectedCodeId, fileDigest || selectedCodeValue) : 'HC-db_SELECT_DATABASE_CODE'), React.createElement("small", {
+    className: "pdfstamp-dots"
+  }, "................................................"), React.createElement("small", {
+    className: "pdfstamp-pdf-line"
+  }, "PDF ----------")), React.createElement("div", {
+    className: "pdfstamp-divider"
+  }), React.createElement("div", {
     className: "pdfstamp-qr"
   }, selectedCodeValue ? React.createElement(QrCanvas, {
     payload: selectedCodeValue,
@@ -10370,8 +10473,8 @@ const PdfStampDialog = ({
     value: "top-left"
   }, L('Arriba izquierda', 'Top left')))), React.createElement("label", null, React.createElement("span", null, L('Ancho', 'Width'), " ", stampWidth, "px"), React.createElement("input", {
     type: "range",
-    min: "220",
-    max: "360",
+    min: "360",
+    max: "560",
     step: "4",
     value: stampWidth,
     onChange: event => setStampWidth(Number(event.target.value))
