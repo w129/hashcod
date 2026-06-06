@@ -287,11 +287,23 @@
     </section>
   </main>
 
+  <script src="data/icons.js?v=orders-catalog-1"></script>
+  <script src="data/catalog.js?v=orders-catalog-1"></script>
   <script>
     const HASHCOD_RNC = '402-0936929-3';
     const HASHCOD_FIXED_DISCOUNT = 2;
     const HASHCOD_FIXED_TAX = 18;
-    const services = [
+    const FAMILY_BASE = {
+      'PQC-KEM': 34, 'PQC-SIG': 36, 'HASH-SIG': 31, HPKE: 29, ZK: 42, MPC: 44, FHE: 58,
+      THRESH: 38, VDF: 33, VRF: 35, 'AEAD-LW': 24, XOF: 19, KDF: 18, MAC: 17, PAKE: 30,
+      ACCUM: 32, IBE: 37, ABE: 41, RING: 34, BLIND: 35
+    };
+    const CATEGORY_BASE = {
+      symmetric: 10, hashes: 8, mac: 12, kdf: 14, passwords: 10, asymmetric: 28,
+      signatures: 30, tokens: 12, ids: 7, pqc: 46, advanced_codes_100: 25,
+      advanced_codes_200: 32, neo_crypto_200: 52, apex_crypto_300: 58, hashcod_advanced_8282: 26
+    };
+    const baseServices = [
       ['Cryptographic code batch', 'Codes', 1.2, 'Codes generated from Hashcod catalog'],
       ['10,000 code catalog delivery', 'Catalog', 1800, 'Complete exported code catalog'],
       ['Hashcod PDF stamp', 'PDF', 24, 'Black QR verified PDF stamp'],
@@ -309,6 +321,79 @@
       ['Custom Hashcod tool development', 'Custom', 250, 'Private tool or workflow'],
       ['Enterprise implementation session', 'Enterprise', 420, 'Deployment, training and support']
     ];
+    const cleanText = value => String(value ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+    const entropyBits = entropy => {
+      const match = String(entropy || '').match(/(\d+(?:\.\d+)?)\s*bits/i);
+      return match ? Number(match[1]) : 128;
+    };
+    const familyFromType = type => {
+      const label = `${type.originalLabel || type.label || ''} ${type.id || ''} ${type.engine || ''}`;
+      const hc = label.match(/\bHC-([A-Z0-9-]+)-/);
+      if (hc) return hc[1];
+      if (/AES|ChaCha|Salsa|Serpent|Twofish|SM4|GOST|Kuznyechik|Magma|Blowfish/i.test(label)) return 'SYMMETRIC';
+      if (/SHA|BLAKE|Keccak|RIPEMD|Whirlpool|Hash/i.test(label)) return 'HASH';
+      if (/JWT|Token|License|QR|TOTP|UUID|ULID|Nonce/i.test(label)) return 'TOKEN';
+      if (/RSA|ECDSA|EdDSA|Dilithium|Kyber|Falcon|SPHINCS|ML-/i.test(label)) return 'ASYMMETRIC';
+      return 'GENERAL';
+    };
+    const levelPremium = type => {
+      const text = `${type.label || ''} ${type.originalLabel || ''} ${type.entropy || ''} ${type.space || ''}`;
+      if (/L5|512|896|832/i.test(text)) return 1.95;
+      if (/L3|384|800|768/i.test(text)) return 1.55;
+      if (/256|704|640/i.test(text)) return 1.25;
+      if (/192/i.test(text)) return 1.12;
+      if (/128|L1/i.test(text)) return 1.0;
+      return 1.08;
+    };
+    const standardPremium = type => {
+      const text = `${type.std || ''} ${type.engine || ''} ${type.about || ''}`;
+      if (/deprecated|broken|legacy interop only/i.test(text)) return 0.62;
+      if (/NIST|FIPS|RFC|ISO|SP 800|IETF|W3C|IEEE/i.test(text)) return 1.22;
+      if (/post-quantum|zero-knowledge|homomorphic|threshold|identity-based|attribute-based/i.test(text)) return 1.38;
+      if (/Hashcod/i.test(text)) return 1.16;
+      return 1.0;
+    };
+    const rarityPremium = (index, categoryId) => {
+      if (categoryId === 'hashcod_advanced_8282') return 1 + ((index % 37) / 100);
+      if (/neo|apex|advanced/i.test(categoryId)) return 1.28 + ((index % 19) / 100);
+      return 1 + ((index % 11) / 100);
+    };
+    const complexityUnits = type => {
+      const text = `${type.engine || ''} ${type.about || ''} ${type.std || ''}`;
+      let score = 1;
+      if (/HMAC|signature|firma|signed|binding/i.test(text)) score += 0.35;
+      if (/nonce|salt|payload|route|checksum/i.test(text)) score += 0.3;
+      if (/SHA-512|SHA3|SHA-3|BLAKE3/i.test(text)) score += 0.2;
+      if (/post-quantum|zero-knowledge|homomorphic|multipartita|threshold/i.test(text)) score += 0.8;
+      return score;
+    };
+    const quoteCodePriceFor = ({ category, type, globalIndex }) => {
+      const family = familyFromType(type);
+      const catBase = CATEGORY_BASE[category.id] || 14;
+      const familyBase = FAMILY_BASE[family] || catBase;
+      const bits = entropyBits(type.entropy);
+      const entropyFactor = Math.max(0.85, Math.min(2.4, Math.log2(Math.max(bits, 64)) / 8));
+      const per10 = Math.max(1, Math.round(familyBase * levelPremium(type) * standardPremium(type) * rarityPremium(globalIndex, category.id) * complexityUnits(type) * entropyFactor));
+      return { family, per10, each: Number((per10 / 10).toFixed(2)) };
+    };
+    const catalogCodeServices = () => {
+      let n = 0;
+      return (window.OCG_CATALOG || []).flatMap(category => (category.types || []).map(type => {
+        n += 1;
+        const price = quoteCodePriceFor({ category, type, globalIndex: n });
+        const codeName = `${String(n).padStart(5, '0')} | ${cleanText(type.label || type.id)}`;
+        return [
+          codeName,
+          cleanText(category.label || category.id),
+          price.each,
+          `${price.family} · ${cleanText(type.entropy || '-')} · ${cleanText(type.std || type.engine || '-')}`,
+          true,
+          price.per10
+        ];
+      }));
+    };
+    const codeServices = catalogCodeServices();
+    const services = [...baseServices, ...codeServices];
     const $ = id => document.getElementById(id);
     const money = value => `$${Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const orderId = () => `HCO-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.random().toString(16).slice(2,8).toUpperCase()}`;
@@ -339,6 +424,9 @@
         service: selected[0],
         category: selected[1],
         unit: selected[2],
+        description: selected[3] || '',
+        kind: selected[4] ? 'cryptographic_code' : 'service',
+        codePack10Price: selected[5] || '',
         qty,
         priority,
         delivery: $('delivery').value,
@@ -362,6 +450,7 @@
         ['Email', row.email || '---'],
         ['Service', row.service],
         ['Category', row.category],
+        ['Reference', row.description],
         ['Quantity', row.qty],
         ['Unit price', money(row.unit)],
         ['Priority multiplier', `${row.priority.toFixed(2)}x`],
@@ -386,8 +475,33 @@
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 500);
     };
-    $('service').innerHTML = services.map(row => `<option>${escapeHtml(row[0])} - ${money(row[2])}</option>`).join('');
-    $('serviceList').innerHTML = services.map(row => `<div class="service-pill"><b>${escapeHtml(row[0])}</b><span>${escapeHtml(row[1])} | ${money(row[2])}</span></div>`).join('');
+    const renderServiceOptions = () => {
+      const select = $('service');
+      select.innerHTML = '';
+      const serviceGroup = document.createElement('optgroup');
+      serviceGroup.label = 'Hashcod services';
+      baseServices.forEach((row, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = `${row[0]} - ${money(row[2])}`;
+        serviceGroup.appendChild(option);
+      });
+      const codeGroup = document.createElement('optgroup');
+      codeGroup.label = `10,000 cryptographic codes priced from Hashcod PDF (${codeServices.length})`;
+      codeServices.forEach((row, index) => {
+        const option = document.createElement('option');
+        option.value = String(baseServices.length + index);
+        option.textContent = `${row[0]} - ${money(row[2])} each`;
+        codeGroup.appendChild(option);
+      });
+      select.appendChild(serviceGroup);
+      select.appendChild(codeGroup);
+    };
+    renderServiceOptions();
+    $('serviceList').innerHTML = [
+      ...baseServices.map(row => `<div class="service-pill"><b>${escapeHtml(row[0])}</b><span>${escapeHtml(row[1])} | ${money(row[2])}</span></div>`),
+      `<div class="service-pill"><b>10,000 cryptographic codes</b><span>Individual code prices loaded from Hashcod pricing PDF formula · ${codeServices.length.toLocaleString('en-US')} options in Service</span></div>`
+    ].join('');
     $('discount').value = HASHCOD_FIXED_DISCOUNT;
     $('tax').value = HASHCOD_FIXED_TAX;
     document.querySelectorAll('input,select,textarea').forEach(el => el.addEventListener('input', renderQuote));
@@ -403,7 +517,7 @@
     $('jsonBtn').addEventListener('click', () => download(`Hashcod-order-${Date.now()}.json`, JSON.stringify(currentOrder(), null, 2), 'application/json;charset=utf-8'));
     $('csvBtn').addEventListener('click', () => {
       const rows = readOrders();
-      const headers = ['id','at','issuer','rnc','customer','phone','email','service','category','qty','unit','discountRatePct','taxRatePct','subtotal','discount','tax','total','delivery','notes'];
+      const headers = ['id','at','issuer','rnc','customer','phone','email','service','category','kind','description','qty','unit','codePack10Price','discountRatePct','taxRatePct','subtotal','discount','tax','total','delivery','notes'];
       const csv = [headers.join(','), ...rows.map(row => headers.map(key => `"${String(row[key] ?? '').replace(/"/g,'""')}"`).join(','))].join('\n');
       download(`Hashcod-orders-${Date.now()}.csv`, csv, 'text/csv;charset=utf-8');
     });
