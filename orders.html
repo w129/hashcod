@@ -115,6 +115,13 @@
       letter-spacing:0;
       text-transform:none;
     }
+    input[readonly] {
+      cursor:not-allowed;
+      background:#ededeb;
+      color:#111;
+      font-weight:800;
+      border-color:#777;
+    }
     textarea { min-height:104px;resize:vertical; }
     .grid2 { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
     .actions { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px; }
@@ -227,8 +234,8 @@
           </label>
         </div>
         <div class="grid2">
-          <label>Descuento %<input id="discount" type="number" min="0" max="90" value="0" /></label>
-          <label>Impuesto %<input id="tax" type="number" min="0" max="40" value="0" /></label>
+          <label>Descuento fijo %<input id="discount" type="number" value="2" readonly aria-readonly="true" tabindex="-1" /></label>
+          <label>Impuesto fijo ITBIS %<input id="tax" type="number" value="18" readonly aria-readonly="true" tabindex="-1" /></label>
         </div>
         <label>Modo de entrega
           <select id="delivery">
@@ -265,8 +272,8 @@
         </article>
         <div class="totalbox">
           <div><span>Subtotal</span><b id="subtotal">$0.00</b></div>
-          <div><span>Discount</span><b id="discountValue">$0.00</b></div>
-          <div><span>Tax</span><b id="taxValue">$0.00</b></div>
+          <div><span>Discount 2%</span><b id="discountValue">$0.00</b></div>
+          <div><span>Tax 18%</span><b id="taxValue">$0.00</b></div>
           <div><span>Total</span><b id="total">$0.00</b></div>
         </div>
         <div class="registry">
@@ -282,6 +289,8 @@
 
   <script>
     const HASHCOD_RNC = '402-0936929-3';
+    const HASHCOD_FIXED_DISCOUNT = 2;
+    const HASHCOD_FIXED_TAX = 18;
     const services = [
       ['Cryptographic code batch', 'Codes', 1.2, 'Codes generated from Hashcod catalog'],
       ['10,000 code catalog delivery', 'Catalog', 1800, 'Complete exported code catalog'],
@@ -312,8 +321,8 @@
       const selected = services[$('service').selectedIndex] || services[0];
       const qty = Math.max(1, Number($('qty').value) || 1);
       const priority = Number($('priority').value) || 1;
-      const discountRate = Math.max(0, Math.min(90, Number($('discount').value) || 0)) / 100;
-      const taxRate = Math.max(0, Math.min(40, Number($('tax').value) || 0)) / 100;
+      const discountRate = HASHCOD_FIXED_DISCOUNT / 100;
+      const taxRate = HASHCOD_FIXED_TAX / 100;
       const subtotal = selected[2] * qty * priority;
       const discount = subtotal * discountRate;
       const taxable = subtotal - discount;
@@ -334,6 +343,8 @@
         priority,
         delivery: $('delivery').value,
         notes: $('notes').value.trim(),
+        discountRatePct: HASHCOD_FIXED_DISCOUNT,
+        taxRatePct: HASHCOD_FIXED_TAX,
         subtotal,
         discount,
         tax,
@@ -354,6 +365,8 @@
         ['Quantity', row.qty],
         ['Unit price', money(row.unit)],
         ['Priority multiplier', `${row.priority.toFixed(2)}x`],
+        ['Fixed discount', `${row.discountRatePct}%`],
+        ['Fixed tax', `${row.taxRatePct}%`],
         ['Delivery', row.delivery],
         ['Notes', row.notes || '---']
       ].map(([a,b]) => `<tr><th>${escapeHtml(a)}</th><td>${escapeHtml(b)}</td></tr>`).join('');
@@ -375,6 +388,8 @@
     };
     $('service').innerHTML = services.map(row => `<option>${escapeHtml(row[0])} - ${money(row[2])}</option>`).join('');
     $('serviceList').innerHTML = services.map(row => `<div class="service-pill"><b>${escapeHtml(row[0])}</b><span>${escapeHtml(row[1])} | ${money(row[2])}</span></div>`).join('');
+    $('discount').value = HASHCOD_FIXED_DISCOUNT;
+    $('tax').value = HASHCOD_FIXED_TAX;
     document.querySelectorAll('input,select,textarea').forEach(el => el.addEventListener('input', renderQuote));
     $('saveBtn').addEventListener('click', () => {
       const row = currentOrder();
@@ -388,7 +403,7 @@
     $('jsonBtn').addEventListener('click', () => download(`Hashcod-order-${Date.now()}.json`, JSON.stringify(currentOrder(), null, 2), 'application/json;charset=utf-8'));
     $('csvBtn').addEventListener('click', () => {
       const rows = readOrders();
-      const headers = ['id','at','issuer','rnc','customer','phone','email','service','category','qty','unit','subtotal','discount','tax','total','delivery','notes'];
+      const headers = ['id','at','issuer','rnc','customer','phone','email','service','category','qty','unit','discountRatePct','taxRatePct','subtotal','discount','tax','total','delivery','notes'];
       const csv = [headers.join(','), ...rows.map(row => headers.map(key => `"${String(row[key] ?? '').replace(/"/g,'""')}"`).join(','))].join('\n');
       download(`Hashcod-orders-${Date.now()}.csv`, csv, 'text/csv;charset=utf-8');
     });
