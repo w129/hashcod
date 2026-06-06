@@ -9454,3 +9454,35 @@ body {
   .body { grid-template-columns:300px minmax(0,1fr) 340px !important; }
   .tb-tag { display:none !important; }
 }
+
+/* Real architectural image background, based on the provided reference */
+.ed::before,
+.equet-main::before {
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+  opacity:.48 !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.99) 0%, rgba(255,255,255,.92) 42%, rgba(255,255,255,.18) 100%),
+    url("hashcod-architectural-bg.svg") right center / auto 100% no-repeat !important;
+  clip-path:none !important;
+}
+
+.equet-main::before {
+  opacity:.44 !important;
+  background:
+    linear-gradient(90deg, rgba(248,248,245,.99) 0%, rgba(248,248,245,.90) 42%, rgba(248,248,245,.20) 100%),
+    url("hashcod-architectural-bg.svg") right center / auto 100% no-repeat !important;
+}
+
+.cfg,
+.out-tb,
+.out,
+.equet-worktop,
+.equet-summary,
+.equet-tablewrap {
+  position:relative !important;
+  z-index:1 !important;
+}
