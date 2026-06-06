@@ -16962,7 +16962,7 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
       equetSimpleHash(ticketSeed.split('').reverse().join('')),
     ].map(n => n.toString(16).padStart(8, '0')).join('').toUpperCase();
     const codeDigest = equetSimpleHash(code).toString(16).padStart(8, '0').toUpperCase();
-    const ticketId = `HCEQ-${ticketHash.slice(0, 14)}`;
+    const ticketId = `HEM-${ticketHash.slice(0, 14)}`;
     const qrPayload = JSON.stringify({
       platform: PLATFORM_DISPLAY_NAME,
       ticket: ticketId,
@@ -16984,10 +16984,19 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
     }
     const canvas = document.createElement('canvas');
     canvas.width = 1600;
-    canvas.height = 1000;
+    canvas.height = 900;
     const ctx = canvas.getContext('2d');
-    const pad = 64;
-    const rightX = 1064;
+    const pad = 42;
+    const cardX = 18;
+    const cardY = 16;
+    const cardW = canvas.width - 36;
+    const cardH = canvas.height - 32;
+    const cut = 28;
+    const innerX = 42;
+    const innerY = 38;
+    const innerW = canvas.width - 84;
+    const innerH = canvas.height - 76;
+    const rightX = 1062;
     const wrapText = (text, x, y, maxWidth, lineHeight, maxLines = 4) => {
       const words = String(text || '').split(/\s+/);
       let line = '';
@@ -17007,15 +17016,26 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
       if (line && lines < maxLines) ctx.fillText(line, x, y);
       return y + lineHeight;
     };
-    const drawLabelValue = (label, value, x, y, w) => {
-      ctx.fillStyle = '#777';
-      ctx.font = '700 15px Consolas, monospace';
-      ctx.letterSpacing = '2px';
-      ctx.fillText(String(label).toUpperCase(), x, y);
-      ctx.letterSpacing = '0px';
-      ctx.fillStyle = '#111';
-      ctx.font = '800 22px Consolas, monospace';
-      wrapText(value, x, y + 28, w, 26, 2);
+    const drawCutRect = (x, y, w, h, c, fill, stroke = '#111', lw = 2) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x + c, y);
+      ctx.lineTo(x + w - c, y);
+      ctx.lineTo(x + w, y + c);
+      ctx.lineTo(x + w, y + h - c);
+      ctx.lineTo(x + w - c, y + h);
+      ctx.lineTo(x + c, y + h);
+      ctx.lineTo(x, y + h - c);
+      ctx.lineTo(x, y + c);
+      ctx.closePath();
+      if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = lw;
+      ctx.stroke();
+      ctx.restore();
     };
     const drawPanel = (x, y, w, h, fill = '#f7f7f2') => {
       ctx.fillStyle = fill;
@@ -17024,86 +17044,283 @@ const HashcodEquetMatrixDialog = ({ open, onClose, rows = [], outputRows = [], n
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, w, h);
     };
-    ctx.fillStyle = '#f4f4ef';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#111';
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(pad, pad, canvas.width - pad * 2, canvas.height - pad * 2);
-    ctx.lineWidth = 2;
-    ctx.strokeRect(pad + 18, pad + 18, canvas.width - pad * 2 - 36, 176);
+    const drawMiniArrow = (x, y) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-0.75);
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.moveTo(0, -17);
+      ctx.lineTo(34, 0);
+      ctx.lineTo(0, 17);
+      ctx.lineTo(8, 3);
+      ctx.lineTo(-20, 3);
+      ctx.lineTo(-20, -3);
+      ctx.lineTo(8, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+    const drawVectorIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.fillStyle = '#111';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      [[0, 0, -20, 20], [0, 0, 20, 20], [0, 0, 0, -26]].forEach(([a, b, c, d]) => {
+        ctx.beginPath();
+        ctx.moveTo(x + a, y + b);
+        ctx.lineTo(x + c, y + d);
+        ctx.stroke();
+      });
+      [[x, y - 26], [x - 20, y + 20], [x + 20, y + 20]].forEach(([cx, cy]) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    };
+    const drawMountainIcon = (x, y) => {
+      ctx.save();
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.moveTo(x, y + 24);
+      ctx.lineTo(x + 23, y - 22);
+      ctx.lineTo(x + 48, y + 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x - 18, y + 24);
+      ctx.lineTo(x + 2, y - 8);
+      ctx.lineTo(x + 18, y + 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+    const drawDottedRing = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 5;
+      ctx.setLineDash([4, 7]);
+      ctx.beginPath();
+      ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    };
+    const drawShieldIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.fillStyle = '#111';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 24);
+      ctx.lineTo(x + 24, y - 13);
+      ctx.lineTo(x + 19, y + 20);
+      ctx.lineTo(x, y + 31);
+      ctx.lineTo(x - 19, y + 20);
+      ctx.lineTo(x - 24, y - 13);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y - 13);
+      ctx.lineTo(x + 13, y - 6);
+      ctx.lineTo(x + 10, y + 13);
+      ctx.lineTo(x, y + 19);
+      ctx.lineTo(x - 10, y + 13);
+      ctx.lineTo(x - 13, y - 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+    const drawChipIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x - 18, y - 18, 36, 36);
+      ctx.strokeRect(x - 10, y - 10, 20, 20);
+      for (let i = -14; i <= 14; i += 9) {
+        ctx.beginPath(); ctx.moveTo(x - 27, y + i); ctx.lineTo(x - 18, y + i); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + 18, y + i); ctx.lineTo(x + 27, y + i); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + i, y - 27); ctx.lineTo(x + i, y - 18); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + i, y + 18); ctx.lineTo(x + i, y + 27); ctx.stroke();
+      }
+      ctx.restore();
+    };
+    const drawCalendarIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x - 20, y - 18, 40, 38);
+      ctx.beginPath(); ctx.moveTo(x - 20, y - 6); ctx.lineTo(x + 20, y - 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 9, y - 25); ctx.lineTo(x - 9, y - 12); ctx.moveTo(x + 9, y - 25); ctx.lineTo(x + 9, y - 12); ctx.stroke();
+      ctx.fillStyle = '#111';
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) ctx.fillRect(x - 12 + c * 11, y + r * 10, 5, 5);
+      ctx.restore();
+    };
+    const drawLayersIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x, y - 25 + i * 15);
+        ctx.lineTo(x + 28, y - 12 + i * 15);
+        ctx.lineTo(x, y + 2 + i * 15);
+        ctx.lineTo(x - 28, y - 12 + i * 15);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    const drawClockIcon = (x, y) => {
+      ctx.save();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 14); ctx.moveTo(x, y); ctx.lineTo(x + 12, y + 8); ctx.stroke();
+      ctx.restore();
+    };
 
-    drawHashcodCanvasLogo(ctx, pad + 58, pad + 50, 116, '#111');
-    ctx.font = '900 68px Segoe UI, Arial, sans-serif';
-    ctx.fillText('HASHCOD', pad + 190, pad + 92);
-    ctx.font = '900 19px Consolas, monospace';
-    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', pad + 190, pad + 132);
-    ctx.font = '700 15px Consolas, monospace';
-    ctx.fillStyle = '#444';
-    ctx.fillText(ticketId, pad + 190, pad + 160);
     ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawCutRect(cardX, cardY, cardW, cardH, cut, '#f6f6f1', '#111', 3);
+    drawCutRect(innerX, innerY, innerW, innerH, 18, null, '#111', 2);
+
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(innerX, 208);
+    ctx.lineTo(innerX + innerW, 208);
+    ctx.moveTo(innerX, 772);
+    ctx.lineTo(innerX + innerW, 772);
+    ctx.stroke();
+
+    drawHashcodCanvasLogo(ctx, 84, 74, 132, '#111');
+    ctx.font = '900 78px Segoe UI, Arial, sans-serif';
+    ctx.fillStyle = '#111';
+    ctx.fillText('HASHCOD', 230, 116);
+    ctx.font = '900 20px Consolas, monospace';
+    ctx.letterSpacing = '3px';
+    ctx.fillText('EQUET ULTRA MATHEMATICAL PARAMETER TICKET', 230, 154);
+    ctx.letterSpacing = '0px';
+    ctx.font = '500 19px Consolas, monospace';
+    ctx.fillText(`TICKET ID: ${ticketId}`, 230, 190);
+
+    ctx.font = '900 20px Consolas, monospace';
+    ctx.letterSpacing = '4px';
+    ctx.fillText('SOURCE MATRIX >', 1082, 178);
+    ctx.letterSpacing = '0px';
     if (qrCanvas) {
       ctx.fillStyle = '#fff';
-      ctx.fillRect(canvas.width - pad - 232, pad + 26, 180, 180);
-      ctx.strokeRect(canvas.width - pad - 232, pad + 26, 180, 180);
-      ctx.drawImage(qrCanvas, canvas.width - pad - 222, pad + 36, 160, 160);
-      ctx.fillStyle = '#111';
-      ctx.font = '800 13px Consolas, monospace';
-      ctx.fillText('VERIFY QR', canvas.width - pad - 218, pad + 224);
+      ctx.fillRect(1330, 48, 176, 176);
+      ctx.strokeRect(1330, 48, 176, 176);
+      ctx.drawImage(qrCanvas, 1340, 58, 156, 156);
     }
 
-    ctx.strokeStyle = '#111';
+    ctx.fillStyle = '#111';
+    ctx.fillRect(86, 238, 196, 31);
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 20px Consolas, monospace';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('PRIMARY VECTOR', 98, 261);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#111';
+    ctx.font = '900 90px Consolas, monospace';
+    ctx.fillText(selectedParam.parameter, 86, 355);
+
+    const metricTop = 434;
+    drawMiniArrow(110, metricTop + 20);
+    drawVectorIcon(335, metricTop + 18);
+    drawMountainIcon(538, metricTop + 8);
+    ctx.strokeStyle = '#aaa';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(pad + 32, 238);
-    ctx.lineTo(canvas.width - pad - 32, 238);
+    ctx.moveTo(280, metricTop - 18); ctx.lineTo(280, metricTop + 60);
+    ctx.moveTo(502, metricTop - 18); ctx.lineTo(502, metricTop + 60);
+    ctx.stroke();
+    const metricText = (label, value, x) => {
+      ctx.fillStyle = '#333';
+      ctx.font = '700 17px Consolas, monospace';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(label, x, metricTop + 2);
+      ctx.letterSpacing = '0px';
+      ctx.fillStyle = '#111';
+      ctx.font = '900 24px Consolas, monospace';
+      ctx.fillText(String(value), x, metricTop + 38);
+    };
+    metricText('DIRECTION', selectedParam.direction, 140);
+    metricText('VECTOR', selectedParam.vector, 378);
+    metricText('WEIGHT', selectedParam.weight, 588);
+
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(60, 488); ctx.lineTo(785, 488);
+    ctx.moveTo(60, 582); ctx.lineTo(785, 582);
+    ctx.moveTo(60, 680); ctx.lineTo(785, 680);
     ctx.stroke();
 
-    ctx.fillStyle = '#111';
-    ctx.font = '900 78px Consolas, monospace';
-    ctx.fillText(selectedParam.parameter, pad + 32, 310);
-    drawLabelValue('Direction', selectedParam.direction, pad + 36, 358, 190);
-    drawLabelValue('Vector', selectedParam.vector, pad + 304, 358, 270);
-    drawLabelValue('Weight', selectedParam.weight, pad + 620, 358, 180);
-    drawLabelValue('Bind', selectedParam.bind, pad + 36, 456, 610);
-    drawLabelValue('Code source', selected ? equetCodeLabel(selected, 0) : 'Hashcod code', pad + 36, 552, 820);
-    ctx.font = '700 16px Consolas, monospace';
-    ctx.fillStyle = '#222';
-    wrapText(`HSC:${code.slice(0, 420)}`, pad + 36, 636, 860, 23, 5);
+    drawDottedRing(104, 532);
+    drawShieldIcon(104, 625);
+    drawChipIcon(104, 724);
+    const blockText = (label, value, x, y, width = 640) => {
+      ctx.fillStyle = '#333';
+      ctx.font = '800 18px Consolas, monospace';
+      ctx.letterSpacing = '2px';
+      ctx.fillText(label, x, y);
+      ctx.letterSpacing = '0px';
+      ctx.fillStyle = '#111';
+      ctx.font = '900 23px Consolas, monospace';
+      wrapText(value, x, y + 36, width, 29, 2);
+    };
+    blockText('RING', selectedParam.bind, 142, 522);
+    blockText('CODE SOURCE', selected ? equetCodeLabel(selected, 0) : 'Hashcod code', 142, 616, 720);
+    blockText('HEX-MECH', `0X${ticketHash}${codeDigest}`.slice(0, 68), 142, 716, 720);
 
-    const cell = 42;
+    const cell = 51;
     const sx = rightX;
-    const sy = 260;
-    ctx.fillStyle = '#111';
-    ctx.font = '800 20px Consolas, monospace';
-    ctx.fillText('SOURCE MATRIX', sx, sy - 28);
-    drawPanel(sx - 10, sy - 10, cell * 8 + 20, cell * 8 + 20, '#fbfbf6');
+    const sy = 232;
+    drawPanel(sx, sy, cell * 8, cell * 8, '#f8f8f3');
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(sx + c * cell, sy + r * cell, cell, cell);
       ctx.fillStyle = '#111';
-      ctx.font = '800 20px Consolas, monospace';
-      ctx.fillText(String(matrix[r][c]), sx + c * cell + 15, sy + r * cell + 28);
+      ctx.font = '900 20px Consolas, monospace';
+      ctx.fillText(String(matrix[r][c]), sx + c * cell + 19, sy + r * cell + 32);
     }
-    drawPanel(rightX - 18, 640, 408, 206, '#fbfbf6');
-    ctx.font = '800 16px Consolas, monospace';
-    ctx.fillText('PARAMETER STREAM', rightX, 672);
-    ctx.font = '700 14px Consolas, monospace';
-    parameters.slice(0, 5).forEach((row, i) => {
-      ctx.fillText(`${String(row.i).padStart(4, '0')}  ${row.parameter}  ${row.direction}`, rightX, 706 + i * 28);
+    drawPanel(1050, 630, 460, 162, '#f8f8f3');
+    ctx.font = '900 24px Consolas, monospace';
+    ctx.fillText('NOTES', 1070, 662);
+
+    const footerY = 820;
+    drawCalendarIcon(103, footerY);
+    drawLayersIcon(455, footerY);
+    ctx.font = '900 20px Consolas, monospace';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('TOTAL PARAMETERS', 146, footerY - 7);
+    ctx.fillText('STRED', 504, footerY - 7);
+    ctx.fillText('CODE', 778, footerY - 7);
+    ctx.fillText('GENERATED', 1106, footerY - 7);
+    ctx.letterSpacing = '0px';
+    ctx.font = '900 24px Consolas, monospace';
+    ctx.fillText(String(parameters.length), 146, footerY + 28);
+    ctx.fillText(String(stride), 504, footerY + 28);
+    ctx.font = '900 36px Consolas, monospace';
+    ctx.fillText('#', 720, footerY + 16);
+    ctx.font = '900 24px Consolas, monospace';
+    ctx.fillText(codeDigest, 778, footerY + 28);
+    drawClockIcon(1068, footerY + 4);
+    ctx.fillText(issuedAt, 1106, footerY + 28);
+
+    ctx.strokeStyle = '#aaa';
+    ctx.lineWidth = 1.5;
+    [392, 660, 1015].forEach(x => {
+      ctx.beginPath();
+      ctx.moveTo(x, 790);
+      ctx.lineTo(x, 852);
+      ctx.stroke();
     });
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(pad + 32, 870);
-    ctx.lineTo(canvas.width - pad - 32, 870);
-    ctx.stroke();
-    ctx.fillStyle = '#111';
-    ctx.font = '800 17px Consolas, monospace';
-    ctx.fillText(`TOTAL PARAMETERS ${parameters.length}  |  STRIDE ${stride}  |  CODE ${codeDigest}  |  GENERATED ${issuedAt}`, pad + 36, 910);
-    ctx.font = '700 13px Consolas, monospace';
-    ctx.fillText('Hashcod verified mathematical ticket - QR payload contains ticket id, parameter, source digest and bind.', pad + 36, 940);
     canvas.toBlob(blob => {
       if (!blob) return;
       triggerBlobDownload(`Hashcod-EquetMatrix-ticket-${selectedParam.parameter}-${tsStamp()}.jpg`, blob);
