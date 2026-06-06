@@ -9535,3 +9535,152 @@ body {
 .out-empty {
   background:transparent !important;
 }
+
+/* Stronger transparency on the exact functional blocks shown in the reference */
+.sb,
+.sb-search-row,
+.sb-cat,
+.sb-cat-h,
+.sb-list,
+.sb-item,
+.sb-item-b,
+.ed,
+.cfg,
+.cfg > *,
+.cfg-strength,
+.cfg-global-prefix,
+.cfg-g,
+.out-tb,
+.out,
+.rp {
+  background-color:rgba(255,255,255,.54) !important;
+  backdrop-filter:blur(1.5px) !important;
+}
+
+.cfg {
+  background:rgba(255,255,255,.50) !important;
+}
+
+.cfg input,
+.cfg select,
+.cfg textarea,
+.cfg button,
+.cfg .btn,
+.sb-search,
+.sb-search-row input {
+  background-color:rgba(255,255,255,.62) !important;
+}
+
+.sb-item:not(.on):hover {
+  background:rgba(245,245,241,.72) !important;
+}
+
+.sb-item.on {
+  background:#050505 !important;
+}
+
+.rp .side-grid,
+.rp .side-table,
+.rp .side-card,
+.rp section,
+.rp article {
+  background-color:rgba(255,255,255,.56) !important;
+}
+
+.rp .side-grid > *,
+.rp .side-table > *,
+.rp .side-card > *,
+.rp table,
+.rp tr,
+.rp td,
+.rp th {
+  background-color:rgba(255,255,255,.46) !important;
+}
+
+.out-empty,
+.out-empty * {
+  background-color:transparent !important;
+}
+
+.out-empty-mark {
+  background:transparent !important;
+}
+
+/* Final reference transparency pass: sidebar, controls, output and tool panes */
+.sb,
+.sb-search-row,
+.sb-cat-h,
+.sb-cat-n,
+.sb-list,
+.ed,
+.rp,
+.cfg,
+.cfg-strength,
+.cfg-global-prefix,
+.cfg-g,
+.cfg-prefix-controls,
+.cfg-prefix-preview,
+.out-tb,
+.out,
+.equet-side,
+.equet-main,
+.equet-live,
+.equet-summary,
+.equet-tablewrap {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.74), rgba(255,255,255,.46)),
+    url("hashcod-architectural-bg.svg") right center / auto 100% no-repeat !important;
+  backdrop-filter:blur(1px) saturate(1.06) !important;
+}
+
+.sb-search-row,
+.sb-cat-h,
+.sb-cat-n,
+.sb-item:not(.on),
+.sb-item-b,
+.cfg,
+.cfg-strength,
+.cfg-global-prefix,
+.cfg-g,
+.out-tb,
+.rp .side-grid,
+.rp .side-table,
+.rp .side-card,
+.rp section,
+.rp article,
+.equet-live,
+.equet-summary,
+.equet-tablewrap {
+  background-color:rgba(255,255,255,.50) !important;
+}
+
+.cfg input,
+.cfg select,
+.cfg textarea,
+.cfg button,
+.cfg .btn,
+.sb-search,
+.sb-search-row input,
+.rp button,
+.rp input,
+.rp select,
+.rp textarea,
+.equet-side input,
+.equet-side select,
+.equet-side button {
+  background-color:rgba(255,255,255,.66) !important;
+}
+
+.sb-item.on,
+.sb-item.on .sb-item-b,
+.sb-item.on .sb-tag {
+  background:#050505 !important;
+  color:#fff !important;
+}
+
+.out,
+.out-empty,
+.out-empty *,
+.out-empty-mark {
+  background-color:transparent !important;
+}
