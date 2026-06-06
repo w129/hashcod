@@ -138,6 +138,7 @@
     .quote-logo { display:flex;align-items:center;gap:12px; }
     .quote-logo img { width:42px;height:42px; }
     .quote-logo b { font-size:28px;letter-spacing:-.04em; }
+    .quote-logo small { display:block;margin-top:4px;color:#555;font-family:Consolas,monospace;font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase; }
     .quote-id { font-family:Consolas,monospace;font-size:12px;font-weight:900;letter-spacing:1px;text-align:right; }
     .quote-table { width:100%;border-collapse:collapse; }
     .quote-table th,.quote-table td { border:1px solid var(--line);padding:10px;text-align:left;font-size:13px; }
@@ -254,7 +255,7 @@
           <header class="quote-head">
             <div class="quote-logo">
               <img src="app/hashcod-platform-icon.svg?v=hashcod-classic-1" alt="" />
-              <div><b>HASHCOD</b><div class="eyebrow">Service quote / order</div></div>
+              <div><b>HASHCOD</b><div class="eyebrow">Service quote / order</div><small id="quoteRncHead">RNC 402-0936929-3</small></div>
             </div>
             <div class="quote-id" id="quoteId">HCO-ORDER</div>
           </header>
@@ -280,6 +281,7 @@
   </main>
 
   <script>
+    const HASHCOD_RNC = '402-0936929-3';
     const services = [
       ['Cryptographic code batch', 'Codes', 1.2, 'Codes generated from Hashcod catalog'],
       ['10,000 code catalog delivery', 'Catalog', 1800, 'Complete exported code catalog'],
@@ -320,6 +322,8 @@
       return {
         id: $('quoteId').dataset.id || orderId(),
         at: new Date().toISOString(),
+        issuer: 'Hashcod',
+        rnc: HASHCOD_RNC,
         customer: $('customer').value.trim(),
         phone: $('phone').value.trim(),
         email: $('email').value.trim(),
@@ -341,6 +345,7 @@
       $('quoteId').dataset.id = row.id;
       $('quoteId').textContent = row.id;
       $('quoteRows').innerHTML = [
+        ['Issuer', `${row.issuer} · RNC ${row.rnc}`],
         ['Customer', row.customer || '---'],
         ['Phone', row.phone || '---'],
         ['Email', row.email || '---'],
@@ -383,7 +388,7 @@
     $('jsonBtn').addEventListener('click', () => download(`Hashcod-order-${Date.now()}.json`, JSON.stringify(currentOrder(), null, 2), 'application/json;charset=utf-8'));
     $('csvBtn').addEventListener('click', () => {
       const rows = readOrders();
-      const headers = ['id','at','customer','phone','email','service','category','qty','unit','subtotal','discount','tax','total','delivery','notes'];
+      const headers = ['id','at','issuer','rnc','customer','phone','email','service','category','qty','unit','subtotal','discount','tax','total','delivery','notes'];
       const csv = [headers.join(','), ...rows.map(row => headers.map(key => `"${String(row[key] ?? '').replace(/"/g,'""')}"`).join(','))].join('\n');
       download(`Hashcod-orders-${Date.now()}.csv`, csv, 'text/csv;charset=utf-8');
     });
