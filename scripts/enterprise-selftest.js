@@ -224,6 +224,10 @@ function assert(ok, id, detail = '') {
   assert(ordersSource.includes('const HASHCOD_FIXED_DISCOUNT = 2') && ordersSource.includes('const HASHCOD_FIXED_TAX = 18') && ordersSource.includes('readonly aria-readonly="true"'), 'orders-fixed-tax-discount');
   assert(ordersSource.includes('data/catalog.js?v=orders-catalog-1') && ordersSource.includes('const catalogCodeServices =') && ordersSource.includes('10,000 cryptographic codes priced from Hashcod PDF'), 'orders-10000-code-pricing-options');
   assert(serverSource.includes("route === '/orders.html'") && serverSource.includes("route === '/pedidos.html'"), 'orders-page-public-route');
+  const castorSource = fs.readFileSync(path.join(ROOT, 'castor.html'), 'utf8');
+  const castorAliasSource = fs.readFileSync(path.join(ROOT, 'juego-castor.html'), 'utf8');
+  assert(castorSource.includes('Castor Castor') && castorSource.includes('requestAnimationFrame(tick)') && castorSource.includes('scoreError') && castorSource.includes('Cronometro'), 'castor-game-standalone');
+  assert(castorAliasSource.includes('/castor.html') && serverSource.includes("route === '/castor.html'") && serverSource.includes("route === '/juego-castor.html'"), 'castor-game-public-route');
   assert(serverSource.includes('async function handleBrandEvidence') && serverSource.includes("['brand-evidence'"), 'brand-evidence-persistent-api');
   assert(appSource.includes('const CodeRegistryTableDialog =') && appSource.includes("authFetch('/api/code-registry'"), 'code-registry-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.codeRegistry') && appSource.includes('CODE REGISTRY'), 'code-registry-menu');

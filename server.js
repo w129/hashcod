@@ -3126,6 +3126,8 @@ function isPublicStaticAsset(routePath = '') {
     || route === '/favicon.ico'
     || route === '/orders.html'
     || route === '/pedidos.html'
+    || route === '/castor.html'
+    || route === '/juego-castor.html'
     || route === '/phone-os-sw.js';
 }
 
