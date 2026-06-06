@@ -20979,7 +20979,10 @@ const HashcodEquetMatrixDialog = ({
     if (!selectedParam) return;
     const code = equetCodeText(selected);
     const issuedAt = new Date().toISOString();
-    const ticketId = `HCEQ-${equetSimpleHash(`${selectedParam.parameter}|${selectedParam.bind}|${code}|${issuedAt}`).slice(0, 14).toUpperCase()}`;
+    const ticketSeed = `${selectedParam.parameter}|${selectedParam.bind}|${code}|${issuedAt}|${JSON.stringify(matrix)}`;
+    const ticketHash = [equetSimpleHash(ticketSeed), equetSimpleHash(ticketSeed.split('').reverse().join(''))].map(n => n.toString(16).padStart(8, '0')).join('').toUpperCase();
+    const codeDigest = equetSimpleHash(code).toString(16).padStart(8, '0').toUpperCase();
+    const ticketId = `HCEQ-${ticketHash.slice(0, 14)}`;
     const qrPayload = JSON.stringify({
       platform: PLATFORM_DISPLAY_NAME,
       ticket: ticketId,
@@ -20989,7 +20992,7 @@ const HashcodEquetMatrixDialog = ({
       vector: selectedParam.vector,
       bind: selectedParam.bind,
       code_label: selected ? equetCodeLabel(selected, 0) : 'Hashcod code',
-      code_hash: equetSimpleHash(code),
+      code_hash: codeDigest,
       issued_at: issuedAt
     });
     let qrCanvas = null;
@@ -21104,9 +21107,9 @@ const HashcodEquetMatrixDialog = ({
     ctx.stroke();
     ctx.fillStyle = '#111';
     ctx.font = '800 17px Consolas, monospace';
-    ctx.fillText(`TOTAL PARAMETERS ${parameters.length}  |  STRIDE ${stride}  |  GENERATED ${issuedAt}`, pad + 36, 898);
+    ctx.fillText(`TOTAL PARAMETERS ${parameters.length}  |  STRIDE ${stride}  |  CODE ${codeDigest}  |  GENERATED ${issuedAt}`, pad + 36, 898);
     ctx.font = '700 13px Consolas, monospace';
-    ctx.fillText('Hashcod verified mathematical ticket · QR payload contains ticket id, parameter, source digest and bind.', pad + 36, 930);
+    ctx.fillText('Hashcod verified mathematical ticket - QR payload contains ticket id, parameter, source digest and bind.', pad + 36, 930);
     canvas.toBlob(blob => {
       if (!blob) return;
       triggerBlobDownload(`Hashcod-EquetMatrix-ticket-${selectedParam.parameter}-${tsStamp()}.jpg`, blob);
