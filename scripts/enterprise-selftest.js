@@ -226,7 +226,7 @@ function assert(ok, id, detail = '') {
   assert(serverSource.includes("route === '/orders.html'") && serverSource.includes("route === '/pedidos.html'"), 'orders-page-public-route');
   const castorSource = fs.readFileSync(path.join(ROOT, 'castor.html'), 'utf8');
   const castorAliasSource = fs.readFileSync(path.join(ROOT, 'juego-castor.html'), 'utf8');
-  assert(castorSource.includes('Castor Castor') && castorSource.includes('requestAnimationFrame(tick)') && castorSource.includes('scoreError') && castorSource.includes('Cronometro') && castorSource.includes('50% de descuento') && castorSource.includes('HASHCOD-CASTOR-50'), 'castor-game-standalone');
+  assert(castorSource.includes('Castor Castor') && castorSource.includes('requestAnimationFrame(tick)') && castorSource.includes('scoreError') && castorSource.includes('Cronometro') && castorSource.includes('50% de descuento') && castorSource.includes('HASHCOD-CASTOR-50') && castorSource.includes('activateTrap') && castorSource.includes('SLOW+') && castorSource.includes('SAFE+'), 'castor-game-standalone');
   assert(castorAliasSource.includes('/castor.html') && serverSource.includes("route === '/castor.html'") && serverSource.includes("route === '/juego-castor.html'"), 'castor-game-public-route');
   assert(serverSource.includes('async function handleBrandEvidence') && serverSource.includes("['brand-evidence'"), 'brand-evidence-persistent-api');
   assert(appSource.includes('const CodeRegistryTableDialog =') && appSource.includes("authFetch('/api/code-registry'"), 'code-registry-dialog');

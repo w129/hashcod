@@ -235,6 +235,53 @@
       opacity:.18;
       pointer-events:none;
     }
+    .bait {
+      position:absolute;
+      min-width:72px;
+      height:30px;
+      display:grid;
+      place-items:center;
+      border:2px solid #11823b;
+      background:#f7fff9;
+      color:#11823b;
+      font-family:Consolas,"Courier New",monospace;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:1.8px;
+      text-transform:uppercase;
+      box-shadow:4px 4px 0 rgba(17,130,59,.2);
+      pointer-events:none;
+      transform:translate3d(0,0,0);
+      will-change:transform;
+    }
+    .bait::before {
+      content:"BONUS";
+      position:absolute;
+      left:6px;
+      top:-12px;
+      color:#111;
+      font-size:8px;
+      letter-spacing:1px;
+    }
+    .bait.bad {
+      border-color:#b00020;
+      color:#b00020;
+      background:#fff7f8;
+      box-shadow:4px 4px 0 rgba(176,0,32,.16);
+    }
+    .target.is-hidden {
+      opacity:.16;
+      filter:blur(1px);
+    }
+    .fake-target {
+      position:absolute;
+      width:112px;
+      height:112px;
+      border:3px dashed #11823b;
+      background:rgba(17,130,59,.08);
+      opacity:.8;
+      pointer-events:none;
+    }
     .result {
       min-height:50px;
       padding:14px 18px;
@@ -276,19 +323,21 @@
     <section class="panel">
       <div class="eyebrow">Impossible timing lab</div>
       <h1>Castor Castor</h1>
-      <p class="lead">Pausa el castor exactamente cuando cruce el cuadro. El cronometro corre acelerado, el castor cambia de direccion y la ventana valida es brutalmente pequena.</p>
+      <p class="lead">Pausa el castor exactamente cuando cruce el cuadro. El cronometro corre acelerado, el castor cambia de direccion y la arena lanza bonus visuales que prometen ayudarte, aunque no todos dicen la verdad.</p>
       <div class="score-grid">
         <div><span>Cronometro</span><b id="clock">00:00.000</b></div>
         <div><span>Velocidad</span><b id="speed">0x</b></div>
         <div><span>Intentos</span><b id="tries">0</b></div>
         <div><span>Mejor error</span><b id="best">---</b></div>
+        <div><span>Ayudas tomadas</span><b id="traps">0</b></div>
+        <div><span>Cuadro</span><b id="targetSize">122</b></div>
       </div>
       <div class="controls">
         <button class="primary" id="startBtn">Iniciar</button>
         <button id="pauseBtn">Pausar Castor</button>
         <button id="resetBtn">Reiniciar</button>
       </div>
-      <div class="notice">Regla: ganas solo si el centro del castor queda dentro del cuadro en el instante exacto de pausa. El modo esta calibrado para ser casi imposible.</div>
+      <div class="notice">Regla: ganas solo si el centro del castor queda dentro del cuadro en el instante exacto de pausa. Los bonus SLOW+, WIDE+, AIM+, FOCUS+ y SAFE+ parecen buenos, pero pueden sabotear el intento.</div>
       <div class="reward">
         <b>Premio del reto</b>
         Si logras pausar el castor dentro del cuadro, obtienes 50% de descuento en servicios Hashcod.
@@ -336,6 +385,8 @@
     const speedEl = $('speed');
     const triesEl = $('tries');
     const bestEl = $('best');
+    const trapsEl = $('traps');
+    const targetSizeEl = $('targetSize');
     const stateEl = $('state');
     const resultEl = $('result');
     const couponEl = $('coupon');
@@ -358,6 +409,12 @@
     let targetBox = { x: 0, y: 0, w: 122, h: 122 };
     let nextChaos = 0;
     let lastCoupon = '';
+    let baits = [];
+    let fakeTarget = null;
+    let nextBait = 0;
+    let trapHits = 0;
+    let targetHiddenUntil = 0;
+    let baitSerial = 0;
 
     const fmt = ms => {
       const total = Math.floor(ms);
@@ -381,6 +438,7 @@
       target.style.width = `${targetBox.w}px`;
       target.style.height = `${targetBox.h}px`;
       target.style.transform = `translate3d(${targetBox.x}px,${targetBox.y}px,0)`;
+      targetSizeEl.textContent = `${Math.round(targetBox.w)}`;
     };
     const resetMotion = () => {
       const b = bounds();
@@ -409,6 +467,114 @@
       dot.style.top = `${y + 20}px`;
       arena.appendChild(dot);
       setTimeout(() => dot.remove(), 360);
+    };
+    const clearBaits = () => {
+      baits.forEach(item => item.el.remove());
+      baits = [];
+      if (fakeTarget) {
+        fakeTarget.remove();
+        fakeTarget = null;
+      }
+      target.classList.remove('is-hidden');
+    };
+    const baitTypes = [
+      { key:'SLOW+', name:'Slow', action:'speed' },
+      { key:'WIDE+', name:'Wide', action:'shrink' },
+      { key:'AIM+', name:'Aim', action:'move' },
+      { key:'FOCUS+', name:'Focus', action:'hide' },
+      { key:'SAFE+', name:'Safe', action:'fake' }
+    ];
+    const spawnBait = now => {
+      const b = bounds();
+      const type = baitTypes[Math.floor(Math.random() * baitTypes.length)];
+      const el = document.createElement('div');
+      el.className = 'bait';
+      el.textContent = type.key;
+      arena.appendChild(el);
+      baits.push({
+        id: ++baitSerial,
+        type,
+        el,
+        x: randomBetween(24, Math.max(25, b.w - 120)),
+        y: randomBetween(34, Math.max(35, b.h - 80)),
+        vx: randomBetween(-90, 90),
+        vy: randomBetween(-70, 70),
+        born: now,
+        ttl: randomBetween(1800, 2900)
+      });
+    };
+    const activateTrap = item => {
+      trapHits += 1;
+      trapsEl.textContent = String(trapHits);
+      item.el.classList.add('bad');
+      item.el.textContent = 'TRAP';
+      if (item.type.action === 'speed') {
+        speedBoost = Math.min(5.4, speedBoost + 1.35);
+        vx *= 1.22;
+        vy *= 1.22;
+        stateEl.textContent = 'SLOW+ ACTIVATED: SPEED SPIKE';
+      } else if (item.type.action === 'shrink') {
+        targetBox.w = Math.max(54, targetBox.w * .72);
+        targetBox.h = targetBox.w;
+        target.style.width = `${targetBox.w}px`;
+        target.style.height = `${targetBox.h}px`;
+        targetSizeEl.textContent = `${Math.round(targetBox.w)}`;
+        stateEl.textContent = 'WIDE+ ACTIVATED: TARGET SHRINK';
+      } else if (item.type.action === 'move') {
+        placeTarget();
+        stateEl.textContent = 'AIM+ ACTIVATED: TARGET SHIFT';
+      } else if (item.type.action === 'hide') {
+        targetHiddenUntil = performance.now() + 900;
+        target.classList.add('is-hidden');
+        stateEl.textContent = 'FOCUS+ ACTIVATED: TARGET FADE';
+      } else if (item.type.action === 'fake') {
+        if (fakeTarget) fakeTarget.remove();
+        fakeTarget = document.createElement('div');
+        fakeTarget.className = 'fake-target';
+        fakeTarget.style.transform = `translate3d(${randomBetween(30, Math.max(31, bounds().w - 150))}px,${randomBetween(40, Math.max(41, bounds().h - 150))}px,0)`;
+        arena.appendChild(fakeTarget);
+        setTimeout(() => {
+          if (fakeTarget) {
+            fakeTarget.remove();
+            fakeTarget = null;
+          }
+        }, 1300);
+        stateEl.textContent = 'SAFE+ ACTIVATED: DECOY TARGET';
+      }
+      setTimeout(() => item.el.remove(), 120);
+    };
+    const updateBaits = (now, dt) => {
+      if (now >= nextBait && baits.length < 5) {
+        spawnBait(now);
+        nextBait = now + randomBetween(520, 900);
+      }
+      const b = bounds();
+      const cx = x + b.bw / 2;
+      const cy = y + b.bh / 2;
+      baits = baits.filter(item => {
+        const age = now - item.born;
+        if (age > item.ttl) {
+          item.el.remove();
+          return false;
+        }
+        item.x += item.vx * dt;
+        item.y += item.vy * dt;
+        if (item.x < 10 || item.x > b.w - 90) item.vx *= -1;
+        if (item.y < 18 || item.y > b.h - 48) item.vy *= -1;
+        item.x = clamp(item.x, 10, b.w - 90);
+        item.y = clamp(item.y, 18, b.h - 48);
+        item.el.style.transform = `translate3d(${item.x}px,${item.y}px,0)`;
+        const hit = Math.abs(cx - (item.x + 36)) < 56 && Math.abs(cy - (item.y + 15)) < 44;
+        if (hit) {
+          activateTrap(item);
+          return false;
+        }
+        return true;
+      });
+      if (targetHiddenUntil && now > targetHiddenUntil) {
+        targetHiddenUntil = 0;
+        target.classList.remove('is-hidden');
+      }
     };
     const shortDigest = async text => {
       const data = new TextEncoder().encode(text);
@@ -467,6 +633,7 @@
       dangerBand.style.setProperty('--y', `${y + b.bh / 2}px`);
       clockEl.textContent = fmt(gameMs);
       speedEl.textContent = `${speedBoost.toFixed(2)}x`;
+      updateBaits(now, dt);
       drawTrail();
       raf = requestAnimationFrame(tick);
     };
@@ -474,6 +641,8 @@
       if (running) return;
       placeTarget();
       resetMotion();
+      clearBaits();
+      nextBait = performance.now() + 420;
       running = true;
       startedAt = performance.now();
       lastFrame = 0;
@@ -519,11 +688,14 @@
       gameMs = 0;
       clockEl.textContent = '00:00.000';
       speedEl.textContent = '0x';
+      trapHits = 0;
+      trapsEl.textContent = '0';
       resultEl.className = 'result';
       resultEl.textContent = 'Reiniciado. Presiona iniciar cuando estes listo.';
       syncCoupon();
       stateEl.textContent = 'Ready';
       startBtn.textContent = 'Iniciar';
+      clearBaits();
       placeTarget();
       resetMotion();
     };
