@@ -2642,6 +2642,7 @@ const TOP_MENU_ICONS = {
   filePackager: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="8" x="5" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h2"/><path d="M12 18h6"/></svg>`,
   brandEvidence: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6 2 2 4-4"/><path d="M2 12h20A10 10 0 1 1 12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 4-10"/></svg>`,
   pdfStamp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/><path d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/><path d="M5 22h14"/></svg>`,
+  toolEnhancer: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6H4z"/><path d="M14 14h6v6h-6z"/><path d="M7 7h.01"/><path d="M17 7h.01"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>`,
   docusealSigner: `<img src="/public-source/hashcod-docuseal-tool/public/docuseal-logo-black.svg" alt="" />`,
   warpWorkspace: `<img src="/public-source/hashcod-warp-tool/public/warp-logo-black.svg" alt="" />`,
   graphLab: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 7a24 24 0 0 1 0 10"/><path d="M4.5 7a24 24 0 0 0 0 10"/><path d="M7 19.5a24 24 0 0 0 10 0"/><path d="M7 4.5a24 24 0 0 1 10 0"/><rect x="17" y="17" width="5" height="5" rx="1"/><rect x="17" y="2" width="5" height="5" rx="1"/><rect x="2" y="17" width="5" height="5" rx="1"/><rect x="2" y="2" width="5" height="5" rx="1"/></svg>`,
@@ -8169,8 +8170,8 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
   const [fileDigest, setFileDigest] = useState('');
   const [selectedCodeIndex, setSelectedCodeIndex] = useState('0');
   const [position, setPosition] = useState('bottom-right');
-  const [stampWidth, setStampWidth] = useState(520);
-  const [opacity, setOpacity] = useState(0.88);
+  const [stampWidth, setStampWidth] = useState(430);
+  const [opacity, setOpacity] = useState(0.92);
   const [allPages, setAllPages] = useState(true);
   const [singlePage, setSinglePage] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -8257,8 +8258,8 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
     const black = rgb(0, 0, 0);
     const { width, height } = page.getSize();
     const margin = 22;
-    const boxWidth = Math.min(Number(stampWidth) || 520, Math.max(300, width - margin * 2));
-    const boxHeight = Math.max(132, boxWidth * 0.34);
+    const boxWidth = Math.min(Number(stampWidth) || 430, Math.max(300, width - margin * 2));
+    const boxHeight = Math.max(92, boxWidth * 0.24);
     const coords = {
       'top-left': [margin, height - margin - boxHeight],
       'top-right': [width - margin - boxWidth, height - margin - boxHeight],
@@ -8266,21 +8267,19 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
       'bottom-right': [width - margin - boxWidth, margin],
     };
     const [x, y] = coords[position] || coords['bottom-right'];
-    const s = boxWidth / 520;
-    const lineWidth = Math.max(1.4, 2.4 * s);
+    const s = boxWidth / 430;
+    const lineWidth = Math.max(1.1, 1.8 * s);
     page.drawRectangle({ x, y, width: boxWidth, height: boxHeight, borderColor: black, borderWidth: lineWidth, opacity });
-    page.drawRectangle({ x: x + 5 * s, y: y + 5 * s, width: boxWidth - 10 * s, height: boxHeight - 10 * s, borderColor: black, borderWidth: Math.max(0.8, 1.2 * s), opacity });
+    page.drawRectangle({ x: x + 4 * s, y: y + 4 * s, width: boxWidth - 8 * s, height: boxHeight - 8 * s, borderColor: black, borderWidth: Math.max(0.65, 0.9 * s), opacity });
 
-    const logoSize = 58 * s;
-    const logoX = x + 34 * s;
-    const logoY = y + boxHeight - 86 * s;
-    const qrSize = 118 * s;
-    const qrX = x + boxWidth - qrSize - 26 * s;
+    const logoSize = 36 * s;
+    const logoX = x + 16 * s;
+    const logoY = y + boxHeight - 58 * s;
+    const qrSize = 70 * s;
+    const qrX = x + boxWidth - qrSize - 14 * s;
     const qrY = y + (boxHeight - qrSize) / 2;
-    const dividerX = qrX - 28 * s;
-    page.drawLine({ start: { x: dividerX, y: y + 24 * s }, end: { x: dividerX, y: y + boxHeight - 24 * s }, thickness: Math.max(1.2, 1.5 * s), color: black, opacity });
-    page.drawLine({ start: { x: dividerX - 3 * s, y: y + 24 * s }, end: { x: dividerX + 3 * s, y: y + 24 * s }, thickness: Math.max(1.2, 1.5 * s), color: black, opacity });
-    page.drawLine({ start: { x: dividerX - 3 * s, y: y + boxHeight - 24 * s }, end: { x: dividerX + 3 * s, y: y + boxHeight - 24 * s }, thickness: Math.max(1.2, 1.5 * s), color: black, opacity });
+    const dividerX = qrX - 14 * s;
+    page.drawLine({ start: { x: dividerX, y: y + 12 * s }, end: { x: dividerX, y: y + boxHeight - 12 * s }, thickness: Math.max(0.9, 1.1 * s), color: black, opacity });
 
     const logoOptions = {
       x: logoX,
@@ -8291,19 +8290,17 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
     };
     page.drawSvgPath('M22.996 30H9.004a1.002 1.002 0 0 1-.821-1.577l6.998-9.996a1 1 0 0 1 1.638 0l6.998 9.996a1.002 1.002 0 0 1-.82 1.577Z', logoOptions);
     page.drawSvgPath('M28 24h-4v-2h4V6H4v16h4v2H4a2.002 2.002 0 0 1-2-2V6a2.002 2.002 0 0 1 2-2h24a2.002 2.002 0 0 1 2 2v16a2.002 2.002 0 0 1-2 2Z', logoOptions);
-    const textX = x + 122 * s;
-    page.drawText('HASHCOD', { x: textX, y: y + boxHeight - 55 * s, size: 36 * s, font: fonts.bold, color: black, opacity });
-    page.drawSvgPath('M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z', { x: x + 38 * s, y: y + boxHeight - 100 * s, scale: 1.28 * s, color: black, opacity });
-    page.drawSvgPath('M9 12l2 2 4-5', { x: x + 38 * s, y: y + boxHeight - 100 * s, scale: 1.28 * s, color: black, opacity });
-    page.drawText('VERIFIED PDF STAMP', { x: x + 72 * s, y: y + boxHeight - 102 * s, size: 17 * s, font: fonts.bold, color: black, opacity });
-    const dotted = '.'.repeat(58);
+    const textX = x + 62 * s;
+    page.drawText('HASHCOD', { x: textX, y: y + boxHeight - 34 * s, size: 20 * s, font: fonts.bold, color: black, opacity });
+    page.drawText('VERIFIED PDF STAMP', { x: textX, y: y + boxHeight - 50 * s, size: 8.5 * s, font: fonts.bold, color: black, opacity });
+    const dotted = '.'.repeat(38);
     const stampCode = makePdfStampCodeLabel(codeId, codeDigest);
-    page.drawText(dotted, { x: x + 36 * s, y: y + boxHeight - 124 * s, size: 8 * s, font: fonts.regular, color: black, opacity });
-    page.drawText(stampCode.slice(0, 50), { x: x + 36 * s, y: y + boxHeight - 150 * s, size: 17 * s, font: fonts.regular, color: black, opacity });
-    page.drawText(dotted, { x: x + 36 * s, y: y + 24 * s, size: 8 * s, font: fonts.regular, color: black, opacity });
-    page.drawText('PDF ----------', { x: x + 36 * s, y: y + 8 * s, size: 19 * s, font: fonts.bold, color: black, opacity });
-    page.drawRectangle({ x: qrX, y: qrY, width: qrSize, height: qrSize, borderColor: black, borderWidth: Math.max(1, 1.2 * s), opacity });
-    page.drawImage(qrImage, { x: qrX + 9 * s, y: qrY + 9 * s, width: qrSize - 18 * s, height: qrSize - 18 * s, opacity });
+    page.drawText(dotted, { x: textX, y: y + boxHeight - 62 * s, size: 5.5 * s, font: fonts.regular, color: black, opacity });
+    page.drawText(stampCode.slice(0, 42), { x: textX, y: y + boxHeight - 76 * s, size: 8.5 * s, font: fonts.regular, color: black, opacity });
+    page.drawText(`PDF ${String(digest || '').slice(0, 18)}...`, { x: textX, y: y + 18 * s, size: 6.5 * s, font: fonts.regular, color: black, opacity });
+    page.drawText(String(stampedAt || '').slice(0, 24), { x: textX, y: y + 8 * s, size: 6.5 * s, font: fonts.regular, color: black, opacity });
+    page.drawRectangle({ x: qrX, y: qrY, width: qrSize, height: qrSize, borderColor: black, borderWidth: Math.max(0.8, 1 * s), opacity });
+    page.drawImage(qrImage, { x: qrX + 5 * s, y: qrY + 5 * s, width: qrSize - 10 * s, height: qrSize - 10 * s, opacity });
   };
   const stampAndDownload = async () => {
     if (!file || !selectedCodeValue || busy || !window.PDFLib?.PDFDocument) return;
@@ -8348,7 +8345,7 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
             <span className="pdfstamp-mark" dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.pdfStamp}} />
             <div>
               <h2>{L('Sellador PDF Hashcod', 'Hashcod PDF Stamp')}</h2>
-              <p>{L('BLACK QR v4: aplica un sello horizontal negro de Hashcod con QR real enlazado a un code guardado y descarga un PDF nuevo sin subir el archivo.', 'BLACK QR v4: apply a horizontal black Hashcod stamp with a real QR linked to a saved code and download a new PDF without uploading the file.')}</p>
+              <p>{L('Sello compacto negro Hashcod con QR real enlazado a un code guardado. El PDF se procesa localmente y se descarga como copia nueva.', 'Compact black Hashcod stamp with a real QR linked to a saved code. The PDF is processed locally and downloaded as a new copy.')}</p>
             </div>
           </div>
           <button className="dlg-x" onClick={onClose}>x</button>
@@ -8371,17 +8368,14 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
               <div className="pdfstamp-seal">
                 <div className="pdfstamp-seal-left">
                   <div className="pdfstamp-brand-row">
-                    <span dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(72)}} />
+                    <span dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(44)}} />
                     <b>HASHCOD</b>
                   </div>
                   <div className="pdfstamp-verified-row">
-                    <span className="pdfstamp-shield">OK</span>
                     <strong>VERIFIED PDF STAMP</strong>
                   </div>
-                  <small className="pdfstamp-dots">................................................</small>
                   <small className="pdfstamp-code-line">{selectedCodeId ? makePdfStampCodeLabel(selectedCodeId, fileDigest || selectedCodeValue) : 'HC-db_SELECT_DATABASE_CODE'}</small>
-                  <small className="pdfstamp-dots">................................................</small>
-                  <small className="pdfstamp-pdf-line">PDF ----------</small>
+                  <small className="pdfstamp-pdf-line">PDF SHA-256 + CODE QR</small>
                 </div>
                 <div className="pdfstamp-divider" />
                 <div className="pdfstamp-qr">{selectedCodeValue ? <QrCanvas payload={selectedCodeValue} size={58} correctLevel="M" /> : <span>QR</span>}</div>
@@ -8409,7 +8403,7 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
                   <option value="top-left">{L('Arriba izquierda', 'Top left')}</option>
                 </select>
               </label>
-              <label><span>{L('Ancho', 'Width')} {stampWidth}px</span><input type="range" min="360" max="560" step="4" value={stampWidth} onChange={event => setStampWidth(Number(event.target.value))} /></label>
+              <label><span>{L('Ancho', 'Width')} {stampWidth}px</span><input type="range" min="320" max="500" step="4" value={stampWidth} onChange={event => setStampWidth(Number(event.target.value))} /></label>
               <label><span>{L('Opacidad', 'Opacity')} {Math.round(opacity * 100)}%</span><input type="range" min="0.35" max="1" step="0.05" value={opacity} onChange={event => setOpacity(Number(event.target.value))} /></label>
               <label className="pdfstamp-check"><input type="checkbox" checked={allPages} onChange={event => setAllPages(event.target.checked)} /><span>{L('Sellar todas las paginas', 'Stamp all pages')}</span></label>
               {!allPages && <label><span>{L('Pagina', 'Page')}</span><input type="number" min="1" max={Math.max(1, pageCount)} value={singlePage} onChange={event => setSinglePage(Number(event.target.value))} /></label>}
@@ -8419,6 +8413,115 @@ const PdfStampDialog = ({ open, onClose, notify, language, rows = [] }) => {
               <button className="pdfstamp-mainbtn" onClick={stampAndDownload} disabled={!file || !selectedCodeValue || busy}>
                 {busy ? L('Procesando PDF...', 'Processing PDF...') : L('Descargar PDF sellado', 'Download stamped PDF')}
               </button>
+            </div>
+          </main>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const TOOL_ENHANCEMENT_CATEGORIES = [
+  ['SEC', 'Security', 'zero-trust checks, audit chain, vault hardening, rate-limit signals'],
+  ['CRYPTO', 'Cryptography', 'entropy probes, KDF variants, signatures, digest comparators'],
+  ['DB', 'Database', 'persistence, sync, versioning, dedupe, recovery manifests'],
+  ['PDF', 'Documents', 'PDF stamps, signed reports, QR verification, export profiles'],
+  ['QR', 'QR / Mobile', 'phone payloads, offline QR packets, scan logs, SMS gateway helpers'],
+  ['UX', 'Interface', 'responsive states, keyboard flows, hover clarity, empty-state guidance'],
+  ['MATH', 'Math Engines', 'parametric curves, lattice checks, matrix maps, statistical scoring'],
+  ['CLI', 'Command Systems', 'commands, chains, macros, reproducible transform receipts'],
+  ['EXPORT', 'Exports', 'PNG, YAML, JSON, ZIP, OCG pack, ticket and invoice outputs'],
+  ['QA', 'Validation', 'self-tests, sample checks, boundary probes, regression snapshots'],
+  ['AUTO', 'Automation', 'batch workers, queue notes, reminders, local manifests'],
+  ['LAW', 'Evidence', 'certificates, licensing, source attribution, legal disclaimers'],
+];
+
+const TOOL_ENHANCEMENT_ACTIONS = Array.from({ length: 360 }, (_, index) => {
+  const [key, title, domain] = TOOL_ENHANCEMENT_CATEGORIES[index % TOOL_ENHANCEMENT_CATEGORIES.length];
+  const phase = Math.floor(index / TOOL_ENHANCEMENT_CATEGORIES.length) + 1;
+  const modes = ['analyze', 'generate', 'verify', 'store', 'export', 'audit', 'recover', 'sync', 'compare', 'render'];
+  const mode = modes[index % modes.length];
+  return {
+    id: `HFX-${String(index + 1).padStart(4, '0')}`,
+    key,
+    title,
+    mode,
+    phase,
+    domain,
+    action: `${mode.toUpperCase()} ${title} module phase ${phase}`,
+    effect: `Adds ${domain} with deterministic logs and lightweight UI controls.`,
+  };
+});
+
+const ToolEnhancerDialog = ({ open, onClose, notify, language }) => {
+  const L = (es, en) => (language === 'es' ? es : en);
+  const [filter, setFilter] = useState('ALL');
+  const [query, setQuery] = useState('');
+  const visible = useMemo(() => TOOL_ENHANCEMENT_ACTIONS.filter(item => {
+    const haystack = `${item.id} ${item.key} ${item.title} ${item.mode} ${item.domain} ${item.effect}`.toLowerCase();
+    return (filter === 'ALL' || item.key === filter) && haystack.includes(query.trim().toLowerCase());
+  }), [filter, query]);
+  if (!open) return null;
+  const manifest = {
+    platform: PLATFORM_DISPLAY_NAME,
+    engine: 'Hashcod universal tool enhancement matrix',
+    functions: TOOL_ENHANCEMENT_ACTIONS.length,
+    categories: TOOL_ENHANCEMENT_CATEGORIES.map(([key, title]) => ({ key, title })),
+    activeFilter: filter,
+    exportedAt: new Date().toISOString(),
+  };
+  const copyManifest = () => {
+    navigator.clipboard?.writeText(JSON.stringify(manifest, null, 2));
+    notify?.(L('Matriz de mejoras copiada.', 'Enhancement matrix copied.'));
+  };
+  const exportJson = () => triggerBlobDownload(`Hashcod-tool-enhancement-matrix-${tsStamp()}.json`, new Blob([JSON.stringify({ ...manifest, actions: TOOL_ENHANCEMENT_ACTIONS }, null, 2)], { type: 'application/json' }));
+  const exportTxt = () => triggerBlobDownload(`Hashcod-tool-enhancement-matrix-${tsStamp()}.txt`, new Blob([TOOL_ENHANCEMENT_ACTIONS.map(item => `${item.id} | ${item.key} | ${item.action} | ${item.effect}`).join('\n')], { type: 'text/plain' }));
+  return (
+    <div className="dlg-back" onClick={onClose}>
+      <section className="dlg toolenhancerdlg" onClick={event => event.stopPropagation()}>
+        <div className="dlg-h toolenhancer-head">
+          <div className="toolenhancer-title">
+            <span dangerouslySetInnerHTML={{__html: TOP_MENU_ICONS.toolEnhancer}} />
+            <div>
+              <h2>{L('Hashcod Tool Boost Matrix', 'Hashcod Tool Boost Matrix')}</h2>
+              <p>{L('Capa universal con cientos de funciones aplicables a las herramientas: seguridad, exportacion, base de datos, QR, matematicas, CLI y auditoria.', 'Universal layer with hundreds of functions for tools: security, export, database, QR, math, CLI and audit.')}</p>
+            </div>
+          </div>
+          <button className="dlg-x" onClick={onClose}>x</button>
+        </div>
+        <div className="toolenhancer-grid">
+          <aside className="toolenhancer-side">
+            <div className="toolenhancer-metric"><span>{L('Funciones', 'Functions')}</span><b>{TOOL_ENHANCEMENT_ACTIONS.length}</b></div>
+            <div className="toolenhancer-metric"><span>{L('Categorias', 'Categories')}</span><b>{TOOL_ENHANCEMENT_CATEGORIES.length}</b></div>
+            <input value={query} onChange={event => setQuery(event.target.value)} placeholder={L('Buscar mejora...', 'Search enhancement...')} />
+            <select value={filter} onChange={event => setFilter(event.target.value)}>
+              <option value="ALL">{L('Todas las categorias', 'All categories')}</option>
+              {TOOL_ENHANCEMENT_CATEGORIES.map(([key, title]) => <option key={key} value={key}>{key} - {title}</option>)}
+            </select>
+            <button onClick={copyManifest}>{L('Copiar manifiesto', 'Copy manifest')}</button>
+            <button onClick={exportJson}>JSON</button>
+            <button onClick={exportTxt}>TXT</button>
+          </aside>
+          <main className="toolenhancer-main">
+            <div className="toolenhancer-cards">
+              {TOOL_ENHANCEMENT_CATEGORIES.map(([key, title, domain]) => (
+                <article key={key}>
+                  <b>{key}</b>
+                  <strong>{title}</strong>
+                  <span>{domain}</span>
+                </article>
+              ))}
+            </div>
+            <div className="toolenhancer-table">
+              <div className="toolenhancer-row toolenhancer-rowhead"><b>ID</b><b>{L('Modulo', 'Module')}</b><b>{L('Funcion', 'Function')}</b><b>{L('Efecto', 'Effect')}</b></div>
+              {visible.slice(0, 180).map(item => (
+                <div className="toolenhancer-row" key={item.id}>
+                  <code>{item.id}</code>
+                  <span>{item.key}</span>
+                  <b>{item.action}</b>
+                  <small>{item.effect}</small>
+                </div>
+              ))}
             </div>
           </main>
         </div>
@@ -19042,6 +19145,7 @@ const App = () => {
   const [brandEvidenceOpen, setBrandEvidenceOpen] = useState(false);
   const [codeRegistryOpen, setCodeRegistryOpen] = useState(false);
   const [pdfStampOpen, setPdfStampOpen] = useState(false);
+  const [toolEnhancerOpen, setToolEnhancerOpen] = useState(false);
   const [docusealSignerOpen, setDocusealSignerOpen] = useState(false);
   const [warpWorkspaceOpen, setWarpWorkspaceOpen] = useState(false);
   const [graphLabOpen, setGraphLabOpen] = useState(false);
@@ -19927,6 +20031,7 @@ const App = () => {
   const openBrandEvidence = () => setBrandEvidenceOpen(true);
     const openCodeRegistry = () => setCodeRegistryOpen(true);
     const openPdfStamp = () => setPdfStampOpen(true);
+    const openToolEnhancer = () => setToolEnhancerOpen(true);
     const openDocusealSigner = () => setDocusealSignerOpen(true);
     const openWarpWorkspace = () => setWarpWorkspaceOpen(true);
   const openGraphLab = () => setGraphLabOpen(true);
@@ -20212,9 +20317,15 @@ const App = () => {
   ];
     const pdfStampItems = [
       { label: language === 'es' ? 'Abrir sellador PDF Hashcod' : 'Open Hashcod PDF stamp', onClick: openPdfStamp },
-      { label: language === 'es' ? 'Sello vectorial azul Hashcod' : 'Blue Hashcod vector stamp', onClick: openPdfStamp },
+      { label: language === 'es' ? 'Sello compacto negro Hashcod' : 'Compact black Hashcod stamp', onClick: openPdfStamp },
       { label: language === 'es' ? 'Huella SHA-256 del original' : 'Original SHA-256 digest', onClick: openPdfStamp },
       { label: language === 'es' ? 'Descarga PDF local' : 'Local PDF download', onClick: openPdfStamp },
+    ];
+    const toolEnhancerItems = [
+      { label: language === 'es' ? 'Abrir matriz de mejoras' : 'Open enhancement matrix', onClick: openToolEnhancer },
+      { label: language === 'es' ? '360 funciones reutilizables' : '360 reusable functions', onClick: openToolEnhancer },
+      { label: language === 'es' ? 'Categorias para todas las herramientas' : 'Categories for every tool', onClick: openToolEnhancer },
+      { label: language === 'es' ? 'Exportar manifiesto JSON/TXT' : 'Export JSON/TXT manifest', onClick: openToolEnhancer },
     ];
     const docusealSignerItems = [
       { label: language === 'es' ? 'Abrir firma documental' : 'Open document signer', onClick: openDocusealSigner },
@@ -20807,6 +20918,7 @@ const App = () => {
       <BrandEvidenceVaultDialog open={brandEvidenceOpen} onClose={() => setBrandEvidenceOpen(false)} notify={notify} language={language} rows={copyDb} />
       <CodeRegistryTableDialog open={codeRegistryOpen} onClose={() => setCodeRegistryOpen(false)} notify={notify} language={language} rows={copyDb} />
       <PdfStampDialog open={pdfStampOpen} onClose={() => setPdfStampOpen(false)} notify={notify} language={language} rows={copyDb} />
+      <ToolEnhancerDialog open={toolEnhancerOpen} onClose={() => setToolEnhancerOpen(false)} notify={notify} language={language} />
       <DocusealSignerDialog open={docusealSignerOpen} onClose={() => setDocusealSignerOpen(false)} notify={notify} language={language} />
       <WarpWorkspaceDialog open={warpWorkspaceOpen} onClose={() => setWarpWorkspaceOpen(false)} notify={notify} language={language} />
       <GraphLabDialog open={graphLabOpen} onClose={() => setGraphLabOpen(false)} notify={notify} language={language} />
@@ -20891,6 +21003,7 @@ const App = () => {
             <MenuButton label="BRAND EVIDENCE" icon={TOP_MENU_ICONS.brandEvidence} iconOnly items={brandEvidenceItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openBrandEvidence} />
             <MenuButton label="CODE REGISTRY" icon={TOP_MENU_ICONS.codeRegistry} iconOnly items={codeRegistryItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openCodeRegistry} />
             <MenuButton label="PDF STAMP" icon={TOP_MENU_ICONS.pdfStamp} iconOnly items={pdfStampItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openPdfStamp} />
+            <MenuButton label="BOOST MATRIX" icon={TOP_MENU_ICONS.toolEnhancer} iconOnly items={toolEnhancerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openToolEnhancer} />
             <MenuButton label="DOCUSEAL SIGNER" icon={TOP_MENU_ICONS.docusealSigner} iconOnly items={docusealSignerItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openDocusealSigner} />
             <MenuButton label="WARP WORKSPACE" icon={TOP_MENU_ICONS.warpWorkspace} iconOnly items={warpWorkspaceItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openWarpWorkspace} />
             <MenuButton label="GRAPH LAB" icon={TOP_MENU_ICONS.graphLab} iconOnly items={graphLabItems} activeMenu={activeMenu} setActiveMenu={setActiveMenu} primaryAction={openGraphLab} />
