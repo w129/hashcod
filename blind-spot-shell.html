@@ -363,6 +363,22 @@
       gap: 14px;
       align-items: center;
     }
+    .access-qr-modes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .access-qr-mode {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.7);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 174px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      min-width: 0;
+    }
     .access-qr-inline .access-qr-box {
       width: 174px;
       height: 174px;
@@ -375,6 +391,19 @@
     .access-qr-copy {
       width: 100%;
       margin-top: 10px;
+    }
+    .micro-offline-badge {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 8px;
+      padding: 6px 8px;
+      border: 1px solid #000;
+      background: #111;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
     }
     .shell-lock {
       display: none;
@@ -415,6 +444,8 @@
       .qr-box { min-height: 220px; }
       .qr-box canvas, .qr-box img { width: 192px !important; height: 192px !important; }
       .bridge-payload { max-height: 170px; }
+      .access-qr-modes { grid-template-columns: 1fr; }
+      .access-qr-mode { grid-template-columns: 1fr; }
       .access-qr-inline { grid-template-columns: 1fr; }
       .access-qr-inline .access-qr-box { width: 100%; min-height: 226px; }
       .access-qr-inline .access-qr-box canvas,
@@ -430,6 +461,10 @@
       .access-qr-box {
         width: 100%;
         min-height: 176px;
+      }
+      .access-qr-modes,
+      .access-qr-mode {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -474,12 +509,23 @@
 
       <section class="panel panel-pad">
         <span class="label">QR unico para conectar</span>
-        <div class="access-qr-inline">
-          <div id="accessQrInlineBox" class="access-qr-box">QR</div>
-          <div>
-            <div id="accessQrInlineId" class="access-qr-id">BSS-ACCESS</div>
-            <p class="hint">Escanea este QR desde otro dispositivo para abrir Blind spot shell. Si ese dispositivo ya la cacheo una vez con internet, podra volver a entrar sin conexion.</p>
-            <button id="copyAccessLink" class="access-qr-copy" type="button">Copiar enlace QR</button>
+        <div class="access-qr-modes">
+          <div class="access-qr-mode">
+            <div id="accessQrInlineBox" class="access-qr-box">QR</div>
+            <div>
+              <div id="accessQrInlineId" class="access-qr-id">BSS-ACCESS</div>
+              <p class="hint">Escanea este QR para abrir la oficina completa. Necesita internet una vez para guardar cache; despues vuelve a abrir offline en ese telefono.</p>
+              <button id="copyAccessLink" class="access-qr-copy" type="button">Copiar enlace QR</button>
+            </div>
+          </div>
+          <div class="access-qr-mode">
+            <div id="microShellQrBox" class="access-qr-box">QR</div>
+            <div>
+              <div id="microShellQrId" class="access-qr-id">BSS-MICRO</div>
+              <p class="hint">Este QR contiene una mini oficina dentro del propio QR. En telefonos compatibles abre sin internet, guarda texto local y no depende del servidor.</p>
+              <button id="copyMicroShellLink" class="access-qr-copy" type="button">Copiar micro QR</button>
+              <span class="micro-offline-badge">offline real</span>
+            </div>
           </div>
         </div>
       </section>
@@ -542,7 +588,7 @@
     <div class="access-qr-title">Access QR</div>
     <div id="accessQrBox" class="access-qr-box">QR</div>
     <div id="accessQrId" class="access-qr-id">BSS-ACCESS</div>
-    <p class="access-qr-note">Escanea una vez para abrir/cachear. Despues funciona offline si el dispositivo ya guardo la oficina.</p>
+    <p class="access-qr-note">Escanea una vez para abrir/cachear. El QR grande dentro de la oficina incluye tambien una micro version sin internet.</p>
   </aside>
 
   <script src="/vendor/qrcode.min.js?v=blind-spot-shell"></script>
@@ -573,7 +619,9 @@
         accessQrBox: $('accessQrBox'),
         accessQrId: $('accessQrId'),
         accessQrInlineBox: $('accessQrInlineBox'),
-        accessQrInlineId: $('accessQrInlineId')
+        accessQrInlineId: $('accessQrInlineId'),
+        microShellQrBox: $('microShellQrBox'),
+        microShellQrId: $('microShellQrId')
       };
 
       function setMessage(text, kind = 'ok') {
@@ -800,6 +848,47 @@
           }
         });
         return accessUrl;
+      }
+
+      function microOfflineShell() {
+        const html = [
+          '<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">',
+          '<title>Blind spot micro</title></head><body style="margin:16px;background:#f7f6f1;color:#111;font-family:Arial,sans-serif">',
+          '<h1 style="font-size:34px;margin:0 0 4px">Blind spot shell</h1>',
+          '<p style="margin:0 0 14px;color:#555">Micro oficina offline dentro del QR. Pega texto, guarda y carga sin internet.</p>',
+          '<textarea id=t style="width:100%;height:42vh;box-sizing:border-box;border:2px solid #111;padding:12px;font:16px monospace" placeholder="Pega texto aqui"></textarea>',
+          '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">',
+          '<button style="padding:14px;font-weight:900" onclick="try{let a=JSON.parse(localStorage.bssm||\'[]\');a.unshift({d:new Date().toISOString(),v:t.value});localStorage.bssm=JSON.stringify(a);t.value=\'\';c.textContent=\'saved \'+a.length}catch(e){c.textContent=e.message}">SAVE</button>',
+          '<button style="padding:14px;font-weight:900" onclick="try{let a=JSON.parse(localStorage.bssm||\'[]\');t.value=a.map(x=>x.d+\'\\n\'+x.v).join(\'\\n---\\n\');c.textContent=\'loaded \'+a.length}catch(e){c.textContent=e.message}">LOAD</button>',
+          '<button style="padding:14px;font-weight:900" onclick="try{navigator.clipboard?navigator.clipboard.readText().then(x=>{t.value=x;c.textContent=\'clipboard\'}):c.textContent=\'paste manual\'}catch(e){c.textContent=\'paste manual\'}">PASTE</button>',
+          '</div><p id=c style="font:13px monospace;border-left:4px solid #111;padding:10px;background:#fff">ready offline</p>',
+          '</body></html>'
+        ].join('');
+        return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+      }
+
+      function renderMicroShellQr() {
+        if (!state.microShellQrBox) return '';
+        const payload = microOfflineShell();
+        const microId = `BSS-MICRO-${payload.length}B`;
+        state.microShellQrId.textContent = microId;
+        state.microShellQrBox.innerHTML = '';
+        if (window.QRCode) {
+          try {
+            new window.QRCode(state.microShellQrBox, {
+              text: payload,
+              width: 174,
+              height: 174,
+              correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : undefined
+            });
+          } catch (error) {
+            state.microShellQrBox.textContent = 'QR demasiado denso';
+            setMessage(`Micro QR no pudo renderizar: ${error.message || error}`, 'warn');
+          }
+        } else {
+          drawMatrixInto(state.microShellQrBox, payload, 158);
+        }
+        return payload;
       }
 
       async function importBridgePayload(payload, source = 'bridge') {
@@ -1030,7 +1119,7 @@
           return;
         }
         try {
-          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js?v=access-qr-2');
+          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js?v=access-qr-3');
           await navigator.serviceWorker.ready;
           state.offlineState.textContent = 'ready';
           setMessage(`Blind spot shell listo offline. Scope: ${reg.scope}`);
@@ -1090,6 +1179,7 @@
           event.target.value = '';
         });
         $('copyAccessLink').addEventListener('click', () => copyText(renderAccessQr()));
+        $('copyMicroShellLink').addEventListener('click', () => copyText(renderMicroShellQr()));
         $('exportJson').addEventListener('click', () => exportRecords('json'));
         $('exportTxt').addEventListener('click', () => exportRecords('txt'));
         $('copyAll').addEventListener('click', () => copyText(filteredClips().map((item) => item.text).join('\n\n')));
@@ -1125,6 +1215,7 @@
         bindEvents();
         updateOnlineState();
         renderAccessQr();
+        renderMicroShellQr();
         db = await openDb();
         await refresh();
         if ('serviceWorker' in navigator) {
