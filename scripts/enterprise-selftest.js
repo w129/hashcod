@@ -228,6 +228,13 @@ function assert(ok, id, detail = '') {
   const castorAliasSource = fs.readFileSync(path.join(ROOT, 'juego-castor.html'), 'utf8');
   assert(castorSource.includes('Castor Castor') && castorSource.includes('requestAnimationFrame(tick)') && castorSource.includes('scoreError') && castorSource.includes('Cronometro') && castorSource.includes('50% de descuento') && castorSource.includes('HASHCOD-CASTOR-50') && castorSource.includes('activateTrap') && castorSource.includes('SLOW+') && castorSource.includes('SAFE+') && castorSource.includes('repelFromTarget') && castorSource.includes('shiftTargetAway'), 'castor-game-standalone');
   assert(castorAliasSource.includes('/castor.html') && serverSource.includes("route === '/castor.html'") && serverSource.includes("route === '/juego-castor.html'"), 'castor-game-public-route');
+  const blindSpotSource = fs.readFileSync(path.join(ROOT, 'blind-spot-shell.html'), 'utf8');
+  const blindSpotAliasSource = fs.readFileSync(path.join(ROOT, 'blindspot.html'), 'utf8');
+  const blindSpotSwSource = fs.readFileSync(path.join(ROOT, 'blind-spot-sw.js'), 'utf8');
+  assert(blindSpotSource.includes('Blind spot shell') && blindSpotSource.includes('navigator.clipboard.readText') && blindSpotSource.includes("indexedDB.open(DB_NAME") && blindSpotSource.includes("serviceWorker.register('/blind-spot-sw.js')"), 'blind-spot-shell-offline-office');
+  assert(blindSpotSource.includes('Modo escucha') && blindSpotSource.includes('paste-box') && blindSpotSource.includes('exportRecords') && blindSpotSource.includes('phone-shell'), 'blind-spot-shell-mobile-clipboard');
+  assert(blindSpotSwSource.includes('blind-spot-shell-v1') && blindSpotSwSource.includes('/blind-spot-shell.html') && blindSpotSwSource.includes('/app/hashcod-platform-icon.svg'), 'blind-spot-shell-service-worker');
+  assert(blindSpotAliasSource.includes('/blind-spot-shell.html') && serverSource.includes("route === '/blind-spot-shell.html'") && serverSource.includes("route === '/blindspot.html'") && serverSource.includes("route === '/blind-spot-sw.js'"), 'blind-spot-shell-public-route');
   assert(serverSource.includes('async function handleBrandEvidence') && serverSource.includes("['brand-evidence'"), 'brand-evidence-persistent-api');
   assert(appSource.includes('const CodeRegistryTableDialog =') && appSource.includes("authFetch('/api/code-registry'"), 'code-registry-dialog');
   assert(appSource.includes('TOP_MENU_ICONS.codeRegistry') && appSource.includes('CODE REGISTRY'), 'code-registry-menu');

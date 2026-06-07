@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <title>Blind spot shell - Hashcod</title>
+  <style>
+    :root {
+      --bg: #f5f4ef;
+      --ink: #090909;
+      --muted: #747474;
+      --line: #151515;
+      --soft: rgba(255,255,255,.82);
+      --dark: #090909;
+      --good: #10783d;
+      --warn: #9b4a00;
+      --bad: #b00020;
+      --shadow: rgba(0,0,0,.16);
+      font-family: "Segoe UI", "Inter", "Arial", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgba(255,255,255,.82), rgba(255,255,255,.82)),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.045) 0 1px, transparent 1px 31px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.045) 0 1px, transparent 1px 31px),
+        var(--bg);
+    }
+    button, input, textarea, select {
+      font: inherit;
+      border-radius: 0;
+    }
+    button {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--dark);
+      color: #fff;
+    }
+    button:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+    .phone-shell {
+      width: min(100vw, 520px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: rgba(255,255,255,.7);
+      border-left: 1px solid rgba(0,0,0,.1);
+      border-right: 1px solid rgba(0,0,0,.1);
+      box-shadow: 0 20px 70px var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #070707;
+      color: #fff;
+      padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+      border-bottom: 2px solid #000;
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.25);
+      padding: 5px;
+      filter: invert(1);
+      background: transparent;
+    }
+    .brand-text {
+      min-width: 0;
+    }
+    .eyebrow {
+      color: #a9a9a9;
+      font-size: 10px;
+      letter-spacing: .42em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 8vw, 42px);
+      letter-spacing: -.04em;
+      line-height: .95;
+    }
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid rgba(255,255,255,.16);
+      margin-top: 12px;
+    }
+    .status-strip div {
+      padding: 10px 8px 2px 0;
+      min-width: 0;
+    }
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .36em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .topbar .label { color: #9d9d9d; }
+    .value {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    main {
+      flex: 1;
+      padding: 14px 14px calc(92px + env(safe-area-inset-bottom));
+    }
+    .panel {
+      background: var(--soft);
+      border: 1px solid rgba(0,0,0,.18);
+      margin-bottom: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .panel-pad { padding: 14px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stack { display: grid; gap: 10px; }
+    textarea, input {
+      width: 100%;
+      border: 1px solid rgba(0,0,0,.35);
+      background: rgba(255,255,255,.86);
+      color: var(--ink);
+      padding: 12px;
+      outline: none;
+    }
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      line-height: 1.45;
+    }
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .notice {
+      border-left: 4px solid var(--good);
+      padding: 12px;
+      background: rgba(255,255,255,.66);
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .notice.warn { border-color: var(--warn); }
+    .notice.bad { border-color: var(--bad); }
+    .toolbar {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(100vw, 520px);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      background: #070707;
+      border-top: 2px solid #000;
+      z-index: 20;
+    }
+    .toolbar button {
+      border-color: rgba(255,255,255,.22);
+      background: #111;
+      color: #fff;
+      min-height: 54px;
+      font-size: 11px;
+    }
+    .entry {
+      border: 1px solid rgba(0,0,0,.18);
+      background: rgba(255,255,255,.72);
+      margin-bottom: 10px;
+    }
+    .entry-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0,0,0,.12);
+      padding: 10px 12px;
+      align-items: center;
+    }
+    .entry-id {
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-weight: 900;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .entry-time {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+    .entry-text {
+      padding: 12px;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow: auto;
+    }
+    .entry-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid rgba(0,0,0,.12);
+    }
+    .entry-actions button {
+      border: 0;
+      border-right: 1px solid rgba(0,0,0,.12);
+      min-height: 38px;
+      font-size: 10px;
+      background: transparent;
+    }
+    .entry-actions button:last-child { border-right: 0; }
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .shell-lock {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(245,244,239,.96);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .shell-lock-card {
+      width: min(420px, 100%);
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 28px;
+      box-shadow: 14px 14px 0 rgba(0,0,0,.1);
+    }
+    .shell-lock-card h2 {
+      margin: 0 0 12px;
+      font-size: 34px;
+      letter-spacing: -.05em;
+    }
+    @media (min-width: 760px) {
+      body {
+        background:
+          linear-gradient(rgba(255,255,255,.88), rgba(255,255,255,.88)),
+          repeating-linear-gradient(0deg, rgba(0,0,0,.045) 0 1px, transparent 1px 31px),
+          repeating-linear-gradient(90deg, rgba(0,0,0,.045) 0 1px, transparent 1px 31px),
+          var(--bg);
+      }
+      .phone-shell { min-height: 92vh; margin-top: 4vh; border: 2px solid #000; }
+      .shell-lock { display: flex; }
+      body.desktop-unlocked .shell-lock { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell-lock" aria-hidden="true">
+    <div class="shell-lock-card">
+      <span class="label">Phone only office</span>
+      <h2>Blind spot shell</h2>
+      <p class="hint">Esta oficina esta optimizada para telefonos. En escritorio puedes revisarla, pero su modo principal es guardar pegados del telefono sin internet despues de la primera carga.</p>
+      <button id="desktopUnlock" class="primary" type="button">Abrir vista escritorio</button>
+    </div>
+  </div>
+
+  <section class="phone-shell" aria-label="Blind spot shell offline office">
+    <header class="topbar">
+      <div class="brand-row">
+        <img class="brand-icon" src="/app/hashcod-platform-icon.svg?v=blind-spot-shell" alt="Hashcod" />
+        <div class="brand-text">
+          <div class="eyebrow">Hashcod mobile office</div>
+          <h1>Blind spot shell</h1>
+        </div>
+      </div>
+      <div class="status-strip" aria-live="polite">
+        <div>
+          <span class="label">Red</span>
+          <span class="value" id="netState">checking</span>
+        </div>
+        <div>
+          <span class="label">Offline</span>
+          <span class="value" id="offlineState">pending</span>
+        </div>
+        <div>
+          <span class="label">Clips</span>
+          <span class="value" id="clipCount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="message" class="notice">Abre esta pagina una vez con internet y pulsa Activar offline. Luego podras guardar pegados del telefono sin conexion.</div>
+
+      <section class="panel panel-pad">
+        <span class="label">Entrada local</span>
+        <textarea id="scratch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega aqui texto, claves, enlaces, notas o payloads copiados desde el telefono. Al pegar se guarda una copia local."></textarea>
+        <p class="hint">El navegador no permite leer el portapapeles en secreto. Blind spot shell guarda lo que pegues o lo que autorices leer con el boton.</p>
+      </section>
+
+      <section class="panel panel-pad stack">
+        <span class="label">Acciones rapidas</span>
+        <div class="grid-2">
+          <button id="pasteBtn" class="primary" type="button">Leer clipboard</button>
+          <button id="saveBtn" type="button">Guardar texto</button>
+          <button id="watchBtn" type="button">Modo escucha</button>
+          <button id="offlineBtn" type="button">Activar offline</button>
+        </div>
+      </section>
+
+      <section class="panel panel-pad">
+        <span class="label">Buscar oficina</span>
+        <input id="searchInput" autocomplete="off" placeholder="Buscar por texto, hash, fecha o origen" />
+      </section>
+
+      <section>
+        <span class="label">Registros guardados</span>
+        <div id="entries" class="entries"></div>
+      </section>
+    </main>
+
+    <nav class="toolbar" aria-label="Blind spot shell exports">
+      <button id="exportJson" type="button">JSON</button>
+      <button id="exportTxt" type="button">TXT</button>
+      <button id="copyAll" type="button">Copiar</button>
+      <button id="clearAll" type="button">Limpiar</button>
+    </nav>
+  </section>
+
+  <script>
+    (() => {
+      const DB_NAME = 'blind_spot_shell_v1';
+      const STORE = 'clips';
+      const $ = (id) => document.getElementById(id);
+      let db = null;
+      let clips = [];
+      let watch = false;
+      let watchTimer = null;
+      let lastReadHash = '';
+
+      const state = {
+        message: $('message'),
+        netState: $('netState'),
+        offlineState: $('offlineState'),
+        clipCount: $('clipCount'),
+        scratch: $('scratch'),
+        entries: $('entries'),
+        searchInput: $('searchInput')
+      };
+
+      function setMessage(text, kind = 'ok') {
+        state.message.textContent = text;
+        state.message.className = 'notice' + (kind === 'warn' ? ' warn' : kind === 'bad' ? ' bad' : '');
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = () => {
+            const nextDb = req.result;
+            if (!nextDb.objectStoreNames.contains(STORE)) {
+              const store = nextDb.createObjectStore(STORE, { keyPath: 'id' });
+              store.createIndex('createdAt', 'createdAt');
+              store.createIndex('hash', 'hash');
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error('IndexedDB failed'));
+        });
+      }
+
+      function txStore(mode = 'readonly') {
+        return db.transaction(STORE, mode).objectStore(STORE);
+      }
+
+      function allClips() {
+        return new Promise((resolve, reject) => {
+          const req = txStore().getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function putClip(record) {
+        return new Promise((resolve, reject) => {
+          const req = txStore('readwrite').put(record);
+          req.onsuccess = () => resolve(record);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function deleteClip(id) {
+        return new Promise((resolve, reject) => {
+          const req = txStore('readwrite').delete(id);
+          req.onsuccess = resolve;
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function clearClips() {
+        return new Promise((resolve, reject) => {
+          const req = txStore('readwrite').clear();
+          req.onsuccess = resolve;
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function sha256(text) {
+        if (crypto && crypto.subtle) {
+          const bytes = new TextEncoder().encode(text);
+          const digest = await crypto.subtle.digest('SHA-256', bytes);
+          return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        }
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i += 1) {
+          hash ^= text.charCodeAt(i);
+          hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+        }
+        return ('00000000' + (hash >>> 0).toString(16)).slice(-8);
+      }
+
+      function download(name, blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      }
+
+      async function saveText(text, source = 'manual') {
+        const clean = String(text || '').trim();
+        if (!clean) {
+          setMessage('No hay texto para guardar.', 'warn');
+          return null;
+        }
+        const hash = await sha256(clean);
+        const duplicate = clips.find((item) => item.hash === hash);
+        if (duplicate) {
+          setMessage(`Ya estaba guardado como ${duplicate.id}.`, 'warn');
+          return duplicate;
+        }
+        const record = {
+          id: `BSS-${Date.now().toString(36).toUpperCase()}-${hash.slice(0, 8).toUpperCase()}`,
+          text: clean,
+          source,
+          hash,
+          size: new Blob([clean]).size,
+          createdAt: new Date().toISOString()
+        };
+        await putClip(record);
+        lastReadHash = hash;
+        await refresh();
+        setMessage(`Guardado local: ${record.id}`);
+        return record;
+      }
+
+      function filteredClips() {
+        const q = state.searchInput.value.trim().toLowerCase();
+        const sorted = clips.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        if (!q) return sorted;
+        return sorted.filter((item) => {
+          return [item.id, item.text, item.hash, item.source, item.createdAt].some((value) => String(value || '').toLowerCase().includes(q));
+        });
+      }
+
+      function render() {
+        state.clipCount.textContent = String(clips.length);
+        const rows = filteredClips();
+        if (!rows.length) {
+          state.entries.innerHTML = '<div class="panel empty">No hay registros guardados en esta oficina.</div>';
+          return;
+        }
+        state.entries.innerHTML = rows.map((item) => {
+          const shortText = escapeHtml(item.text);
+          const when = new Date(item.createdAt).toLocaleString();
+          return `<article class="entry" data-id="${item.id}">
+            <div class="entry-head">
+              <div class="entry-id">${item.id}</div>
+              <div class="entry-time">${when}</div>
+            </div>
+            <div class="entry-text">${shortText}</div>
+            <div class="entry-actions">
+              <button type="button" data-act="copy">Copiar</button>
+              <button type="button" data-act="txt">TXT</button>
+              <button type="button" data-act="del">Quitar</button>
+            </div>
+          </article>`;
+        }).join('');
+      }
+
+      function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, (ch) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[ch]);
+      }
+
+      async function refresh() {
+        clips = await allClips();
+        render();
+      }
+
+      async function readClipboardOnce() {
+        if (!navigator.clipboard || !navigator.clipboard.readText) {
+          setMessage('Este navegador no permite leer el portapapeles. Pega manualmente en el cuadro.', 'warn');
+          return null;
+        }
+        try {
+          const text = await navigator.clipboard.readText();
+          const hash = await sha256(text || '');
+          if (watch && hash && hash === lastReadHash) return null;
+          return saveText(text, 'clipboard');
+        } catch (error) {
+          setMessage(`Permiso de portapapeles no disponible: ${error.message || error}`, 'warn');
+          return null;
+        }
+      }
+
+      function toggleWatch() {
+        watch = !watch;
+        $('watchBtn').textContent = watch ? 'Escucha ON' : 'Modo escucha';
+        if (watch) {
+          setMessage('Modo escucha activo. En algunos telefonos el navegador pedira permiso cada vez.');
+          watchTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') readClipboardOnce();
+          }, 3600);
+          readClipboardOnce();
+        } else {
+          clearInterval(watchTimer);
+          watchTimer = null;
+          setMessage('Modo escucha pausado. Los registros guardados siguen disponibles offline.');
+        }
+      }
+
+      async function registerOffline() {
+        if (!('serviceWorker' in navigator)) {
+          state.offlineState.textContent = 'unsupported';
+          setMessage('Este navegador no soporta modo offline con service worker.', 'warn');
+          return;
+        }
+        try {
+          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js');
+          await navigator.serviceWorker.ready;
+          state.offlineState.textContent = 'ready';
+          setMessage(`Blind spot shell listo offline. Scope: ${reg.scope}`);
+        } catch (error) {
+          state.offlineState.textContent = 'failed';
+          setMessage(`No se pudo activar offline: ${error.message || error}`, 'bad');
+        }
+      }
+
+      function updateOnlineState() {
+        state.netState.textContent = navigator.onLine ? 'online' : 'offline';
+      }
+
+      function exportRecords(format) {
+        const rows = filteredClips();
+        if (!rows.length) {
+          setMessage('No hay registros para exportar.', 'warn');
+          return;
+        }
+        if (format === 'json') {
+          download(`blind-spot-shell-${Date.now()}.json`, new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' }));
+        } else {
+          const body = rows.map((item) => `[${item.id}] ${item.createdAt}\nsource=${item.source}\nsha256=${item.hash}\n\n${item.text}\n\n---`).join('\n');
+          download(`blind-spot-shell-${Date.now()}.txt`, new Blob([body], { type: 'text/plain' }));
+        }
+        setMessage(`Exportados ${rows.length} registros en ${format.toUpperCase()}.`);
+      }
+
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setMessage('Copiado al portapapeles.');
+        } catch {
+          state.scratch.value = text;
+          state.scratch.select();
+          setMessage('No se pudo copiar automaticamente. El texto quedo seleccionado.', 'warn');
+        }
+      }
+
+      function bindEvents() {
+        $('desktopUnlock').addEventListener('click', () => document.body.classList.add('desktop-unlocked'));
+        $('pasteBtn').addEventListener('click', readClipboardOnce);
+        $('saveBtn').addEventListener('click', () => saveText(state.scratch.value, 'manual'));
+        $('watchBtn').addEventListener('click', toggleWatch);
+        $('offlineBtn').addEventListener('click', registerOffline);
+        $('exportJson').addEventListener('click', () => exportRecords('json'));
+        $('exportTxt').addEventListener('click', () => exportRecords('txt'));
+        $('copyAll').addEventListener('click', () => copyText(filteredClips().map((item) => item.text).join('\n\n')));
+        $('clearAll').addEventListener('click', async () => {
+          if (!confirm('Eliminar todos los registros locales de Blind spot shell?')) return;
+          await clearClips();
+          await refresh();
+          setMessage('Oficina local limpiada.');
+        });
+        state.searchInput.addEventListener('input', render);
+        state.scratch.addEventListener('paste', () => {
+          setTimeout(() => saveText(state.scratch.value, 'paste-box'), 80);
+        });
+        state.entries.addEventListener('click', async (event) => {
+          const button = event.target.closest('button[data-act]');
+          const card = event.target.closest('.entry');
+          if (!button || !card) return;
+          const item = clips.find((row) => row.id === card.dataset.id);
+          if (!item) return;
+          if (button.dataset.act === 'copy') await copyText(item.text);
+          if (button.dataset.act === 'txt') download(`${item.id}.txt`, new Blob([item.text], { type: 'text/plain' }));
+          if (button.dataset.act === 'del') {
+            await deleteClip(item.id);
+            await refresh();
+            setMessage(`Registro quitado: ${item.id}`);
+          }
+        });
+        window.addEventListener('online', updateOnlineState);
+        window.addEventListener('offline', updateOnlineState);
+      }
+
+      async function boot() {
+        bindEvents();
+        updateOnlineState();
+        db = await openDb();
+        await refresh();
+        if ('serviceWorker' in navigator) {
+          registerOffline();
+        } else {
+          state.offlineState.textContent = 'unsupported';
+        }
+      }
+
+      boot().catch((error) => {
+        setMessage(`Blind spot shell no pudo iniciar: ${error.message || error}`, 'bad');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -3128,6 +3128,9 @@ function isPublicStaticAsset(routePath = '') {
     || route === '/pedidos.html'
     || route === '/castor.html'
     || route === '/juego-castor.html'
+    || route === '/blind-spot-shell.html'
+    || route === '/blindspot.html'
+    || route === '/blind-spot-sw.js'
     || route === '/phone-os-sw.js';
 }
 
