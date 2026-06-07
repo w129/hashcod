@@ -1,4 +1,4 @@
-const BLIND_SPOT_CACHE = 'blind-spot-shell-v5';
+const BLIND_SPOT_CACHE = 'blind-spot-shell-v6';
 const BLIND_SPOT_ASSETS = [
   '/blind-spot-shell.html',
   '/blindspot.html',
