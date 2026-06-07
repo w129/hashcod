@@ -365,8 +365,8 @@
     }
     .access-qr-modes {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 14px;
       align-items: stretch;
     }
     .access-qr-mode {
@@ -374,19 +374,33 @@
       background: rgba(255,255,255,.7);
       padding: 12px;
       display: grid;
-      grid-template-columns: 174px minmax(0, 1fr);
-      gap: 14px;
-      align-items: center;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: start;
+      justify-items: center;
+      min-width: 0;
+    }
+    .access-qr-copy-wrap {
+      width: 100%;
       min-width: 0;
     }
     .access-qr-inline .access-qr-box {
       width: 174px;
       height: 174px;
     }
+    .access-qr-mode .access-qr-box {
+      width: 196px;
+      height: 196px;
+    }
     .access-qr-inline .access-qr-box canvas,
     .access-qr-inline .access-qr-box img {
       width: 158px !important;
       height: 158px !important;
+    }
+    .access-qr-mode .access-qr-box canvas,
+    .access-qr-mode .access-qr-box img {
+      width: 180px !important;
+      height: 180px !important;
     }
     .access-qr-copy {
       width: 100%;
@@ -445,11 +459,13 @@
       .qr-box canvas, .qr-box img { width: 192px !important; height: 192px !important; }
       .bridge-payload { max-height: 170px; }
       .access-qr-modes { grid-template-columns: 1fr; }
-      .access-qr-mode { grid-template-columns: 1fr; }
       .access-qr-inline { grid-template-columns: 1fr; }
       .access-qr-inline .access-qr-box { width: 100%; min-height: 226px; }
       .access-qr-inline .access-qr-box canvas,
       .access-qr-inline .access-qr-box img { width: 200px !important; height: 200px !important; }
+      .access-qr-mode .access-qr-box { width: 100%; min-height: 230px; }
+      .access-qr-mode .access-qr-box canvas,
+      .access-qr-mode .access-qr-box img { width: 204px !important; height: 204px !important; }
     }
     @media (max-width: 980px) {
       .access-qr-dock {
@@ -462,10 +478,7 @@
         width: 100%;
         min-height: 176px;
       }
-      .access-qr-modes,
-      .access-qr-mode {
-        grid-template-columns: 1fr;
-      }
+      .access-qr-modes { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -512,7 +525,7 @@
         <div class="access-qr-modes">
           <div class="access-qr-mode">
             <div id="accessQrInlineBox" class="access-qr-box">QR</div>
-            <div>
+            <div class="access-qr-copy-wrap">
               <div id="accessQrInlineId" class="access-qr-id">BSS-ACCESS</div>
               <p class="hint">Escanea este QR para abrir la oficina completa. Necesita internet una vez para guardar cache; despues vuelve a abrir offline en ese telefono.</p>
               <button id="copyAccessLink" class="access-qr-copy" type="button">Copiar enlace QR</button>
@@ -520,7 +533,7 @@
           </div>
           <div class="access-qr-mode">
             <div id="microShellQrBox" class="access-qr-box">QR</div>
-            <div>
+            <div class="access-qr-copy-wrap">
               <div id="microShellQrId" class="access-qr-id">BSS-MICRO</div>
               <p class="hint">Este QR contiene una mini oficina dentro del propio QR. En telefonos compatibles abre sin internet, guarda texto local y no depende del servidor.</p>
               <button id="copyMicroShellLink" class="access-qr-copy" type="button">Copiar micro QR</button>
