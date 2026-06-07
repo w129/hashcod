@@ -104,7 +104,7 @@
     }
     .status-strip {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       border-top: 1px solid rgba(255,255,255,.16);
       margin-top: 12px;
     }
@@ -514,6 +514,10 @@
           <span class="label">Clips</span>
           <span class="value" id="clipCount">0</span>
         </div>
+        <div>
+          <span class="label">Sync</span>
+          <span class="value" id="syncState">idle</span>
+        </div>
       </div>
     </header>
 
@@ -554,6 +558,7 @@
         <div class="grid-2">
           <button id="pasteBtn" class="primary" type="button">Leer clipboard</button>
           <button id="saveBtn" type="button">Guardar texto</button>
+          <button id="syncNowBtn" type="button">Sync now</button>
           <button id="watchBtn" type="button">Modo escucha</button>
           <button id="offlineBtn" type="button">Activar offline</button>
         </div>
@@ -609,11 +614,17 @@
     (() => {
       const DB_NAME = 'blind_spot_shell_v1';
       const STORE = 'clips';
+      const SYNC_CHANNEL = 'blind-spot';
+      const SYNC_QUEUE_KEY = 'blind_spot_shell_sync_queue';
+      const SYNC_CURSOR_KEY = 'blind_spot_shell_sync_cursor';
       const $ = (id) => document.getElementById(id);
       let db = null;
       let clips = [];
       let watch = false;
       let watchTimer = null;
+      let syncTimer = null;
+      let syncBusy = false;
+      let syncCursor = Number(localStorage.getItem(SYNC_CURSOR_KEY) || 0);
       let lastReadHash = '';
       let cameraStream = null;
       let qrScanActive = false;
@@ -622,6 +633,7 @@
         message: $('message'),
         netState: $('netState'),
         offlineState: $('offlineState'),
+        syncState: $('syncState'),
         clipCount: $('clipCount'),
         scratch: $('scratch'),
         entries: $('entries'),
@@ -640,6 +652,10 @@
       function setMessage(text, kind = 'ok') {
         state.message.textContent = text;
         state.message.className = 'notice' + (kind === 'warn' ? ' warn' : kind === 'bad' ? ' bad' : '');
+      }
+
+      function setSyncState(text) {
+        if (state.syncState) state.syncState.textContent = text;
       }
 
       function openDb() {
@@ -717,6 +733,147 @@
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 800);
+      }
+
+      function getDeviceId() {
+        const key = 'blind_spot_shell_device_id';
+        let id = localStorage.getItem(key);
+        if (!id) {
+          const random = crypto && crypto.getRandomValues ? Array.from(crypto.getRandomValues(new Uint8Array(9))).map((b) => b.toString(16).padStart(2, '0')).join('') : `${Date.now()}${Math.random()}`;
+          id = `BSS-DEVICE-${random.toUpperCase()}`;
+          localStorage.setItem(key, id);
+        }
+        return id;
+      }
+
+      function readSyncQueue() {
+        try {
+          const rows = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || '[]');
+          return Array.isArray(rows) ? rows : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function writeSyncQueue(rows) {
+        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(rows.slice(-80)));
+        setSyncState(rows.length ? `queued ${rows.length}` : 'ready');
+      }
+
+      function queueSyncEvent(event) {
+        const queue = readSyncQueue();
+        queue.push({ ...event, queuedAt: new Date().toISOString() });
+        writeSyncQueue(queue);
+      }
+
+      function rememberSyncCursor(seq) {
+        const next = Math.max(syncCursor, Number(seq || 0));
+        if (next !== syncCursor) {
+          syncCursor = next;
+          localStorage.setItem(SYNC_CURSOR_KEY, String(syncCursor));
+        }
+      }
+
+      async function postSyncEvent(event) {
+        const response = await fetch('/api/device-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: SYNC_CHANNEL, deviceId: getDeviceId(), event })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) throw new Error(data.error || `sync_${response.status}`);
+        rememberSyncCursor(data.event && data.event.seq);
+        return data.event;
+      }
+
+      async function syncPushEvent(event) {
+        if (!event || !event.action) return;
+        if (!navigator.onLine) {
+          queueSyncEvent(event);
+          return;
+        }
+        try {
+          setSyncState('sending');
+          await postSyncEvent(event);
+          setSyncState('synced');
+        } catch {
+          queueSyncEvent(event);
+        }
+      }
+
+      async function flushSyncQueue() {
+        const queue = readSyncQueue();
+        if (!queue.length || !navigator.onLine) return;
+        const failed = [];
+        setSyncState(`flush ${queue.length}`);
+        for (const item of queue) {
+          try {
+            await postSyncEvent(item);
+          } catch {
+            failed.push(item);
+          }
+        }
+        writeSyncQueue(failed);
+      }
+
+      async function applySyncEvent(event) {
+        if (!event || event.deviceId === getDeviceId()) return false;
+        if (event.action === 'clip:save' && event.clip && event.clip.text) {
+          await saveText(event.clip.text, event.clip.source || `sync:${event.deviceId}`, {
+            id: event.clip.id,
+            hash: event.clip.hash,
+            size: event.clip.size,
+            createdAt: event.clip.createdAt,
+            skipSync: true,
+            silent: true
+          });
+          return true;
+        }
+        if (event.action === 'clip:delete' && event.clipId) {
+          await deleteClip(event.clipId);
+          return true;
+        }
+        if (event.action === 'clip:clear') {
+          await clearClips();
+          return true;
+        }
+        return false;
+      }
+
+      async function pullDeviceSync() {
+        if (!navigator.onLine || !db) return 0;
+        const url = `/api/device-sync?channel=${encodeURIComponent(SYNC_CHANNEL)}&deviceId=${encodeURIComponent(getDeviceId())}&since=${encodeURIComponent(syncCursor)}`;
+        const response = await fetch(url);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) throw new Error(data.error || `pull_${response.status}`);
+        let applied = 0;
+        for (const event of data.events || []) {
+          rememberSyncCursor(event.seq);
+          if (await applySyncEvent(event)) applied += 1;
+        }
+        if (applied) await refresh();
+        return applied;
+      }
+
+      async function syncNow(showMessage = true) {
+        if (syncBusy) return;
+        syncBusy = true;
+        try {
+          if (!navigator.onLine) {
+            setSyncState('offline');
+            if (showMessage) setMessage('Sin conexion. Los cambios quedan en cola y se sincronizan al volver online.', 'warn');
+            return;
+          }
+          await flushSyncQueue();
+          const pulled = await pullDeviceSync();
+          setSyncState(pulled ? `${pulled} in` : 'synced');
+          if (showMessage) setMessage(pulled ? `Sincronizados ${pulled} cambios de otro dispositivo.` : 'Sincronizacion al dia entre telefono y laptop.');
+        } catch (error) {
+          setSyncState('failed');
+          if (showMessage) setMessage(`Sync fallo: ${error.message || error}`, 'bad');
+        } finally {
+          syncBusy = false;
+        }
       }
 
       function buildBridgePackage(limit = 12) {
@@ -1017,30 +1174,36 @@
         setMessage(`Paquete USB creado con ${pack.count} registros. Pasalo por cable y usa USB import en el otro equipo.`);
       }
 
-      async function saveText(text, source = 'manual') {
+      async function saveText(text, source = 'manual', options = {}) {
         const clean = String(text || '').trim();
         if (!clean) {
-          setMessage('No hay texto para guardar.', 'warn');
+          if (!options.silent) setMessage('No hay texto para guardar.', 'warn');
           return null;
         }
-        const hash = await sha256(clean);
-        const duplicate = clips.find((item) => item.hash === hash);
+        const hash = options.hash || await sha256(clean);
+        const duplicate = clips.find((item) => item.hash === hash || (options.id && item.id === options.id));
         if (duplicate) {
-          setMessage(`Ya estaba guardado como ${duplicate.id}.`, 'warn');
+          if (!options.silent) setMessage(`Ya estaba guardado como ${duplicate.id}.`, 'warn');
           return duplicate;
         }
         const record = {
-          id: `BSS-${Date.now().toString(36).toUpperCase()}-${hash.slice(0, 8).toUpperCase()}`,
+          id: options.id || `BSS-${Date.now().toString(36).toUpperCase()}-${hash.slice(0, 8).toUpperCase()}`,
           text: clean,
           source,
           hash,
-          size: new Blob([clean]).size,
-          createdAt: new Date().toISOString()
+          size: options.size || new Blob([clean]).size,
+          createdAt: options.createdAt || new Date().toISOString()
         };
         await putClip(record);
         lastReadHash = hash;
         await refresh();
-        setMessage(`Guardado local: ${record.id}`);
+        if (!options.silent) setMessage(`Guardado local: ${record.id}`);
+        if (!options.skipSync) {
+          syncPushEvent({
+            action: 'clip:save',
+            clip: record
+          });
+        }
         return record;
       }
 
@@ -1132,7 +1295,7 @@
           return;
         }
         try {
-          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js?v=access-qr-3');
+          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js?v=device-sync-1');
           await navigator.serviceWorker.ready;
           state.offlineState.textContent = 'ready';
           setMessage(`Blind spot shell listo offline. Scope: ${reg.scope}`);
@@ -1144,6 +1307,7 @@
 
       function updateOnlineState() {
         state.netState.textContent = navigator.onLine ? 'online' : 'offline';
+        if (!navigator.onLine) setSyncState('offline');
       }
 
       function exportRecords(format) {
@@ -1176,6 +1340,7 @@
         $('desktopUnlock').addEventListener('click', () => document.body.classList.add('desktop-unlocked'));
         $('pasteBtn').addEventListener('click', readClipboardOnce);
         $('saveBtn').addEventListener('click', () => saveText(state.scratch.value, 'manual'));
+        $('syncNowBtn').addEventListener('click', () => syncNow(true));
         $('watchBtn').addEventListener('click', toggleWatch);
         $('offlineBtn').addEventListener('click', registerOffline);
         $('nfcWriteBtn').addEventListener('click', writeNfcPackage);
@@ -1200,6 +1365,7 @@
           if (!confirm('Eliminar todos los registros locales de Blind spot shell?')) return;
           await clearClips();
           await refresh();
+          syncPushEvent({ action: 'clip:clear' });
           setMessage('Oficina local limpiada.');
         });
         state.searchInput.addEventListener('input', render);
@@ -1217,10 +1383,14 @@
           if (button.dataset.act === 'del') {
             await deleteClip(item.id);
             await refresh();
+            syncPushEvent({ action: 'clip:delete', clipId: item.id });
             setMessage(`Registro quitado: ${item.id}`);
           }
         });
-        window.addEventListener('online', updateOnlineState);
+        window.addEventListener('online', () => {
+          updateOnlineState();
+          syncNow(false);
+        });
         window.addEventListener('offline', updateOnlineState);
       }
 
@@ -1231,6 +1401,8 @@
         renderMicroShellQr();
         db = await openDb();
         await refresh();
+        await syncNow(false);
+        syncTimer = setInterval(() => syncNow(false), 4200);
         if ('serviceWorker' in navigator) {
           registerOffline();
         } else {

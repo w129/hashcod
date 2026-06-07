@@ -23,6 +23,7 @@ const ACCESS_HISTORY_FILE = path.join(DATA_DIR, 'access-history.enc');
 const CODE_WALLET_FILE = path.join(DATA_DIR, 'code-wallet.enc');
 const BRAND_EVIDENCE_FILE = path.join(DATA_DIR, 'brand-evidence.enc');
 const CODE_REGISTRY_FILE = path.join(DATA_DIR, 'code-registry.enc');
+const DEVICE_SYNC_FILE = path.join(DATA_DIR, 'device-sync.json');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMITS = { GET: 240, POST: 45, PUT: 45, DELETE: 30 };
@@ -345,6 +346,100 @@ function safeText(value, max = 500) {
 
 function safeWalletPayload(value, max = 16000) {
   return String(value || '').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, max);
+}
+
+function readDeviceSyncStore() {
+  ensureDataDir();
+  try {
+    if (!fs.existsSync(DEVICE_SYNC_FILE)) return { nextSeq: 1, events: [] };
+    const parsed = JSON.parse(fs.readFileSync(DEVICE_SYNC_FILE, 'utf8'));
+    return {
+      nextSeq: Math.max(1, Number(parsed.nextSeq || 1)),
+      events: Array.isArray(parsed.events) ? parsed.events : [],
+    };
+  } catch {
+    return { nextSeq: 1, events: [] };
+  }
+}
+
+function writeDeviceSyncStore(store) {
+  ensureDataDir();
+  const events = Array.isArray(store.events) ? store.events.slice(-800) : [];
+  const nextSeq = Math.max(Number(store.nextSeq || 1), events.reduce((max, event) => Math.max(max, Number(event.seq || 0) + 1), 1));
+  fs.writeFileSync(DEVICE_SYNC_FILE, JSON.stringify({ nextSeq, events }, null, 2));
+}
+
+function sanitizeDeviceSyncEvent(body = {}) {
+  const event = body.event && typeof body.event === 'object' ? body.event : body;
+  const action = safeText(event.action || body.action, 40);
+  const allowed = new Set(['clip:save', 'clip:delete', 'clip:clear', 'heartbeat']);
+  if (!allowed.has(action)) return null;
+  const clip = event.clip && typeof event.clip === 'object' ? event.clip : {};
+  return {
+    action,
+    clipId: safeText(event.clipId || clip.id, 120),
+    clip: action === 'clip:save' ? {
+      id: safeText(clip.id, 120),
+      text: safeWalletPayload(clip.text, 48000),
+      source: safeText(clip.source, 120),
+      hash: safeText(clip.hash, 96),
+      size: Math.max(0, Number(clip.size || 0)),
+      createdAt: safeText(clip.createdAt, 60) || new Date().toISOString(),
+    } : null,
+  };
+}
+
+async function handleDeviceSync(req, res) {
+  if (req.method === 'OPTIONS') {
+    send(res, 204, { 'Content-Type': MIME['.json'] }, '');
+    return;
+  }
+  if (req.method === 'GET') {
+    const url = new URL(req.url || '/api/device-sync', 'http://hashcod.local');
+    const channel = safeText(url.searchParams.get('channel') || 'blind-spot', 80) || 'blind-spot';
+    const since = Math.max(0, Number(url.searchParams.get('since') || 0));
+    const deviceId = safeText(url.searchParams.get('deviceId') || '', 120);
+    const store = readDeviceSyncStore();
+    const events = store.events
+      .filter((event) => event.channel === channel && Number(event.seq || 0) > since)
+      .filter((event) => !deviceId || event.deviceId !== deviceId)
+      .slice(-240);
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, channel, events, serverTime: new Date().toISOString() }));
+    return;
+  }
+  if (req.method !== 'POST') {
+    send(res, 405, { 'Content-Type': MIME['.json'], Allow: 'GET, POST, OPTIONS' }, JSON.stringify({ ok: false, error: 'method_not_allowed' }));
+    return;
+  }
+  try {
+    const body = await readJsonBody(req, 72 * 1024);
+    const channel = safeText(body.channel || 'blind-spot', 80) || 'blind-spot';
+    const deviceId = safeText(body.deviceId || 'unknown-device', 120) || 'unknown-device';
+    const payload = sanitizeDeviceSyncEvent(body);
+    if (!payload) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_sync_event' }));
+      return;
+    }
+    if (payload.action === 'clip:save' && (!payload.clip?.id || !payload.clip?.text)) {
+      send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'invalid_clip' }));
+      return;
+    }
+    const store = readDeviceSyncStore();
+    const event = {
+      seq: store.nextSeq || 1,
+      channel,
+      deviceId,
+      receivedAt: new Date().toISOString(),
+      ...payload,
+    };
+    store.nextSeq = event.seq + 1;
+    store.events.push(event);
+    writeDeviceSyncStore(store);
+    audit('device_sync.event', { ip: clientIp(req), channel, deviceId, action: event.action, seq: event.seq });
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, event }));
+  } catch (err) {
+    send(res, 400, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'device_sync_failed', detail: safeText(err.message, 160) }));
+  }
 }
 
 function validEmail(email) {
@@ -3141,6 +3236,14 @@ const server = http.createServer((req, res) => {
 
   if (routePath.startsWith('/api/private-entry/')) {
     handlePrivateEntry(req, res);
+    return;
+  }
+
+  if (routePath === '/api/device-sync') {
+    handleDeviceSync(req, res).catch(err => {
+      audit('device_sync.request_failed', { error: safeText(err.message, 160), ip: clientIp(req) });
+      if (!res.headersSent) send(res, 500, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'device_sync_request_failed' }));
+    });
     return;
   }
 
