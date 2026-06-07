@@ -233,7 +233,8 @@ function assert(ok, id, detail = '') {
   const blindSpotSwSource = fs.readFileSync(path.join(ROOT, 'blind-spot-sw.js'), 'utf8');
   assert(blindSpotSource.includes('Blind spot shell') && blindSpotSource.includes('navigator.clipboard.readText') && blindSpotSource.includes("indexedDB.open(DB_NAME") && blindSpotSource.includes("serviceWorker.register('/blind-spot-sw.js')"), 'blind-spot-shell-offline-office');
   assert(blindSpotSource.includes('Modo escucha') && blindSpotSource.includes('paste-box') && blindSpotSource.includes('exportRecords') && blindSpotSource.includes('phone-shell'), 'blind-spot-shell-mobile-clipboard');
-  assert(blindSpotSwSource.includes('blind-spot-shell-v1') && blindSpotSwSource.includes('/blind-spot-shell.html') && blindSpotSwSource.includes('/app/hashcod-platform-icon.svg'), 'blind-spot-shell-service-worker');
+  assert(blindSpotSource.includes('NDEFReader') && blindSpotSource.includes('BarcodeDetector') && blindSpotSource.includes('blind-spot-shell-transfer') && blindSpotSource.includes('USB import'), 'blind-spot-shell-offline-bridge');
+  assert(blindSpotSwSource.includes('blind-spot-shell-v1') && blindSpotSwSource.includes('/blind-spot-shell.html') && blindSpotSwSource.includes('/app/hashcod-platform-icon.svg') && blindSpotSwSource.includes('/vendor/qrcode.min.js'), 'blind-spot-shell-service-worker');
   assert(blindSpotAliasSource.includes('/blind-spot-shell.html') && serverSource.includes("route === '/blind-spot-shell.html'") && serverSource.includes("route === '/blindspot.html'") && serverSource.includes("route === '/blind-spot-sw.js'"), 'blind-spot-shell-public-route');
   assert(serverSource.includes('async function handleBrandEvidence') && serverSource.includes("['brand-evidence'"), 'brand-evidence-persistent-api');
   assert(appSource.includes('const CodeRegistryTableDialog =') && appSource.includes("authFetch('/api/code-registry'"), 'code-registry-dialog');

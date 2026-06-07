@@ -2,6 +2,8 @@ const BLIND_SPOT_CACHE = 'blind-spot-shell-v1';
 const BLIND_SPOT_ASSETS = [
   '/blind-spot-shell.html',
   '/blindspot.html',
+  '/vendor/qrcode.min.js?v=blind-spot-shell',
+  '/vendor/qrcode.min.js',
   '/app/hashcod-platform-icon.svg?v=blind-spot-shell',
   '/app/hashcod-platform-icon.svg'
 ];
@@ -26,6 +28,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const allowed = url.pathname === '/blind-spot-shell.html'
     || url.pathname === '/blindspot.html'
+    || url.pathname === '/vendor/qrcode.min.js'
     || url.pathname === '/app/hashcod-platform-icon.svg';
   if (!allowed || event.request.method !== 'GET') return;
 

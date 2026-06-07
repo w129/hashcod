@@ -251,6 +251,64 @@
       text-align: center;
       color: var(--muted);
     }
+    .bridge-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .bridge-grid button,
+    .bridge-grid label {
+      display: grid;
+      place-items: center;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+    }
+    .bridge-visual {
+      display: grid;
+      grid-template-columns: 156px 1fr;
+      gap: 12px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+    .qr-box {
+      min-height: 156px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+      overflow: hidden;
+    }
+    .qr-box canvas,
+    .qr-box img {
+      width: 136px !important;
+      height: 136px !important;
+      image-rendering: pixelated;
+    }
+    .bridge-payload {
+      min-height: 156px;
+      max-height: 156px;
+      font-size: 11px;
+    }
+    .camera {
+      display: none;
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      background: #111;
+      margin-top: 12px;
+    }
+    .camera.on { display: block; }
+    .file-input-hidden { display: none; }
     .shell-lock {
       display: none;
       position: fixed;
@@ -284,6 +342,12 @@
       .phone-shell { min-height: 92vh; margin-top: 4vh; border: 2px solid #000; }
       .shell-lock { display: flex; }
       body.desktop-unlocked .shell-lock { display: none; }
+    }
+    @media (max-width: 420px) {
+      .bridge-visual { grid-template-columns: 1fr; }
+      .qr-box { min-height: 220px; }
+      .qr-box canvas, .qr-box img { width: 192px !important; height: 192px !important; }
+      .bridge-payload { max-height: 170px; }
     }
   </style>
 </head>
@@ -346,6 +410,25 @@
         <input id="searchInput" autocomplete="off" placeholder="Buscar por texto, hash, fecha o origen" />
       </section>
 
+      <section class="panel panel-pad stack">
+        <span class="label">Offline bridge NFC / QR / USB</span>
+        <div class="notice warn">Para comunicacion sin internet: NFC intercambia paquetes pequenos al acercar telefonos compatibles; QR muestra/lee un paquete visual; USB exporta/importa un archivo .bss.json para pasarlo por cable.</div>
+        <div class="bridge-grid">
+          <button id="nfcWriteBtn" type="button">NFC escribir</button>
+          <button id="nfcReadBtn" type="button">NFC leer</button>
+          <button id="qrBuildBtn" type="button">QR mostrar</button>
+          <button id="qrScanBtn" type="button">QR escanear</button>
+          <button id="usbExportBtn" type="button">USB export</button>
+          <label for="usbImportFile">USB import</label>
+        </div>
+        <input id="usbImportFile" class="file-input-hidden" type="file" accept=".json,.bss,.txt,application/json,text/plain" />
+        <div class="bridge-visual">
+          <div id="qrBox" class="qr-box">QR</div>
+          <textarea id="bridgePayload" class="bridge-payload" readonly placeholder="El paquete NFC/QR/USB se prepara aqui."></textarea>
+        </div>
+        <video id="qrVideo" class="camera" playsinline muted></video>
+      </section>
+
       <section>
         <span class="label">Registros guardados</span>
         <div id="entries" class="entries"></div>
@@ -360,6 +443,7 @@
     </nav>
   </section>
 
+  <script src="/vendor/qrcode.min.js?v=blind-spot-shell"></script>
   <script>
     (() => {
       const DB_NAME = 'blind_spot_shell_v1';
@@ -370,6 +454,8 @@
       let watch = false;
       let watchTimer = null;
       let lastReadHash = '';
+      let cameraStream = null;
+      let qrScanActive = false;
 
       const state = {
         message: $('message'),
@@ -378,7 +464,10 @@
         clipCount: $('clipCount'),
         scratch: $('scratch'),
         entries: $('entries'),
-        searchInput: $('searchInput')
+        searchInput: $('searchInput'),
+        qrBox: $('qrBox'),
+        bridgePayload: $('bridgePayload'),
+        qrVideo: $('qrVideo')
       };
 
       function setMessage(text, kind = 'ok') {
@@ -461,6 +550,198 @@
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 800);
+      }
+
+      function buildBridgePackage(limit = 12) {
+        const rows = filteredClips().slice(0, limit).map((item) => ({
+          id: item.id,
+          text: item.text,
+          source: item.source,
+          hash: item.hash,
+          size: item.size,
+          createdAt: item.createdAt
+        }));
+        return {
+          type: 'blind-spot-shell-transfer',
+          version: 1,
+          channel: 'NFC_QR_USB',
+          createdAt: new Date().toISOString(),
+          count: rows.length,
+          totalLocal: clips.length,
+          deviceHint: navigator.userAgent.slice(0, 120),
+          clips: rows
+        };
+      }
+
+      function buildCompactBridgePayload() {
+        const compact = buildBridgePackage(6);
+        compact.clips = compact.clips.map((item) => ({
+          id: item.id,
+          hash: item.hash,
+          createdAt: item.createdAt,
+          text: item.text.length > 360 ? item.text.slice(0, 360) + '...' : item.text
+        }));
+        return JSON.stringify(compact);
+      }
+
+      function setBridgePayload(payload) {
+        state.bridgePayload.value = payload;
+        return payload;
+      }
+
+      function drawFallbackMatrix(payload) {
+        state.qrBox.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        const size = 136;
+        const cells = 29;
+        const cell = Math.floor(size / cells);
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#000';
+        let seed = 0;
+        for (let i = 0; i < payload.length; i += 1) seed = (seed * 31 + payload.charCodeAt(i)) >>> 0;
+        for (let y = 0; y < cells; y += 1) {
+          for (let x = 0; x < cells; x += 1) {
+            seed = (seed * 1664525 + 1013904223) >>> 0;
+            const finder = (x < 7 && y < 7) || (x > cells - 8 && y < 7) || (x < 7 && y > cells - 8);
+            if (finder || ((seed >>> 28) & 1)) ctx.fillRect(x * cell, y * cell, cell, cell);
+          }
+        }
+        state.qrBox.appendChild(canvas);
+      }
+
+      function renderBridgeQr(payload = buildCompactBridgePayload()) {
+        setBridgePayload(payload);
+        state.qrBox.innerHTML = '';
+        if (window.QRCode) {
+          new window.QRCode(state.qrBox, {
+            text: payload,
+            width: 220,
+            height: 220,
+            correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined
+          });
+          setMessage('QR offline creado. El otro telefono puede escanearlo sin internet.');
+        } else {
+          drawFallbackMatrix(payload);
+          setMessage('QR library no disponible; se genero matriz visual de respaldo.', 'warn');
+        }
+        return payload;
+      }
+
+      async function importBridgePayload(payload, source = 'bridge') {
+        const raw = String(payload || '').trim();
+        if (!raw) {
+          setMessage('Paquete vacio.', 'warn');
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.type === 'blind-spot-shell-transfer' && Array.isArray(parsed.clips)) {
+            let imported = 0;
+            for (const item of parsed.clips) {
+              const saved = await saveText(item.text || '', `${source}:${item.id || 'remote'}`);
+              if (saved) imported += 1;
+            }
+            setMessage(`Paquete ${source} importado: ${imported} registros procesados.`);
+            return;
+          }
+        } catch {
+          // Plain text is also a valid transfer.
+        }
+        await saveText(raw, source);
+      }
+
+      async function writeNfcPackage() {
+        if (!('NDEFReader' in window)) {
+          setMessage('NFC no disponible. Usa Android Chrome con HTTPS, o usa QR/USB.', 'warn');
+          return;
+        }
+        try {
+          const payload = setBridgePayload(buildCompactBridgePayload());
+          const ndef = new NDEFReader();
+          await ndef.write({ records: [{ recordType: 'text', data: payload }] });
+          setMessage('NFC escrito. Acerca el otro dispositivo para recibir el paquete.');
+        } catch (error) {
+          setMessage(`NFC write fallo: ${error.message || error}`, 'bad');
+        }
+      }
+
+      async function readNfcPackage() {
+        if (!('NDEFReader' in window)) {
+          setMessage('NFC no disponible. Usa QR/USB como canal sin internet.', 'warn');
+          return;
+        }
+        try {
+          const ndef = new NDEFReader();
+          await ndef.scan();
+          setMessage('NFC escuchando. Acerca una etiqueta o telefono compatible.');
+          ndef.onreading = async (event) => {
+            for (const record of event.message.records) {
+              if (record.recordType === 'text' && record.data) {
+                const text = new TextDecoder(record.encoding || 'utf-8').decode(record.data);
+                await importBridgePayload(text, 'nfc');
+              }
+            }
+          };
+        } catch (error) {
+          setMessage(`NFC read fallo: ${error.message || error}`, 'bad');
+        }
+      }
+
+      function stopQrScanner() {
+        qrScanActive = false;
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+          cameraStream = null;
+        }
+        state.qrVideo.classList.remove('on');
+      }
+
+      async function scanQrPackage() {
+        if (!('BarcodeDetector' in window)) {
+          setMessage('El escaner QR nativo no esta disponible en este navegador. Usa la camara normal y pega el texto, o USB import.', 'warn');
+          return;
+        }
+        try {
+          const detector = new BarcodeDetector({ formats: ['qr_code'] });
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+          state.qrVideo.srcObject = cameraStream;
+          state.qrVideo.classList.add('on');
+          await state.qrVideo.play();
+          qrScanActive = true;
+          setMessage('Escaneando QR. Apunta al paquete del otro telefono.');
+          const loop = async () => {
+            if (!qrScanActive) return;
+            try {
+              const codes = await detector.detect(state.qrVideo);
+              if (codes && codes.length) {
+                stopQrScanner();
+                await importBridgePayload(codes[0].rawValue, 'qr');
+                return;
+              }
+            } catch {
+              stopQrScanner();
+              setMessage('No se pudo escanear QR desde la camara.', 'bad');
+              return;
+            }
+            requestAnimationFrame(loop);
+          };
+          loop();
+        } catch (error) {
+          stopQrScanner();
+          setMessage(`Camara QR no disponible: ${error.message || error}`, 'bad');
+        }
+      }
+
+      function exportUsbPackage() {
+        const pack = buildBridgePackage(5000);
+        const payload = JSON.stringify(pack, null, 2);
+        setBridgePayload(payload);
+        download(`blind-spot-shell-usb-${Date.now()}.bss.json`, new Blob([payload], { type: 'application/json' }));
+        setMessage(`Paquete USB creado con ${pack.count} registros. Pasalo por cable y usa USB import en el otro equipo.`);
       }
 
       async function saveText(text, source = 'manual') {
@@ -624,6 +905,19 @@
         $('saveBtn').addEventListener('click', () => saveText(state.scratch.value, 'manual'));
         $('watchBtn').addEventListener('click', toggleWatch);
         $('offlineBtn').addEventListener('click', registerOffline);
+        $('nfcWriteBtn').addEventListener('click', writeNfcPackage);
+        $('nfcReadBtn').addEventListener('click', readNfcPackage);
+        $('qrBuildBtn').addEventListener('click', () => renderBridgeQr());
+        $('qrScanBtn').addEventListener('click', scanQrPackage);
+        $('usbExportBtn').addEventListener('click', exportUsbPackage);
+        $('usbImportFile').addEventListener('change', async (event) => {
+          const file = event.target.files && event.target.files[0];
+          if (!file) return;
+          const text = await file.text();
+          setBridgePayload(text);
+          await importBridgePayload(text, 'usb');
+          event.target.value = '';
+        });
         $('exportJson').addEventListener('click', () => exportRecords('json'));
         $('exportTxt').addEventListener('click', () => exportRecords('txt'));
         $('copyAll').addEventListener('click', () => copyText(filteredClips().map((item) => item.text).join('\n\n')));
