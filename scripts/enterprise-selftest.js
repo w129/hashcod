@@ -150,7 +150,7 @@ function assert(ok, id, detail = '') {
   const ids = catalog.flatMap(cat => (cat.types || []).map(type => type.id));
   const duplicates = ids.filter((id, idx) => ids.indexOf(id) !== idx);
   assert(duplicates.length === 0, 'catalog-unique-ids', `${ids.length} ids`);
-  assert(ids.length === 10000, 'catalog-total-10000', `${ids.length}/10000 ids`);
+  assert(ids.length === 10100, 'catalog-total-10100', `${ids.length}/10100 ids`);
 
   const neo = catalog.find(cat => cat.id === 'neo_crypto_200');
   assert(neo && neo.types && neo.types.length === 200, 'neo-200-complete', `${neo ? neo.types.length : 0}/200`);
@@ -160,6 +160,9 @@ function assert(ok, id, detail = '') {
 
   const hc10000 = catalog.find(cat => cat.id === 'hashcod_advanced_8282');
   assert(hc10000 && hc10000.types && hc10000.types.length === 8282, 'hashcod-8282-complete', `${hc10000 ? hc10000.types.length : 0}/8282`);
+
+  const mobilePatterns = catalog.find(cat => cat.id === 'mobile_pattern_codes_100');
+  assert(mobilePatterns && mobilePatterns.types && mobilePatterns.types.length === 100, 'mobile-pattern-100-complete', `${mobilePatterns ? mobilePatterns.types.length : 0}/100`);
 
   const variants = catalog.flatMap(cat => cat.types || []);
   const apiVariant = variants.find(type => type.hashcodVariant === 'HCV-00185');
@@ -179,6 +182,9 @@ function assert(ok, id, detail = '') {
 
   const hc10000Out = await ctx.window.OCG_GEN.generate('hc10000_code_08282', 32, {});
   assert(/^HASHCOD\./.test(hc10000Out) && /^CHECK=/m.test(hc10000Out), 'hashcod-10000-generator-health', hc10000Out.split('\n')[0]);
+
+  const mobilePatternOut = await ctx.window.OCG_GEN.generate('mobile_pattern_code_100', 32, {});
+  assert(/^HASHCOD\.MOBILE_PATTERN\.v1\./.test(mobilePatternOut) && /PATTERN_VIEW\n/.test(mobilePatternOut) && /ROUTE=\d-\d-\d-\d-\d-\d-\d-\d-\d/.test(mobilePatternOut), 'mobile-pattern-generator-health', mobilePatternOut.split('\n')[0]);
 
   const jwt = await ctx.window.OCG_GEN.generate('jwt_hs256_real', 32, {});
   assert(jwt.split('.').length === 3, 'jwt-real-shape');

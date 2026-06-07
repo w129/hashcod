@@ -602,6 +602,133 @@
     ].join('\n');
   }
 
+  function mobilePatternRoute() {
+    const midpoint = {
+      '1-3': 2, '3-1': 2,
+      '1-7': 4, '7-1': 4,
+      '3-9': 6, '9-3': 6,
+      '7-9': 8, '9-7': 8,
+      '1-9': 5, '9-1': 5,
+      '3-7': 5, '7-3': 5,
+      '2-8': 5, '8-2': 5,
+      '4-6': 5, '6-4': 5,
+    };
+    for (let attempt = 0; attempt < 80; attempt++) {
+      const route = [1 + rint(9)];
+      const used = new Set(route);
+      while (route.length < 9) {
+        const current = route[route.length - 1];
+        const candidates = [];
+        for (let next = 1; next <= 9; next++) {
+          if (used.has(next)) continue;
+          const mid = midpoint[`${current}-${next}`];
+          if (!mid || used.has(mid)) candidates.push(next);
+        }
+        if (!candidates.length) break;
+        const next = candidates[rint(candidates.length)];
+        route.push(next);
+        used.add(next);
+      }
+      if (route.length === 9) return route;
+    }
+    return [1, 5, 9, 6, 3, 2, 4, 7, 8];
+  }
+
+  function mobilePatternMetrics(route) {
+    const pos = {
+      1: [0, 0], 2: [1, 0], 3: [2, 0],
+      4: [0, 1], 5: [1, 1], 6: [2, 1],
+      7: [0, 2], 8: [1, 2], 9: [2, 2],
+    };
+    let distance = 0;
+    let turns = 0;
+    let diagonals = 0;
+    const vectors = [];
+    for (let i = 1; i < route.length; i++) {
+      const [ax, ay] = pos[route[i - 1]];
+      const [bx, by] = pos[route[i]];
+      const vx = bx - ax;
+      const vy = by - ay;
+      vectors.push([Math.sign(vx), Math.sign(vy)]);
+      distance += Math.sqrt(vx * vx + vy * vy);
+      if (Math.abs(vx) && Math.abs(vy)) diagonals++;
+      if (i > 1) {
+        const [px, py] = vectors[vectors.length - 2];
+        const [cx, cy] = vectors[vectors.length - 1];
+        if (px !== cx || py !== cy) turns++;
+      }
+    }
+    return { distance, turns, diagonals };
+  }
+
+  function mobilePatternVisual(route) {
+    const order = {};
+    route.forEach((node, index) => { order[node] = String(index + 1).padStart(2, '0'); });
+    const cell = (node) => `[${order[node] || '..'}:${node}]`;
+    return [
+      `${cell(1)}---${cell(2)}---${cell(3)}`,
+      `  |  \\     |     /  |`,
+      `${cell(4)}---${cell(5)}---${cell(6)}`,
+      `  |  /     |     \\  |`,
+      `${cell(7)}---${cell(8)}---${cell(9)}`,
+      `PATH=${route.join(' -> ')}`,
+    ].join('\n');
+  }
+
+  async function mobilePatternCodeTemplate(typeId) {
+    const n = Math.max(1, Math.min(100, Number(String(typeId).replace('mobile_pattern_code_', '')) || 1));
+    const families = [
+      ['MPL', 'LATTICE-GESTURE-LOCK', 'full-grid mobile unlock credential'],
+      ['MPX', 'CROSSLINE-VAULT-PATTERN', 'cross-axis vault unlock evidence'],
+      ['MPD', 'DIAGONAL-MESH-PATTERN', 'diagonal-heavy gesture proof'],
+      ['MPS', 'SPIRAL-NODE-PATTERN', 'spiral route phone credential'],
+      ['MPM', 'MIRROR-TRAP-PATTERN', 'mirror-resistant route binder'],
+      ['MPG', 'PULSE-GRID-PATTERN', 'timed grid pulse material'],
+      ['MZT', 'ZERO-TRUST-TOUCHPATH', 'zero-trust device touchpath'],
+      ['MRG', 'RECOVERY-GESTURE-SEAL', 'offline recovery gesture seal'],
+      ['MPB', 'PASSLINE-PATTERN-BINDER', 'passline HMAC-bound route'],
+      ['MNA', 'NODEFLOW-AUTH-PATTERN', 'multi-node authentication pattern'],
+    ];
+    const fam = families[(n - 1) % families.length];
+    const route = mobilePatternRoute();
+    const visual = mobilePatternVisual(route);
+    const metrics = mobilePatternMetrics(route);
+    const salt = bytes(32);
+    const nonce = bytes(16);
+    const gridKey = toB32(bytes(15)).slice(0, 24);
+    const issued = new Date().toISOString();
+    const routeText = route.join('-');
+    const turns = String(metrics.turns).padStart(2, '0');
+    const distance = metrics.distance.toFixed(4);
+    const complexity = Math.round((metrics.distance * 100) + (metrics.turns * 37) + (metrics.diagonals * 29) + n);
+    const serial = `HMP-${String(n).padStart(3, '0')}-${fam[0]}-${toB32(bytes(8)).slice(0, 13)}`;
+    const routeDigest = toHex(await sha('SHA-256', enc.encode(`${serial}:${routeText}:${visual}:${gridKey}:${issued}`)));
+    const binding = toHex(await hmacSha256(salt, `${serial}:${fam[1]}:${routeDigest}:${toB64u(nonce)}:${complexity}`));
+    const sha512 = toHex(await sha('SHA-512', enc.encode(`${binding}:${routeText}:${distance}:${turns}:${fam[2]}`)));
+    const check = crc32(enc.encode(`${serial}:${routeText}:${binding}:${sha512}`)).toUpperCase();
+    return [
+      `HASHCOD.MOBILE_PATTERN.v1.${serial}`,
+      `TYPE=${fam[1]}`,
+      `PURPOSE=${fam[2]}`,
+      `GRID=3x3 Android-compatible unlock lattice`,
+      `ROUTE=${routeText}`,
+      `ROUTE_DIGEST_SHA256=${routeDigest}`,
+      `HMAC_SHA256=${binding}`,
+      `SHA512=${sha512}`,
+      `SALT=${toB64u(salt)}`,
+      `NONCE=${toB64u(nonce)}`,
+      `GRID_KEY=${gridKey}`,
+      `TURNS=${turns}`,
+      `DIAGONALS=${metrics.diagonals}`,
+      `DISTANCE=${distance}`,
+      `COMPLEXITY=${complexity}`,
+      `ISSUED=${issued}`,
+      `CHECK=${check}`,
+      `PATTERN_VIEW`,
+      visual,
+    ].join('\n');
+  }
+
   async function generate(typeId, len, opts) {
     const o = opts || {};
     const L = len || 32;
@@ -609,6 +736,7 @@
     if (String(typeId).startsWith('xadv_code_')) return extraAdvancedCodeTemplate(typeId);
     if (String(typeId).startsWith('neo_code_')) return await neoCryptoCodeTemplate(typeId);
     if (String(typeId).startsWith('apex_code_')) return await apexCryptoCodeTemplate(typeId);
+    if (String(typeId).startsWith('mobile_pattern_code_')) return await mobilePatternCodeTemplate(typeId);
     if (/^hc(?:5000|10000)_code_/.test(String(typeId))) return await hashcodAdvanced10000Template(typeId);
     if (String(typeId).startsWith('card_tpl_')) return cardStudioTemplate(typeId);
     switch (typeId) {

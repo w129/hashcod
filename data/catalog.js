@@ -1454,6 +1454,46 @@ window.OCG_CATALOG = [
   });
 })();
 
+(function addMobilePatternCodes100() {
+  const patternModes = [
+    ['Lattice Gesture Lock', 'Android-style lattice unlock route with complete 3x3 coverage', 'gesture-lock lattice profile'],
+    ['Crossline Vault Pattern', 'cross-axis phone pattern for vault unlock evidence', 'mobile vault pattern profile'],
+    ['Diagonal Mesh Pattern', 'diagonal-heavy unlock route with anti-replay salt', 'diagonal mesh profile'],
+    ['Spiral Node Pattern', 'spiral phone gesture route with ordered node checksum', 'spiral gesture profile'],
+    ['Mirror Trap Pattern', 'mirror-resistant unlock pattern route with turn signature', 'mirror trap profile'],
+    ['Pulse Grid Pattern', 'timed mobile pattern packet with grid pulse digest', 'pulse grid profile'],
+    ['Zero Trust Touchpath', 'touchpath credential with route and device binding', 'zero-trust mobile touchpath'],
+    ['Recovery Gesture Seal', 'offline recovery gesture packet with QR-ready proof', 'recovery gesture seal'],
+    ['Passline Pattern Binder', 'mobile passline code with HMAC-bound route', 'passline binder profile'],
+    ['Nodeflow Auth Pattern', 'multi-node authentication pattern for phone handoff', 'nodeflow authentication profile'],
+  ];
+
+  window.OCG_CATALOG.push({
+    id: 'mobile_pattern_codes_100',
+    label: 'Mobile Pattern Codes 100',
+    icon: 'grid',
+    desc: 'One hundred complex phone unlock-pattern cryptographic codes. Each output includes a generated 3x3 pattern, route, digest, checksum and visual pattern map.',
+    types: Array.from({ length: 100 }, (_, i) => {
+      const n = i + 1;
+      const mode = patternModes[(n - 1) % patternModes.length];
+      const level = ['L3', 'L5', '256-bit', '384-bit', '512-bit'][(n - 1) % 5];
+      return {
+        id: `mobile_pattern_code_${String(n).padStart(3, '0')}`,
+        icon: 'grid',
+        label: `${mode[0]} ${String(n).padStart(3, '0')}`,
+        badge: `MP${String(n).padStart(3, '0')}`,
+        hasLen: false,
+        hasCharset: false,
+        engine: `3x3 mobile gesture route + HMAC-SHA256 + SHA-512 + route checksum`,
+        entropy: '512 bits',
+        space: '9! routes + 2^512 binding',
+        std: `Hashcod ${mode[2]}`,
+        about: `Mobile Pattern Code ${String(n).padStart(3, '0')}: ${mode[1]}. Generates a complex phone pattern credential with full node route, visual grid, route digest, salt, nonce, HMAC binding, SHA-512 material and checksum for secure mobile/offline workflows.`,
+      };
+    }),
+  });
+})();
+
 (function addHashcodAdvancedCodes8282() {
   const HASHCOD_ADVANCED_TOTAL = 8282;
   const profiles = [

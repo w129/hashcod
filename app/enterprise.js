@@ -125,10 +125,12 @@
 
       const catalog = catalogReport();
       push('catalog-unique-ids', catalog.duplicateIds.length === 0, `${catalog.primitives} primitives`);
-      push('catalog-total-10000', catalog.primitives === 10000, `${catalog.primitives}/10000 primitives`);
+      push('catalog-total-10100', catalog.primitives === 10100, `${catalog.primitives}/10100 primitives`);
       push('neo-200-complete', catalog.neoCount === 200 && catalog.missingNeo.length === 0, `${catalog.neoCount}/200`);
       push('apex-300-complete', catalog.apexCount === 300 && catalog.missingApex.length === 0, `${catalog.apexCount}/300`);
       push('hashcod-8282-complete', catalog.hashcodCount === 8282 && catalog.missingHashcod.length === 0, `${catalog.hashcodCount}/8282`);
+      const mobile = (window.OCG_CATALOG || []).find(cat => cat.id === 'mobile_pattern_codes_100');
+      push('mobile-pattern-100-complete', mobile && mobile.types && mobile.types.length === 100, `${mobile?.types?.length || 0}/100`);
 
       if (window.OCG_GEN && window.OCG_GEN.generate) {
         const neo = await window.OCG_GEN.generate('neo_code_200', 32, {});
@@ -137,6 +139,8 @@
         push('apex-generator-health', /^OCG-APEX\./.test(apex) && /^CHECK=/m.test(apex), apex.split('\n')[0]);
         const hashcod = await window.OCG_GEN.generate('hc10000_code_08282', 32, {});
         push('hashcod-10000-generator-health', /^HASHCOD\./.test(hashcod) && /^CHECK=/m.test(hashcod), hashcod.split('\n')[0]);
+        const mobilePattern = await window.OCG_GEN.generate('mobile_pattern_code_100', 32, {});
+        push('mobile-pattern-generator-health', /^HASHCOD\.MOBILE_PATTERN\.v1\./.test(mobilePattern) && /PATTERN_VIEW\n/.test(mobilePattern), mobilePattern.split('\n')[0]);
       } else {
         push('generator-present', false, 'window.OCG_GEN.generate missing');
       }
