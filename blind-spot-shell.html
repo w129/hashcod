@@ -309,6 +309,54 @@
     }
     .camera.on { display: block; }
     .file-input-hidden { display: none; }
+    .access-qr-dock {
+      position: fixed;
+      right: max(26px, calc((100vw - 520px) / 2 - 220px));
+      top: 50%;
+      transform: translateY(-50%);
+      width: 178px;
+      z-index: 12;
+      border: 1px solid rgba(0,0,0,.22);
+      background: rgba(255,255,255,.9);
+      box-shadow: 10px 10px 0 rgba(0,0,0,.07);
+      padding: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .access-qr-title {
+      font-size: 10px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .access-qr-box {
+      width: 152px;
+      height: 152px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: #fff;
+      padding: 6px;
+    }
+    .access-qr-box canvas,
+    .access-qr-box img {
+      width: 138px !important;
+      height: 138px !important;
+      image-rendering: pixelated;
+    }
+    .access-qr-id {
+      margin-top: 8px;
+      font-family: Consolas, "SFMono-Regular", monospace;
+      font-size: 10px;
+      font-weight: 900;
+      word-break: break-all;
+    }
+    .access-qr-note {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
     .shell-lock {
       display: none;
       position: fixed;
@@ -348,6 +396,18 @@
       .qr-box { min-height: 220px; }
       .qr-box canvas, .qr-box img { width: 192px !important; height: 192px !important; }
       .bridge-payload { max-height: 170px; }
+    }
+    @media (max-width: 980px) {
+      .access-qr-dock {
+        position: static;
+        transform: none;
+        width: auto;
+        margin: 12px 14px 0;
+      }
+      .access-qr-box {
+        width: 100%;
+        min-height: 176px;
+      }
     }
   </style>
 </head>
@@ -443,6 +503,13 @@
     </nav>
   </section>
 
+  <aside class="access-qr-dock" aria-label="QR unico de acceso offline">
+    <div class="access-qr-title">Access QR</div>
+    <div id="accessQrBox" class="access-qr-box">QR</div>
+    <div id="accessQrId" class="access-qr-id">BSS-ACCESS</div>
+    <p class="access-qr-note">Escanea una vez para abrir/cachear. Despues funciona offline si el dispositivo ya guardo la oficina.</p>
+  </aside>
+
   <script src="/vendor/qrcode.min.js?v=blind-spot-shell"></script>
   <script>
     (() => {
@@ -467,7 +534,9 @@
         searchInput: $('searchInput'),
         qrBox: $('qrBox'),
         bridgePayload: $('bridgePayload'),
-        qrVideo: $('qrVideo')
+        qrVideo: $('qrVideo'),
+        accessQrBox: $('accessQrBox'),
+        accessQrId: $('accessQrId')
       };
 
       function setMessage(text, kind = 'ok') {
@@ -613,6 +682,29 @@
         state.qrBox.appendChild(canvas);
       }
 
+      function drawMatrixInto(target, payload, size = 138) {
+        target.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        const cells = 29;
+        const cell = Math.floor(size / cells);
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#000';
+        let seed = 0;
+        for (let i = 0; i < payload.length; i += 1) seed = (seed * 33 + payload.charCodeAt(i)) >>> 0;
+        for (let y = 0; y < cells; y += 1) {
+          for (let x = 0; x < cells; x += 1) {
+            seed = (seed * 1103515245 + 12345) >>> 0;
+            const finder = (x < 7 && y < 7) || (x > cells - 8 && y < 7) || (x < 7 && y > cells - 8);
+            if (finder || ((seed >>> 29) & 1)) ctx.fillRect(x * cell, y * cell, cell, cell);
+          }
+        }
+        target.appendChild(canvas);
+      }
+
       function renderBridgeQr(payload = buildCompactBridgePayload()) {
         setBridgePayload(payload);
         state.qrBox.innerHTML = '';
@@ -629,6 +721,41 @@
           setMessage('QR library no disponible; se genero matriz visual de respaldo.', 'warn');
         }
         return payload;
+      }
+
+      function getInstallId() {
+        const key = 'blind_spot_shell_access_id';
+        let id = localStorage.getItem(key);
+        if (!id) {
+          const random = crypto && crypto.getRandomValues ? Array.from(crypto.getRandomValues(new Uint8Array(8))).map((b) => b.toString(16).padStart(2, '0')).join('') : Date.now().toString(16);
+          id = `BSS-ACCESS-${random.toUpperCase()}`;
+          localStorage.setItem(key, id);
+        }
+        return id;
+      }
+
+      function renderAccessQr() {
+        const id = getInstallId();
+        const accessUrl = `${location.origin}/blind-spot-shell.html?entry=offline&access=${encodeURIComponent(id)}`;
+        const payload = JSON.stringify({
+          type: 'blind-spot-shell-access',
+          id,
+          url: accessUrl,
+          note: 'Open once with internet to cache Blind spot shell; then use offline.',
+          createdAt: new Date().toISOString()
+        });
+        state.accessQrId.textContent = id;
+        state.accessQrBox.innerHTML = '';
+        if (window.QRCode) {
+          new window.QRCode(state.accessQrBox, {
+            text: accessUrl,
+            width: 152,
+            height: 152,
+            correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined
+          });
+        } else {
+          drawMatrixInto(state.accessQrBox, payload, 138);
+        }
       }
 
       async function importBridgePayload(payload, source = 'bridge') {
@@ -952,6 +1079,7 @@
       async function boot() {
         bindEvents();
         updateOnlineState();
+        renderAccessQr();
         db = await openDb();
         await refresh();
         if ('serviceWorker' in navigator) {
