@@ -1,4 +1,4 @@
-const BLIND_SPOT_CACHE = 'blind-spot-shell-v1';
+const BLIND_SPOT_CACHE = 'blind-spot-shell-v2';
 const BLIND_SPOT_ASSETS = [
   '/blind-spot-shell.html',
   '/blindspot.html',
@@ -33,12 +33,20 @@ self.addEventListener('fetch', (event) => {
   if (!allowed || event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
+    fetch(event.request).then((response) => {
+      if (response && response.ok) {
         const copy = response.clone();
         caches.open(BLIND_SPOT_CACHE).then((cache) => cache.put(event.request, copy));
-        return response;
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        if (url.pathname !== '/blind-spot-shell.html') return caches.match('/blind-spot-shell.html');
+        return new Response('Blind spot shell offline cache unavailable. Open once with internet first.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
       });
     })
   );

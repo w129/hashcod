@@ -357,6 +357,25 @@
       font-size: 10px;
       line-height: 1.35;
     }
+    .access-qr-inline {
+      display: grid;
+      grid-template-columns: 174px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+    .access-qr-inline .access-qr-box {
+      width: 174px;
+      height: 174px;
+    }
+    .access-qr-inline .access-qr-box canvas,
+    .access-qr-inline .access-qr-box img {
+      width: 158px !important;
+      height: 158px !important;
+    }
+    .access-qr-copy {
+      width: 100%;
+      margin-top: 10px;
+    }
     .shell-lock {
       display: none;
       position: fixed;
@@ -396,6 +415,10 @@
       .qr-box { min-height: 220px; }
       .qr-box canvas, .qr-box img { width: 192px !important; height: 192px !important; }
       .bridge-payload { max-height: 170px; }
+      .access-qr-inline { grid-template-columns: 1fr; }
+      .access-qr-inline .access-qr-box { width: 100%; min-height: 226px; }
+      .access-qr-inline .access-qr-box canvas,
+      .access-qr-inline .access-qr-box img { width: 200px !important; height: 200px !important; }
     }
     @media (max-width: 980px) {
       .access-qr-dock {
@@ -448,6 +471,18 @@
 
     <main>
       <div id="message" class="notice">Abre esta pagina una vez con internet y pulsa Activar offline. Luego podras guardar pegados del telefono sin conexion.</div>
+
+      <section class="panel panel-pad">
+        <span class="label">QR unico para conectar</span>
+        <div class="access-qr-inline">
+          <div id="accessQrInlineBox" class="access-qr-box">QR</div>
+          <div>
+            <div id="accessQrInlineId" class="access-qr-id">BSS-ACCESS</div>
+            <p class="hint">Escanea este QR desde otro dispositivo para abrir Blind spot shell. Si ese dispositivo ya la cacheo una vez con internet, podra volver a entrar sin conexion.</p>
+            <button id="copyAccessLink" class="access-qr-copy" type="button">Copiar enlace QR</button>
+          </div>
+        </div>
+      </section>
 
       <section class="panel panel-pad">
         <span class="label">Entrada local</span>
@@ -536,7 +571,9 @@
         bridgePayload: $('bridgePayload'),
         qrVideo: $('qrVideo'),
         accessQrBox: $('accessQrBox'),
-        accessQrId: $('accessQrId')
+        accessQrId: $('accessQrId'),
+        accessQrInlineBox: $('accessQrInlineBox'),
+        accessQrInlineId: $('accessQrInlineId')
       };
 
       function setMessage(text, kind = 'ok') {
@@ -745,17 +782,24 @@
           createdAt: new Date().toISOString()
         });
         state.accessQrId.textContent = id;
-        state.accessQrBox.innerHTML = '';
-        if (window.QRCode) {
-          new window.QRCode(state.accessQrBox, {
-            text: accessUrl,
-            width: 152,
-            height: 152,
-            correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined
-          });
-        } else {
-          drawMatrixInto(state.accessQrBox, payload, 138);
-        }
+        state.accessQrInlineId.textContent = id;
+        [
+          { node: state.accessQrBox, size: 152, fallback: 138 },
+          { node: state.accessQrInlineBox, size: 174, fallback: 158 }
+        ].filter((target) => target.node).forEach((target) => {
+          target.node.innerHTML = '';
+          if (window.QRCode) {
+            new window.QRCode(target.node, {
+              text: accessUrl,
+              width: target.size,
+              height: target.size,
+              correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined
+            });
+          } else {
+            drawMatrixInto(target.node, payload, target.fallback);
+          }
+        });
+        return accessUrl;
       }
 
       async function importBridgePayload(payload, source = 'bridge') {
@@ -986,7 +1030,7 @@
           return;
         }
         try {
-          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js');
+          const reg = await navigator.serviceWorker.register('/blind-spot-sw.js?v=access-qr-2');
           await navigator.serviceWorker.ready;
           state.offlineState.textContent = 'ready';
           setMessage(`Blind spot shell listo offline. Scope: ${reg.scope}`);
@@ -1045,6 +1089,7 @@
           await importBridgePayload(text, 'usb');
           event.target.value = '';
         });
+        $('copyAccessLink').addEventListener('click', () => copyText(renderAccessQr()));
         $('exportJson').addEventListener('click', () => exportRecords('json'));
         $('exportTxt').addEventListener('click', () => exportRecords('txt'));
         $('copyAll').addEventListener('click', () => copyText(filteredClips().map((item) => item.text).join('\n\n')));
