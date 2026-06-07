@@ -1,4 +1,4 @@
-const BLIND_SPOT_CACHE = 'blind-spot-shell-v4';
+const BLIND_SPOT_CACHE = 'blind-spot-shell-v5';
 const BLIND_SPOT_ASSETS = [
   '/blind-spot-shell.html',
   '/blindspot.html',
@@ -48,6 +48,22 @@ self.addEventListener('fetch', (event) => {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
       });
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/blind-spot-shell.html';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+      const existing = clients.find((client) => client.url.includes('/blind-spot-shell.html'));
+      if (existing) {
+        await existing.focus();
+        existing.postMessage({ type: 'blind-spot-notification-open', clipId: event.notification.data && event.notification.data.clipId });
+        return;
+      }
+      await self.clients.openWindow(targetUrl);
     })
   );
 });
