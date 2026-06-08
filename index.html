@@ -4,6 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hashcod - Cryptographic Platform</title>
+  <script>
+    (function () {
+      var baseTitle = 'Hashcod - Cryptographic Platform';
+      function two(value) {
+        return String(value).padStart(2, '0');
+      }
+      function updateHashcodClockTitle() {
+        var now = new Date();
+        var clock = two(now.getHours()) + ':' + two(now.getMinutes()) + ':' + two(now.getSeconds());
+        document.title = 'Hashcod · ' + clock + ' · Cryptographic Platform';
+      }
+      updateHashcodClockTitle();
+      window.__hashcodTitleClock = window.__hashcodTitleClock || {};
+      if (window.__hashcodTitleClock.timer) window.clearInterval(window.__hashcodTitleClock.timer);
+      window.__hashcodTitleClock.baseTitle = baseTitle;
+      window.__hashcodTitleClock.update = updateHashcodClockTitle;
+      window.__hashcodTitleClock.timer = window.setInterval(updateHashcodClockTitle, 1000);
+    })();
+  </script>
 
   <link rel="icon" type="image/svg+xml" href="app/hashcod-platform-icon.svg?v=hashcod-classic-1" />
   <link rel="apple-touch-icon" href="app/hashcod-platform-icon.svg?v=hashcod-classic-1" />
