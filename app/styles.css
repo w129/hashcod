@@ -3805,10 +3805,23 @@ kbd {
 .cryptoai-model-card b { font-family:var(--mono); font-size:20px; letter-spacing:1px; }
 .cryptoai-model-card em, .cryptoai-note { font-style:normal; color:var(--ink-3); font-size:10px; line-height:1.45; }
 .cryptoai-note { border:1px solid var(--line); background:#fff; padding:10px; }
-.cryptoai-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.cryptoai-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid #111; background:#fff; box-shadow:5px 5px 0 rgba(0,0,0,.08); }
+.cryptoai-metrics article { min-width:0; padding:10px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); display:grid; gap:5px; }
+.cryptoai-metrics article:nth-child(2n) { border-right:0; }
+.cryptoai-metrics article:nth-last-child(-n+2) { border-bottom:0; }
+.cryptoai-metrics b { font-family:var(--mono); font-size:16px; overflow-wrap:anywhere; }
+.cryptoai-quick { border:1px solid var(--line); background:#fff; padding:10px; display:grid; gap:7px; }
+.cryptoai-quick button { min-height:32px; border:1px solid var(--line-2); background:#f7f7f4; color:#111; padding:8px 9px; text-align:left; font-size:10px; line-height:1.35; }
+.cryptoai-quick button:hover { background:#111; color:#fff; }
+.cryptoai-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
 .cryptoai-actions button, .cryptoai-compose button { min-height:38px; border:1px solid #111; background:#111; color:#fff; padding:0 12px; font-size:10px; letter-spacing:1.7px; text-transform:uppercase; }
 .cryptoai-actions button:hover, .cryptoai-compose button:hover { background:#fff; color:#111; }
-.cryptoai-chat { min-width:0; min-height:620px; max-height:calc(100vh - 180px); display:grid; grid-template-rows:minmax(0,1fr) auto auto; background:#fff; }
+.cryptoai-chat { min-width:0; min-height:620px; max-height:calc(100vh - 180px); display:grid; grid-template-rows:auto minmax(0,1fr) auto auto; background:#fff; }
+.cryptoai-dashboard { display:grid; grid-template-columns:1.5fr repeat(3,minmax(120px,.7fr)); border-bottom:1px solid var(--line); background:#f7f7f4; }
+.cryptoai-dashboard article { min-width:0; padding:11px 13px; border-right:1px solid var(--line); display:grid; gap:5px; }
+.cryptoai-dashboard article:last-child { border-right:0; }
+.cryptoai-dashboard span { color:var(--ink-4); font-size:9px; letter-spacing:2px; text-transform:uppercase; }
+.cryptoai-dashboard b { font-family:var(--mono); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cryptoai-log { overflow:auto; padding:16px; display:grid; gap:12px; align-content:start; }
 .cryptoai-msg { max-width:86%; border:1px solid var(--line); background:#f7f7f4; padding:12px; display:grid; gap:7px; }
 .cryptoai-msg.user { margin-left:auto; background:#111; color:#fff; border-color:#111; }
@@ -3825,6 +3838,8 @@ kbd {
   .cryptoai-shell { grid-template-columns:1fr; }
   .cryptoai-side { border-right:0; border-bottom:1px solid var(--line); max-height:none; }
   .cryptoai-chat { min-height:520px; max-height:none; }
+  .cryptoai-dashboard { grid-template-columns:1fr 1fr; }
+  .cryptoai-dashboard article:nth-child(2n) { border-right:0; }
   .cryptoai-compose { grid-template-columns:1fr; }
   .cryptoai-msg { max-width:100%; }
 }

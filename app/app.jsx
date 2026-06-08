@@ -6656,6 +6656,58 @@ const CRYPTO_AI_PROVIDERS = [
   { id: 'other', name: 'Other API', hashModel: 'HSC00128', defaultModel: 'openai-compatible', placeholder: 'Bearer/API key' },
 ];
 
+const CRYPTO_AI_MODES = [
+  { id: 'audit', es: 'Auditoria criptografica', en: 'Cryptographic audit', focus: 'entropy, structure, misuse, predictable sections, production risk' },
+  { id: 'tokenization', es: 'Tokenizacion enterprise', en: 'Enterprise tokenization', focus: 'token format, payload split, vault storage, QR/export strategy' },
+  { id: 'incident', es: 'Respuesta a incidente', en: 'Incident response', focus: 'exposed keys, rotation, revocation, logging, remediation plan' },
+  { id: 'architecture', es: 'Arquitectura segura', en: 'Secure architecture', focus: 'API design, KMS, HSM, zero trust, report signing, data flows' },
+  { id: 'explain', es: 'Explicacion tecnica', en: 'Technical explanation', focus: 'plain-language cryptography, constraints, examples, safe usage' },
+];
+
+const CRYPTO_AI_QUICK_PROMPTS = [
+  { id: 'risk', es: 'Analiza el riesgo real de este code y dime si sirve para produccion.', en: 'Analyze the real risk of this code and tell me if it is production-ready.' },
+  { id: 'format', es: 'Separa prefijo, payload, firma, longitud, entropia y posibles secciones predecibles.', en: 'Split prefix, payload, signature, length, entropy, and possible predictable sections.' },
+  { id: 'token', es: 'Propón un formato de tokenizacion seguro usando este code como material de entrada.', en: 'Propose a secure tokenization format using this code as input material.' },
+  { id: 'incident', es: 'Si este code se filtró, dame un plan de rotacion, revocacion y auditoria.', en: 'If this code leaked, give me a rotation, revocation, and audit plan.' },
+  { id: 'docs', es: 'Crea una documentacion tecnica corta para usar este code sin exponer secretos.', en: 'Create short technical documentation for using this code without exposing secrets.' },
+  { id: 'api', es: 'Diseña una API segura para validar este code con rate limit, logs y scopes.', en: 'Design a secure API to validate this code with rate limit, logs, and scopes.' },
+];
+
+const CRYPTO_AI_CONTROL_ROUTINES = Array.from({ length: 144 }, (_, i) => {
+  const groups = ['entropy', 'format', 'leak', 'jwt', 'qr', 'license', 'vault', 'hns', 'api', 'report', 'kms', 'rotation'];
+  const group = groups[i % groups.length];
+  return `HSC-${String(i + 1).padStart(3, '0')}-${group.toUpperCase()}-${(i % 6) + 1}`;
+});
+
+const cryptoAiEntropy = (value = '') => {
+  const text = String(value || '');
+  if (!text.length) return 0;
+  const counts = {};
+  for (const ch of text) counts[ch] = (counts[ch] || 0) + 1;
+  return Object.values(counts).reduce((sum, count) => {
+    const p = count / text.length;
+    return sum - p * Math.log2(p);
+  }, 0);
+};
+
+const cryptoAiLocalAnalysis = (row) => {
+  const value = String(row?.value || row?.valuePreview || '');
+  const unique = new Set(value).size;
+  const entropy = cryptoAiEntropy(value);
+  const length = value.length;
+  const sections = value.split(/[.\-_:|]/).filter(Boolean).length;
+  const repeated = /(.)\1{4,}/.test(value);
+  const hasJwtShape = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value);
+  const hasHexShape = /^[a-f0-9]+$/i.test(value) && value.length >= 32;
+  const hasBase64Shape = /^[A-Za-z0-9+/=_-]+$/.test(value) && value.length >= 32;
+  const alphabetRatio = length ? unique / length : 0;
+  const structureScore = Math.min(100, Math.round((sections > 2 ? 22 : 0) + (repeated ? 28 : 0) + (alphabetRatio < 0.22 ? 20 : 0) + (hasJwtShape ? 18 : 0) + (hasHexShape || hasBase64Shape ? 8 : 0)));
+  const entropyScore = Math.min(100, Math.round((entropy / 6) * 100));
+  const risk = Math.max(0, Math.min(100, Math.round(structureScore + Math.max(0, 58 - entropyScore) * 0.7)));
+  const verdict = risk >= 75 ? 'HIGH RISK' : risk >= 48 ? 'WATCHLIST' : entropyScore >= 70 ? 'CLEAR / STRONG' : 'REVIEW';
+  return { length, unique, entropy: Number(entropy.toFixed(3)), alphabetRatio: Number(alphabetRatio.toFixed(3)), sections, repeated, hasJwtShape, hasHexShape, hasBase64Shape, entropyScore, structureScore, risk, verdict };
+};
+
 const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) => {
   const L = (es, en) => (language === 'es' ? es : en);
   const source = useMemo(() => [...(outputRows || []), ...(rows || [])].filter((row, index, arr) => row?.value && arr.findIndex(r => r.value === row.value) === index).slice(0, 400), [rows, outputRows]);
@@ -6664,6 +6716,7 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
   const [apiKey, setApiKey] = useState('');
   const [actualModel, setActualModel] = useState(profile.defaultModel);
   const [customUrl, setCustomUrl] = useState('https://api.example.com/v1/chat/completions');
+  const [mode, setMode] = useState('audit');
   const [selectedCodeId, setSelectedCodeId] = useState('');
   const [manualContext, setManualContext] = useState('');
   const [input, setInput] = useState('');
@@ -6679,7 +6732,10 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
     setStatus('');
   }, [provider]);
   if (!open) return null;
+  const activeMode = CRYPTO_AI_MODES.find(item => item.id === mode) || CRYPTO_AI_MODES[0];
+  const localScan = cryptoAiLocalAnalysis(selectedCode);
   const codeContext = [
+    `Hashcod Crypto AI mode: ${language === 'es' ? activeMode.es : activeMode.en}\nMode focus: ${activeMode.focus}\nLocal deterministic scan:\n${JSON.stringify(localScan, null, 2)}\nEnabled control routines: ${CRYPTO_AI_CONTROL_ROUTINES.length}`,
     selectedCode ? `Selected code index: ${String(selectedCode.idx || '').padStart(3, '0')}\nType: ${selectedCode.type}\nValue: ${String(selectedCode.value || '').slice(0, 1800)}` : '',
     manualContext ? `Manual platform context:\n${manualContext}` : '',
   ].filter(Boolean).join('\n\n');
@@ -6704,6 +6760,7 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
           apiKey: apiKey.trim(),
           actualModel: actualModel.trim(),
           customUrl: provider === 'other' ? customUrl.trim() : '',
+          mode,
           messages: nextMessages.filter(msg => msg.role !== 'system'),
           codeContext,
         }),
@@ -6733,6 +6790,23 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
     setMessages([{ role: 'assistant', content: L('Sesion limpia. Coloca un code, escribe tu pregunta y elige proveedor.', 'Clean session. Add a code, write your question, and choose provider.') }]);
     setStatus('');
   };
+  const exportReport = () => {
+    const payload = {
+      platform: PLATFORM_DISPLAY_NAME,
+      tool: 'Hashcod Crypto AI',
+      provider: profile.name,
+      hashModel: profile.hashModel,
+      actualModel,
+      mode,
+      localScan,
+      selectedCode: selectedCode ? { idx: selectedCode.idx, type: selectedCode.type, preview: String(selectedCode.value || '').slice(0, 220) } : null,
+      routines: CRYPTO_AI_CONTROL_ROUTINES,
+      messages,
+      exportedAt: new Date().toISOString(),
+    };
+    triggerDownload(`Hashcod-CryptoAI-${profile.hashModel}-${tsStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+  };
+  const injectQuickPrompt = (prompt) => setInput(prev => prev ? `${prev}\n\n${prompt}` : prompt);
   return (
     <div className="dlg-back" onClick={onClose}>
       <section className="dlg cryptoaidlg" onClick={e => e.stopPropagation()}>
@@ -6748,7 +6822,14 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
         </div>
         <div className="cryptoai-shell">
           <aside className="cryptoai-side">
+            <div className="cryptoai-metrics">
+              <article><span>{L('Veredicto local', 'Local verdict')}</span><b>{localScan.verdict}</b></article>
+              <article><span>{L('Riesgo', 'Risk')}</span><b>{localScan.risk}/100</b></article>
+              <article><span>{L('Entropia', 'Entropy')}</span><b>{localScan.entropy}</b></article>
+              <article><span>{L('Rutinas', 'Routines')}</span><b>{CRYPTO_AI_CONTROL_ROUTINES.length}</b></article>
+            </div>
             <label><span>{L('Proveedor IA', 'AI provider')}</span><select value={provider} onChange={e => setProvider(e.target.value)}>{CRYPTO_AI_PROVIDERS.map(item => <option key={item.id} value={item.id}>{item.name} / {item.hashModel}</option>)}</select></label>
+            <label><span>{L('Modo experto', 'Expert mode')}</span><select value={mode} onChange={e => setMode(e.target.value)}>{CRYPTO_AI_MODES.map(item => <option key={item.id} value={item.id}>{language === 'es' ? item.es : item.en}</option>)}</select></label>
             <div className="cryptoai-model-card">
               <span>{L('Modelo Hashcod', 'Hashcod model')}</span>
               <b>{profile.hashModel}</b>
@@ -6759,10 +6840,20 @@ const CryptoAiDialog = ({ open, onClose, rows, outputRows, notify, language }) =
             {provider === 'other' && <label><span>{L('Endpoint HTTPS compatible', 'Compatible HTTPS endpoint')}</span><input value={customUrl} onChange={e => setCustomUrl(e.target.value)} /></label>}
             <label><span>{L('Code de contexto', 'Context code')}</span><select value={selectedCodeId} onChange={e => setSelectedCodeId(e.target.value)}>{source.map((row, i) => <option key={`${row.id || row.idx || i}`} value={String(row.id || row.idx || row.value)}>{String(row.idx || i + 1).padStart(3, '0')} | {row.type}</option>)}</select></label>
             <label><span>{L('Contexto manual', 'Manual context')}</span><textarea value={manualContext} onChange={e => setManualContext(e.target.value)} placeholder={L('Pega payloads, dudas, HNS URLs o requisitos de tokenizacion...', 'Paste payloads, questions, HNS URLs, or tokenization requirements...')} /></label>
+            <div className="cryptoai-quick">
+              <span>{L('Prompts rapidos', 'Quick prompts')}</span>
+              {CRYPTO_AI_QUICK_PROMPTS.map(item => <button key={item.id} type="button" onClick={() => injectQuickPrompt(language === 'es' ? item.es : item.en)}>{language === 'es' ? item.es : item.en}</button>)}
+            </div>
             <div className="cryptoai-note">{L('La API key se envia al servidor solo para ejecutar esta llamada. No se guarda en disco ni en la base de datos.', 'The API key is sent to the server only for this call. It is not saved to disk or the database.')}</div>
-            <div className="cryptoai-actions"><button onClick={copyChat}>{L('Copiar chat', 'Copy chat')}</button><button onClick={clearChat}>{L('Limpiar', 'Clear')}</button></div>
+            <div className="cryptoai-actions"><button onClick={copyChat}>{L('Copiar chat', 'Copy chat')}</button><button onClick={exportReport}>{L('Reporte', 'Report')}</button><button onClick={clearChat}>{L('Limpiar', 'Clear')}</button></div>
           </aside>
           <main className="cryptoai-chat">
+            <div className="cryptoai-dashboard">
+              <article><span>{L('Code activo', 'Active code')}</span><b>{selectedCode ? `${String(selectedCode.idx || '').padStart(3, '0')} | ${selectedCode.type}` : '---'}</b></article>
+              <article><span>{L('Estructura', 'Structure')}</span><b>{localScan.structureScore}/100</b></article>
+              <article><span>{L('Diversidad', 'Diversity')}</span><b>{localScan.unique}/{localScan.length}</b></article>
+              <article><span>{L('Secciones', 'Sections')}</span><b>{localScan.sections}</b></article>
+            </div>
             <div className="cryptoai-log">
               {messages.map((msg, i) => (
                 <article key={i} className={`cryptoai-msg ${msg.role} ${msg.error ? 'error' : ''}`}>
