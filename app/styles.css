@@ -3477,7 +3477,7 @@ kbd {
 .oc-main {
   display: grid;
   grid-template-columns: 48px minmax(0,1fr) auto auto;
-  align-items: center;
+  align-items: start;
   column-gap: 0;
   row-gap: 5px;
   min-height: 38px;
@@ -3522,17 +3522,16 @@ kbd {
 .oc-meta { font-size: 9px; color: var(--ink-4); padding: 0 8px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
 .oc-actions {
   grid-column: 2 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(7, 23px);
+  grid-auto-rows: 23px;
+  align-items: stretch;
+  justify-content: end;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+  overflow: visible;
+  scrollbar-width: none;
 }
-.oc-actions::-webkit-scrollbar { height: 5px; }
-.oc-actions::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); }
+.oc-actions::-webkit-scrollbar { display: none; }
 .oc-sim {
   width: 74px;
   height: 26px;
@@ -3585,15 +3584,13 @@ kbd {
 .oc-sim-txt { min-width: 34px; text-align: left; }
 .oc-act {
   width: 23px; height: 23px;
-  flex: 0 0 23px;
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-4);
   border: 1px solid rgba(16,16,16,.26);
-  border-left: 0;
   background: rgba(255,255,255,.72);
   transition: all .1s;
 }
-.oc-actions .oc-act:first-child { border-left: 1px solid rgba(16,16,16,.26); }
+.oc-actions .oc-act { margin: 0; }
 .oc-act:hover { color: var(--ink); border-color: var(--line-2); }
 .oc-act-qr { color: #646464; }
 .oc-act-qr:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
@@ -6969,15 +6966,17 @@ kbd {
 
   .oc-actions {
     grid-column: 1;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(7, 32px);
+    grid-auto-rows: 32px;
+    justify-content: start;
     overflow: visible;
   }
 
   .oc-act {
     display: inline-flex;
-    margin-right: 4px;
-    margin-top: 2px;
+    width: 32px;
+    height: 32px;
+    margin: 0;
   }
 
   .rp {
