@@ -2411,7 +2411,7 @@ const buildSimilarityMap = (rows = [], plan = PLAN_DEFINITIONS.free) => {
   return selected;
 };
 
-const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, onSampleExtract, density, t, language }) => {
+const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownload, onQrDownload, onCapture, onPrintTicket, onLogDownload, onJsonDownload, onTxtDownload, onIsoDownload, onYamlDownload, onZipDownload, onPackDownload, onCardDownload, onAssistRequest, onCodeDesktop, onCodeGui, onSmsSend, onPhonePush, onPixelNote, onContainerAdd, onPrepareContainerExport, onSampleExtract, density, t, language }) => {
   const [flash, setFlash] = useState(false);
   const isMulti = row.value.includes('\n');
   const jumpSimilarity = (e) => {
@@ -2507,6 +2507,10 @@ const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownlo
     e.stopPropagation();
     onContainerAdd?.(row);
   };
+  const prepareContainerExport = (e) => {
+    e.stopPropagation();
+    onPrepareContainerExport?.(row);
+  };
   const extractSample = (e) => {
     e.stopPropagation();
     onSampleExtract?.(row);
@@ -2587,6 +2591,9 @@ const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownlo
         </button>
         <button className="oc-act oc-act-container-add" onClick={addContainer} title={language === 'es' ? 'Agregar code a caja/contenedor' : 'Add code to box/container'}>
           <span dangerouslySetInnerHTML={{__html: STICKY_NOTE_PLUS_ICON}} />
+        </button>
+        <button className="oc-act oc-act-container-ready" onClick={prepareContainerExport} title={language === 'es' ? 'Preparar code para exportacion a contenedor y envio' : 'Prepare code for container export and shipping'}>
+          <span dangerouslySetInnerHTML={{__html: CONTAINER_EXPORT_READY_ICON}} />
         </button>
         <button className="oc-act oc-act-sample" onClick={extractSample} title={language === 'es' ? 'Sustraer muestra y guardarla en base de datos' : 'Extract sample and save it to database'}>
           <span dangerouslySetInnerHTML={{__html: PILL_BOTTLE_ICON}} />
@@ -20189,7 +20196,57 @@ const App = () => {
     writeContainerPort(next);
     setContainerPortState(next);
     notify(`${String(row.idx).padStart(3, '0')} agregado a ${box.id} / ${container.id}`);
+    return { containerId: container.id, boxId: box.id, containerIH: container.ih, boxIH: box.ih, status: container.status };
   }, [notify]);
+  const prepareCodeContainerExport = useCallback(async (row) => {
+    if (!row?.value) return;
+    const placement = await addCodeToContainerPort(row);
+    const createdAt = new Date().toISOString();
+    const sha256 = await digestHex(row.value);
+    const codeIndex = String(row.idx || 0).padStart(5, '0');
+    const route = `HCE-${codeIndex}-${sha256.slice(0, 12).toUpperCase()}`;
+    const manifest = {
+      hashcod_container_export: {
+        version: '1.0',
+        action: 'PREPARE_FOR_CONTAINER_SHIPPING',
+        status: 'READY_FOR_CONTAINER_EXPORT',
+        route,
+        preparedAt: createdAt,
+        preparedBy: 'Hashcod',
+        code: {
+          index: row.idx,
+          id: row.id,
+          primitive: row.type,
+          value: row.value,
+          length: row.value.length,
+          sha256,
+          generatedAt: row.ts ? new Date(row.ts).toISOString() : createdAt
+        },
+        container: {
+          id: placement?.containerId || null,
+          boxId: placement?.boxId || null,
+          containerIH: placement?.containerIH || null,
+          boxIH: placement?.boxIH || null,
+          status: placement?.status || 'OPEN',
+          boxSize: CONTAINER_PORT_BOX_SIZE,
+          boxesPerContainer: CONTAINER_PORT_BOXES_PER_CONTAINER
+        },
+        shipping: {
+          channel: 'container-port-send',
+          readyFor: ['box', 'container', 'phone-os', 'hns-browser'],
+          integrity: 'SHA-256 + container IH',
+          instructions: [
+            'Verify sha256 before loading the code.',
+            'Load the code into the assigned box before sealing.',
+            'Seal the container only when all box hashes match.',
+            'Send through Hashcod Phone OS or HNS Browser when available.'
+          ]
+        }
+      }
+    };
+    triggerDownload(`Hashcod-container-ready-${codeIndex}-${tsStamp()}.hce.json`, JSON.stringify(manifest, null, 2), 'application/vnd.hashcod.container-ready+json;charset=utf-8');
+    notify(language === 'es' ? 'Code preparado para exportacion a contenedor.' : 'Code prepared for container export.');
+  }, [addCodeToContainerPort, language, notify]);
   const openAssistRequest = (row) => setAssistRow(row);
   const openCodeDesktop = (row) => setCodeDesktopRow(row);
   const openCodeGui = (row) => setCodeGuiRow(row);
@@ -21212,7 +21269,7 @@ const App = () => {
                     </div>
                   )}
                   {visibleOutput.map(row => (
-                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={rememberSingleCopied} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} onSampleExtract={extractCodeSample} density={density} t={t} language={language} />
+                    <OutputCard key={row.id} row={row} similarity={similarityMap.get(row.id)} freeMode={activePlan.id === 'free'} onCopy={rememberSingleCopied} onDelete={deleteRow} onDownload={downloadOne} onQrDownload={downloadRowQrPng} onCapture={downloadRowScreenshotPng} onPrintTicket={printRowTicket} onLogDownload={downloadRowLog} onJsonDownload={downloadRowJson} onTxtDownload={downloadRowTxt} onIsoDownload={downloadRowIso} onYamlDownload={downloadRowYaml} onZipDownload={downloadRowZip} onPackDownload={downloadRowPack} onCardDownload={downloadRowCodeCard} onAssistRequest={openAssistRequest} onCodeDesktop={openCodeDesktop} onCodeGui={openCodeGui} onSmsSend={openSmsSender} onPhonePush={pushPhoneNotification} onPixelNote={openPixelNote} onContainerAdd={addCodeToContainerPort} onPrepareContainerExport={prepareCodeContainerExport} onSampleExtract={extractCodeSample} density={density} t={t} language={language} />
                   ))}
                 </>
               )}
@@ -21387,6 +21444,7 @@ const CONTAINER_CYLINDER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="
 const PACKAGE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg>`;
 const PACKAGE_OPEN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-9"/><path d="M15.17 2.21a1.67 1.67 0 0 1 1.63 0L21 4.57a1.93 1.93 0 0 1 0 3.36L8.82 14.79a1.655 1.655 0 0 1-1.64 0L3 12.43a1.93 1.93 0 0 1 0-3.36z"/><path d="M20 13v3.87a2.06 2.06 0 0 1-1.11 1.83l-6 3.08a1.93 1.93 0 0 1-1.78 0l-6-3.08A2.06 2.06 0 0 1 4 16.87V13"/><path d="M21 12.43a1.93 1.93 0 0 0 0-3.36L8.83 2.2a1.64 1.64 0 0 0-1.63 0L3 4.57a1.93 1.93 0 0 0 0 3.36l12.18 6.86a1.636 1.636 0 0 0 1.63 0z"/></svg>`;
 const STICKY_NOTE_PLUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M18 15v6"/><path d="M21 12.356V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.355"/><path d="M21 18h-6"/></svg>`;
+const CONTAINER_EXPORT_READY_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 511 511" aria-hidden="true"><g fill="currentColor"><path d="m511 58.643v-31.143c0-15.164-12.336-27.5-27.5-27.5s-27.5 12.336-27.5 27.5v166.5h-21.018c1.924-3.753 3.018-8 3.018-12.5v-120c0-15.163-12.337-27.5-27.5-27.5h-160c-15.163 0-27.5 12.337-27.5 27.5v120c0 4.5 1.094 8.747 3.018 12.5h-24.036c1.924-3.753 3.018-8 3.018-12.5v-60c0-15.163-12.337-27.5-27.5-27.5h-80c-15.163 0-27.5 12.337-27.5 27.5v60c0 4.5 1.094 8.747 3.018 12.5h-18.018v-166.5c0-15.164-12.336-27.5-27.5-27.5s-27.5 12.336-27.5 27.5v291.143h15v-291.143c0-6.893 5.607-12.5 12.5-12.5s12.5 5.607 12.5 12.5v468.5h-25v-162.357h-15v177.357h55v-22h103.5v-15h-103.5v-25h401v25h-282.5v15h282.5v22h55v-437.357h-15v422.357h-25v-468.5c0-6.893 5.607-12.5 12.5-12.5s12.5 5.607 12.5 12.5v31.143zm-198-9.643h35v45h-35zm-75 12.5c0-6.893 5.607-12.5 12.5-12.5h47.5v60h65v-60h47.5c6.893 0 12.5 5.607 12.5 12.5v120c0 6.893-5.607 12.5-12.5 12.5h-160c-6.893 0-12.5-5.607-12.5-12.5zm-108 47.5h15v25h-15zm-45 12.5c0-6.893 5.607-12.5 12.5-12.5h17.5v40h45v-40h17.5c6.893 0 12.5 5.607 12.5 12.5v60c0 6.893-5.607 12.5-12.5 12.5h-80c-6.893 0-12.5-5.607-12.5-12.5zm188 300c0 6.893-5.607 12.5-12.5 12.5h-160c-6.893 0-12.5-5.607-12.5-12.5v-120c0-6.893 5.607-12.5 12.5-12.5h47.5v60h65v-60h47.5c6.893 0 12.5 5.607 12.5 12.5zm-110-87.5v-45h35v45zm263 87.5c0 6.893-5.607 12.5-12.5 12.5h-80c-6.893 0-12.5-5.607-12.5-12.5v-60c0-6.893 5.607-12.5 12.5-12.5h17.5v40h45v-40h17.5c6.893 0 12.5 5.607 12.5 12.5zm-60-47.5v-25h15v25zm90-140h-103.5v15h103.5v185h-18.018c1.924-3.753 3.018-8 3.018-12.5v-60c0-15.163-12.337-27.5-27.5-27.5h-80c-15.163 0-27.5 12.337-27.5 27.5v60c0 4.5 1.094 8.747 3.018 12.5h-24.036c1.924-3.753 3.018-8 3.018-12.5v-120c0-15.163-12.337-27.5-27.5-27.5h-160c-15.163 0-27.5 12.337-27.5 27.5v120c0 4.5 1.094 8.747 3.018 12.5h-21.018v-185h282.5v-15h-282.5v-25h401z"/><path d="m347.5 164h30v15h-30z"/><path d="m347.5 134h60v15h-60z"/><path d="m197.5 404h30v15h-30z"/><path d="m197.5 374h60v15h-60z"/><path d="m253 64.5h15v15h-15z"/><path d="m253 94.5h15v15h-15z"/><path d="m392.5 164h15v15h-15z"/><path d="m103 334.5h15v15h-15z"/><path d="m103 304.5h15v15h-15z"/><path d="m242.5 404h15v15h-15z"/></g></svg>`;
 const STICKY_NOTE_CHECK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 19 2 2 4-4"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M21 13V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6.5"/></svg>`;
 const STICKY_NOTE_MINUS_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3v5a1 1 0 0 0 1 1h5"/><path d="M21 14V9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.35"/><path d="M21 18h-6"/></svg>`;
 const SHARED_CLI_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m10 8-3 3 3 3"/><path d="m14 14 3-3-3-3"/></svg>`;

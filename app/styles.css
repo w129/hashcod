@@ -3476,7 +3476,7 @@ kbd {
 .oc.similar-hit { animation: similarHit .9s ease; }
 .oc-main {
   display: grid;
-  grid-template-columns: 48px minmax(0,1fr) auto auto auto auto auto auto auto auto auto auto auto;
+  grid-template-columns: 48px minmax(0,1fr) auto auto repeat(24, 26px);
   align-items: center;
   min-height: 38px;
 }
@@ -4181,6 +4181,8 @@ kbd {
 .code-grid code { color:var(--ink-3); }
 .oc-act-container-add { color:#646464; }
 .oc-act-container-add:hover { color:var(--ink); border-color:var(--line-2); background:rgba(255,255,255,.7); }
+.oc-act-container-ready { color:#646464; }
+.oc-act-container-ready:hover { color:var(--ink); border-color:var(--line-2); background:rgba(255,255,255,.7); }
 @media (max-width: 860px) {
   .containerdlg { width:calc(100vw - 16px); }
   .container-formula { display:grid; }
