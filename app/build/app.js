@@ -28805,18 +28805,23 @@ const HashcodSingleKeyGate = ({
   };
   if (unlocked) return children;
   return React.createElement("div", {
-    className: "singlekey-gate zero-trust-gate"
+    className: "singlekey-gate zero-trust-gate zta-entry"
   }, React.createElement("form", {
-    className: "singlekey-card zero-trust-card",
+    className: "singlekey-card zero-trust-card zta-entry-card",
     onSubmit: submit
   }, React.createElement("section", {
     className: "zta-hero"
+  }, React.createElement("div", {
+    className: "zta-hero-brand"
   }, React.createElement("div", {
     className: "singlekey-mark",
     dangerouslySetInnerHTML: {
       __html: window.OCG_ICONS.brand(42)
     }
-  }), React.createElement("span", null, PLATFORM_DISPLAY_NAME, " VERIFIABLE SECURITY LAYER"), React.createElement("h1", null, "Zero Trust Access"), React.createElement("p", null, "Hashcod verifica entorno, clave, WebCrypto, vault local, auditoria hash-chain y manifiesto firmado antes de abrir la plataforma.")), React.createElement("aside", {
+  }), React.createElement("div", null, React.createElement("span", null, PLATFORM_DISPLAY_NAME, " ENTRY PLATFORM"), React.createElement("h1", null, "Access Layer"))), React.createElement("p", null, "Hashcod valida clave, entorno local, WebCrypto, vault, auditoria hash-chain y manifiesto firmado antes de abrir la plataforma."), React.createElement("div", {
+    className: "zta-entry-flow",
+    "aria-label": "Entry flow"
+  }, React.createElement("span", null, "01 local check"), React.createElement("span", null, "02 key digest"), React.createElement("span", null, "03 signed manifest"), React.createElement("span", null, "04 platform unlock"))), React.createElement("aside", {
     className: "zta-panel"
   }, React.createElement("b", null, "SECURITY STACK"), React.createElement("div", {
     className: "zta-stack"

@@ -21567,13 +21567,23 @@ const HashcodSingleKeyGate = ({ children }) => {
   };
   if (unlocked) return children;
   return (
-    <div className="singlekey-gate zero-trust-gate">
-      <form className="singlekey-card zero-trust-card" onSubmit={submit}>
+    <div className="singlekey-gate zero-trust-gate zta-entry">
+      <form className="singlekey-card zero-trust-card zta-entry-card" onSubmit={submit}>
         <section className="zta-hero">
-          <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
-          <span>{PLATFORM_DISPLAY_NAME} VERIFIABLE SECURITY LAYER</span>
-          <h1>Zero Trust Access</h1>
-          <p>Hashcod verifica entorno, clave, WebCrypto, vault local, auditoria hash-chain y manifiesto firmado antes de abrir la plataforma.</p>
+          <div className="zta-hero-brand">
+            <div className="singlekey-mark" dangerouslySetInnerHTML={{__html: window.OCG_ICONS.brand(42)}} />
+            <div>
+              <span>{PLATFORM_DISPLAY_NAME} ENTRY PLATFORM</span>
+              <h1>Access Layer</h1>
+            </div>
+          </div>
+          <p>Hashcod valida clave, entorno local, WebCrypto, vault, auditoria hash-chain y manifiesto firmado antes de abrir la plataforma.</p>
+          <div className="zta-entry-flow" aria-label="Entry flow">
+            <span>01 local check</span>
+            <span>02 key digest</span>
+            <span>03 signed manifest</span>
+            <span>04 platform unlock</span>
+          </div>
         </section>
 
         <aside className="zta-panel">

@@ -1346,6 +1346,273 @@ kbd {
   opacity: .52;
   cursor: not-allowed;
 }
+
+/* Entry platform design adapted from the standalone startup shell. */
+.zta-entry,
+.authgate {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(14,14,13,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,14,13,.045) 1px, transparent 1px),
+    #f3f3f1;
+  background-size: 26px 26px;
+  color: #0e0e0d;
+}
+.zta-entry {
+  padding: clamp(18px, 3vw, 42px);
+}
+.zta-entry-card,
+.authbox-pro {
+  border: 1px solid #0e0e0d;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.96), rgba(250,250,249,.9)),
+    linear-gradient(rgba(14,14,13,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,14,13,.04) 1px, transparent 1px);
+  background-size: auto, 24px 24px, 24px 24px;
+  box-shadow: 22px 22px 0 rgba(14,14,13,.12);
+  color: #0e0e0d;
+}
+.zta-entry-card {
+  width: min(1180px, calc(100vw - 36px));
+  grid-template-columns: minmax(0, 1.2fr) minmax(310px, .8fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.zta-entry-card .zta-hero,
+.zta-entry-card .zta-keybox,
+.zta-entry-card .zta-panel,
+.zta-entry-card .zta-metrics,
+.zta-entry-card .zta-controls article {
+  background: rgba(255,255,255,.78);
+  border-color: #cfcfc8;
+}
+.zta-entry-card .zta-hero {
+  min-height: 286px;
+  padding: clamp(28px, 4vw, 54px);
+  border: 0;
+  border-right: 1px solid #cfcfc8;
+  border-bottom: 1px solid #cfcfc8;
+  align-content: start;
+}
+.zta-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.zta-entry-card .singlekey-mark,
+.authbox-pro .authmark {
+  width: 68px;
+  height: 68px;
+  background: #0e0e0d;
+  color: #fff;
+  border: 1px solid #0e0e0d;
+  box-shadow: 10px 10px 0 #d9d9d4;
+}
+.zta-entry-card .singlekey-mark svg,
+.authbox-pro .authmark svg {
+  width: 42px;
+  height: 42px;
+}
+.zta-entry-card span,
+.authbox-pro span,
+.zta-entry-card .zta-panel > b,
+.zta-entry-card .zta-keybox label,
+.zta-entry-card .zta-metrics span,
+.zta-entry-card .zta-controls article > span {
+  color: #8a8a82;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.zta-entry-card h1,
+.authbox-pro h1 {
+  color: #0e0e0d;
+  font-family: var(--sans);
+  font-size: clamp(54px, 8vw, 96px);
+  line-height: .92;
+  letter-spacing: -.055em;
+  font-weight: 850;
+  text-shadow: 4px 4px 0 rgba(0,0,0,.1);
+}
+.zta-entry-card p,
+.authbox-pro p {
+  max-width: 760px;
+  color: #44443f;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.zta-entry-card .zta-panel,
+.authbox-pro .auth-handshake {
+  min-height: 286px;
+  padding: 28px;
+  border: 0;
+  border-bottom: 1px solid #cfcfc8;
+  background:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+    #0e0e0d;
+  background-size: 18px 18px;
+  color: #fff;
+}
+.zta-entry-card .zta-panel > b,
+.authbox-pro .auth-handshake b {
+  color: #fff;
+}
+.zta-entry-card .zta-stack i,
+.authbox-pro .auth-handshake span {
+  border: 1px solid #2d2d2a;
+  background: rgba(255,255,255,.035);
+  color: #f3f3f1;
+}
+.zta-entry-card .zta-stack strong,
+.zta-entry-card .zta-stack small {
+  color: inherit;
+}
+.zta-entry-card .zta-stack small {
+  opacity: .62;
+}
+.zta-entry-card .zta-stack i.ok::before,
+.zta-entry-card .zta-stack i.warn::before,
+.authbox-pro .auth-handshake i {
+  width: 9px;
+  height: 9px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #0e0e0d, 0 0 0 3px #fff;
+}
+.zta-entry-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid #cfcfc8;
+  margin-top: 8px;
+}
+.zta-entry-flow span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-right: 1px solid #cfcfc8;
+  color: #0e0e0d;
+  letter-spacing: .18em;
+}
+.zta-entry-flow span:last-child {
+  border-right: 0;
+}
+.zta-entry-card .zta-keybox {
+  grid-column: 1 / -1;
+  padding: 26px;
+  border-left: 0;
+  border-right: 0;
+}
+.zta-entry-card .zta-keybox input,
+.authbox-pro > input,
+.authbox-pro > textarea {
+  min-height: 58px;
+  border: 1px solid #0e0e0d;
+  background: rgba(255,255,255,.82);
+  color: #0e0e0d;
+  font-family: var(--mono);
+  font-size: 14px;
+}
+.zta-entry-card .zta-keybox input:focus,
+.authbox-pro > input:focus,
+.authbox-pro > textarea:focus {
+  outline: 2px solid #0e0e0d;
+  outline-offset: 2px;
+}
+.zta-entry-card .zta-keybox button,
+.authbox-pro > button,
+.authbox-pro .oauth-row button,
+.authbox-pro .auth-mode-row button.ghost {
+  min-height: 54px;
+  border: 1px solid #0e0e0d;
+  background: #0e0e0d;
+  color: #fff;
+  font-family: var(--mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.zta-entry-card .zta-keybox button:hover,
+.authbox-pro > button:hover,
+.authbox-pro .oauth-row button:hover,
+.authbox-pro .auth-mode-row button.ghost:hover {
+  background: #fff;
+  color: #0e0e0d;
+}
+.zta-entry-card .zta-metrics {
+  grid-column: 1 / -1;
+  border-left: 0;
+  border-right: 0;
+  background: rgba(255,255,255,.68);
+}
+.zta-entry-card .zta-metrics div {
+  border-right-color: #cfcfc8;
+}
+.zta-entry-card .zta-metrics strong {
+  color: #0e0e0d;
+}
+.zta-entry-card .zta-metrics small,
+.zta-entry-card .zta-controls p {
+  color: #8a8a82;
+}
+.zta-entry-card .zta-controls {
+  grid-column: 1 / -1;
+  padding: 18px;
+  gap: 12px;
+  background: rgba(14,14,13,.04);
+}
+.zta-entry-card .zta-controls article {
+  min-height: 120px;
+}
+.zta-entry-card .zta-controls b {
+  color: #0e0e0d;
+}
+.zta-entry-card .zta-controls article > span.ok,
+.zta-entry-card .zta-controls article > span.warn {
+  color: #0e0e0d;
+}
+.authbox-pro {
+  width: min(1180px, calc(100vw - 36px));
+  max-width: 1180px;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.authbox-pro .auth-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid #cfcfc8;
+}
+.authbox-pro .auth-hero > div:first-child {
+  padding: clamp(28px, 4vw, 54px);
+}
+.authbox-pro > input,
+.authbox-pro > textarea,
+.authbox-pro > button,
+.authbox-pro > em,
+.authbox-pro > .oauth-row,
+.authbox-pro > .auth-mode-row,
+.authbox-pro > .auth-stack-list,
+.authbox-pro > .auth-generated,
+.authbox-pro > .auth-flow {
+  margin-left: clamp(24px, 4vw, 54px);
+  margin-right: clamp(24px, 4vw, 54px);
+}
+.authbox-pro > .auth-flow {
+  border: 1px solid #cfcfc8;
+  margin-top: 22px;
+  margin-bottom: 20px;
+}
+.authbox-pro > input:first-of-type,
+.authbox-pro > textarea:first-of-type {
+  margin-top: 22px;
+}
+.authbox-pro > button:last-of-type {
+  margin-bottom: 32px;
+}
 .pixel-auth {
   background:
     linear-gradient(#202020 1px, transparent 1px),
