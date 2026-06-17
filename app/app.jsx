@@ -2535,6 +2535,7 @@ const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownlo
         ) : (
           <span className="oc-sim oc-sim-none" title={language === 'es' ? 'Sin similitud marcada por este plan' : 'No similarity marker for this plan'} />
         )}
+        <div className="oc-actions" aria-label={language === 'es' ? 'Herramientas del code generado' : 'Generated code tools'}>
         <button className="oc-act" onClick={copy} title="Copy">
           <span dangerouslySetInnerHTML={{__html: flash ? CHECK_ICON : COPY_ICON}} />
         </button>
@@ -2604,6 +2605,7 @@ const OutputCard = memo(({ row, similarity, freeMode, onCopy, onDelete, onDownlo
         <button className="oc-act" onClick={() => onDelete(row.id)} title="Delete">
           <span dangerouslySetInnerHTML={{__html: X_ICON}} />
         </button>
+        </div>
       </div>
     </div>
   );

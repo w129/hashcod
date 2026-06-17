@@ -3476,8 +3476,10 @@ kbd {
 .oc.similar-hit { animation: similarHit .9s ease; }
 .oc-main {
   display: grid;
-  grid-template-columns: 48px minmax(0,1fr) auto auto repeat(24, 26px);
+  grid-template-columns: 48px minmax(0,1fr) auto auto;
   align-items: center;
+  column-gap: 0;
+  row-gap: 5px;
   min-height: 38px;
 }
 .app.compact .oc .oc-main { min-height: 30px; }
@@ -3504,7 +3506,9 @@ kbd {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px;
+  padding: 7px 12px;
+  background: rgba(255,255,255,.62);
+  border: 1px solid rgba(16,16,16,.08);
   cursor: pointer;
 }
 .oc.multiline .oc-val {
@@ -3515,7 +3519,20 @@ kbd {
   font-size: 11px;
   padding: 4px 12px 4px 0;
 }
-.oc-meta { font-size: 9px; color: var(--ink-4); padding: 0 12px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.oc-meta { font-size: 9px; color: var(--ink-4); padding: 0 8px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
+.oc-actions {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.oc-actions::-webkit-scrollbar { height: 5px; }
+.oc-actions::-webkit-scrollbar-thumb { background: rgba(0,0,0,.22); }
 .oc-sim {
   width: 74px;
   height: 26px;
@@ -3567,12 +3584,16 @@ kbd {
 .oc-sim.down .oc-sim-icon { transform: rotate(180deg); }
 .oc-sim-txt { min-width: 34px; text-align: left; }
 .oc-act {
-  width: 26px; height: 26px;
+  width: 23px; height: 23px;
+  flex: 0 0 23px;
   display: flex; align-items: center; justify-content: center;
   color: var(--ink-4);
-  border: 1px solid transparent;
+  border: 1px solid rgba(16,16,16,.26);
+  border-left: 0;
+  background: rgba(255,255,255,.72);
   transition: all .1s;
 }
+.oc-actions .oc-act:first-child { border-left: 1px solid rgba(16,16,16,.26); }
 .oc-act:hover { color: var(--ink); border-color: var(--line-2); }
 .oc-act-qr { color: #646464; }
 .oc-act-qr:hover { color: var(--ink); border-color: var(--line-2); background: rgba(255,255,255,.7); }
@@ -6944,6 +6965,13 @@ kbd {
     width: max-content;
     min-width: 86px;
     height: 30px;
+  }
+
+  .oc-actions {
+    grid-column: 1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    overflow: visible;
   }
 
   .oc-act {
