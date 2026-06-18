@@ -9,9 +9,30 @@ const zlib = require('zlib');
 let PgPool = null;
 try { PgPool = require('pg').Pool; } catch {}
 
+function loadEnvironmentFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const clean = line.trim();
+    if (!clean || clean.startsWith('#')) continue;
+    const separator = clean.indexOf('=');
+    if (separator < 1) continue;
+    const key = clean.slice(0, separator).trim();
+    let value = clean.slice(separator + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
+
+const LOCAL_ENV_FILE = process.env.HASHCOD_ENV_FILE || path.join(__dirname, '.env.local');
+loadEnvironmentFile(LOCAL_ENV_FILE);
+
 const PORT = Number(process.env.PORT || 2340);
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || '127.0.0.1';
 const ROOT = __dirname;
+const APP_VERSION = '12.1.0';
+const STARTED_AT = Date.now();
 const DATA_DIR = process.env.HASHCOD_DATA_DIR || path.join(ROOT, 'runtime-data');
 const HELP_REQUESTS_FILE = path.join(DATA_DIR, 'assist-requests.json');
 const CLI_CONSOLE_FILE = path.join(DATA_DIR, 'cli-console.json');
@@ -41,11 +62,11 @@ const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const PRIVATE_MODE = String(process.env.HASHCOD_PRIVATE_MODE || (IS_PRODUCTION ? '1' : '0')).toLowerCase() !== '0';
 const PRIVATE_ENTRY_KEY = String(process.env.HASHCOD_PRIVATE_ENTRY_KEY || '');
 const LEGACY_PLATFORM_GATE = String(process.env.HASHCOD_LEGACY_PLATFORM_GATE || '0').toLowerCase() === '1';
-const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || 'a1e32e351eb2a186760c05f7d460b5382b8dcd6287105924d3cad140d8ce662a';
-const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '3e251bc983f9b3bce195d72af9635093cafdba2f9df683c90eb07e6ade487717';
-const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || 'c12efaa40f0bfc44a601cd650c4c14d4fe8ab4107d91d7d948594622da0f731e';
-const PLATFORM_GATE_TOKEN_HASH = process.env.HASHCOD_PLATFORM_GATE_TOKEN_HASH || '1d5529b450b29daeb44bf7a2df59c8aff349dff105a29d0661c70e372bfe98a7';
-const PLATFORM_GATE_KEY_HASH = process.env.HASHCOD_PLATFORM_GATE_KEY_HASH || '0a8b089d57a477e2eb6393aa22592665b1d9406b22086ef147cbb1a2b446e82c';
+const ADMIN_PANEL_KEY_HASH = process.env.HASHCOD_ADMIN_PANEL_KEY_HASH || '';
+const SECURITY_KING_KEY_HASH = process.env.HASHCOD_SECURITY_KING_KEY_HASH || '';
+const SECURITY_KING_NONCE_HASH = process.env.HASHCOD_SECURITY_KING_NONCE_HASH || '';
+const PLATFORM_GATE_TOKEN_HASH = process.env.HASHCOD_PLATFORM_GATE_TOKEN_HASH || '';
+const PLATFORM_GATE_KEY_HASH = process.env.HASHCOD_PLATFORM_GATE_KEY_HASH || '';
 const PLATFORM_GATE_RESOURCE_ID = 'HASHCOD-PLATFORM';
 const PLATFORM_GATE_CREDENTIAL_ID = 'HSC-ACCESS-CAPABILITY';
 const SMS_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || process.env.HASHCOD_SMS_ACCOUNT_SID || '';
@@ -54,6 +75,8 @@ const SMS_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER || process.env.HASHCOD_SM
 const SMS_PROVIDER = String(process.env.SMS_PROVIDER || (SMS_ACCOUNT_SID && SMS_AUTH_TOKEN && SMS_FROM_NUMBER ? 'twilio' : 'hashcod')).toLowerCase();
 const SMS_GATEWAY_PAIRING_KEY_HASH = process.env.HASHCOD_GATEWAY_PAIRING_KEY_HASH || ADMIN_PANEL_KEY_HASH;
 const DATABASE_URL = process.env.DATABASE_URL || process.env.HASHCOD_DATABASE_URL || '';
+const LOCAL_SHUTDOWN_TOKEN = process.env.HASHCOD_LOCAL_SHUTDOWN_TOKEN || '';
+const FALLBACK_RUNTIME_SECRET = crypto.randomBytes(32).toString('hex');
 let pgPool = null;
 let pgReady = false;
 
@@ -248,9 +271,25 @@ function ensureAutomaticBackup(reason = 'write') {
       backupFileIfExists(CODE_REGISTRY_FILE, 'code-registry', stamp),
     ].filter(Boolean).map(file => path.basename(file));
     fs.writeFileSync(manifest, JSON.stringify({ app: 'Hashcod', createdAt: new Date().toISOString(), reason, files }, null, 2));
+    pruneAutomaticBackups();
     audit('backup.automatic', { reason, files: files.length });
   } catch {
     // Backups are best-effort and must not block critical writes.
+  }
+}
+
+function pruneAutomaticBackups() {
+  try {
+    if (!fs.existsSync(BACKUP_DIR)) return;
+    const retentionDays = Math.max(1, Number(process.env.HASHCOD_BACKUP_RETENTION_DAYS || 14));
+    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    for (const entry of fs.readdirSync(BACKUP_DIR, { withFileTypes: true })) {
+      if (!entry.isFile()) continue;
+      const full = path.join(BACKUP_DIR, entry.name);
+      if (fs.statSync(full).mtimeMs < cutoff) fs.unlinkSync(full);
+    }
+  } catch {
+    // Retention cleanup is best-effort.
   }
 }
 
@@ -660,7 +699,7 @@ function canonicalizeSecurityValue(value) {
 }
 
 function authSecretKey() {
-  const secret = process.env.HASHCOD_SECRET || 'hashcod-dev-secret-change-me-before-production';
+  const secret = process.env.HASHCOD_SECRET || FALLBACK_RUNTIME_SECRET;
   return crypto.createHash('sha256').update(secret).digest();
 }
 
@@ -3162,6 +3201,7 @@ function enterpriseManifest() {
   const generatorPath = path.join(ROOT, 'data', 'generators.js');
   return JSON.stringify({
     app: 'Hashcod',
+    version: APP_VERSION,
     profile: 'enterprise-production-baseline',
     servedAt: new Date().toISOString(),
     host: HOST,
@@ -3186,6 +3226,42 @@ function enterpriseManifest() {
       catalogBytes: fs.existsSync(catalogPath) ? fs.statSync(catalogPath).size : 0,
       generatorsBytes: fs.existsSync(generatorPath) ? fs.statSync(generatorPath).size : 0
     }
+  }, null, 2);
+}
+
+function healthPayload() {
+  const required = [
+    'index.html',
+    'server.js',
+    'app/build/app.js',
+    'app/build/root.js',
+    'data/catalog.js',
+    'data/generators.js',
+    'vendor/react.production.min.js',
+    'vendor/react-dom.production.min.js'
+  ].map(file => {
+    const full = path.join(ROOT, file);
+    return { file, present: fs.existsSync(full), bytes: fs.existsSync(full) ? fs.statSync(full).size : 0 };
+  });
+  const configuredSecrets = [
+    'HASHCOD_SECRET',
+    'HASHCOD_ADMIN_PANEL_KEY_HASH',
+    'HASHCOD_SECURITY_KING_KEY_HASH',
+    'HASHCOD_SECURITY_KING_NONCE_HASH'
+  ].filter(key => !!process.env[key]);
+  return JSON.stringify({
+    ok: required.every(file => file.present && file.bytes > 0),
+    app: 'Hashcod',
+    version: APP_VERSION,
+    uptimeSeconds: Math.floor((Date.now() - STARTED_AT) / 1000),
+    host: HOST,
+    port: PORT,
+    localOnly: HOST === '127.0.0.1' || HOST === 'localhost',
+    storage: pgReady ? 'postgres+encrypted-cache' : 'encrypted-file-cache',
+    secretsConfigured: configuredSecrets.length,
+    secretsExpected: 4,
+    backupRetentionDays: Math.max(1, Number(process.env.HASHCOD_BACKUP_RETENTION_DAYS || 14)),
+    files: required
   }, null, 2);
 }
 
@@ -3233,6 +3309,25 @@ const server = http.createServer((req, res) => {
   if (enforceHttps(req, res)) return;
   if (!rateLimit(req, res)) return;
   const routePath = (req.url || '').split('?')[0];
+
+  if (routePath === '/api/local/shutdown' && req.method === 'POST') {
+    const remote = String(req.socket.remoteAddress || '');
+    const localRequest = remote === '127.0.0.1' || remote === '::1' || remote.endsWith('127.0.0.1');
+    const supplied = String(req.headers['x-hashcod-shutdown-token'] || '');
+    if (!localRequest || !LOCAL_SHUTDOWN_TOKEN || supplied.length !== LOCAL_SHUTDOWN_TOKEN.length
+      || !crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(LOCAL_SHUTDOWN_TOKEN))) {
+      send(res, 403, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: false, error: 'shutdown_denied' }));
+      return;
+    }
+    send(res, 200, { 'Content-Type': MIME['.json'] }, JSON.stringify({ ok: true, shuttingDown: true }));
+    setImmediate(() => shutdown('LOCAL_CONTROL'));
+    return;
+  }
+
+  if ((routePath === '/health' || routePath === '/health.json') && req.method === 'GET') {
+    send(res, 200, { 'Content-Type': MIME['.json'] }, healthPayload());
+    return;
+  }
 
   if (routePath.startsWith('/api/private-entry/')) {
     handlePrivateEntry(req, res);
@@ -3376,11 +3471,33 @@ const server = http.createServer((req, res) => {
   });
 });
 
+server.on('clientError', (_err, socket) => {
+  socket.end('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
+});
+
+function shutdown(signal) {
+  console.log(`\n Hashcod cerrando de forma segura (${signal})...`);
+  server.close(() => {
+    if (pgPool) pgPool.end().catch(() => {});
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 5000).unref();
+}
+
+process.once('SIGINT', () => shutdown('SIGINT'));
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+
 async function startServer() {
+  ensureDataDir();
+  pruneAutomaticBackups();
+  if (!process.env.HASHCOD_SECRET) {
+    console.warn('[Hashcod] HASHCOD_SECRET no configurado. Ejecuta scripts/setup-local.js para persistencia segura.');
+  }
   server.listen(PORT, HOST, () => {
     console.log('----------------------------------------');
     console.log(' Hashcod servidor iniciado');
     console.log(` URL: http://${HOST}:${PORT}`);
+    console.log(` Salud: http://${HOST}:${PORT}/health`);
     console.log(' Auth storage: encrypted file cache; Render PostgreSQL connecting in background');
     console.log(' Para cerrar: Ctrl + C');
     console.log('----------------------------------------');

@@ -2750,6 +2750,7 @@ const MenuButton = ({ label, items, activeMenu, setActiveMenu, primaryAction = n
     <div className="tb-menu">
       <button
         ref={btnRef}
+        data-tool-label={label}
         className={`tb-n ${open ? 'on' : ''} ${primaryAction ? 'tb-n-tool' : ''} ${iconOnly ? 'tb-n-icon-only' : ''}`}
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
@@ -19214,6 +19215,8 @@ const App = () => {
   const searchRef = useRef(null);
   const topNavRef = useRef(null);
   const [activeMenu, setActiveMenu] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [generatorPanelOpen, setGeneratorPanelOpen] = useState(true);
   const [bottomToolsOpen, setBottomToolsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sharedCliOpen, setSharedCliOpen] = useState(false);
@@ -21197,6 +21200,9 @@ const App = () => {
           <span className="bcr-l">{getCategoryLabel(selectedCat, language)}</span>
           <span className="bcr-sep" dangerouslySetInnerHTML={{__html: CHEV_R}} />
           <span className="bcr-c">{selectedType?.label || '—'}</span>
+          <span className="bcr-desc" title={selectedCat?.desc || selectedType?.std || ''}>
+            {selectedCat?.desc || selectedType?.std || ''}
+          </span>
           <span className="bcr-spacer" />
           <span className="bcr-st"><b>{stats.generated}</b> {t('generated')}</span>
           <span className="bcr-st"><b>{stats.unique}</b> {t('unique')}</span>
@@ -21204,7 +21210,24 @@ const App = () => {
         </div>
 
         {/* Main body */}
-        <div className="body d-grid">
+        <div className={`body d-grid ${sidebarOpen ? '' : 'sidebar-closed'} ${generatorPanelOpen ? '' : 'generator-closed'}`}>
+          <button
+            type="button"
+            className="block-slide-toggle sidebar-slide-toggle"
+            onClick={() => setSidebarOpen(prev => !prev)}
+            title={sidebarOpen
+              ? (language === 'es' ? 'Desplazar los 10,100 codes hacia la izquierda' : 'Slide the 10,100 codes left')
+              : (language === 'es' ? 'Recuperar los 10,100 codes' : 'Restore the 10,100 codes')}
+            aria-label={sidebarOpen
+              ? (language === 'es' ? 'Ocultar biblioteca de codes' : 'Hide code library')
+              : (language === 'es' ? 'Mostrar biblioteca de codes' : 'Show code library')}
+            aria-expanded={sidebarOpen}
+          >
+            <span dangerouslySetInnerHTML={{__html: sidebarOpen
+              ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>'
+              : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'}} />
+            <b>{sidebarOpen ? '10,100' : 'CODES'}</b>
+          </button>
           <Sidebar
             catalog={visibleCatalog}
             selectedId={selectedId}
@@ -21218,20 +21241,39 @@ const App = () => {
           />
 
           <main className="ed d-flex flex-column overflow-hidden">
-            <ConfigBar
-              type={selectedType}
-              length={length} setLength={setLength}
-              strength={strength} setStrength={setStrength}
-              generationPrefix={generationPrefix} setGenerationPrefix={setGenerationPrefix}
-              qty={qty} setQty={setQty}
-              prefix={prefix} setPrefix={setPrefix}
-              charset={charset} setCharset={setCharset}
-              onGen={generate} onClear={clearOutput} onCopy={copyAll} onDownload={downloadAll}
-              busy={busy} hasOut={output.length > 0}
-              t={t}
-              plan={activePlan}
-              language={language}
-            />
+            <div className="generator-panel">
+              <ConfigBar
+                type={selectedType}
+                length={length} setLength={setLength}
+                strength={strength} setStrength={setStrength}
+                generationPrefix={generationPrefix} setGenerationPrefix={setGenerationPrefix}
+                qty={qty} setQty={setQty}
+                prefix={prefix} setPrefix={setPrefix}
+                charset={charset} setCharset={setCharset}
+                onGen={generate} onClear={clearOutput} onCopy={copyAll} onDownload={downloadAll}
+                busy={busy} hasOut={output.length > 0}
+                t={t}
+                plan={activePlan}
+                language={language}
+              />
+            </div>
+            <button
+              type="button"
+              className="block-slide-toggle generator-slide-toggle"
+              onClick={() => setGeneratorPanelOpen(prev => !prev)}
+              title={generatorPanelOpen
+                ? (language === 'es' ? 'Subir y ocultar controles de generación' : 'Slide generation controls up')
+                : (language === 'es' ? 'Bajar y recuperar controles de generación' : 'Restore generation controls')}
+              aria-label={generatorPanelOpen
+                ? (language === 'es' ? 'Ocultar controles de generación' : 'Hide generation controls')
+                : (language === 'es' ? 'Mostrar controles de generación' : 'Show generation controls')}
+              aria-expanded={generatorPanelOpen}
+            >
+              <span dangerouslySetInnerHTML={{__html: generatorPanelOpen
+                ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>'}} />
+              <b>{language === 'es' ? 'GENERAR' : 'GENERATE'}</b>
+            </button>
 
             <div className="out-tb d-flex align-items-center">
               <span className="out-tb-l">{t('output')}</span>

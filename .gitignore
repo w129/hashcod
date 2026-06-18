@@ -2,3 +2,5 @@ node_modules/
 runtime-data/
 .env
 .env.*
+!.env.example
+LOCAL-CREDENTIALS.txt

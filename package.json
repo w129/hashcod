@@ -1,14 +1,20 @@
 {
-  "name": "opencriptg-local",
-  "version": "2.1.0",
+  "name": "hashcod-local",
+  "version": "12.1.0",
   "private": true,
   "description": "Hashcod ejecutable en servidor local con Node.js",
   "scripts": {
+    "setup:local": "node scripts/setup-local.js",
+    "prestart": "node scripts/setup-local.js --quiet",
     "start": "node server.js",
+    "start:smart": "node scripts/local-launcher.js",
+    "stop": "node scripts/stop-local.js",
     "dev": "node server.js",
     "start:5600": "PORT=5600 node server.js",
     "build:browser": "node scripts/build-browser.js",
-    "test:enterprise": "node scripts/enterprise-selftest.js"
+    "test:enterprise": "node scripts/enterprise-selftest.js",
+    "test:server": "node scripts/server-selftest.js",
+    "test": "npm run test:enterprise && npm run test:server"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
