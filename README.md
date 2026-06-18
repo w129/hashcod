@@ -1,74 +1,93 @@
-# HSG2818 — servidor local
+# Hashcod V12.1 Local
 
-Este paquete deja el software listo para ejecutarse en un servidor local con Node.js.
+Plataforma criptográfica local con 10,100 códigos, herramientas Enterprise,
+Vault, QR, Docuseal, Warp Workspace, registro de códigos y utilidades de
+auditoría.
 
-## Ejecutar
+## Diseño Hashcod Spectrum
 
-1. Instala Node.js si no lo tienes.
-2. Abre una terminal dentro de esta carpeta.
-3. Ejecuta:
+La interfaz utiliza la paleta oficial solicitada:
 
-```bash
+```text
+#E50058  #FF5B5B  #FFD399
+#FFE9CC  #09607D  #07485E
+```
+
+Los azules estructuran la plataforma, magenta y coral identifican acciones,
+y los tonos crema crean superficies de trabajo. El nombre y el icono oficial
+de Hashcod permanecen exclusivamente en blanco o negro según el contraste.
+
+## Inicio rápido en Windows
+
+Haz doble clic en:
+
+```text
+INICIAR-HASHCOD.bat
+```
+
+El iniciador:
+
+- comprueba Node.js;
+- instala las dependencias únicamente cuando faltan;
+- genera secretos locales únicos la primera vez;
+- selecciona otro puerto si `2340` está ocupado;
+- espera a que el diagnóstico responda;
+- abre Hashcod automáticamente en el navegador.
+
+Para detener un proceso iniciado de esta forma usa:
+
+```text
+DETENER-HASHCOD.bat
+```
+
+## Diagnóstico
+
+Ejecuta:
+
+```text
+DIAGNOSTICO-HASHCOD.bat
+```
+
+También puedes usar:
+
+```powershell
+npm test
+```
+
+El estado del servidor está disponible en:
+
+```text
+http://127.0.0.1:2340/health
+```
+
+## Credenciales locales
+
+En el primer arranque se crean:
+
+- `.env.local`: secretos y configuración privada;
+- `runtime-data/LOCAL-CREDENTIALS.txt`: claves legibles para los paneles locales.
+
+Ambos están excluidos de Git. Guarda `LOCAL-CREDENTIALS.txt` en un lugar
+seguro y no lo publiques.
+
+## Persistencia y copias de seguridad
+
+Los datos locales se guardan cifrados dentro de `runtime-data/`. Hashcod crea
+copias automáticas diarias y conserva 14 días de forma predeterminada. Puedes
+cambiarlo en `.env.local`:
+
+```text
+HASHCOD_BACKUP_RETENTION_DAYS=30
+```
+
+## Ejecución manual
+
+```powershell
+npm ci
+npm run setup:local
 npm start
 ```
 
-4. Abre en el navegador:
-
-```text
-http://127.0.0.1:2340
-```
-
-En Windows también puedes hacer doble clic en `INICIAR-WINDOWS.bat`.
-
-## Cambiar puerto
-
-PowerShell / CMD:
-
-```bash
-set PORT=5600 && npm start
-```
-
-Linux / macOS:
-
-```bash
-PORT=5600 npm start
-```
-
-## Correcciones incluidas
-
-- Se añadió la carga de `app/security.js`, necesaria para el candado/vault del software.
-- Se eliminó el bloqueo por hashes `integrity` en CDNs para evitar pantalla blanca si el CDN cambia la respuesta.
-- Se agregó servidor local propio con Node.js, sin Express ni dependencias externas.
-- Se agregó pantalla de carga/error para detectar fallos en vez de quedar en blanco.
-- Se conservaron las carpetas `app/`, `data/`, el diseño original, el tour, el vault y el panel de ajustes.
-
-## Nota importante
-
-No abras `index.html` directamente con doble clic. Para que Web Crypto funcione correctamente, ejecútalo desde `localhost` con `npm start`.
-
-## Menú superior funcional
-
-El menú superior ahora funciona según cada nombre:
-
-- File: nueva sesión, abrir sesión, guardar sesión, limpiar salida.
-- Generate: generar valores, generar lotes de 10/100/500, copiar resultados.
-- Export: exportar en Markdown, TXT, JSON y CSV.
-- View: cambiar densidad, enfocar búsqueda, volver al resultado más nuevo, repetir tour.
-- Help: abrir ayuda, atajos y explicación del sistema.
-
-## SipHash + Mythos Gate v12 security update
-
-This package includes the hardened HSG2818 entry layer:
-
-- SipHash-2-4 64-bit access gate before the local vault flow.
-- PBKDF2-SHA-512 with 1,250,000 iterations.
-- Domain-separated KDF material for verifier and AES vault key.
-- AES-256-GCM local vault sealing.
-- 8-glyph Mythos pattern requirement.
-- 8-digit TOTP-style HMAC-SHA-256 code.
-- 6-digit nonce challenge before unlock.
-- Progressive lockout after failed attempts.
-- Temporary session seal stored in sessionStorage.
-- Sanitized local audit log.
-
-No entry system is mathematically impossible to break, but this version is hardened for local/offline use and avoids storing the master passphrase.
+Por seguridad, el servidor escucha sólo en `127.0.0.1`. Cambia `HOST`
+únicamente si necesitas acceso desde otros equipos y cuentas con un firewall y
+una configuración privada adecuados.

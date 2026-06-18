@@ -1,0 +1,212 @@
+/*
+  Final visibility layer for the cryptographic code description panel.
+  This file loads after every historical theme stylesheet.
+*/
+
+#root .app .body .rp {
+  background: #fffdfc !important;
+  color: #07485e !important;
+}
+
+#root .app .body .rp .ti,
+#root .app .body .rp .ti-head,
+#root .app .body .rp .ti-section,
+#root .app .body .rp .ti-foot {
+  background: transparent !important;
+  color: #07485e !important;
+}
+
+#root .app .body .rp .ti-cat {
+  color: #476f7b !important;
+  opacity: 1 !important;
+}
+
+#root .app .body .rp .ti-title {
+  color: #07485e !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: #07485e !important;
+}
+
+#root .app .body .rp .ti-pill {
+  background: #07485e !important;
+  color: #ffffff !important;
+  border-color: #07485e !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+#root .app .body .rp .ti-pill-mono {
+  background: #ffffff !important;
+  color: #07485e !important;
+  border-color: #376f82 !important;
+  -webkit-text-fill-color: #07485e !important;
+}
+
+#root .app .body .rp .ti-about,
+#root .app .body .rp .ti-subabout,
+#root .app .body .rp .ti-concrete p,
+#root .app .body .rp .ti-ul li {
+  color: #294f5b !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #294f5b !important;
+}
+
+#root .app .body .rp .ti-quickgrid {
+  background: transparent !important;
+}
+
+#root .app .body .rp .ti-quickcard,
+#root .app .body .rp .ti-spec,
+#root .app .body .rp .ti-concrete {
+  background: #ffffff !important;
+  color: #07485e !important;
+  border: 1px solid #9db4bb !important;
+  box-shadow: 5px 5px 0 rgba(7, 72, 94, .12) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+#root .app .body .rp .ti-quickcard span,
+#root .app .body .rp .ti-k,
+#root .app .body .rp .ti-concrete-head span,
+#root .app .body .rp .ti-concrete-row span,
+#root .app .body .rp .ti-foot-row span {
+  color: #567580 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #567580 !important;
+}
+
+#root .app .body .rp .ti-quickcard b,
+#root .app .body .rp .ti-v,
+#root .app .body .rp .ti-concrete-head b,
+#root .app .body .rp .ti-concrete-row b,
+#root .app .body .rp .ti-h3,
+#root .app .body .rp .ti-foot-row b {
+  color: #0a3f51 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #0a3f51 !important;
+}
+
+#root .app .body .rp .ti-spec-row,
+#root .app .body .rp .ti-concrete-head,
+#root .app .body .rp .ti-concrete-row,
+#root .app .body .rp .ti-foot {
+  border-color: #bed0d5 !important;
+}
+
+#root .app .body .rp .ti-tagline span {
+  background: #ffe9cc !important;
+  color: #07485e !important;
+  border-color: #9db4bb !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #07485e !important;
+}
+
+#root .app .body .rp .ti-ul li::before {
+  background: #09607d !important;
+}
+
+#root .app .body .rp .ti-ul-warn li::before {
+  background: #e50058 !important;
+}
+
+#root .app .body .rp .ti-empty-t {
+  color: #07485e !important;
+  -webkit-text-fill-color: #07485e !important;
+}
+
+#root .app .body .rp .ti-empty-d {
+  color: #476f7b !important;
+  -webkit-text-fill-color: #476f7b !important;
+}
+
+/*
+  Bottom tools handle: keep the closed tab inside the status-bar area so it
+  does not cover the final generated cryptographic code.
+*/
+#root .app .bottom-tools {
+  bottom: 0 !important;
+  height: 24px !important;
+  align-items: flex-end !important;
+  transition: bottom .18s ease, height .18s ease !important;
+}
+
+#root .app .bottom-tools.open {
+  bottom: 24px !important;
+  height: 38px !important;
+}
+
+#root .app .bottom-tools:not(.open) .bottom-tools-toggle {
+  width: 48px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  border-bottom: 0 !important;
+}
+
+#root .app .bottom-tools:not(.open) .bottom-tools-toggle span,
+#root .app .bottom-tools:not(.open) .bottom-tools-toggle svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+#root .app .bottom-tools.open .bottom-tools-toggle {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+#root .app .out {
+  padding-bottom: 18px !important;
+  scroll-padding-bottom: 18px !important;
+}
+
+/* Keep the pinned EQUET control inside the normal top-toolbar dimensions. */
+#root .app .tb {
+  overflow: hidden !important;
+}
+
+#root .app .tb .tb-right {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  overflow: hidden !important;
+  align-self: center !important;
+}
+
+#root .app .tb .tb-right .tb-equet-pin {
+  box-sizing: border-box !important;
+  flex: 0 0 78px !important;
+  width: 78px !important;
+  min-width: 78px !important;
+  max-width: 78px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 6px 4px !important;
+  padding: 0 9px !important;
+  gap: 6px !important;
+  align-self: center !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  overflow: hidden !important;
+  line-height: 1 !important;
+}
+
+#root .app .tb .tb-right .tb-equet-pin span,
+#root .app .tb .tb-right .tb-equet-pin svg {
+  display: block !important;
+  flex: 0 0 15px !important;
+  width: 15px !important;
+  height: 15px !important;
+  max-width: 15px !important;
+  max-height: 15px !important;
+}
+
+#root .app .tb .tb-right .tb-equet-pin b {
+  overflow: hidden !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  letter-spacing: 1.3px !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
